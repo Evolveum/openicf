@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -105,11 +106,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public void init(Configuration cfg) {
         configuration = (SolarisConfiguration) cfg;
-        connection = initConnection(configuration);
-    }
-
-    private SolarisConnection initConnection(final SolarisConfiguration configuration) {
-        return new SolarisConnection(configuration);
+        connection = new SolarisConnection(configuration);
     }
 
     /**
@@ -329,7 +326,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             // Check if the connector has write access to /tmp folder
             final String tmpFileName = "/tmp/SConnectorTmpAccessTest";
             out = getConnection().executeCommand("touch " + tmpFileName);
-            if (out.length() > 0) {
+            if (StringUtil.isNotBlank(out)) {
                 throw new ConnectorException("ERROR: buffer: <" + out + ">");
             }
             getConnection().executeCommand("rm -f " + tmpFileName);
@@ -368,10 +365,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     /* ********************** GET / SET methods ********************* */
     public SolarisConnection getConnection() {
-        if (connection != null)
-            return connection;
-        
-        connection = initConnection(configuration);
+        assert (connection != null);
         return connection;
     }
     

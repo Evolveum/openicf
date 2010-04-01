@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -83,7 +84,7 @@ public class CreateNISUser extends AbstractNISOp {
         String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
         
         String basedir = config.getHomeBaseDirectory();
-        if ((basedir != null) && (basedir.length() > 0)) {
+        if (StringUtil.isNotBlank(basedir)) {
             StringBuffer homedirBuffer = new StringBuffer(basedir);
 
             if (!basedir.endsWith("/")) {
@@ -96,13 +97,13 @@ public class CreateNISUser extends AbstractNISOp {
         }
         
         String loginGroup = config.getDefaultPrimaryGroup();
-        if ((loginGroup != null) && (loginGroup.length() > 0)) {
+        if (StringUtil.isNotBlank(loginGroup)) {
             gid = loginGroup;
             log.ok(accountId + " got " + loginGroup + " from Configuration attribute 'defaultPrimaryGroup'");
         }
         
         String loginShell  = config.getLoginShell();
-        if ((loginShell != null) && (loginShell.length() > 0)) {
+        if (StringUtil.isNotBlank(loginShell)) {
             shell = loginShell;
             log.ok(accountId + " got " + loginShell + " from Configuration attribute 'loginShell'");
         }
@@ -180,7 +181,7 @@ public class CreateNISUser extends AbstractNISOp {
         // If resource attributes are available, override results from defadduser
         // At the moment, we are using defgroup, defshell and defparent
         // Override for defgroup (RA_DEFAULT_PRIMARY_GROUP or USER_GROUP) has already been loaded above.
-        if ((gid != null) && (gid.length() > 0)) {
+        if (StringUtil.isNotBlank(gid)) {
             passwordRecord.append("defgroup=`ypmatch " + gid + " group | cut -d: -f3`; ");
             passwordRecord.append("if [ -z \"$defgroup\" ]; then\n");
             passwordRecord.append("GRPERRMSG=\"" + NO_DEFAULT_PRIMARY_GROUP + " matches in ypmatch " + gid + " group.\"; ");
@@ -197,7 +198,7 @@ public class CreateNISUser extends AbstractNISOp {
         }
         
         // Override for defparent (homeBasedir or userDir) has already been loaded above.
-        if ((homedir != null) && (homedir.length() > 0)) {
+        if (StringUtil.isNotBlank(homedir)) {
             passwordRecord.append("defhome=" + homedir +"; ");
         } else {
             passwordRecord.append("if [ -z \"$defparent\" ]; then\n");
@@ -209,7 +210,7 @@ public class CreateNISUser extends AbstractNISOp {
         }
         
         // Override for defshell (RA_LOGIN_SHELL or USER_SHELL) has already been loaded above.
-        if ((shell != null) && (shell.length() > 0)) {
+        if (StringUtil.isNotBlank(shell)) {
             passwordRecord.append("defshell=" + shell + "; ");
         } else {
             passwordRecord.append("if [ -z \"$defshell\" ]; then\n");

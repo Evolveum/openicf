@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.operation.nis;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -58,18 +59,18 @@ public class DeleteNISGroup extends AbstractNISOp {
         connection.executeCommand(getOwner);
         String out = connection.executeCommand(workScript);
         out = out.trim();
-        if (out.length() > 0) {
+        if (StringUtil.isNotBlank(out)) {
             if (out.contains(">")) {
                 out = out.substring(out.lastIndexOf(">") + 1, out.length());
                 out = out.trim();
             }
-            if (out.length() > 0) {
+            if (StringUtil.isNotBlank(out)) {
                 throw new ConnectorException("ERROR: " + out);
             }
         }
         
         out = connection.executeCommand("echo $?; ");
-        if (!out.equals("0")) {
+        if (StringUtil.isNotBlank(out) && !out.equals("0")) {
             throw new UnknownUidException("Error deleting group: " + groupName);
         }
 

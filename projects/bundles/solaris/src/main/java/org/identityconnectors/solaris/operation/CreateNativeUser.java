@@ -200,7 +200,7 @@ class CreateNativeUser  {
         String homeDirectory = null;
         
         String basedir = conn.getConfiguration().getHomeBaseDirectory();
-        if ((basedir != null) && (basedir.length() > 0)) {
+        if (StringUtil.isNotBlank(basedir)) {
             // If there is a specific home directory specified for the
             // user then that takes priority.
             StringBuffer homedirBuffer = new StringBuffer(basedir);

@@ -878,17 +878,6 @@ public class SolarisConnection {
         return SolarisUtil.limitString(buff);
     }
 
-    /**
-     * Try to authenticate with the given configuration
-     * If the test fails, an exception is thrown.
-     * @param configuration the configuration that should be tested.
-     * @throws Exception
-     */
-    static void test(SolarisConfiguration configuration) throws Exception {
-        SolarisConnection connection = new SolarisConnection(configuration);
-        connection.dispose();
-    }
-
     public String getRootShellPrompt() {
         return loginShellPrompt;
     }

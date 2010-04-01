@@ -254,7 +254,7 @@ public class AbstractNISOp {
         conn.executeCommand(String.format("WSUSERS=\"%s\"", userList));
         conn.executeCommand(checkUsers);
         final String badUsers = conn.executeCommand("echo $BADWSUSERS");
-        if (badUsers.length() > 0) {
+        if (StringUtil.isNotBlank(badUsers)) {
             throw new ConnectorException("SolarisConnector: users do not exist: " + badUsers);
         }
         
@@ -265,7 +265,7 @@ public class AbstractNISOp {
         conn.executeCommand(changeUsers);
         conn.executeCommand(rmTmpFiles);
         final String grpErrMsg = conn.executeCommand("echo $GRPERRMSG");
-        if (grpErrMsg.length() > 0) {
+        if (StringUtil.isNotBlank(grpErrMsg)) {
             throw new ConnectorException(grpErrMsg);
         }
 
@@ -313,8 +313,7 @@ public class AbstractNISOp {
      * to process output of some specific commands.
      */
     protected static void parseNisOutputForErrors(String out) {
-        out = out.trim();
-        if (out.length() > 0) {
+        if (StringUtil.isNotBlank(out)) {
             if (out.contains(">")) {
                 out = out.substring(out.lastIndexOf(">") + 1);
                 out = out.trim();

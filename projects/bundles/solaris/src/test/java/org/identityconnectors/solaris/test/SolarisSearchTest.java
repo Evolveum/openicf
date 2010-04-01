@@ -28,6 +28,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -98,7 +99,7 @@ public class SolarisSearchTest extends SolarisTestBase {
         if (result.size() > 0) {
             for (ConnectorObject connectorObject : result) {
                 String value = connectorObject.getName().getNameValue();
-                Assert.assertTrue(value.trim().length() > 0);
+                Assert.assertTrue(StringUtil.isNotBlank(value));
             }
         }
     }
@@ -113,7 +114,7 @@ public class SolarisSearchTest extends SolarisTestBase {
         if (result.size() > 0) {
             for (ConnectorObject connectorObject : result) {
                 String value = connectorObject.getName().getNameValue();
-                Assert.assertTrue(value.trim().length() > 0);
+                Assert.assertTrue(StringUtil.isNotBlank(value));
             }
         }
     }

@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.Pair;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -254,7 +255,7 @@ public class UpdateNISUser extends AbstractNISOp {
         passwordRecord1.append("ENTRYTEXT=`ypmatch " + accountName + " passwd`; ");
         
         
-        if ((gid != null) && (gid.length() > 0)) { // "" gid does not make sense
+        if (StringUtil.isNotBlank(gid)) { // "" gid does not make sense
             passwordRecord1.append("GROUP=`ypmatch " + gid + " group | cut -d: -f3`; ");
             passwordRecord1.append("if [ -z \"$GROUP\" ]; then\n");
             passwordRecord1.append("GRPERRMSG=\"" + NO_PRIMARY_GROUP + " matches in ypmatch " + gid + " group.\"; ");
@@ -271,7 +272,7 @@ public class UpdateNISUser extends AbstractNISOp {
             passwordRecord1.append("HOMEDIR=`echo $ENTRYTEXT | cut -d: -f6`; ");
         }
         
-        if ((uid != null) && (uid.length() > 0)) { // "" uid does not make sense
+        if (StringUtil.isNotBlank(uid)) { // "" uid does not make sense
             passwordRecord1.append("NEWUID=" + uid + "; \\\n");
             //check whether newuid is duplicate or not.
             passwordRecord1.append("dupuid=`ypmatch \"$NEWUID\" passwd.byuid |  cut -d: -f3`; ");

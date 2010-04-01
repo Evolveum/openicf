@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -36,7 +37,7 @@ class ProfilesCommand {
     public static Attribute getProfilesAttributeFor(String username, SolarisConnection conn) {
         final String out = conn.executeCommand(conn.buildCommand("profiles", username));
         List<String> profiles = null;
-        if (!out.endsWith("No such user") && !out.endsWith("No profiles") && !out.endsWith("not found") && out.trim().length() > 0) {
+        if (StringUtil.isNotBlank(out) && !out.endsWith("No such user") && !out.endsWith("No profiles") && !out.endsWith("not found")) {
             final String[] lines = out.split("\n");
             profiles = new ArrayList<String>(lines.length);
             for (String line : lines) {
