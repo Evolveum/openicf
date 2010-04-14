@@ -160,8 +160,9 @@ public class GoogleAppsUserOps {
                 if (fetchNicknames) {
                     nicknames = g.getNicknamesAsList(accountId);
                 }
-                if( fetchGroups )
+                if (fetchGroups) {
                     groups = g.getGroupMembershipsForUser(accountId);
+                }
 
                 handler.handle(makeConnectorObject(ue, nicknames, groups));
             }
@@ -181,7 +182,7 @@ public class GoogleAppsUserOps {
      *
      * @param ue google apps UesrEntry object
      * @param nicknames list of nicknames
-     * @param gropus - list of groups this user belongs to
+     * @param groups - list of groups this user belongs to
      * @return a connectorOject
      */
     private ConnectorObject makeConnectorObject(UserEntry ue, List<String> nicknames, List<String> groups) {
@@ -206,13 +207,9 @@ public class GoogleAppsUserOps {
         builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_GIVEN_NAME, givenName));
         builder.addAttribute(AttributeBuilder.buildEnabled(!suspended));
 
-        if (nicknames.size() > 0) {
-            builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_NICKNAME_LIST, nicknames));
-        }
-
-        if( groups.size() > 0 ) {
-            builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_LIST, groups));
-        }
+        // if either nicknames or groups are empty lists, return them anyway
+        builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_NICKNAME_LIST, nicknames));
+        builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_LIST, groups));
 
         Quota quota = ue.getQuota();
 
