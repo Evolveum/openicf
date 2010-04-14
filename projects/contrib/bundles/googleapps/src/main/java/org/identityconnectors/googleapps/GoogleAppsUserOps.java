@@ -144,7 +144,7 @@ public class GoogleAppsUserOps {
                
                 if (alist.contains(GoogleAppsConnector.ATTR_NICKNAME_LIST)) 
                     fetchNicknames = true;
-                else if(alist.contains(GoogleAppsConnector.ATTR_GROUP_LIST))
+                if (alist.contains(GoogleAppsConnector.ATTR_GROUP_LIST))
                     fetchGroups = true;  
             }
         }
