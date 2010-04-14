@@ -41,7 +41,11 @@ package org.identityconnectors.googleapps;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * The google apps api only supports fetching by id (equals)
@@ -57,8 +61,12 @@ public class GoogleAppsFilterTranslator extends AbstractFilterTranslator<String>
         if (not) { //no way (natively) to search for "NotEquals"
             return null;
         }
-        String name = filter.getAttribute().getName();
-        String value = AttributeUtil.getAsStringValue(filter.getAttribute());
+        Attribute attr = filter.getAttribute();
+        if (!attr.is(Name.NAME) && !attr.is(Uid.NAME)) {
+            return null;
+        }
+        String name = attr.getName();
+        String value = AttributeUtil.getAsStringValue(attr);
         if (checkSearchValue(value) == null) {
             return null;
         } else {
