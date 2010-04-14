@@ -50,7 +50,10 @@ connector {
     connectionUrl = "__CONFIGURE_ME__"
     login = "__CONFIGURE_ME__"
     domain = "__CONFIGURE_ME__"
-    password = "__CONFIGURE_ME__"    
+    password = "__CONFIGURE_ME__"
+
+    // for unit testing only
+    testGroup = "connectorstest@identityconnectors.com"
 }
 
 
