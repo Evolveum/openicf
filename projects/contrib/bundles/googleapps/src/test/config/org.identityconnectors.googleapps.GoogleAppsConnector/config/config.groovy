@@ -44,6 +44,25 @@ testsuite {
     bundleName=System.getProperty("bundleName")
     bundleVersion=System.getProperty("bundleVersion")
     connectorName="org.identityconnectors.googleapps.GoogleAppsConnector"
+
+    Validate.invalidConfig = [
+      [connectionUrl: null],
+      [connectionUrl: ""],
+      [connectionUrl: "invalidUrl"],
+      [login: null],
+      [login: ""],
+      [domain: null],
+      [domain: ""],
+      [password: null],
+      [password: ""],
+    ]
+
+    Test.invalidConfig = [
+      [connectionUrl: "http://something.com"],
+      [login: "bogus"],
+      [domain: "bogus"],
+      [password: "password"]
+    ]
 }
 
 connector {
