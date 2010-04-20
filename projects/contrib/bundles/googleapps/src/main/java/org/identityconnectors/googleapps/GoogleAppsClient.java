@@ -44,11 +44,7 @@ import com.google.gdata.client.appsforyourdomain.AppsGroupsService;
 import com.google.gdata.client.appsforyourdomain.NicknameService;
 import com.google.gdata.client.appsforyourdomain.UserService;
 import com.google.gdata.data.Link;
-import com.google.gdata.data.appsforyourdomain.AppsForYourDomainException;
-import com.google.gdata.data.appsforyourdomain.Login;
-import com.google.gdata.data.appsforyourdomain.Name;
-import com.google.gdata.data.appsforyourdomain.Nickname;
-import com.google.gdata.data.appsforyourdomain.Quota;
+import com.google.gdata.data.appsforyourdomain.*;
 import com.google.gdata.data.appsforyourdomain.generic.GenericEntry;
 import com.google.gdata.data.appsforyourdomain.generic.GenericFeed;
 import com.google.gdata.data.appsforyourdomain.provisioning.NicknameEntry;
@@ -65,7 +61,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  *
@@ -137,6 +137,12 @@ public class GoogleAppsClient {
         try {
             URL retrieveUrl = new URL(domainUrlBase + "user/" + SERVICE_VERSION + "/" + username);
             return (UserEntry) userService.getEntry(retrieveUrl, UserEntry.class);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityDoesNotExist) {
+                // ok
+                return null;
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -442,6 +448,11 @@ public class GoogleAppsClient {
         try {
             URL insertUrl = new URL(domainUrlBase + "user/" + SERVICE_VERSION);
             return (UserEntry) userService.insert(insertUrl, entry);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityExists) {
+                throw new AlreadyExistsException(e);
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             //log.error("Got an exception trying to create a user: {0}", e.getMessage());
             throw ConnectorException.wrap(e);
@@ -480,6 +491,11 @@ public class GoogleAppsClient {
             URL deleteUrl = new URL(
                     domainUrlBase + "user/" + SERVICE_VERSION + "/" + username);
             userService.delete(deleteUrl);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityDoesNotExist) {
+                throw new UnknownUidException(new Uid(username), ObjectClass.ACCOUNT);
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -591,6 +607,12 @@ public class GoogleAppsClient {
     public GenericEntry getGroupEntry(String id) {
         try {
             return groupService.retrieveGroup(id);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityDoesNotExist) {
+                // ok
+                return null;
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -599,6 +621,11 @@ public class GoogleAppsClient {
     public void deleteGroup(String id) {
         try {
             groupService.deleteGroup(id);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityDoesNotExist) {
+                throw new UnknownUidException(new Uid(id), ObjectClass.GROUP);
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -625,6 +652,11 @@ public class GoogleAppsClient {
 
         try {
             groupService.createGroup(id, Name, groupDescription, emailPermission);
+        } catch (AppsForYourDomainException e) {
+            if (e.getErrorCode() == AppsForYourDomainErrorCode.EntityExists) {
+                throw new AlreadyExistsException(e);
+            }
+            throw ConnectorException.wrap(e);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
