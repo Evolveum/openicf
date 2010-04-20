@@ -6,6 +6,8 @@ package org.identityconnectors.googleapps;
 
 import com.google.gdata.client.appsforyourdomain.AppsGroupsService;
 import com.google.gdata.data.appsforyourdomain.generic.GenericEntry;
+
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -83,17 +85,41 @@ public class GoogleAppsGroupOps {
 
     void query(String query, ResultsHandler handler, OperationOptions ops) {
         GoogleAppsClient g = gc.getConnection();
+        boolean fetchMembers = false; // by default members and owners are not fetched
+        boolean fetchOwners = false;
+
+        if (ops != null) {
+            String attrs[] = ops.getAttributesToGet();
+
+            if (attrs != null) {
+                List<String> alist = Arrays.asList(attrs);
+
+                if (alist.contains(GoogleAppsConnector.ATTR_MEMBER_LIST)) 
+                    fetchMembers = true;
+                if (alist.contains(GoogleAppsConnector.ATTR_OWNER_LIST))
+                    fetchOwners = true;
+            }
+        }
 
         if (query == null) { // return all groups;
             log.info("Fetching All Groups");
             Iterator i = g.getGroupIterator();
             while (i.hasNext()) {
                 GenericEntry ge = (GenericEntry) i.next();
-                handler.handle(makeConnectorObject(ge, null, null));
+                List<String> members = null;
+                List<String> owners = null;
+                String groupId = ge.getProperty(AppsGroupsService.APPS_PROP_GROUP_ID);
+                if (fetchMembers) {
+                    members = g.getMembersAsList(groupId);
+                }
+                if (fetchOwners) {
+                    owners = g.getOwnersAsList(groupId);
+                }
+                handler.handle(makeConnectorObject(ge, members, owners));
 
             }
         } else {  // get a single group
-            ConnectorObject obj = getGroup(query);
+            ConnectorObject obj = getGroup(query, fetchMembers, fetchOwners);
             log.info("ConnectorObj {0}", obj);
             if (obj != null) {
                 handler.handle(obj);
@@ -171,8 +197,6 @@ public class GoogleAppsGroupOps {
      * Given a google apps group entry, create
      * a ConnectorObject.
      *
-     * @param ue google apps EmailList object
-     * @return a connectorOject
      */
     private ConnectorObject makeConnectorObject(GenericEntry ge, List<String> members, List<String> owners) {
 
@@ -196,10 +220,10 @@ public class GoogleAppsGroupOps {
         builder.addAttribute(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_PERMISSIONS, p));
 
         if (owners != null) {
-            builder.addAttribute("owners", owners);
+            builder.addAttribute(GoogleAppsConnector.ATTR_OWNER_LIST, owners);
         }
-        if (owners != members) {
-            builder.addAttribute("members", members);
+        if (members != null) {
+            builder.addAttribute(GoogleAppsConnector.ATTR_MEMBER_LIST, members);
         }
 
         return builder.build();
@@ -211,7 +235,7 @@ public class GoogleAppsGroupOps {
      * @param id - the id for the group
      * @return The user object if it exists, null otherwise
      */
-    private ConnectorObject getGroup(String id) {
+    private ConnectorObject getGroup(String id, boolean fetchMembers, boolean fetchOwners) {
         GenericEntry ge = null;
 
         GoogleAppsClient g = gc.getConnection();
@@ -220,8 +244,14 @@ public class GoogleAppsGroupOps {
         ge = g.getGroupEntry(id);
 
         if (ge != null) {
-            List<String> members = (g.getMembersAsList(id));
-            List<String> owners = (g.getOwnersAsList(id));
+            List<String> members = null;            
+            List<String> owners = null;
+            if (fetchMembers) {
+                members = g.getMembersAsList(id);
+            }
+            if (fetchOwners) {
+                owners = g.getOwnersAsList(id);
+            }
 
             return makeConnectorObject(ge, members, owners);
         }
