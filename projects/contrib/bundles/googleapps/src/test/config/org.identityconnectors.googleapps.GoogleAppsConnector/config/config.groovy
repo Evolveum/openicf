@@ -63,6 +63,15 @@ testsuite {
       [domain: "bogus"],
       [password: "password"]
     ]
+
+    Schema {
+        strictCheck = false
+        oclasses=['__ACCOUNT__', '__GROUP__']
+        attributes.__ACCOUNT__.oclasses=['__NAME__', 'familyName', 'givenName', 'quota', 'nicknames', 'groups', '__PASSWORD__', '__ENABLE__']
+        attributes.__GROUP__.oclasses=['__NAME__', 'members', 'owners', 'groupName', 'groupDescription', 'groupPermissions']
+        // account and group attributes are supported by all operations, no need to test this
+        operations = [:]
+    }
 }
 
 connector {
