@@ -86,7 +86,7 @@ connector {
 
 
 // attribute values:
-name = Lazy.random("Contr\\act###", String.class)
+name = Lazy.random("contr\\act###", String.class)
 __ACCOUNT__.__NAME__ = Lazy.get("name")
 __ACCOUNT__.familyName = Lazy.get("name")
 __ACCOUNT__.givenName = Lazy.get("name")

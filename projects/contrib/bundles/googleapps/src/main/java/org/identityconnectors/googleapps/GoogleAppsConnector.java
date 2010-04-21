@@ -40,34 +40,20 @@
 package org.identityconnectors.googleapps;
 
 
-import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.framework.spi.Connector;
-import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
-import java.util.HashSet;
-import java.util.Set;
-import org.identityconnectors.framework.common.objects.AttributesAccessor;
-import org.identityconnectors.framework.spi.PoolableConnector;
+
+import java.util.*;
+
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
@@ -98,7 +84,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(configurationClass = GoogleAppsConfiguration.class, displayNameKey = "googleapps.connector.display")
 public class GoogleAppsConnector implements
-        PoolableConnector, CreateOp, SearchOp<String>, DeleteOp, SchemaOp, UpdateOp, TestOp {
+        PoolableConnector, CreateOp, SearchOp<String>, DeleteOp, SchemaOp, UpdateOp, TestOp, AttributeNormalizer {
 
     public static final String ATTR_FAMILY_NAME = "familyName";
     public static final String ATTR_GIVEN_NAME = "givenName";
@@ -388,5 +374,54 @@ public class GoogleAppsConnector implements
         test();
     }
 
-   
+    public Attribute normalizeAttribute(final ObjectClass oclass, final Attribute attribute) {
+        if (ObjectClass.ACCOUNT.equals(oclass)) {
+            if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
+                // lowercased id
+                return AttributeBuilder.build(attribute.getName(), AttributeUtil.getStringValue(attribute).toLowerCase());
+            } else if (attribute.is(ATTR_GROUP_LIST)) {
+                // all values should include domain name and be lowercased
+                return normalizeDomainAttribute(attribute);
+            } else if (attribute.is(ATTR_NICKNAME_LIST)) {
+                // all nicknames lowercased and alphabetically ordered
+                List<Object> values = attribute.getValue();
+                List<String> normalized = new ArrayList<String>(values.size());
+                for (Object value : values) {
+                    assert value instanceof String;
+                    String strValue = (String) value;
+                    normalized.add(strValue.toLowerCase());
+                }
+                Collections.sort(normalized);
+                return AttributeBuilder.build(attribute.getName(), normalized);
+            }
+        } else if (ObjectClass.GROUP.equals(oclass)) {
+            if (attribute.is(Name.NAME) || attribute.is(Uid.NAME) || attribute.is(ATTR_MEMBER_LIST) || attribute.is(ATTR_OWNER_LIST)) {
+                // all values should include domain name and be lowercased
+                return normalizeDomainAttribute(attribute);
+            }
+        }
+        return attribute;
+    }
+
+    private Attribute normalizeDomainAttribute(final Attribute attribute) {
+        List<Object> values = attribute.getValue();
+        List<Object> normalized = new ArrayList<Object>(values.size());
+        for (Object value : values) {
+            assert value instanceof String;
+            String strValue = (String) value;
+            normalized.add(normalizeDomainValue(strValue));
+        }
+        return AttributeBuilder.build(attribute.getName(), normalized);
+    }
+
+    private String normalizeDomainValue(String oldValue) {
+        String newValue = oldValue;
+        if (oldValue.indexOf('@') == -1) {
+            // add domain name
+            StringBuilder sb = new StringBuilder(oldValue);
+            sb.append("@").append(this.config.getDomain());
+            newValue = sb.toString();
+        }
+        return newValue.toLowerCase();
+    }
 }
