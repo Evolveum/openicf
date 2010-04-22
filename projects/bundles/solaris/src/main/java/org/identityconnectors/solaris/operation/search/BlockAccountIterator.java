@@ -127,13 +127,17 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
      */
     private List<SolarisEntry> buildEntries(List<String> blockUserNames) {
         conn.doSudoStart();
-        conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
-        
-        String getUsersScript = buildGetUserScript(blockUserNames);
-        final String out = conn.executeCommand(getUsersScript, conn.getConfiguration().getBlockFetchTimeout());
-        
-        conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
-        conn.doSudoReset();
+        String out = null;
+        try {
+            conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
+
+            String getUsersScript = buildGetUserScript(blockUserNames);
+            out = conn.executeCommand(getUsersScript, conn.getConfiguration().getBlockFetchTimeout());
+
+            conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
+        } finally {
+            conn.doSudoReset();
+        }
         
         List<SolarisEntry> fetchedEntries = processOutput(out);
         if (fetchedEntries.size() != blockUserNames.size()) {

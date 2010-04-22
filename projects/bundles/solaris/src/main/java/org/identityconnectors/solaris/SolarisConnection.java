@@ -122,10 +122,6 @@ public class SolarisConnection {
     
     private Boolean isVersionLT10;
     
-    /**
-     * Specific constructor used by OpAuthenticateImpl. In most cases consider
-     * using {@link SolarisConnection#SolarisConnection(SolarisConfiguration)}
-     */
     public SolarisConnection(SolarisConfiguration config) {
         if (config == null) {
             throw new ConfigurationException(
@@ -335,11 +331,9 @@ public class SolarisConnection {
      * @param accepts
      *            Optional parameter. {@see
      *            SolarisConnection#executeCommand(String, Set, Set)} contract
-     * @param conn
      * @return feedback on the sent password from the resource.
      * 
      * Note on usage of params 'rejects', 'accepts': If none of the parameters are given, we wait for RootShellPrompt
-     * Note: compare with {@link SolarisUtil#sendPassword(GuardedString, SolarisConnection)}
      */
     public String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts) {
         sendPassword(passwd);
