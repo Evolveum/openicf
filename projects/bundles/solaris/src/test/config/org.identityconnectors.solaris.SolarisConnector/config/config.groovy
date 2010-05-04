@@ -6,12 +6,32 @@ import org.identityconnectors.contract.data.groovy.Lazy
 import org.identityconnectors.contract.exceptions.ObjectNotFoundException
 import org.identityconnectors.common.security.GuardedString
 
+host="__CONFIGURE_ME__"
+port= Integer.valueOf(22)
+
+// single admin user = login user
+user="__CONFIGURE_ME__" // change to root for admin user
+pass=new org.identityconnectors.common.security.GuardedString("__CONFIGURE_ME__".toCharArray())
+loginShellPrompt = "#"
+
+// root user (if not defined, login user has administrator privileges)
+rootUser = null
+credentials = null
+rootShellPrompt = null
+
 connector {
-  port = port
-  loginShellPrompt = "#"
+  host = Lazy.get("host")
+  loginUser = Lazy.get("user")
+  rootUser = Lazy.get("rootUser")
+  password = Lazy.get("pass")
+  credentials = Lazy.get("credentials")
+  loginShellPrompt = Lazy.get("loginShellPrompt")
+  rootShellPrompt = Lazy.get("rootShellPrompt")
+  connectionType = Lazy.get("connectionType")
+  port = Lazy.get("port")
   sudoAuthorization = false
-  connectionType = connectionType
 }
+
 
 testsuite {
   // path to bundle jar - property is set by ant - leave it as it is
