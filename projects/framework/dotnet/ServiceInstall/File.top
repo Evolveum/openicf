@@ -19,4 +19,3 @@
 						</ServiceInstall>
 						<ServiceControl Id="StartConnectorServerService" Name="ConnectorServerService" Start="install" Wait="no" />
 						<ServiceControl Id="StopConnectorServerService" Name="ConnectorServerService" Stop="both" Wait="yes" Remove="uninstall" />
-						<File Id="LicenseFile" Name="license.rtf" Source="license.rtf"/>

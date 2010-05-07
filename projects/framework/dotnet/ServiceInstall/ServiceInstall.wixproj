@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -30,7 +30,6 @@
     <OutputName>ServiceInstall</OutputName>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.0\Wix.targets</WixTargetsPath>
     <SupressIces>ICE45</SupressIces>
-    <WixVariables>WixUILicenseRtf=license.rtf</WixVariables>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -59,7 +58,6 @@
     <WixExtension Include="WixUIExtension"/>
     <Compile Include="Files.wxs" />
     <Compile Include="Setup.wxs" />
-    <None Include="license.rtf" />
   </ItemGroup>
   <Import Project="ExtBuild.proj" />
   <ItemGroup>
