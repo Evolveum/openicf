@@ -612,7 +612,7 @@ public class RacfConfiguration extends AbstractConfiguration {
         return _asBlockSize;
     }
 
-    public void getActiveSyncBlocksize(String blockSize) {
+    public void setActiveSyncBlocksize(String blockSize) {
         _asBlockSize = blockSize;
     }
 
