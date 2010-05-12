@@ -235,7 +235,7 @@ public class GoogleAppsClient {
             List<GenericEntry> x = f.getEntries();
             for( GenericEntry item:x) {
                 String group = item.getProperty(AppsGroupsService.APPS_PROP_GROUP_ID);
-                l.add(  item.getProperty(group) );
+                l.add(group);
             }
         }
         catch(Exception e) {
