@@ -117,7 +117,7 @@ public class GoogleAppsConfiguration extends AbstractConfiguration {
     // =======================================================================
     private String password;
 
-    @ConfigurationProperty(order = 4, confidential = true)
+    @ConfigurationProperty(order = 4, helpMessageKey = "PWD_HELP", displayMessageKey = "PWD_DISPLAY", confidential = true)
     public String getPassword() {
         return this.password;
     }
