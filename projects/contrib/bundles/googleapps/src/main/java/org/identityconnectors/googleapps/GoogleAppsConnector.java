@@ -40,6 +40,7 @@
 package org.identityconnectors.googleapps;
 
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 
@@ -161,12 +162,13 @@ public class GoogleAppsConnector implements
         AttributeInfoBuilder name = new AttributeInfoBuilder();
         name.setCreateable(true);
         name.setUpdateable(false);
+        name.setRequired(true);
         name.setName(Name.NAME);
 
         attributes.add(name.build());
         // regular attributes
-        attributes.add(AttributeInfoBuilder.build(ATTR_FAMILY_NAME));
-        attributes.add(AttributeInfoBuilder.build(ATTR_GIVEN_NAME));
+        attributes.add(AttributeInfoBuilder.build(ATTR_FAMILY_NAME, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED)));
+        attributes.add(AttributeInfoBuilder.build(ATTR_GIVEN_NAME, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED)));
 
         // quota can be set on create, but can not be updated after account creation
         AttributeInfoBuilder q = new AttributeInfoBuilder();
@@ -183,8 +185,8 @@ public class GoogleAppsConnector implements
 
 
         // Operational Attributes - password and enable/disable status
-        //
-        attributes.add(OperationalAttributeInfos.PASSWORD);
+        attributes.add(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_NAME, GuardedString.class,
+            EnumSet.of(AttributeInfo.Flags.NOT_READABLE, AttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT, AttributeInfo.Flags.REQUIRED)));
         attributes.add(OperationalAttributeInfos.ENABLE);    
       
        
@@ -194,9 +196,9 @@ public class GoogleAppsConnector implements
         // Build Group Schema
         attributes = new HashSet<AttributeInfo>();
         attributes.add(name.build());
-        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_TEXT_NAME));
-        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_DESCRIPTION));
-        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_PERMISSIONS));
+        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_TEXT_NAME, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED)));
+        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_DESCRIPTION, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED)));
+        attributes.add(AttributeInfoBuilder.build(ATTR_GROUP_PERMISSIONS, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED)));
         attributes.add(buildMultivaluedAttribute(ATTR_OWNER_LIST, String.class, false, false));
         attributes.add(buildMultivaluedAttribute(ATTR_MEMBER_LIST, String.class, false, false));
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
