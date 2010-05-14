@@ -385,6 +385,9 @@ public class GoogleAppsConnector implements
             } else if (attribute.is(ATTR_NICKNAME_LIST)) {
                 // all nicknames lowercased and alphabetically ordered
                 List<Object> values = attribute.getValue();
+                // no values to normalize
+                if (values == null) return attribute;
+
                 List<String> normalized = new ArrayList<String>(values.size());
                 for (Object value : values) {
                     assert value instanceof String;
@@ -405,6 +408,9 @@ public class GoogleAppsConnector implements
 
     private Attribute normalizeDomainAttribute(final Attribute attribute) {
         List<Object> values = attribute.getValue();
+        // no values to normalize
+        if (values == null) return attribute;
+
         List<Object> normalized = new ArrayList<Object>(values.size());
         for (Object value : values) {
             assert value instanceof String;
