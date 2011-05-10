@@ -45,32 +45,32 @@
         </site>
     </distributionManagement>
     <modules>
-        <module>misc/dbcommon</module>
-        <module>misc/dummy</module>
-        <module>misc/patternparser</module>
+        <module>java/dbcommon</module>
+        <module>java/dummy</module>
+        <module>java/patternparser</module>
 
-        <module>db/databasetable</module>
-        <module>db/db2</module>
-        <module>db/mysqluser</module>
-        <module>db/oracle</module>
-        <module>db/oracleerp</module>
-        <module>db/scriptedsql</module>
-        <module>file/flatfile</module>
-        <module>file/xml</module>
+        <module>java/databasetable</module>
+        <module>java/db2</module>
+        <module>java/mysqluser</module>
+        <module>java/oracle</module>
+        <module>java/oracleerp</module>
+        <module>java/scriptedsql</module>
+        <module>java/flatfile</module>
+        <module>java/xml</module>
         <!-- Missing OpenDJ JARs-->
-        <!--module>ldap/ldap</module-->
-        <module>sso/tam</module>
-        <module>unix/solaris</module>
-        <module>unix/vms</module>
-        <module>webservice/openportal</module>
-        <module>webservice/spml</module>
-        <!--module>webservice/usd</module-->
+        <!--module>java/ldap</module-->
+        <module>java/tam</module>
+        <module>java/solaris</module>
+        <module>java/vms</module>
+        <module>java/openportal</module>
+        <module>java/spml</module>
+        <!--module>java/usd</module-->
         <!-- Requires private JARs -->
-        <module>mainframe/3270common</module>
-        <module>mainframe/3270freehost</module>
-        <module>mainframe/3270hod</module>
-        <module>mainframe/3270wrq</module>
-        <module>mainframe/racf</module>
+        <module>java/3270common</module>
+        <module>java/3270freehost</module>
+        <module>java/3270hod</module>
+        <module>java/3270wrq</module>
+        <module>java/racf</module>
                 
     </modules>
     <build>

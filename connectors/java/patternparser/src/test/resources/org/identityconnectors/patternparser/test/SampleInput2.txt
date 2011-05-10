@@ -1,0 +1,12 @@
+TSO INFORMATION                                                                 
+---------------                                                                 
+ACCTNUM= ACCT#                                                                  
+HOLDCLASS= X                                                                    
+JOBCLASS= A                                                                     
+MSGCLASS= X                                                                     
+PROC= ISPFPROC                                                                  
+SIZE= 00006133                                                                  
+MAXSIZE= 00000000                                                               
+SYSOUTCLASS= X                                                                  
+USERDATA= 0000                                                                  
+COMMAND= ISPF PANEL(ISR@390)                                                    

@@ -1,0 +1,111 @@
+import expect4j.Closure;
+import expect4j.Expect4j;
+import expect4j.ExpectState;
+import expect4j.ExpectUtils;
+import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+import expect4j.matches.TimeoutMatch;
+import org.identityconnectors.vms.VmsConfiguration;
+import org.identityconnectors.vms.VmsMessages;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import java.util.Arrays;
+import org.identityconnectors.common.security.GuardedString;
+
+public class GuardedStringAccessor implements GuardedString.Accessor {
+    private char[] _array;
+    
+    public void access(char[] clearChars) {
+        _array = new char[clearChars.length];
+        System.arraycopy(clearChars, 0, _array, 0, _array.length);            
+    }
+    
+    public char[] getArray() {
+        return _array;
+    }
+
+    public void clear() {
+        Arrays.fill(_array, 0, _array.length, ' ');
+    }
+}
+
+GuardedStringAccessor accessor = new GuardedStringAccessor();
+CONFIGURATION.getPassword().access(accessor);
+char[] passwordArray = accessor.getArray();
+        
+buffer = new StringBuffer();
+class TimeoutClosure implements Closure {
+    VmsConfiguration configuration;
+    public TimeoutClosure(VmsConfiguration configuration) {
+        this.configuration = configuration;
+    }
+    public void run(ExpectState state) {
+        //System.out.println("TimeoutClosure");
+        ConnectorException e = new ConnectorException("timeout in waitFor:"+state.getBuffer());
+        throw e;
+    }
+};
+
+class StringClosure implements Closure {
+    StringBuffer buffer;
+    Expect4j expect4j;
+    String string;
+    VmsConfiguration configuration;
+    public StringClosure(StringBuffer buffer, Expect4j expect4j, String string, VmsConfiguration configuration) {
+        this.buffer = buffer;
+        this.expect4j = expect4j;
+        this.string = string;
+        this.configuration = configuration;
+    }
+    public void run(ExpectState state) {
+        //System.out.println("StringClosure["+string+"]="+state.getBuffer());
+        buffer.append(state.getBuffer());
+        expect4j.send(string+configuration.getRealHostLineTerminator());
+        state.exp_continue();
+    }
+};
+
+class CompleteClosure implements Closure {
+    StringBuffer buffer;
+    public CompleteClosure(StringBuffer buffer) {
+        this.buffer = buffer;
+    }
+    public void run(ExpectState state) {
+        //System.out.println("StringClosure["+string+"]="+state.getBuffer());
+        buffer.append(state.getBuffer());
+    }
+};
+
+class ErrorClosure implements Closure {
+    public ErrorClosure() {
+    }
+    public void run(ExpectState state) {
+        //System.out.println("ErrorClosure="+state.getBuffer());
+        //
+        throw new ConnectorException(state.getBuffer());
+    }
+};
+
+Match[] matches = [
+    // Specify the user name to log in
+    //
+    new RegExpMatch("Username:", new StringClosure(buffer, CONNECTION.getExpect(), CONFIGURATION.getUserName(), CONFIGURATION)),
+    
+    // Specify the password to log in
+    //
+    new RegExpMatch("Password:", new StringClosure(buffer, CONNECTION.getExpect(), new String(accessor.getArray()), CONFIGURATION)),
+    
+    // If we see the prompt, we are logged in
+    //
+    new RegExpMatch(CONFIGURATION.getHostShellPrompt(), new CompleteClosure(buffer)),
+    
+    // Catch errors, and report them
+    //
+    new RegExpMatch("Your password has expired", new ErrorClosure()),
+    new RegExpMatch("User authorization failure", new ErrorClosure()),
+    
+    new TimeoutMatch(SHORT_WAIT, new TimeoutClosure(CONFIGURATION))
+];
+
+CONNECTION.getExpect().expect(matches);
+
+return buffer.toString();

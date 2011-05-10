@@ -1,0 +1,60 @@
+<MapTransform>
+  <PatternNode key='username' pattern='Username:\s+(.*?)\s*(?=Owner)' optional='false' reset='false'/>
+  <PatternNode key='owner' pattern='Owner:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='account' pattern='Account:\s+(.*?)\s*(?=UIC)' optional='false' reset='false'/>
+  <PatternNode key='uic' pattern='UIC:\s+(\[[^]]+\]).*\n' optional='false' reset='false'/>
+  <PatternNode key='cli' pattern='CLI:\s+(.*?)\s*(?=Tables)' optional='false' reset='false'/>
+  <PatternNode key='clitables' pattern='Tables:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='default' pattern='Default:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='lgicmd' pattern='LGICMD:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='Flags' pattern='Flags:\s+(.*?)\s*(?=Primary days)' optional='false' reset='false'>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='Primary days' pattern='Primary days:\s+(.*?)\s*\n' optional='false' reset='false'>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='Secondary days' pattern='Secondary days:\s+(.*?)\s*\n' optional='false' reset='false'>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='expiration' pattern='Expiration:\s+(.*?)\s*(?=Pwdminimum)' optional='false' reset='false'/>
+  <PatternNode key='pwdminimum' pattern='Pwdminimum:\s+(.*?)\s*(?=Login Fails)' optional='false' reset='false'/>
+  <PatternNode key='loginfails' pattern='Login Fails:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='pwdlifetime' pattern='Pwdlifetime:\s+(.*?)\s*(?=Pwdchange)' optional='false' reset='false'/>
+  <PatternNode key='pwdchange' pattern='Pwdchange:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='lastlogin' pattern='Last Login:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='maxjobs' pattern='Maxjobs:\s+(.*?)\s*(?=Fillm)' optional='false' reset='false'/>
+  <PatternNode key='fillm' pattern='Fillm:\s+(.*?)\s*(?=Bytlm)' optional='false' reset='false'/>
+  <PatternNode key='bytlm' pattern='Bytlm:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='maxacctjobs' pattern='Maxacctjobs:\s+(.*?)\s*(?=Shrfillm)' optional='false' reset='false'/>
+  <PatternNode key='shrfillm' pattern='Shrfillm:\s+(.*?)\s*(?=Pbytlm)' optional='false' reset='false'/>
+  <PatternNode key='pbytlm' pattern='Pbytlm:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='maxdetach' pattern='Maxdetach:\s+(.*?)\s*(?=BIOlm)' optional='false' reset='false'/>
+  <PatternNode key='biolm' pattern='BIOlm:\s+(.*?)\s*(?=JTquota)' optional='false' reset='false'/>
+  <PatternNode key='jtquota' pattern='JTquota:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='prclm' pattern='Prclm:\s+(.*?)\s*(?=DIOlm)' optional='false' reset='false'/>
+  <PatternNode key='diolm' pattern='DIOlm:\s+(.*?)\s*(?=WSdef)' optional='false' reset='false'/>
+  <PatternNode key='wsdef' pattern='WSdef:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='prio' pattern='Prio:\s+(.*?)\s*(?=ASTlm)' optional='false' reset='false'/>
+  <PatternNode key='astlm' pattern='ASTlm:\s+(.*?)\s*(?=WSquo)' optional='false' reset='false'/>
+  <PatternNode key='wsquo' pattern='WSquo:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='queprio' pattern='Queprio:\s+(.*?)\s*(?=TQElm)' optional='false' reset='false'/>
+  <PatternNode key='tqelm' pattern='TQElm:\s+(.*?)\s*(?=WSextent)' optional='false' reset='false'/>
+  <PatternNode key='wsextent' pattern='WSextent:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='cpu' pattern='CPU:\s+(.*?)\s*(?=Enqlm)' optional='false' reset='false'/>
+  <PatternNode key='enqlm' pattern='Enqlm:\s+(.*?)\s*(?=Pgflquo)' optional='false' reset='false'/>
+  <PatternNode key='pgflquo' pattern='Pgflquo:\s+(.*?)\s*\n' optional='false' reset='false'/>
+  <PatternNode key='Authorized Privileges' pattern='Authorized Privileges:\s+\n\s{2}?((?:.+\n)(?:\s{2}.+\n)*)' optional='false' reset='false'>
+    <SubstituteTransform pattern='IMPERSONAT(\w\w+)' substitute='IMPERSONATE $1'/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='Default Privileges' pattern='Default Privileges:\s+\n\s{2}?((?:.+\n)(?:\s{2}.+\n)*)' optional='false' reset='false'>
+    <SubstituteTransform pattern='IMPERSONAT(\w\w+)' substitute='IMPERSONATE $1'/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='Identifier' pattern='Identifier.*?\n\s{2}?((?:.+\n)(?:\s{2}.+\n)*)' optional='false' reset='false'>
+    <SplitTransform splitPattern='\n'/>
+    <ListTransform>
+      <GroupsTransform mapPattern='\s*(\S+)\s+(\S+)\s*(\S+)?$'/>
+    </ListTransform>
+  </PatternNode>
+</MapTransform>

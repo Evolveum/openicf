@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://maven.apache.org/XDOC/2.0'
+   xsi:schemaLocation='http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd'>
+    <properties>
+        <title>PDAdmin Configuration</title>
+    </properties>
+    <body>
+        <section name="Using the TAM Java Admin API – Setup">
+            <p>First you need to install the appropriate TAM components. Really you only need the TAM Java Runtime (PDJrte) but I like to install the TAM Runtime (PDRTE, IBMldapc, gsk7bas) as well for testing and diagnostic purposes.</p>
+            <p>Next assuming you have a Java runtime already installed (in the case of this example Java 1.4 on a Solaris 8 box) you run pdjrtecfg passing it a bunch o parameters, like so:</p>
+            <p>
+                <code>/opt/PolicyDirector/sbin/pdjrtecfg -action config -host polserver.myco.com -port 7135 -java_home /usr/j2se/jre -domain Default -config_type full</code>
+            </p>
+            <p>Provided no problems you will see the following:</p>
+            <p>
+                <code>
+      Configuration of Access Manager Java Runtime Environment is in progress.
+                    <br/>
+
+This might take several minutes.
+                    <br/>
+
+Configuration of Access Manager Java Runtime Environment completed successfully.
+                </code>
+            </p>
+            <p>To confirm that the Java runtime you indicated is configured correcty you can look at a couple of things. Firstly take a look the file /opt/PolicyDirector/etc/pdjrte_paths. You should see the runtime listed.</p>
+            <p>
+                <code>
+      $cat /opt/PolicyDirector/etc/pdjrte_paths
+                    <br/>
+
+/opt/WebSphere/AppServer/java/jre
+                    <br/>
+
+/usr/j2se/jre
+                </code>
+            </p>
+            <p>Also take a look at the lib/ext directory of the runtime. For example here's the listing of /usr/j2se/jre/lib/ext after running pdjrtecfg:</p>
+            <p>
+                <code>
+      total 8096
+                    <br/>
+
+-rw-r--r-- 1 root other 1244161 Mar 27 10:18 PD.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 1937 Mar 27 10:18 US_export_policy.jar
+                    <br/>
+
+-rw-r--r-- 1 root bin 8386 Nov 1 2003 dnsns.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 76238 Mar 27 10:18 ibmjcefw.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 687231 Mar 27 10:18 ibmjceprovider.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 331177 Mar 27 10:18 ibmjsse.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 688551 Mar 27 10:19 ibmpkcs.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 76069 Mar 27 10:19 ibmpkcs11.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 115329 Mar 27 10:19 jaas.jar
+                    <br/>
+
+-rw-r--r-- 1 root bin 53521 Nov 1 2003 ldapsec.jar
+                    <br/>
+
+-rw-r--r-- 1 root other 1928 Mar 27 10:19 local_policy.jar
+                    <br/>
+
+-rw-r--r-- 1 root bin 650624 Nov 1 2003 localedata.jar
+                    <br/>
+
+-rw-r--r-- 1 root bin 117054 Nov 1 2003 sunjce_provider.jar
+                </code>
+            </p>
+            <p>You should see PD.jar. ibmjcefw.jar, ibmjceprovider.jar, ibmjsse.jar, ibmpkcs.jar, ibmpkcs11.jar, local_policy.jar, jaas.jar will also be copied into lib/ext if they are not already there.</p>
+
+        </section>
+        <section name="Using the TAM Java Admin API – SvrSslCfg">
+            <p>What is SvrSslCfg? It’s a Java program that lives inside PD.jar. It will create a properties &amp; keystore on the local filesystem and create a corresponding TAM user account. Applications using the TAM API will need to reference the properties and keystore file created. When executed a number of parameters need to be provided. I usually like to place it into a shell script like so:</p>
+            <p>
+                <code>
+      JAVA_HOME=/usr/j2se/jre
+                    <br/>
+
+CLASSPATH=$JAVA_HOME/lib/rt.jar:JAVA_HOME/lib/ext/PD.jar
+                    <br/>
+
+ADMIN_ID=sec_master
+                    <br/>
+
+ADMIN_PASSWORD=mypassword
+                    <br/>
+
+APPSVR_ID=tamapi_user
+                    <br/>
+
+PORT=8888
+                    <br/>
+
+MODE=remote
+                    <br/>
+
+POLICYSVR_HOSTNAME=mypolserver.myco.com:7135:1
+                    <br/>
+
+AUTHSVR_HOSTNAME=myauthserver.myco.com:7136:1
+                    <br/>
+
+CFG_FILE=$JAVA_HOME/PolicyDirector/PDPerm.properties
+                    <br/>
+
+KEY_FILE=$JAVA_HOME/PolicyDirector/pdperm.ks
+                    <br/>
+
+CFG_ACTION=create
+                    <br/>
+
+# The following is all on one line
+                    <br/>
+
+$JAVA_HOME/bin/java -cp $CLASSPATH com.tivoli.pd.jcfg.SvrSslCfg -action config -admin_id $ADMIN_ID -admin_pwd $ADMIN_PASSWORD -appsvr_id $APPSVR_ID -port $PORT -mode $MODE -policysvr $POLICYSVR_HOSTNAME -authzsvr $AUTHSVR_HOSTNAME -cfg_file $CFG_FILE -key_file $KEY_FILE -cfg_action $CFG_ACTION
+                </code>
+            </p>
+            <p>For purposes of this example the properties and keystore are created in JAVA_HOME/PolicyDirector but I would recommend they be placed somewhere else where you can enforce file-system controls without adversely affecting access to the system’s Java runtime. I have a slightly different approach to this when performing this procedure for a WebSphere Application Server installation, where I would place the those files in the WAS installation’s Java runtime path but that’s something for another day.</p>
+
+        </section>
+        <section  name="Using the TAM Java Admin API">
+            <p>Nothing fancy here, just enough to connect, get a list of servers and then disconnect:</p>
+            <p>
+                <a target="_blank" href="./TAMTestPDJrte.java">TAMTestPDJrte.java</a>
+            </p>
+            <p>
+    To compile:
+                <br/>
+                <code>
+      JAVA_HOME=/usr/j2se
+                    <br/>
+
+CLASSPATH=.:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/jre/lib/ext/PD.jar
+                    <br/>
+
+$JAVA_HOME/bin/javac -classpath %CLASSPATH% TAMTestPDJrte.java
+                </code>
+            </p>
+            <p>
+    To run:
+                <br/>
+                <code>
+      JAVA_HOME=/usr/j2se
+                    <br/>
+
+CLASSPATH=.:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/jre/lib/ext/PD.jar
+                    <br/>
+
+$JAVA_HOME/jre/bin/java -classpath $CLASSPATH TAMTestPDJrte &lt;USERID&gt; &lt;PASSWORD&gt; file:///usr/j2se/jre/PolicyDirector/PDPerm.properties
+                </code>
+            </p>
+        </section>
+    </body>
+</document>
