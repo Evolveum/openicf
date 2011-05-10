@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~
+  ~ Copyright © 2011. ForgeRock AS. All rights reserved.
+  ~
+  ~ The contents of this file are subject to the terms
+  ~ of the Common Development and Distribution License
+  ~ (the License). You may not use this file except in
+  ~ compliance with the License.
+  ~
+  ~ You can obtain a copy of the License at
+  ~ http://forgerock.org/license/CDDLv1.0.html
+  ~ See the License for the specific language governing
+  ~ permission and limitations under the License.
+  ~
+  ~ When distributing Covered Code, include this CDDL
+  ~ Header Notice in each file and include the License file
+  ~ at http://forgerock.org/license/CDDLv1.0.html
+  ~ If applicable, add the following below the CDDL Header,
+  ~ with the fields enclosed by brackets [] replaced by
+  ~ your own identifying information:
+  ~ "Portions Copyrighted [year] [name of copyright owner]"
+  ~
+  ~ $Id$
+-->
+
+<archetype-descriptor xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd" name="connector-archetype"
+    xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <requiredProperties>
+    <requiredProperty key="OP_SCRIPTONCONNECTOR">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="ALL_OPERATIONS">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_DELETE">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_RESOLVEUSERNAME">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_AUTHENTICATE">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="jira_project">
+      <defaultValue>ICFXXX</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_TEST">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="poolable_connector">
+      <defaultValue>no</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_UPDATEATTRIBUTEVALUES">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="framework_version">
+      <defaultValue>0.0-SNAPSHOT</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="connector_name">
+    </requiredProperty>
+    <requiredProperty key="OP_UPDATE">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_SEARCH">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_CREATE">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="compatibility_version">
+      <defaultValue>1.1</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_SYUPDATENC">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="connector_family">
+      <defaultValue>misc</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_SCHEMA">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="OP_SCRIPTONRESOURCE">
+      <defaultValue>yes</defaultValue>
+    </requiredProperty>
+  </requiredProperties>
+  <fileSets>
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*.properties</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/test/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/test/config</directory>
+      <includes>
+        <include>**/*.groovy</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/site</directory>
+      <includes>
+        <include>**/*.xml</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/site</directory>
+      <includes>
+        <include>**/*.apt</include>
+        <include>**/*.fml</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory></directory>
+      <includes>
+        <include>releases-pom.xml</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</archetype-descriptor>

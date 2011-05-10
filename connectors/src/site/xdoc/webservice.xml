@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~
+  ~ Copyright © 2011. ForgeRock AS. All rights reserved.
+  ~
+  ~ The contents of this file are subject to the terms
+  ~ of the Common Development and Distribution License
+  ~ (the License). You may not use this file except in
+  ~ compliance with the License.
+  ~
+  ~ You can obtain a copy of the License at
+  ~ http://forgerock.org/license/CDDLv1.0.html
+  ~ See the License for the specific language governing
+  ~ permission and limitations under the License.
+  ~
+  ~ When distributing Covered Code, include this CDDL
+  ~ Header Notice in each file and include the License file
+  ~ at http://forgerock.org/license/CDDLv1.0.html
+  ~ If applicable, add the following below the CDDL Header,
+  ~ with the fields enclosed by brackets [] replaced by
+  ~ your own identifying information:
+  ~ "Portions Copyrighted [year] [name of copyright owner]"
+  ~
+  ~ $Id$
+-->
+<document xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://maven.apache.org/XDOC/2.0'
+   xsi:schemaLocation='http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd'  url="./webservice.xml">
+    <properties>
+        <title>Web Service Connector Family</title>
+    </properties>
+    <body>
+        <section name="Web Service Connectors" href="Top">
+            <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sapien purus, congue a tincidunt non, mollis vitae
+            diam. Fusce pharetra massa interdum nisl ultrices mattis. Cras eget est ultricies magna auctor condimentum.
+            Phasellus sed elit erat, a ultricies arcu. Proin vitae volutpat ante. Quisque porta tempor elit, non aliquam tortor
+            sodales nec. Sed imperdiet metus sed orci adipiscing faucibus. Nulla facilisi. Nulla massa tortor, dapibus a
+            vehicula vel, cursus vel mi. Integer sed lacus velit. Etiam dignissim varius turpis ut ullamcorper. Integer
+            lobortis imperdiet dui, ut porta nulla interdum ac. Nulla neque lorem, bibendum et venenatis a, convallis in arcu.
+            In sagittis neque ac mauris venenatis id elementum elit lacinia. Phasellus porttitor turpis eu ipsum pharetra
+            eleifend. Integer ac magna sit amet mi luctus scelerisque at a odio. Quisque sed mi nibh, ac pretium felis.
+            Nunc congue sapien sit amet ipsum elementum ac euismod justo mollis. Etiam dictum elementum libero sed sagittis.
+            </p>
+
+            <section name="Guidelines for support" href="Support">
+                <ol>
+                    <li>
+                        <p>
+                            <b>ForgeRock Supported Project</b>
+                            <img src="images/forgerock_supported.png" alt="ForgeRock Supported"/>
+                        </p>
+                        <ul>
+                            <li>Tested and QA by ForgeRock</li>
+                            <li>Officially bundled with OpenIDM</li>
+                            <li>Can be made part of the OpenIDM subscriptions</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <p>
+                            <b>Community Supported Project</b>
+                            <img src="images/community_supported.png" alt="Community Supported"/>
+                        </p>
+                        <ul>
+                            <li>Tested and QA by Community</li>
+                            <li>Not officially supported by ForgeRock</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <p>
+                            <b>Incubator Project</b>
+                            <img src="images/incubator_project.png" alt="Incubator"/>
+                        </p>
+                        <ul>
+                            <li>Place for new connectors</li>
+                            <li>Not necessarily code complete</li>
+                            <li>Totally unsupported</li>
+                            <li>No binary releases</li>
+                        </ul>
+                    </li>
+                </ol>
+            </section>
+            <section name="OpenPortal Connector" href="openportal">
+                <p>LifeRay Portal 6 Connector</p>
+                <table class="bodyTable" border="0" cellpadding="4" cellspacing="0">
+                    <tbody>
+                        <tr class="a">
+                            <th colspan="5">Connector Releases</th>
+                        </tr>
+                        <tr style="background-color: rgb(224, 224, 224); font-weight: bold">
+                            <td width="30%">Download</td>
+                            <td width="40%">Description</td>
+                            <td width="10%">Platform</td>
+                            <td width="10%">Status</td>
+                            <td width="10%">Build Date</td>
+                        </tr>
+                        <tr class="b">
+                            <td>
+                                <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">openportal-1.1.0.0-SNAPSHOT.jar</a>
+                            </td>
+                            <td>
+                                <a href="./openportal">Documentation</a>
+                            </td>
+                            <td>Java 1.5</td>
+                            <td>
+                                <img src="images/comingSoon.png" align="middle"/>
+                            </td>
+                            <td>May 10, 2011</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            <section name="SPML Connector" href="spml">
+                <p>The SPML Connector supports provisioning to any SPML 2.0 server which supports DSML schemas</p>
+                <table class="bodyTable" border="0" cellpadding="4" cellspacing="0">
+                    <tbody>
+                        <tr class="a">
+                            <th colspan="5">Connector Releases</th>
+                        </tr>
+                        <tr style="background-color: rgb(224, 224, 224); font-weight: bold">
+                            <td width="30%">Download</td>
+                            <td width="40%">Description</td>
+                            <td width="10%">Platform</td>
+                            <td width="10%">Status</td>
+                            <td width="10%">Build Date</td>
+                        </tr>
+                        <tr class="b">
+                            <td>
+                                <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">spml-1.1.0.0-SNAPSHOT.jar</a>
+                            </td>
+                            <td>
+                                <a href="./spml">Documentation</a>
+                            </td>
+                            <td>Java 1.5</td>
+                            <td>
+                                <img src="images/comingSoon.png" align="middle"/>
+                            </td>
+                            <td>May 10, 2011</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </section>
+    </body>
+</document>

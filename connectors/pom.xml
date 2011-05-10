@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+ Copyright © 2011 ForgeRock Inc. All Rights Reserved
+
+ The contents of this file are subject to the terms
+ of the Common Development and Distribution License
+ (the License). You may not use this file except in
+ compliance with the License.
+
+ You can obtain a copy of the License at
+ http://www.opensource.org/licenses/cddl1.php or
+ OpenIDM/legal/CDDLv1.0.txt
+ See the License for the specific language governing
+ permission and limitations under the License.
+
+ When distributing Covered Code, include this CDDL
+ Header Notice in each file and include the License file
+ at OpenIDM/legal/CDDLv1.0.txt.
+ If applicable, add the following below the CDDL Header,
+ with the fields enclosed by brackets [] replaced by
+ your own identifying information:
+ "Portions Copyrighted 2011 [name of copyright owner]"
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.forgerock</groupId>
+        <artifactId>forgerock-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>connectors-site</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>OpenICF Connectors Site</name>
+    <description>Builder parent POM to build all connectors</description>
+    <url>http://openicf.forgerock.org/connectors</url>
+    <distributionManagement>
+        <site>
+            <id>forgerock.org</id>
+            <url>${siteDistributionURL}/connectors/</url>
+        </site>
+    </distributionManagement>
+    <modules>
+        <module>misc/dbcommon</module>
+        <module>misc/dummy</module>
+        <module>misc/patternparser</module>
+
+        <module>db/databasetable</module>
+        <module>db/db2</module>
+        <module>db/mysqluser</module>
+        <module>db/oracle</module>
+        <module>db/oracleerp</module>
+        <module>db/scriptedsql</module>
+        <module>file/flatfile</module>
+        <module>file/xml</module>
+        <!-- Missing OpenDJ JARs-->
+        <!--module>ldap/ldap</module-->
+        <module>sso/tam</module>
+        <module>unix/solaris</module>
+        <module>unix/vms</module>
+        <module>webservice/openportal</module>
+        <module>webservice/spml</module>
+        <!--module>webservice/usd</module-->
+        <!-- Requires private JARs -->
+        <module>mainframe/3270common</module>
+        <module>mainframe/3270freehost</module>
+        <module>mainframe/3270hod</module>
+        <module>mainframe/3270wrq</module>
+        <module>mainframe/racf</module>
+                
+    </modules>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <!-- No need to deploy the reactor -->
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

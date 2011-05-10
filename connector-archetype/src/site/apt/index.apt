@@ -1,0 +1,126 @@
+   -------------------------
+    Title
+   -------------------------
+   -------------------------
+    Date
+   -------------------------
+~~
+~~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+~~
+~~ Copyright © 2011. ForgeRock AS. All rights reserved.
+~~
+~~ The contents of this file are subject to the terms
+~~ of the Common Development and Distribution License
+~~ (the License). You may not use this file except in
+~~ compliance with the License.
+~~
+~~ You can obtain a copy of the License at
+~~ http://forgerock.org/license/CDDLv1.0.html
+~~ See the License for the specific language governing
+~~ permission and limitations under the License.
+~~
+~~ When distributing Covered Code, include this CDDL
+~~ Header Notice in each file and include the License file
+~~ at http://forgerock.org/license/CDDLv1.0.html
+~~ If applicable, add the following below the CDDL Header,
+~~ with the fields enclosed by brackets [] replaced by
+~~ your own identifying information:
+~~ "Portions Copyrighted [year] [name of copyright owner]"
+~~
+~~ $Id$
+~~
+
+How to create new connector
+
+* Examples
+
+    For the first time execute this command to import the archetype and generate a new connector project.
+
+    These properties are customisable: 
+        -DartifactId=<<sample>>
+        -Dversion=<<1.0-SNAPSHOT>>
+        -Dpackage=<<org.forgerock.openicf.sample>>
+        -Dconnector_name=<<Sample>>
+
+
++---
+mvn archetype:generate \
+    -DarchetypeGroupId=org.forgerock.openicf \
+    -DarchetypeArtifactId=connector-archetype \
+    -DarchetypeVersion=1.0.0-SNAPSHOT \
+    -DremoteRepositories=http://maven.forgerock.org/repo/snapshots \
+    -DarchetypeRepository=http://maven.forgerock.org/repo/snapshots \
+    -DgroupId=org.forgerock.openicf.connectors.misc \
+    -DartifactId=sample \
+    -Dversion=1.0-SNAPSHOT \
+    -Dpackage=org.forgerock.openicf.sample \
+    -Dconnector_name=Sample
++---
+
+    For the second time even the local archetype can be used with the following command.
+
++---+
+    $ mvn archetype:generate -DarchetypeCatalog=local
+    [INFO] Scanning for projects...
+    [INFO]
+    [INFO] Generating project in Interactive mode
+    Choose archetype:
+    1: local -> connector-archetype (OpenICF Connector Development Archetype)
+    Choose a number: : 1
+    Define value for property 'groupId': : org.forgerock.openicf.<<misc>>
+    Define value for property 'artifactId': : <<sample>>
+    Define value for property 'version':  1.0-SNAPSHOT: :
+    Define value for property 'package':  org.forgerock.openicf.<<sample>>: :
+    [INFO] Using property: ALL_OPERATIONS = yes
+    [INFO] Using property: OP_AUTHENTICATE = yes
+    [INFO] Using property: OP_CREATE = yes
+    [INFO] Using property: OP_DELETE = yes
+    [INFO] Using property: OP_RESOLVEUSERNAME = yes
+    [INFO] Using property: OP_SCHEMA = yes
+    [INFO] Using property: OP_SCRIPTONCONNECTOR = yes
+    [INFO] Using property: OP_SCRIPTONRESOURCE = yes
+    [INFO] Using property: OP_SEARCH = yes
+    [INFO] Using property: OP_SYUPDATENC = yes
+    [INFO] Using property: OP_TEST = yes
+    [INFO] Using property: OP_UPDATE = yes
+    [INFO] Using property: OP_UPDATEATTRIBUTEVALUES = yes
+    [INFO] Using property: compatibility_version = 1.1
+    [INFO] Using property: connector_family = <<misc>>
+    Define value for property 'connector_name': : <<Sample>>
+    [INFO] Using property: framework_version = 0.0-SNAPSHOT
+    [INFO] Using property: jira_project = ICFXXX
+    [INFO] Using property: poolable_connector = no
+    Confirm properties configuration:
+    groupId: org.forgerock.openicf.misc
+    artifactId: sample
+    version: 1.0-SNAPSHOT
+    package: org.forgerock.openicf.sample
+    ALL_OPERATIONS: yes
+    OP_AUTHENTICATE: yes
+    OP_CREATE: yes
+    OP_DELETE: yes
+    OP_RESOLVEUSERNAME: yes
+    OP_SCHEMA: yes
+    OP_SCRIPTONCONNECTOR: yes
+    OP_SCRIPTONRESOURCE: yes
+    OP_SEARCH: yes
+    OP_SYUPDATENC: yes
+    OP_TEST: yes
+    OP_UPDATE: yes
+    OP_UPDATEATTRIBUTEVALUES: yes
+    compatibility_version: 1.1
+    connector_family: misc
+    connector_name: Sample
+    framework_version: 0.0-SNAPSHOT
+    jira_project: ICFXXX
+    poolable_connector: no
+     Y: :
+    [INFO] ------------------------------------------------------------------------
+    [INFO] BUILD SUCCESS
+    [INFO] ------------------------------------------------------------------------
+    [INFO] ------------------------------------------------------------------------
+    $ cd sample
+    $ mvn install
++---+
+
+
