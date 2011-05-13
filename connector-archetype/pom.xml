@@ -42,8 +42,8 @@
     <url>http://openicf.forgerock.org/connector-archetype</url>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connector-archetype</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/openicf/trunk/connector-archetype</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/connector-archetype</url>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connector-archetype</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connector-archetype</url>
     </scm>
     <issueManagement>
         <system>jira</system>
