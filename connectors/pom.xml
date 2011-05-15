@@ -53,24 +53,28 @@
         <module>java/db2</module>
         <module>java/mysqluser</module>
         <module>java/oracle</module>
-        <module>java/oracleerp</module>
+        <!-- Requires proprietary JARs -->
+        <!--module>java/oracleerp</module-->
         <module>java/scriptedsql</module>
         <module>java/flatfile</module>
         <module>java/xml</module>
         <!-- Missing OpenDJ JARs-->
         <!--module>java/ldap</module-->
-        <module>java/tam</module>
+        <!-- Requires proprietary JARs -->
+        <!--module>java/tam</module-->
+        <!-- Requires proprietary JARs - ->
         <module>java/solaris</module>
-        <module>java/vms</module>
+        <module>java/vms</module-->
         <module>java/openportal</module>
-        <module>java/spml</module>
+        <!-- Requires proprietary JARs - ->
+        <module>java/spml</module-->
         <!--module>java/usd</module-->
-        <!-- Requires private JARs -->
-        <module>java/3270common</module>
+        <!-- Requires proprietary JARs -->
+        <!--module>java/3270common</module>
         <module>java/3270freehost</module>
         <module>java/3270hod</module>
         <module>java/3270wrq</module>
-        <module>java/racf</module>
+        <module>java/racf</module-->
                 
     </modules>
     <build>
