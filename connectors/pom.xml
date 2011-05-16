@@ -57,15 +57,18 @@
         <!--module>java/oracleerp</module-->
         <module>java/scriptedsql</module>
         <module>java/flatfile</module>
+        <module>java/csvfile</module>
         <module>java/xml</module>
         <!-- Missing OpenDJ JARs-->
         <!--module>java/ldap</module-->
         <!-- Requires proprietary JARs -->
         <!--module>java/tam</module-->
+        <!-- Requires proprietary JARs - ->
         <module>java/solaris</module>
-        <module>java/vms</module>
+        <module>java/vms</module-->
         <module>java/openportal</module>
-        <module>java/spml</module>
+        <!-- Requires proprietary JARs - ->
+        <module>java/spml</module-->
         <!--module>java/usd</module-->
         <!-- Requires proprietary JARs -->
         <!--module>java/3270common</module>

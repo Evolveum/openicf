@@ -112,7 +112,7 @@
                 </table>
             </section>
             <section name="FlatFile Connector" href="flatfile">
-                <p>The FlatFile Connector supports provisioning to standard CSV files.</p>
+                <p>The FlatFile Connector supports reading from standard CSV files.</p>
                 <table class="bodyTable" border="0" cellpadding="4" cellspacing="0">
                     <tbody>
                         <tr class="a">
@@ -141,8 +141,8 @@
                     </tbody>
                 </table>
             </section>
-            <section name="Flat Connector" href="flat">
-                <p>Flat File Connector with CRUD functionality</p>
+            <section name="CSV File Connector" href="flat">
+                <p>CSV File Connector with CRUD functionality</p>
                 <table class="bodyTable" border="0" cellpadding="4" cellspacing="0">
                     <tbody>
                         <tr class="a">
@@ -157,10 +157,10 @@
                         </tr>
                         <tr class="b">
                             <td>
-                                <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">flat-1.1.0.0-SNAPSHOT.jar</a>
+                                <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">csvfile-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./flat">Documentation</a>
+                                <a href="./csvfile">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
