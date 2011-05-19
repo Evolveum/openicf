@@ -52,15 +52,27 @@
         <developerConnection>${symbol_dollar}{project.scm.developerConnection}</developerConnection>
         <url>${symbol_dollar}{project.scm.url}</url>
     </scm>
-    <developers>
-        <developer>
-            <id>forgerock</id>
-            <name>ForgeRock Engineering</name>
-            <email>replaceme@${poolable_connector}s${symbol_pound}pam.forgerock.org</email>
-            <organization>ForgeRock</organization>
-            <roles/>
-            <timezone>+1</timezone>
-        </developer>
-    </developers>
+    <issueManagement>
+        <system>jira</system>
+        <url>${symbol_dollar}{project.issueManagement.url}</url>
+    </issueManagement>
+    <repositories>
+        <repository>
+            <id>forgerock-staging-repository</id>
+            <name>ForgeRock Release Repository</name>
+            <url>http://maven.forgerock.org/repo/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>forgerock-snapshots-repository</id>
+            <name>ForgeRock Snapshot Repository</name>
+            <url>http://maven.forgerock.org/repo/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
 </project>
 

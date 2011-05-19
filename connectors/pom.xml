@@ -59,8 +59,7 @@
         <module>java/flatfile</module>
         <module>java/csvfile</module>
         <module>java/xml</module>
-        <!-- Missing OpenDJ JARs-->
-        <!--module>java/ldap</module-->
+        <module>java/ldap</module>
         <!-- Requires proprietary JARs -->
         <!--module>java/tam</module-->
         <!-- Requires proprietary JARs - ->
