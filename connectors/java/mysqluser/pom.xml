@@ -36,6 +36,11 @@
     <name>MySQLUser Connector</name>
     <description>The MySQLUser Connector capabilities are pretty limited. The connector supports just a user creation from "Modeluser" template</description>
     <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/mysqluser</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/mysqluser</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/mysqluser</url>
+    </scm>
     <properties>
         <defaultConnectorFamily>db</defaultConnectorFamily>
         <skipTests>true</skipTests>

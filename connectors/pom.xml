@@ -44,6 +44,20 @@
             <url>${siteDistributionURL}/connectors/</url>
         </site>
     </distributionManagement>
+        <ciManagement>
+        <system>hudson</system>
+        <url>http://builds.forgerock.org/job/OpenICF - Connector Site</url>
+        <notifiers>
+            <notifier>
+                <type>mail</type>
+                <sendOnError>true</sendOnError>
+                <sendOnFailure>true</sendOnFailure>
+                <sendOnSuccess>false</sendOnSuccess>
+                <sendOnWarning>false</sendOnWarning>
+                <address>openicf-issues@forgerock.org</address>
+            </notifier>
+        </notifiers>
+    </ciManagement>
     <modules>
         <module>java/dbcommon</module>
         <module>java/dummy</module>

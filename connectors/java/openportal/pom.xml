@@ -36,6 +36,11 @@
     <name>OpenPortal 6.0 Connector</name>
     <description>Connector for OpenPortal 6.0</description>
     <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/openportal</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/openportal</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/openportal</url>
+    </scm>
     <properties>
         <defaultConnectorFamily>webservice</defaultConnectorFamily>
         <skipTests>false</skipTests>

@@ -36,6 +36,11 @@
     <name>Pattern Parser</name>
     <description>The Pattern Parser is intended to provide a pattern-based method of taking a String, and creating a Map containing name-value pairs.</description>
     <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/patternparser</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/patternparser</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/patternparser</url>
+    </scm>
     <properties>
         <skipTests>false</skipTests>
         <contracts.skip>true</contracts.skip>

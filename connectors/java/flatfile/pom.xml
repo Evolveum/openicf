@@ -36,6 +36,11 @@
     <name>FlatFile Connector</name>
     <description>This Connector is responsible for parsing a CSV file for account information.</description>
     <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/flatfile</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/flatfile</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/flatfile</url>
+    </scm>
     <properties>
         <defaultConnectorFamily>file</defaultConnectorFamily>
         <skipTests>true</skipTests>

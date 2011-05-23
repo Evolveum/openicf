@@ -45,11 +45,11 @@
         <system>jira</system>
         <url>https://bugster.forgerock.org/jira/browse/${jira_project}</url>
     </issueManagement>
-    <!--scm>
-        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/java/connectors/${connector_family}/${artifactId}</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/java/connectors/${connector_family}/${artifactId}</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/java/connectors/${connector_family}/${artifactId}</url>
-    </scm-->
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/${artifactId}</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/${artifactId}</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/${artifactId}</url>
+    </scm>
     <properties>
         <defaultConnectorFamily>${connector_family}</defaultConnectorFamily>
         <skipTests>false</skipTests>
