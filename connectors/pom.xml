@@ -76,9 +76,9 @@
         <module>java/ldap</module>
         <!-- Requires proprietary JARs -->
         <!--module>java/tam</module-->
-        <!-- Requires proprietary JARs - ->
+        <!-- Requires proprietary JARs -->
         <module>java/solaris</module>
-        <module>java/vms</module-->
+        <module>java/vms</module>
         <module>java/openportal</module>
         <module>java/spml</module>
         <!--module>java/usd</module-->

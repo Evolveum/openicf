@@ -81,11 +81,11 @@
             <scope>test</scope>
         </dependency>
         <!--
-        Download from http://code.google.com/p/expect4j/downloads/detail?name=expect4j-1.0.jar&can=2&q=
-        mvn install:install-file -Dfile=expect4j-1.0.jar -DgroupId=com.google.com.p.expect4j -DartifactId=expect4j -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
+        Download from http://expect4j.googlecode.com/files/expect4j-1.0.jar
+        mvn install:install-file -Dfile=expect4j-1.0.jar -DgroupId=com.google.p.expect4j -DartifactId=expect4j -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true
         -->
         <dependency>
-            <groupId>com.google.com.p.expect4j</groupId>
+            <groupId>com.google.p.expect4j</groupId>
             <artifactId>expect4j</artifactId>
             <version>1.0</version>
             <!--scope>system</scope>
