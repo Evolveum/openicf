@@ -35,7 +35,7 @@
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
-    <ConnectorFrameworkDir>..\..\framework\dotnet</ConnectorFrameworkDir>
+    <ConnectorFrameworkDir>$(OPENICF_HOME)</ConnectorFrameworkDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -60,23 +60,23 @@
   <ItemGroup>
     <Reference Include="Common">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Common.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Common.dll</HintPath>
     </Reference>
     <Reference Include="Framework">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Framework.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Framework.dll</HintPath>
     </Reference>
     <Reference Include="FrameworkInternal">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\FrameworkInternal.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\FrameworkInternal.dll</HintPath>
     </Reference>
     <Reference Include="ShellScriptExecutorFactory">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Shell.ScriptExecutorFactory.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Shell.ScriptExecutorFactory.dll</HintPath>
     </Reference>
     <Reference Include="TestCommon">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\TestCommon.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\TestCommon.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
     </Reference>

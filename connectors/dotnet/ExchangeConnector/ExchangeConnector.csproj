@@ -35,7 +35,7 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ZipRelease>true</ZipRelease>
-    <ConnectorFrameworkDir>..\..\framework\dotnet</ConnectorFrameworkDir>
+    <ConnectorFrameworkDir>$(OPENICF_HOME)</ConnectorFrameworkDir>
     <SignAssembly>false</SignAssembly>
     <InternalsVisibleTo>ExchangeConnectorTests</InternalsVisibleTo>
   </PropertyGroup>
@@ -60,12 +60,12 @@
   <ItemGroup>
     <Reference Include="Common">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Common.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Framework">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Framework.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />

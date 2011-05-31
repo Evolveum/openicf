@@ -31,7 +31,7 @@
     <ProductName>ActiveDirectoryConnector</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ZipRelease>true</ZipRelease>
-    <ConnectorFrameworkDir>..\..\framework\dotnet</ConnectorFrameworkDir>
+    <ConnectorFrameworkDir>$(OPENICF_HOME)</ConnectorFrameworkDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -59,12 +59,12 @@
   <ItemGroup>
     <Reference Include="Common">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Common.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Framework">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(ConnectorFrameworkDir)\Dist\Framework.dll</HintPath>
+      <HintPath>$(ConnectorFrameworkDir)\Framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -155,7 +155,7 @@
   </ItemGroup>
   <Target Name="AfterBuild">
     <Copy
-      SourceFiles="$(ConnectorFrameworkDir)\Dist\Shell.ScriptExecutorFactory.dll"
+      SourceFiles="$(ConnectorFrameworkDir)\Shell.ScriptExecutorFactory.dll"
       DestinationFolder="$(OutputPath)"
     />
   </Target>
