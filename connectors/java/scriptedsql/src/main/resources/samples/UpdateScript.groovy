@@ -54,6 +54,7 @@ import groovy.sql.DataSet;
 log.info("Entering "+action+" Script");
 def sql = new Sql(connection);
 
+
 switch ( action ) {
     case "UPDATE":
     if (attributes.get("fullname").get(0) != null){

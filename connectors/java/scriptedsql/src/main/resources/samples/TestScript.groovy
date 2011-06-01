@@ -35,6 +35,6 @@ import groovy.sql.DataSet;
 log.info("Entering "+action+" Script");
 def sql = new Sql(connection);
 
-sql.eachRow("select * from Users", { println it.uid + " -- ${it.email} --"} );
+sql.eachRow("select * from Users", { println it.uid} );
 
 

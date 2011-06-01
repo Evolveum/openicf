@@ -45,40 +45,64 @@ import groovy.sql.DataSet;
 // query = [ operation: "GREATERTHANOREQUAL", left: attribute, right: "value", not: true/false ]
 // query = [ operation: "LESSTHAN", left: attribute, right: "value", not: true/false ]
 // query = [ operation: "LESSTHANOREQUAL", left: attribute, right: "value", not: true/false ]
+// query = null : then we assume we fetch everything
 //
 // AND and OR filter just embed a left/right couple of queries.
 // query = [ operation: "AND", left: query1, right: query2 ]
 // query = [ operation: "OR", left: query1, right: query2 ]
 //
 // Returns: A list of Maps. Each map describing one row.
+// !!!! Each Map must contain a '__UID__' and '__NAME__' attribute.
+// This is required to build a ConnectorObject.
 
 log.info("Entering "+action+" Script");
+
 def sql = new Sql(connection);
-
-// We can use Groovy template engine to generate our custom SQL queries
-def engine = new groovy.text.SimpleTemplateEngine()
-// def where = ""
-
-
-def where = [
-    CONTAINS:'WHERE $left ${not ? "NOT " : ""}LIKE "%$right%"',
-    ENDSWITH:'WHERE $left ${not ? "NOT " : ""}LIKE "%$right"',
-    STARTSWITH:'WHERE $left ${not ? "NOT " : ""}LIKE "$right%"',
-    EQUALS:'WHERE $left ${not ? "<>" : "="} "$right"',
-    GREATERTHAN:'WHERE $left ${not ? "<=" : ">"} "$right"',
-    GREATERTHANOREQUAL:'WHERE $left ${not ? "<" : ">="} "$right"',
-    LESSTHAN:'WHERE $left ${not ? ">=" : "<"} "$right"',
-    LESSTHANOREQUAL:'WHERE $left ${not ? ">" : "<="} "$right"'
-]
-
-def request = 'SELECT * FROM Users ' + where.get(query.get("operation"))
-def binding = [left:query.get("left"),right:query.get("right"),not:query.get("not")]
-def template = engine.createTemplate(request).make(binding)
 def result = []
+def where = "";
 
-log.ok("Search request is: "+template.toString())
+if (query != null){
+    //Need to handle the __UID__ in queries
+    if (query.get("left").equalsIgnoreCase("__UID__") && objectClass.equalsIgnoreCase("__ACCOUNT__")) query.put("left","uid");
+    if (query.get("left").equalsIgnoreCase("__UID__") && objectClass.equalsIgnoreCase("__GROUP__")) query.put("left","name");
+    if (query.get("left").equalsIgnoreCase("__UID__") && objectClass.equalsIgnoreCase("organization")) query.put("left","name")
 
-// sql.eachRow(template.toString(), { println it.id + " -- ${it.firstName} --"} );
-sql.eachRow(template.toString(), {result.add([uid:it.uid, fullname:it.fullname])} );
+    // We can use Groovy template engine to generate our custom SQL queries
+    def engine = new groovy.text.SimpleTemplateEngine();
 
-return result
+    def whereTemplates = [
+        CONTAINS:' WHERE $left ${not ? "NOT " : ""}LIKE "%$right%"',
+        ENDSWITH:' WHERE $left ${not ? "NOT " : ""}LIKE "%$right"',
+        STARTSWITH:' WHERE $left ${not ? "NOT " : ""}LIKE "$right%"',
+        EQUALS:' WHERE $left ${not ? "<>" : "="} "$right"',
+        GREATERTHAN:' WHERE $left ${not ? "<=" : ">"} "$right"',
+        GREATERTHANOREQUAL:' WHERE $left ${not ? "<" : ">="} "$right"',
+        LESSTHAN:' WHERE $left ${not ? ">=" : "<"} "$right"',
+        LESSTHANOREQUAL:' WHERE $left ${not ? ">" : "<="} "$right"'
+    ]
+
+    def wt = whereTemplates.get(query.get("operation"));
+    def binding = [left:query.get("left"),right:query.get("right"),not:query.get("not")];
+    def template = engine.createTemplate(wt).make(binding);
+    where = template.toString();
+    log.ok("Search WHERE clause is: "+ where)
+}
+
+switch ( objectClass ) {
+    case "__ACCOUNT__":
+    sql.eachRow("SELECT * FROM Users" + where, {result.add([__UID__:it.uid, __NAME__:it.uid, uid:it.uid, fullname:it.fullname,firstname:it.firstname,lastname:it.lastname,email:it.email,organization:it.organization])} );
+    break
+
+    case "__GROUP__":
+    sql.eachRow("SELECT * FROM Groups" + where, {result.add([__UID__:it.name, __NAME__:it.name, gid:it.gid, ,description:it.description])} );
+    break
+
+    case "organization":
+    sql.eachRow("SELECT * FROM Organizations" + where, {result.add([__UID__:it.name, __NAME__:it.name, description:it.description])} );
+    break
+
+    default:
+    result;
+}
+
+return result;

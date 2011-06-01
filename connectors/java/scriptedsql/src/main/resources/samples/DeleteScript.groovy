@@ -39,4 +39,20 @@ log.info("Entering "+action+" Script");
 def sql = new Sql(connection);
 
 assert uid != null
-sql.execute("delete from Users where uid= ?",[uid])
+
+switch ( objectClass ) {
+    case "__ACCOUNT__":
+    sql.execute("DELETE FROM Users where uid= ?",[uid])
+    break
+
+    case "__GROUP__":
+    sql.execute("DELETE FROM Groups where name= ?",[uid])
+    break
+
+    case "organization":
+    sql.execute("DELETE FROM Organizations where name= ?",[uid])
+    break
+
+    default:
+    uid;
+}
