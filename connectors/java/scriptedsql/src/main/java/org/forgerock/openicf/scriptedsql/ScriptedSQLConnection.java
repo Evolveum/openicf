@@ -87,7 +87,7 @@ public class ScriptedSQLConnection {
         } else {
             final String driver = config.getJdbcDriver();
             final String connectionUrl = config.formatUrlTemplate();
-            log.info("Get a new connection using connection url {0} and user {1}", connectionUrl, login);
+            log.info("Getting a new connection using connection url {0} and user {1}", connectionUrl, login);
             connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, login, password);
             log.ok("The new connection using connection url {0} and user {1} created", connectionUrl, login);
         }

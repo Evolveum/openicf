@@ -34,6 +34,8 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.dbcommon.JNDIUtil;
 
+import java.io.File;
+
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the ScriptedJDBC Connector.
@@ -421,7 +423,6 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     public void setScriptingLanguage(String value) {
         this.scriptingLanguage = value;
     }
-
     /**
      * Should password be passed to scripts in clear text?
      */
@@ -542,7 +543,6 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     public void setSyncScript(String value) {
         this.syncScript = value;
     }
-
     /**
      * Test script string
      */
@@ -562,6 +562,126 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
      */
     public void setTestScript(String value) {
         this.testScript = value;
+    }
+    /**
+     * Create script filename
+     */
+    private String createScriptFileName = null;
+
+    /**
+     * Return the Create script FileName
+     * @return value
+     */
+    public String getCreateScriptFileName() {
+        return createScriptFileName;
+    }
+
+    /**
+     * Set the Create script FileName
+     * @param value
+     */
+    public void setCreateScriptFileName(String value) {
+        this.createScriptFileName = value;
+    }
+    /**
+     * Update script FileName
+     */
+    private String updateScriptFileName = null;
+
+    /**
+     * Return the Update script FileName
+     * @return updateScriptFileName value
+     */
+    public String getUpdateScriptFileName() {
+        return updateScriptFileName;
+    }
+
+    /**
+     * Set the Update script FileName
+     * @param value
+     */
+    public void setUpdateScriptFileName(String value) {
+        this.updateScriptFileName = value;
+    }
+    /**
+     * Delete script FileName
+     */
+    private String deleteScriptFileName = null;
+
+    /**
+     * Return the Delete script FileName
+     * @return deleteScriptFileName value
+     */
+    public String getDeleteScriptFileName() {
+        return deleteScriptFileName;
+    }
+
+    /**
+     * Set the Delete script FileName
+     * @param value
+     */
+    public void setDeleteScriptFileName(String value) {
+        this.deleteScriptFileName = value;
+    }
+    /**
+     * Search script FileName
+     */
+    private String searchScriptFileName = null;
+
+    /**
+     * Return the Search script FileName
+     * @return searchScriptFileName value
+     */
+    public String getSearchScriptFileName() {
+        return searchScriptFileName;
+    }
+
+    /**
+     * Set the Search script FileName
+     * @param value
+     */
+    public void setSearchScriptFileName(String value) {
+        this.searchScriptFileName = value;
+    }
+    /**
+     * Sync script FileName
+     */
+    private String syncScriptFileName = null;
+
+    /**
+     * Return the Sync script FileName
+     * @return syncScriptFileName value
+     */
+    public String getSyncScriptFileName() {
+        return syncScriptFileName;
+    }
+
+    /**
+     * Set the Sync script FileName
+     * @param value
+     */
+    public void setSyncScriptFileName(String value) {
+        this.syncScriptFileName = value;
+    }
+    /**
+     * Test script FileName
+     */
+    private String testScriptFileName = null;
+
+    /**
+     * Return the Test script FileName
+     * @return testScriptFileName value
+     */
+    public String getTestScriptFileName() {
+        return testScriptFileName;
+    }
+
+    /**
+     * Set the Test script FileName
+     * @param value
+     */
+    public void setTestScriptFileName(String value) {
+        this.testScriptFileName = value;
     }
 
     // =======================================================================
@@ -613,7 +733,8 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
             }
             try {
                 Class.forName(getJdbcDriver());
-            } catch (ClassNotFoundException e) {
+            }
+            catch (ClassNotFoundException e) {
                 throw new IllegalArgumentException(getMessage("MSG_JDBC_DRIVER_NOT_FOUND"));
             }
             log.ok("driver configuration is ok");
@@ -625,9 +746,19 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         }
 
         // Validate the actions
-        if (!StringUtil.isBlank(getCreateScript())){
-            // we parse the script for syntax check
-        }
+        
+        log.info("Checking Create Script filename");
+        checkFileIsReadable("Create",getCreateScriptFileName());
+        log.info("Checking Update Script filename");
+        checkFileIsReadable("Update",getUpdateScriptFileName());
+        log.info("Checking Delete Script filename");
+        checkFileIsReadable("Delete",getDeleteScriptFileName());
+        log.info("Checking Search Script filename");
+        checkFileIsReadable("Search",getSearchScriptFileName());
+        log.info("Checking Sync Script filename");
+        checkFileIsReadable("Sync",getSyncScriptFileName());
+        log.info("Checking Test Script filename");
+        checkFileIsReadable("Test",getTestScriptFileName());
 
         log.ok("Configuration is valid");
     }
@@ -686,5 +817,23 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         final String fmt = getConnectorMessages().format(key, key, objects);
         log.ok("Get for a key {0} connector message {1}", key, fmt);
         return fmt;
+    }
+    
+    private void checkFileIsReadable(String type,String fileName){
+        if (fileName == null) {
+            log.info(type+" Script Filename is null");
+        } else {
+            File f = new File(fileName);
+            try {
+                if (f.canRead()) {
+                    log.ok(fileName + " is readable");
+                } else {
+                    throw new IllegalArgumentException("Can't read " + fileName);
+                }
+            }
+            catch (SecurityException e) {
+                throw new IllegalArgumentException("Can't read " + fileName);
+            }
+        }
     }
 }
