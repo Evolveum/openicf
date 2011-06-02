@@ -41,6 +41,7 @@
     <version position="right"/>
     <body>
         <breadcrumbs>
+            <item name="Developer Community" href="http://www.forgerock.org" />
             <item name="OpenICF" href="http://openicf.forgerock.org"/>
             <item name="Connectors" href="http://openicf.forgerock.org/connectors/index.html" />
             <item name="${connector_name} Connector" href="http://openicf.forgerock.org/connectors/${artifactId}/index.html" />

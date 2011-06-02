@@ -88,7 +88,7 @@
         <module>java/3270hod</module>
         <module>java/3270wrq</module>
         <module>java/racf</module-->
-                
+        <module>java/webtimesheet</module>
     </modules>
     <build>
         <plugins>

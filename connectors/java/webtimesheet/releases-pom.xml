@@ -1,6 +1,3 @@
-#set( $symbol_pound = '#' )
-#set( $symbol_dollar = '$' )
-#set( $symbol_escape = '\' )
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
@@ -26,7 +23,7 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
-  ~ ${symbol_dollar}Id${symbol_dollar}
+  ~ $Id$
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -36,21 +33,21 @@
         <artifactId>forgerock-parent</artifactId>
         <version>1.0.0</version>
     </parent>
-    <groupId>${symbol_dollar}{project.groupId}</groupId>
-    <artifactId>${symbol_dollar}{project.artifactId}</artifactId>
-    <version>${symbol_dollar}{project.version}</version>
+    <groupId>${project.groupId}</groupId>
+    <artifactId>${project.artifactId}</artifactId>
+    <version>${project.version}</version>
     <packaging>bundle</packaging>
-    <name>${symbol_dollar}{project.name}</name>
-    <description>${symbol_dollar}{project.description}</description>
-    <url>${symbol_dollar}{project.url}</url>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
+    <url>${project.url}</url>
     <issueManagement>
-        <system>${symbol_dollar}{project.issueManagement.system}</system>
-        <url>${symbol_dollar}{project.issueManagement.url}</url>
+        <system>${project.issueManagement.system}</system>
+        <url>${project.issueManagement.url}</url>
     </issueManagement>
     <scm>
-        <connection>${symbol_dollar}{project.scm.connection}</connection>
-        <developerConnection>${symbol_dollar}{project.scm.developerConnection}</developerConnection>
-        <url>${symbol_dollar}{project.scm.url}</url>
+        <connection>${project.scm.connection}</connection>
+        <developerConnection>${project.scm.developerConnection}</developerConnection>
+        <url>${project.scm.url}</url>
     </scm>
     <repositories>
         <repository>

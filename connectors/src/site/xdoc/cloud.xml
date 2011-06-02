@@ -72,6 +72,37 @@
                     </li>
                 </ol>
             </section>
+
+            <section name="Web TimeSheet Connector" href="webtimesheet">
+                <p>Web TimeSheet Connector</p>
+                <table class="bodyTable" border="0" cellpadding="4" cellspacing="0">
+                    <tbody>
+                        <tr class="a">
+                            <th colspan="5">Connector Releases</th>
+                        </tr>
+                        <tr style="background-color: rgb(224, 224, 224); font-weight: bold">
+                            <td width="30%">Download</td>
+                            <td width="40%">Description</td>
+                            <td width="10%">Platform</td>
+                            <td width="10%">Status</td>
+                            <td width="10%">Build Date</td>
+                        </tr>
+                        <tr class="b">
+                            <td>
+                                <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">webtimesheet-1.1.0.0-SNAPSHOT.jar</a>
+                            </td>
+                            <td>
+                                <a href="./webtimesheet/index.html">Documentation</a>
+                            </td>
+                            <td>Java 1.5</td>
+                            <td>
+                                <img src="images/comingSoon.png" align="middle"/>
+                            </td>
+                            <td>Jun 03, 2011</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
         </section>
     </body>
 </document>

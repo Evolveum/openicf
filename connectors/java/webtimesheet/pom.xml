@@ -1,6 +1,3 @@
-#set( $symbol_pound = '#' )
-#set( $symbol_dollar = '$' )
-#set( $symbol_escape = '\' )
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
@@ -26,32 +23,40 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
-  ~ ${symbol_dollar}Id${symbol_dollar}
+  ~ $Id$
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.forgerock</groupId>
-        <artifactId>forgerock-parent</artifactId>
-        <version>1.0.0</version>
+        <groupId>org.forgerock.openicf.connectors</groupId>
+        <artifactId>connectors-parent</artifactId>
+        <version>1.1.0.0-SNAPSHOT</version>
     </parent>
-    <groupId>${symbol_dollar}{project.groupId}</groupId>
-    <artifactId>${symbol_dollar}{project.artifactId}</artifactId>
-    <version>${symbol_dollar}{project.version}</version>
+    <groupId>org.forgerock.openicf.connectors.cloud</groupId>
+    <artifactId>webtimesheet</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <name>${symbol_dollar}{project.name}</name>
-    <description>${symbol_dollar}{project.description}</description>
-    <url>${symbol_dollar}{project.url}</url>
+    <name>WebTimeSheet Connector</name>
+    <description>Connector for WebTimeSheet</description>
+    <url>https://openicf.forgerock.org/connectors/webtimesheet</url>
     <issueManagement>
-        <system>${symbol_dollar}{project.issueManagement.system}</system>
-        <url>${symbol_dollar}{project.issueManagement.url}</url>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/ICFXXX</url>
     </issueManagement>
     <scm>
-        <connection>${symbol_dollar}{project.scm.connection}</connection>
-        <developerConnection>${symbol_dollar}{project.scm.developerConnection}</developerConnection>
-        <url>${symbol_dollar}{project.scm.url}</url>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/webtimesheet</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/webtimesheet</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/webtimesheet</url>
     </scm>
+    <properties>
+        <defaultConnectorFamily>cloud</defaultConnectorFamily>
+        <skipTests>false</skipTests>
+        <contracts.skip>true</contracts.skip>
+        <privateConfigPath>${user.home}/.connectors/connector-${project.artifactId}/config</privateConfigPath>
+        <connectorPackage>org.forgerock.openicf.webtimesheet</connectorPackage>
+        <connectorClass>WebTimeSheetConnector</connectorClass>
+    </properties>
     <repositories>
         <repository>
             <id>forgerock-staging-repository</id>
@@ -70,5 +75,18 @@
             </releases>
         </repository>
     </repositories>
-</project>
+    <profiles>
+        <profile>
+            <id>with-embedded-dependencies</id>
+            <properties>
+                <!-- Example: <embedded.dependencies>dbcommon</embedded.dependencies> -->
+            </properties>
+        </profile>
+        <profile>
+            <id>active-embedded-dependencies</id>
+            <properties>
+            </properties>
+        </profile>
+    </profiles>
 
+</project>
