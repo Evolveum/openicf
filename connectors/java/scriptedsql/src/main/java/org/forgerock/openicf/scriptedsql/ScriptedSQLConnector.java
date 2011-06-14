@@ -238,7 +238,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             arguments.put("objectClass", objClass.getObjectClassValue());
             arguments.put("options", options.getOptions());
             // We give the id (name) as an argument, more friendly than dealing with __NAME__
-            arguments.put("id",AttributeUtil.getNameFromAttributes(attrs));
+            arguments.put("id",AttributeUtil.getNameFromAttributes(attrs).getNameValue());
             
             Map<String, List> attrMap = new HashMap();
             for (Attribute attr : attrs) {
@@ -393,7 +393,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             try {
                 // We expect the script to return a list of Maps
                 List<Map> results = (List<Map>) searchExecutor.execute(arguments);
-                log.ok("test ok");
+                log.ok("search ok");
                 processResults(objClass, results, handler);
             }
             catch (Exception e) {
