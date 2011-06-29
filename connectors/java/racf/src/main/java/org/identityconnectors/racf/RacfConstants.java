@@ -29,6 +29,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_EXPIRED               = "fakeExpired";
     
     public static final String ATTR_LDAP_ACCOUNTID             = "accountId";
+    public static final String ATTR_LDAP_ID                    = "racfId";
     public static final String ATTR_LDAP_DATA                  = "racfInstallationData";
     public static final String ATTR_LDAP_MODEL                 = "racfDatasetModel";
     public static final String ATTR_LDAP_OWNER                 = "racfOwner";
@@ -131,6 +132,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_UNIVERSAL             = "racfGroupUniversal";
     public static final String ATTR_LDAP_OVM_GROUP_ID          = "racfOvmGroupId";
     public static final String ATTR_LDAP_OMVS_GROUP_ID         = "racfOmvsGroupId";
+    public static final String ATTR_LDAP_USER_ACCESS           = "racfGroupUserAccess";
     
     // Attributes on Connection
     //
