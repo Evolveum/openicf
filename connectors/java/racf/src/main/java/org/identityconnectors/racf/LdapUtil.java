@@ -64,43 +64,41 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 
 class LdapUtil {
-    private final Pattern                   _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
 
-    private RacfConnector                   _connector;
-    private Schema                          _schema;
-    private RACFPasswordEnvelopeUtilities   _passwdEnvDecrypter;
+    private final Pattern _connectionPattern = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
+    private RacfConnector _connector;
+    private Schema _schema;
+    private RACFPasswordEnvelopeUtilities _passwdEnvDecrypter;
 
     public LdapUtil(RacfConnector connector) {
         _connector = connector;
         _schema = _connector.schema();
 
-        StringBuffer pemcert = loadBuffer(((RacfConfiguration)_connector.getConfiguration()).getActiveSyncCertificate());
-        StringBuffer pemkey = loadBuffer(((RacfConfiguration)_connector.getConfiguration()).getActiveSyncPrivateKey());
-        String decryptorClass = ((RacfConfiguration)_connector.getConfiguration()).getActiveSyncPasswordDecryptorClass();
-        if (pemcert.length()>0 && pemkey.length()>0)
+        StringBuffer pemcert = loadBuffer(( (RacfConfiguration) _connector.getConfiguration() ).getActiveSyncCertificate());
+        StringBuffer pemkey = loadBuffer(( (RacfConfiguration) _connector.getConfiguration() ).getActiveSyncPrivateKey());
+        String decryptorClass = ( (RacfConfiguration) _connector.getConfiguration() ).getActiveSyncPasswordDecryptorClass();
+        if (pemcert.length() > 0 && pemkey.length() > 0) {
             _passwdEnvDecrypter = RACFPasswordEnvelopeUtilities.newRACFPasswordEnvelopeDecryptor(decryptorClass, pemcert.toString(), pemkey.toString());
+        }
     }
-    
     static private Pattern _uidPattern = Pattern.compile("racfid=(\\w+),([^,]+).+", Pattern.CASE_INSENSITIVE);
-    
+
     public String createUniformUid(Uid oldUid) {
         return createUniformUid(oldUid.getUidValue());
     }
-    
+
     public String createUniformUid(String oldUidString) {
-        return createUniformUid(oldUidString, ((RacfConfiguration)_connector.getConfiguration()).getSuffix());
+        return createUniformUid(oldUidString, ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
     }
-    
+
     static public String createUniformUid(String oldUidString, String suffix) {
         Matcher matcher = _uidPattern.matcher(oldUidString);
         if (matcher.matches()) {
-            return "racfid="+matcher.group(1).toUpperCase()+","+matcher.group(2).toLowerCase()+","+suffix;
+            return "racfid=" + matcher.group(1).toUpperCase() + "," + matcher.group(2).toLowerCase() + "," + suffix;
         } else {
             return oldUidString;
         }
     }
-    
-    
 
     private StringBuffer loadBuffer(String[] vals) {
         StringBuffer buffer = new StringBuffer();
@@ -120,9 +118,10 @@ class LdapUtil {
             try {
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
                 Map<String, Attribute> newAttributes = AttributeUtil.toMap(attrs);
-                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(name.getNameValue(), createLdapAttributesFromConnectorAttributes(newAttributes));
+                ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(name.getNameValue(), createLdapAttributesFromConnectorAttributes(newAttributes));
                 return new Uid(createUniformUid(name.getNameValue()));
-            } catch (NamingException e) {
+            }
+            catch (NamingException e) {
                 throw new ConnectorException(e);
             }
         } else if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
@@ -138,48 +137,58 @@ class LdapUtil {
                 _connector.throwErrorIfNullOrEmpty(password);
                 _connector.checkConnectionConsistency(groups, owners);
 
-                if (expired!=null && password==null) 
-                    throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
-                if (userExists(name.getNameValue()))
+                if (expired != null && password == null) {
+                    throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+                }
+                if (userExists(name.getNameValue())) {
                     throw new AlreadyExistsException();
+                }
                 // Some attributes cannot be specified during create, only modify.
                 // Save these off to the side.
                 //
                 Set<Attribute> changes = new HashSet<Attribute>();
-                Attribute enable      = attributes.remove(ATTR_LDAP_ENABLED);
-                Attribute enableDate  = attributes.remove(ATTR_LDAP_RESUME_DATE);
+                Attribute enable = attributes.remove(ATTR_LDAP_ENABLED);
+                Attribute enableDate = attributes.remove(ATTR_LDAP_RESUME_DATE);
                 Attribute disableDate = attributes.remove(ATTR_LDAP_REVOKE_DATE);
-                if (expired!=null)
+                if (expired != null) {
                     changes.add(expired);
-                if (password!=null)
+                }
+                if (password != null) {
                     changes.add(password);
-                if (enable!=null)
+                }
+                if (enable != null) {
                     changes.add(enable);
-                if (enableDate!=null)
+                }
+                if (enableDate != null) {
                     changes.add(enableDate);
-                if (disableDate!=null)
+                }
+                if (disableDate != null) {
                     changes.add(disableDate);
+                }
 
                 String id = name.getNameValue();
                 Uid uid = new Uid(createUniformUid(id));
                 Map<String, Attribute> newAttributes = CollectionUtil.newCaseInsensitiveMap();
                 newAttributes.putAll(attributes);
                 addObjectClass(objectClass, newAttributes);
-                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
-                if (groups!=null)
+                ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
+                if (groups != null) {
                     _connector.setGroupMembershipsForUser(id, groups, owners);
+                }
                 // Now, process the deferred attributes
                 //
-                if (changes.size()>0) {
+                if (changes.size() > 0) {
                     changes.add(uid);
                     updateViaLdap(objectClass, changes, options);
                 }
                 return uid;
-            } catch (NamingException e) {
-                if (e.toString().contains("INVALID USER"))
+            }
+            catch (NamingException e) {
+                if (e.toString().contains("INVALID USER")) {
                     throw new AlreadyExistsException();
-                else
+                } else {
                     throw new ConnectorException(e);
+                }
             }
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
@@ -191,35 +200,41 @@ class LdapUtil {
                 Uid uid = new Uid(createUniformUid(id));
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
-                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
-                if (members!=null)
+                ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
+                if (members != null) {
                     _connector.setGroupMembershipsForGroups(id, members, groupOwners);
+                }
                 return uid;
-            } catch (NamingException e) {
-                if (e.toString().contains("INVALID GROUP"))
+            }
+            catch (NamingException e) {
+                if (e.toString().contains("INVALID GROUP")) {
                     throw new AlreadyExistsException();
-                else
+                } else {
                     throw new ConnectorException(e);
+                }
             }
         } else {
-            throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+            throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         }
     }
 
     public void deleteViaLdap(ObjectClass objectClass, Uid uid) {
         try {
-            ((RacfConnection)_connector.getConnection()).getDirContext().destroySubcontext(uid.getUidValue());
-        } catch (NamingException e) {
+            ( (RacfConnection) _connector.getConnection() ).getDirContext().destroySubcontext(uid.getUidValue());
+        }
+        catch (NamingException e) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-                if (e.toString().contains("INVALID USER"))
+                if (e.toString().contains("INVALID USER")) {
                     throw new UnknownUidException();
-                else
+                } else {
                     throw new ConnectorException(e);
+                }
             } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-                if (e.toString().contains("INVALID GROUP"))
+                if (e.toString().contains("INVALID GROUP")) {
                     throw new UnknownUidException();
-                else
+                } else {
                     throw new ConnectorException(e);
+                }
             } else {
                 throw ConnectorException.wrap(e);
             }
@@ -227,49 +242,52 @@ class LdapUtil {
     }
 
     public List<String> getGroupsForUserViaLdap(String user) {
-        return getConnectionInfo("racfuserid="+RacfConnector.extractRacfIdFromLdapId(user), 2);
+        return getConnectionInfo("racfuserid=" + RacfConnector.extractRacfIdFromLdapId(user), 2);
     }
 
     public List<String> getMembersOfGroupViaLdap(String group) {
-        return getConnectionInfo("racfgroupid="+RacfConnector.extractRacfIdFromLdapId(group), 1);
+        return getConnectionInfo("racfgroupid=" + RacfConnector.extractRacfIdFromLdapId(group), 1);
     }
 
     private List<String> getConnectionInfo(String query, int index) {
         SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, null, true, true);
         List<String> objects = new LinkedList<String>();
         try {
-            String search = "profileType=connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
-            NamingEnumeration<SearchResult> connections = ((RacfConnection)_connector.getConnection()).getDirContext().search(search, query, subTreeControls);
+            String search = "profileType=connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+            NamingEnumeration<SearchResult> connections = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, query, subTreeControls);
             while (connections.hasMore()) {
                 SearchResult userRoot = connections.next();
                 String name = userRoot.getNameInNamespace();
                 Matcher matcher = _connectionPattern.matcher(name);
                 if (matcher.matches()) {
-                    objects.add("racfid="+matcher.group(index)+",profileType="+(index==1?"User,":"Group,")+((RacfConfiguration)_connector.getConfiguration()).getSuffix());
+                    objects.add("racfid=" + matcher.group(index) + ",profileType=" + ( index == 1 ? "User," : "Group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
                 } else {
-                    throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.PATTERN_FAILED, name));
+                    throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.PATTERN_FAILED, name));
                 }
             }
             return objects;
-        } catch (LimitExceededException e) {
+        }
+        catch (LimitExceededException e) {
             //TODO: cope with this
             throw ConnectorException.wrap(e);
-        } catch (NamingException e) {
+        }
+        catch (NamingException e) {
             throw new ConnectorException(e);
         }
     }
 
     public List<String> getUsersViaLdap(String query) {
-        RacfConfiguration configuration = (RacfConfiguration)_connector.getConfiguration();
+        RacfConfiguration configuration = (RacfConfiguration) _connector.getConfiguration();
         String[] queries = configuration.getUserQueries();
-        
+
         // If we are querying ALL users, and we have a partitioned Query, 
         // we will use it instead
         //
-        if (("*".equals(query) || query==null) && queries!=null && queries.length>0) {
+        if (( "*".equals(query) || query == null ) && queries != null && queries.length > 0) {
             Set<String> users = new HashSet<String>();
-            for (String subquery : queries)
+            for (String subquery : queries) {
                 users.addAll(getUsersViaLdap0(subquery));
+            }
             List<String> userList = new ArrayList<String>(users.size());
             userList.addAll(users);
             return userList;
@@ -280,27 +298,30 @@ class LdapUtil {
 
     private List<String> getUsersViaLdap0(String query) {
         SearchControls subTreeControls = new SearchControls(SearchControls.ONELEVEL_SCOPE, 4095, 0, null, true, true);
-        List<String> userNames = new LinkedList<String>(); 
+        List<String> userNames = new LinkedList<String>();
         try {
-            String search = "profileType=user,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
-            NamingEnumeration<SearchResult> users = ((RacfConnection)_connector.getConnection()).getDirContext().search(search, getLdapFilterForFilterString(query), subTreeControls);
+            String search = "profileType=user," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+            NamingEnumeration<SearchResult> users = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, getLdapFilterForFilterString(query), subTreeControls);
             while (users.hasMore()) {
                 SearchResult userRoot = users.next();
                 String name = userRoot.getNameInNamespace();
-                if (name.startsWith("racfid=irrcerta,") ||
-                        name.startsWith("racfid=irrmulti,") ||
-                        name.startsWith("racfid=irrsitec,")) {
+                if (name.startsWith("racfid=irrcerta,")
+                        || name.startsWith("racfid=irrmulti,")
+                        || name.startsWith("racfid=irrsitec,")) {
                     // Ignore
                 } else {
                     userNames.add(name);
                 }
             }
-        } catch (LimitExceededException e) {
+        }
+        catch (LimitExceededException e) {
             //TODO: cope with this
             throw ConnectorException.wrap(e);
-        } catch (NamingException e) {
-            if (!e.toString().contains("NO ENTRIES MEET SEARCH CRITERIA"))
+        }
+        catch (NamingException e) {
+            if (!e.toString().contains("NO ENTRIES MEET SEARCH CRITERIA")) {
                 throw new ConnectorException(e);
+            }
         }
         return userNames;
     }
@@ -309,38 +330,42 @@ class LdapUtil {
         SearchControls subTreeControls = new SearchControls(SearchControls.ONELEVEL_SCOPE, 4095, 0, null, true, true);
         List<String> groupNames = new LinkedList<String>();
         try {
-            String search = "profileType=group,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
-            NamingEnumeration<SearchResult> groups = ((RacfConnection)_connector.getConnection()).getDirContext().search(search, getLdapFilterForFilterString(query), subTreeControls);
+            String search = "profileType=group," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+            NamingEnumeration<SearchResult> groups = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, getLdapFilterForFilterString(query), subTreeControls);
             while (groups.hasMore()) {
                 SearchResult userRoot = groups.next();
                 String name = userRoot.getNameInNamespace();
                 groupNames.add(name);
             }
-        } catch (LimitExceededException e) {
+        }
+        catch (LimitExceededException e) {
             //TODO: cope with this
             throw ConnectorException.wrap(e);
-        } catch (NamingException e) {
-            if (!e.toString().contains("NO ENTRIES MEET SEARCH CRITERIA"))
+        }
+        catch (NamingException e) {
+            if (!e.toString().contains("NO ENTRIES MEET SEARCH CRITERIA")) {
                 throw new ConnectorException(e);
+            }
         }
         return groupNames;
     }
 
     private String getLdapFilterForFilterString(String filter) {
         String filterText = "(objectclass=*)";
-        if (filter != null)
+        if (filter != null) {
             filterText = filter;
+        }
         return filterText;
     }
 
     private boolean userExists(String user) {
-        List<String> users = getUsersViaLdap("racfid="+RacfConnector.extractRacfIdFromLdapId(user));
-        return users.size()==1;
+        List<String> users = getUsersViaLdap("racfid=" + RacfConnector.extractRacfIdFromLdapId(user));
+        return users.size() == 1;
     }
 
     private boolean groupExists(String group) {
-        List<String> groups = getGroupsViaLdap("racfid="+RacfConnector.extractRacfIdFromLdapId(group));
-        return groups.size()==1;
+        List<String> groups = getGroupsViaLdap("racfid=" + RacfConnector.extractRacfIdFromLdapId(group));
+        return groups.size() == 1;
     }
 
     public Map<String, Object> getAttributesFromLdap(ObjectClass objectClass, String ldapName, Set<String> originalAttributesToGet) throws NamingException {
@@ -351,10 +376,10 @@ class LdapUtil {
         //
         attributesToGet.remove(ATTR_LDAP_ACCOUNTID);
         attributesToGet.remove(Name.NAME);
-        
+
         // Now special case 'name-only', since that includes accountId
         //
-        if (attributesToGet.size()==0) {
+        if (attributesToGet.size() == 0) {
             String name = ldapName;
             Uid uid = new Uid(name);
             attributesRead.put(Uid.NAME, uid);
@@ -362,7 +387,7 @@ class LdapUtil {
             attributesRead.put(ATTR_LDAP_ACCOUNTID, RacfConnector.extractRacfIdFromLdapId(name));
             return attributesRead;
         }
-        
+
         // A few attributes need to be done via a separate LDAP query, so we save them
         //
         boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
@@ -373,8 +398,9 @@ class LdapUtil {
         // we must ensure we fetch the Attribute
         //
         boolean enable = attributesToGet.remove(OperationalAttributes.ENABLE_NAME);
-        if (enable && !attributesToGet.contains(ATTR_LDAP_ATTRIBUTES))
+        if (enable && !attributesToGet.contains(ATTR_LDAP_ATTRIBUTES)) {
             attributesToGet.add(ATTR_LDAP_ATTRIBUTES);
+        }
 
         SearchResult ldapObject = getAttributesFromLdap(ldapName, attributesRead, attributesToGet);
         String name = createUniformUid(ldapObject.getNameInNamespace());
@@ -391,9 +417,9 @@ class LdapUtil {
                 String user = RacfConnector.extractRacfIdFromLdapId(ldapName);
                 // First, get the connections for the user
                 //
-                String query = "profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
+                String query = "profileType=Connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
                 SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, attributesToGet.toArray(new String[0]), true, true);
-                NamingEnumeration<SearchResult> results = _connector.getConnection().getDirContext().search(query, "(racfuserid="+user+")", subTreeControls);
+                NamingEnumeration<SearchResult> results = _connector.getConnection().getDirContext().search(query, "(racfuserid=" + user + ")", subTreeControls);
                 List<String> groupsForUser = new ArrayList<String>();
                 while (results.hasMore()) {
                     SearchResult result = results.next();
@@ -402,15 +428,16 @@ class LdapUtil {
                     String group = ids[1];
                     groupsForUser.add(createUniformUid(_connector.createUidFromName(RacfConnector.RACF_GROUP, group).getUidValue()));
                 }
-                if (groups)
+                if (groups) {
                     attributesRead.put(ATTR_LDAP_GROUPS, groupsForUser);
+                }
                 if (owners) {
                     List<String> ownersForUser = new ArrayList<String>();
                     Set<String> connectAttributesToGet = new HashSet<String>();
                     connectAttributesToGet.add(ATTR_LDAP_CONNECT_OWNER);
                     for (String group : groupsForUser) {
                         group = RacfConnector.extractRacfIdFromLdapId(group);
-                        String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
+                        String root = "racfuserid=" + user + "+racfgroupid=" + group + ",profileType=Connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
                         ownersForUser.add(getConnectOwner(root));
                     }
                     attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForUser);
@@ -424,15 +451,16 @@ class LdapUtil {
             if (members || owners) {
                 String group = RacfConnector.extractRacfIdFromLdapId(ldapName);
                 List<String> usersForGroup = getMembersOfGroupViaLdap(ldapObject.getNameInNamespace());
-                if (members)
+                if (members) {
                     attributesRead.put(ATTR_LDAP_GROUP_USERIDS, usersForGroup);
+                }
                 if (owners) {
                     List<String> ownersForGroup = new ArrayList<String>();
                     Set<String> connectAttributesToGet = new HashSet<String>();
                     connectAttributesToGet.add(ATTR_LDAP_OWNER);
                     for (String user : usersForGroup) {
                         user = RacfConnector.extractRacfIdFromLdapId(user);
-                        String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
+                        String root = "racfuserid=" + user + "+racfgroupid=" + group + ",profileType=Connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
                         ownersForGroup.add(getConnectOwner(root));
                     }
                     attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForGroup);
@@ -446,14 +474,14 @@ class LdapUtil {
             // 'racfattributes' comes back as a String, we need to transform it into a list
             //
             Object racfAttributes = attributesRead.get(ATTR_LDAP_ATTRIBUTES);
-            if (racfAttributes!=null) {
+            if (racfAttributes != null) {
                 List<String> realRacfAttributes = new ArrayList<String>();
                 if (racfAttributes instanceof String) {
-                    for (String attribute : ((String)racfAttributes).split("\\s+")) {
+                    for (String attribute : ( (String) racfAttributes ).split("\\s+")) {
                         realRacfAttributes.add(attribute);
                     }
                 } else if (racfAttributes instanceof List) {
-                    for (Object attribute : ((List)racfAttributes)) {
+                    for (Object attribute : ( (List) racfAttributes )) {
                         for (String attributePart : attribute.toString().split("\\s+")) {
                             realRacfAttributes.add(attributePart);
                         }
@@ -477,15 +505,15 @@ class LdapUtil {
             //
             if (attributesRead.containsKey(ATTR_LDAP_TSO_LOGON_SIZE)) {
                 Object value = attributesRead.get(ATTR_LDAP_TSO_LOGON_SIZE);
-                Integer converted = Integer.parseInt((String)value);
+                Integer converted = Integer.parseInt((String) value);
                 attributesRead.put(ATTR_LDAP_TSO_LOGON_SIZE, converted);
             }
             // password envelope must be converted
             //
             if (attributesRead.containsKey(ATTR_LDAP_PASSWORD_ENVELOPE)) {
                 Object value = attributesRead.get(ATTR_LDAP_PASSWORD_ENVELOPE);
-                byte[] encrypted = (byte[])value;
-                if (_passwdEnvDecrypter!=null) {
+                byte[] encrypted = (byte[]) value;
+                if (_passwdEnvDecrypter != null) {
                     byte[] decrypted = _passwdEnvDecrypter.decrypt(encrypted);
                     String pw = _passwdEnvDecrypter.getPassword(decrypted);
                     if (pw != null) {
@@ -497,7 +525,7 @@ class LdapUtil {
             //
             if (attributesRead.containsKey(ATTR_LDAP_TSO_MAX_REGION_SIZE)) {
                 Object value = attributesRead.get(ATTR_LDAP_TSO_MAX_REGION_SIZE);
-                Integer converted = Integer.parseInt((String)value);
+                Integer converted = Integer.parseInt((String) value);
                 attributesRead.put(ATTR_LDAP_TSO_MAX_REGION_SIZE, converted);
             }
             // password change date must be converted
@@ -513,26 +541,28 @@ class LdapUtil {
             }
             // Revoke date must be converted
             //
-            long now = new Date().getTime(); 
+            long now = new Date().getTime();
             if (attributesRead.containsKey(ATTR_LDAP_REVOKE_DATE)) {
                 Object value = attributesRead.get(ATTR_LDAP_REVOKE_DATE);
                 Long converted = _connector.convertFromResumeRevokeFormat(value);
-                if (converted==null || converted<now)
+                if (converted == null || converted < now) {
                     attributesRead.put(OperationalAttributes.DISABLE_DATE_NAME, null);
-                else
+                } else {
                     attributesRead.put(OperationalAttributes.DISABLE_DATE_NAME, converted);
+                }
             }
             // Resume date must be converted
             //
             if (attributesRead.containsKey(ATTR_LDAP_RESUME_DATE)) {
                 Object value = attributesRead.get(ATTR_LDAP_RESUME_DATE);
                 Long converted = _connector.convertFromResumeRevokeFormat(value);
-                if (converted==null || converted<now)
+                if (converted == null || converted < now) {
                     attributesRead.put(OperationalAttributes.ENABLE_DATE_NAME, null);
-                else
+                } else {
                     attributesRead.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
+                }
             }
-            
+
 
             // Groups must be filled in if null
             //
@@ -545,7 +575,7 @@ class LdapUtil {
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
                 attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
-            
+
             // Names/Uids must be made uniform
             //
             makeUniformUid(attributesRead, ATTR_LDAP_GROUPS);
@@ -560,10 +590,11 @@ class LdapUtil {
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             if (attributesRead.containsKey(ATTR_LDAP_SUP_GROUP)) {
                 Object value = attributesRead.get(ATTR_LDAP_SUP_GROUP);
-                if ("NONE".equals(value))
+                if ("NONE".equals(value)) {
                     attributesRead.put(ATTR_LDAP_SUP_GROUP, null);
+                }
             }
-            
+
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_SUB_GROUPS)) {
@@ -592,29 +623,29 @@ class LdapUtil {
         }
         return attributesRead;
     }
-    
 
     static boolean isUidValued(String name) {
-        return ATTR_LDAP_GROUPS.equalsIgnoreCase(name) ||
-        ATTR_LDAP_DEFAULT_GROUP.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OWNER.equalsIgnoreCase(name) ||
-        ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name) ||
-        ATTR_LDAP_SUP_GROUP.equalsIgnoreCase(name) ||
-        ATTR_LDAP_SUB_GROUPS.equalsIgnoreCase(name) ||
-        ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name) ||
-        ATTR_LDAP_GROUP_USERIDS.equalsIgnoreCase(name);
+        return ATTR_LDAP_GROUPS.equalsIgnoreCase(name)
+                || ATTR_LDAP_DEFAULT_GROUP.equalsIgnoreCase(name)
+                || ATTR_LDAP_OWNER.equalsIgnoreCase(name)
+                || ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name)
+                || ATTR_LDAP_SUP_GROUP.equalsIgnoreCase(name)
+                || ATTR_LDAP_SUB_GROUPS.equalsIgnoreCase(name)
+                || ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name)
+                || ATTR_LDAP_GROUP_USERIDS.equalsIgnoreCase(name);
     }
-
 
     private void makeUniformUid(Map<String, Object> attributesRead, String attributename) {
         if (attributesRead.containsKey(attributename)) {
             Object value = attributesRead.get(attributename);
             if (value instanceof List) {
-                List list = (List)value;
-                for (int i=0; i<list.size(); i++)
+                List list = (List) value;
+                for (int i = 0; i < list.size(); i++) {
                     list.set(i, createUniformUid(list.get(i).toString()));
-            } else if (value!=null)
+                }
+            } else if (value != null) {
                 value = createUniformUid(value.toString());
+            }
             attributesRead.put(attributename, value);
         }
     }
@@ -624,7 +655,11 @@ class LdapUtil {
         Set<String> attributesToGet = new HashSet<String>();
         attributesToGet.add(ATTR_LDAP_CONNECT_OWNER);
         getAttributesFromLdap(query, attributesRead, attributesToGet);
-        return createUniformUid((String)attributesRead.get(ATTR_LDAP_CONNECT_OWNER));
+        if (!attributesRead.isEmpty()) {
+            return createUniformUid((String) attributesRead.get(ATTR_LDAP_CONNECT_OWNER));
+        } else {
+            return "";
+        }
     }
 
     private SearchResult getAttributesFromLdap(String ldapName, Map<String, Object> attributesRead,
@@ -642,7 +677,7 @@ class LdapUtil {
             //
             if (ATTR_LDAP_GROUPS.equalsIgnoreCase(attribute.getID())) {
                 Object value = getValueFromAttribute(attribute);
-                if (!(value instanceof List)) {
+                if (!( value instanceof List )) {
                     List newValue = new LinkedList();
                     newValue.add(value);
                     value = newValue;
@@ -650,8 +685,9 @@ class LdapUtil {
                 attributesRead.put(attribute.getID(), value);
             } else {
                 Object value = getValueFromAttribute(attribute);
-                if ("NONE".equals(value) && isIntegerAttribute(attribute.getID()))
+                if ("NONE".equals(value) && isIntegerAttribute(attribute.getID())) {
                     value = null;
+                }
                 attributesRead.put(attribute.getID(), value);
             }
         }
@@ -659,29 +695,28 @@ class LdapUtil {
     }
 
     private boolean isIntegerAttribute(String name) {
-        return ATTR_LDAP_OMVS_MAX_CPUTIME.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OMVS_MAX_ADDR_SPACE.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OMVS_MAX_FILES.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OMVS_MAX_MEMORY_MAP.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OMVS_MAX_THREADS.equalsIgnoreCase(name) ||
-        ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name);
+        return ATTR_LDAP_OMVS_MAX_CPUTIME.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_MAX_ADDR_SPACE.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_MAX_FILES.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_MAX_MEMORY_MAP.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_MAX_THREADS.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name);
     }
 
     static Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
         switch (attribute.size()) {
-        case 0:
-            return null;
-        case 1:
-            return attribute.get();
-        default:
-        {
-            List<Object> values = new LinkedList<Object>();
-            NamingEnumeration ne = attribute.getAll();
-            while (ne.hasMore()) {
-                values.add(ne.next());
+            case 0:
+                return null;
+            case 1:
+                return attribute.get();
+            default: {
+                List<Object> values = new LinkedList<Object>();
+                NamingEnumeration ne = attribute.getAll();
+                while (ne.hasMore()) {
+                    values.add(ne.next());
+                }
+                return values;
             }
-            return values;
-        }
         }
     }
 
@@ -690,7 +725,7 @@ class LdapUtil {
         attributes.putAll(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
 
-        if (uid!=null) {
+        if (uid != null) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
                 try {
                     Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
@@ -701,39 +736,47 @@ class LdapUtil {
                     _connector.throwErrorIfNull(groups);
                     _connector.throwErrorIfNull(groupOwners);
 
-                    if (expired!=null && password==null) 
-                        throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+                    if (expired != null && password == null) {
+                        throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+                    }
 
-                    if (!userExists(uid.getUidValue()))
+                    if (!userExists(uid.getUidValue())) {
                         throw new UnknownUidException();
+                    }
 
-                    ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
+                    ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
 
-                    if (groups!=null)
+                    if (groups != null) {
                         _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
-                } catch (NamingException e) {
-                    if (e.toString().contains("INVALID USER"))
+                    }
+                }
+                catch (NamingException e) {
+                    if (e.toString().contains("INVALID USER")) {
                         throw new AlreadyExistsException();
-                    else
+                    } else {
                         throw new ConnectorException(e);
+                    }
                 }
             } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
                 try {
                     Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
                     Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
 
-                    ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, 
+                    ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE,
                             createLdapAttributesFromConnectorAttributes(objectClass, attributes));
-                    if (members!=null)
+                    if (members != null) {
                         _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
-                } catch (NamingException e) {
-                    if (e.toString().contains("INVALID GROUP"))
+                    }
+                }
+                catch (NamingException e) {
+                    if (e.toString().contains("INVALID GROUP")) {
                         throw new AlreadyExistsException();
-                    else
+                    } else {
                         throw new ConnectorException(e);
+                    }
                 }
             } else {
-                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
+                throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
             }
         }
         return uid;
@@ -742,11 +785,13 @@ class LdapUtil {
     protected void addObjectClass(ObjectClass objectClass, Map<String, Attribute> attrs) {
         List<Object> values = new ArrayList<Object>();
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-            for (String userObjectClass : ((RacfConfiguration)_connector.getConfiguration()).getUserObjectClasses())
+            for (String userObjectClass : ( (RacfConfiguration) _connector.getConfiguration() ).getUserObjectClasses()) {
                 values.add(userObjectClass);
+            }
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            for (String groupObjectClass : ((RacfConfiguration)_connector.getConfiguration()).getGroupObjectClasses())
+            for (String groupObjectClass : ( (RacfConfiguration) _connector.getConfiguration() ).getGroupObjectClasses()) {
                 values.add(groupObjectClass);
+            }
         }
         attrs.put("objectclass", AttributeBuilder.build("objectclass", values));
     }
@@ -756,8 +801,9 @@ class LdapUtil {
         Set<ObjectClassInfo> objectClassInfos = _schema.getObjectClassInfo();
         ObjectClassInfo accountInfo = null;
         for (ObjectClassInfo objectClassInfo : objectClassInfos) {
-            if (objectClassInfo.is(objectClass.getObjectClassValue()))
+            if (objectClassInfo.is(objectClass.getObjectClassValue())) {
                 accountInfo = objectClassInfo;
+            }
         }
         Set<AttributeInfo> attributeInfos = accountInfo.getAttributeInfo();
         Set<String> racfAttributes = CollectionUtil.newCaseInsensitiveSet();
@@ -766,37 +812,40 @@ class LdapUtil {
 
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
-            if (attribute.getValue()==null)
-                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String)null));
+            if (attribute.getValue() == null) {
+                throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
+            }
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
                 //
             } else if (attribute.is("objectclass")) {
                 BasicAttribute objectClassAttribute = new BasicAttribute("objectclass");
-                for (Object value : attribute.getValue())
+                for (Object value : attribute.getValue()) {
                     objectClassAttribute.add(value);
+                }
                 basicAttributes.put(objectClassAttribute);
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
-                    if (value==null) {
-                        throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String)null));
+                    if (value == null) {
+                        throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
                     } else {
                         String string = value.toString();
-                        if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string))
-                            throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
-                        else
+                        if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string)) {
+                            throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
+                        } else {
                             racfAttributes.add(string);
+                        }
                     }
                 }
                 negateAttributes = true;
                 setRacfAttributes = true;
-            } else if (attribute.is(ATTR_LDAP_AUTHORIZATION_DATE) ||
-                    attribute.is(ATTR_LDAP_PASSWORD_INTERVAL) ||
-                    attribute.is(ATTR_LDAP_RACF_ID) ||
-                    attribute.is(ATTR_LDAP_LAST_ACCESS) ||
-                    attribute.is(ATTR_LDAP_PASSWORD_CHANGE) ||
-                    attribute.is(ATTR_LDAP_SUB_GROUP) ||
-                    attribute.is(ATTR_LDAP_GROUP_USERIDS)) {
+            } else if (attribute.is(ATTR_LDAP_AUTHORIZATION_DATE)
+                    || attribute.is(ATTR_LDAP_PASSWORD_INTERVAL)
+                    || attribute.is(ATTR_LDAP_RACF_ID)
+                    || attribute.is(ATTR_LDAP_LAST_ACCESS)
+                    || attribute.is(ATTR_LDAP_PASSWORD_CHANGE)
+                    || attribute.is(ATTR_LDAP_SUB_GROUP)
+                    || attribute.is(ATTR_LDAP_GROUP_USERIDS)) {
                 // Ignore read-only attrs
                 //
             } else if (attribute.is(PredefinedAttributes.GROUPS_NAME)) {
@@ -806,16 +855,18 @@ class LdapUtil {
                 // Ignore current password
                 //
             } else if (attribute.is(ATTR_LDAP_EXPIRED)) {
-                if (AttributeUtil.getBooleanValue(attribute))
+                if (AttributeUtil.getBooleanValue(attribute)) {
                     racfAttributes.add("Expired");
-                else
+                } else {
                     racfAttributes.add("noExpired");
+                }
                 setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_ENABLED)) {
-                if (AttributeUtil.getBooleanValue(attribute))
+                if (AttributeUtil.getBooleanValue(attribute)) {
                     racfAttributes.add("RESUME");
-                else
+                } else {
                     racfAttributes.add("REVOKE");
+                }
                 setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_RESUME_DATE) || attribute.is(ATTR_LDAP_REVOKE_DATE)) {
                 basicAttributes.put(attribute.getName(), AttributeUtil.getStringValue(attribute));
@@ -823,8 +874,8 @@ class LdapUtil {
                 // remap password
                 //
                 List<Object> value = attribute.getValue();
-                if (value==null || value.size()!=1) {
-                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.MUST_BE_SINGLE_VALUE));
+                if (value == null || value.size() != 1) {
+                    throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.MUST_BE_SINGLE_VALUE));
                 }
                 GuardedString password = AttributeUtil.getGuardedStringValue(attribute);
                 GuardedStringAccessor accessor = new GuardedStringAccessor();
@@ -832,8 +883,9 @@ class LdapUtil {
                 basicAttributes.put(ATTR_LDAP_PASSWORD, new String(accessor.getArray()));
             } else {
                 AttributeInfo attributeInfo = getAttributeInfo(attributeInfos, attributeName);
-                if (attributeInfo==null)
-                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_ATTRIBUTE, attributeName));
+                if (attributeInfo == null) {
+                    throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.UNKNOWN_ATTRIBUTE, attributeName));
+                }
                 basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
             }
         }
@@ -849,9 +901,11 @@ class LdapUtil {
             //      are not currently supporting
             List<Object> finalValue = new LinkedList<Object>();
             if (negateAttributes) {
-                for (String attrValue : RacfConnector.POSSIBLE_ATTRIBUTES)
-                    if (!racfAttributes.contains(attrValue))
-                        finalValue.add("NO"+attrValue);
+                for (String attrValue : RacfConnector.POSSIBLE_ATTRIBUTES) {
+                    if (!racfAttributes.contains(attrValue)) {
+                        finalValue.add("NO" + attrValue);
+                    }
+                }
             }
             finalValue.addAll(racfAttributes);
             basicAttributes.put(makeBasicAttribute(ATTR_LDAP_ATTRIBUTES, finalValue));
@@ -878,20 +932,20 @@ class LdapUtil {
     private BasicAttribute makeBasicAttribute(String name, List<Object> racfAttributes) {
         BasicAttribute attribute = new BasicAttribute(name);
         for (Object value : racfAttributes) {
-            if (value!=null)
+            if (value != null) {
                 value = value.toString();
+            }
             attribute.add(value);
         }
         return attribute;
     }
 
     private AttributeInfo getAttributeInfo(Set<AttributeInfo> attributeInfos, String name) {
-        for (AttributeInfo attributeInfo: attributeInfos) {
-            if (attributeInfo.getName().equalsIgnoreCase(name))
+        for (AttributeInfo attributeInfo : attributeInfos) {
+            if (attributeInfo.getName().equalsIgnoreCase(name)) {
                 return attributeInfo;
+            }
         }
         return null;
     }
-
-
 }
