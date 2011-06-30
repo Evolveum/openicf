@@ -268,6 +268,7 @@ class LdapUtil {
             return objects;
         }
         catch (LimitExceededException e) {
+            // GAEL - This one is really annoying...
             //TODO: cope with this
             throw ConnectorException.wrap(e);
         }
@@ -327,6 +328,25 @@ class LdapUtil {
     }
 
     public List<String> getGroupsViaLdap(String query) {
+        RacfConfiguration configuration = (RacfConfiguration) _connector.getConfiguration();
+        String[] queries = configuration.getGroupQueries();
+
+        // If we are querying ALL groups, and we have a partitioned Query, 
+        // we will use it instead
+        //
+        if (( "*".equals(query) || query == null ) && queries != null && queries.length > 0) {
+            Set<String> groups = new HashSet<String>();
+            for (String subquery : queries) {
+                groups.addAll(getGroupsViaLdap0(subquery));
+            }
+            List<String> groupList = new ArrayList<String>(groups.size());
+            groupList.addAll(groups);
+            return groupList;
+        } else {
+            return getGroupsViaLdap0(query);
+        }
+    }
+    public List<String> getGroupsViaLdap0(String query) {
         SearchControls subTreeControls = new SearchControls(SearchControls.ONELEVEL_SCOPE, 4095, 0, null, true, true);
         List<String> groupNames = new LinkedList<String>();
         try {
@@ -390,9 +410,19 @@ class LdapUtil {
 
         // A few attributes need to be done via a separate LDAP query, so we save them
         //
-        boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
-        boolean groups = attributesToGet.remove(ATTR_LDAP_GROUPS);
-        boolean members = attributesToGet.remove(ATTR_LDAP_GROUP_USERIDS);
+        // Gael - Stop looking up the connect branch. There is no benefit for now.
+        // A User entry contains the information about its Groups.
+        // A Group entry contains the information about its members.
+        // What we miss by not looking up the connect branch is the real
+        // status of User-Group relation (owner, last connect, resume, revoke etc...).
+        // But that code does not leverage it either... So for now, 
+        // let's pick up group and members as normal attributes
+//        boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
+//        boolean groups = attributesToGet.remove(ATTR_LDAP_GROUPS);
+//        boolean members = attributesToGet.remove(ATTR_LDAP_GROUP_USERIDS);
+        boolean owners = false;
+        boolean groups = false;
+        boolean members = false;
 
         // Since Enable is indicated by ATTRIBUTES attribute containing REVOKE
         // we must ensure we fetch the Attribute
