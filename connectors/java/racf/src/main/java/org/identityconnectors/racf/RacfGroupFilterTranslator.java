@@ -57,6 +57,8 @@ public class RacfGroupFilterTranslator extends RacfLdapFilterTranslatorBase {
             return true;
         if (attribute.is(RacfConstants.ATTR_LDAP_OMVS_UID))
             return true;
+        if (attribute.is(RacfConstants.ATTR_LDAP_ID))
+            return true;
         return false;
     }
     
