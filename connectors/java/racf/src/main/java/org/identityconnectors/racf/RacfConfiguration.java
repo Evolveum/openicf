@@ -49,6 +49,7 @@ public class RacfConfiguration extends AbstractConfiguration {
     private Integer        _commandTimeout;
     private Integer        _reaperMaximumIdle;
     private String[]       _userQueries;
+    private String[]       _groupQueries;
 
     private String[]       _userObjectClasses;
     private String[]       _groupObjectClasses;
@@ -382,6 +383,24 @@ public class RacfConfiguration extends AbstractConfiguration {
     public void setUserQueries(String[] userQueries) {
         _userQueries = arrayCopy(userQueries);
     }
+
+    /**
+     * Get the group queries
+     * @return an array of query strings that can fetch all groups
+     */
+    @ConfigurationProperty(order=5, displayMessageKey="GroupQueries", helpMessageKey="GroupQueriesHelp")
+    public String[] getGroupQueries() {
+        return arrayCopy(_groupQueries);
+    }
+
+    /**
+     * Set the query strings that can fetch all groups
+     * @param userObjectClasses -- an array of query strings that can fetch all groups
+     */
+    public void setGroupQueries(String[] groupQueries) {
+        _groupQueries = arrayCopy(groupQueries);
+    }
+
 
     /**
      * Get the password for the LDAP connection
