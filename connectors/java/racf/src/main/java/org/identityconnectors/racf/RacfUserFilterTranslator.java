@@ -67,6 +67,8 @@ public class RacfUserFilterTranslator extends RacfLdapFilterTranslatorBase {
             return true;
         if (attribute.is(RacfConstants.ATTR_LDAP_KERB_NAME))
             return true;
+        if (attribute.is(RacfConstants.ATTR_LDAP_ID))
+            return true;
         return false;
     }
     
