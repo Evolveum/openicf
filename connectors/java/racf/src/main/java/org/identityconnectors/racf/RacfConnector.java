@@ -736,8 +736,10 @@ public class RacfConnector implements Connector, CreateOp,
             if (iterator.hasNext()) {
                 ConnectorObject object = iterator.next();
                 Attribute expired = object.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
+                if (expired != null) {
                 attributes.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
             }
+        }
         }
         splitUpOutgoingAttributes(objectClass, attributes, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {

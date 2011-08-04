@@ -60,7 +60,7 @@
     </repositories>
     <dependencies>
         <!--
-        mvn install:install-file -Dfile=freehost3270.jar -DgroupId=com.ibm.racf -DartifactId=freehost -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
+        mvn install:install-file -Dfile=freehost3270.jar -DgroupId=com.ibm.racf -DartifactId=freehost -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true
         -->
         <dependency>
             <groupId>com.ibm.racf</groupId>

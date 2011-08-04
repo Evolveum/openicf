@@ -260,7 +260,8 @@ class LdapUtil {
                 String name = userRoot.getNameInNamespace();
                 Matcher matcher = _connectionPattern.matcher(name);
                 if (matcher.matches()) {
-                    objects.add("racfid=" + matcher.group(index) + ",profileType=" + ( index == 1 ? "User," : "Group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
+                    //use normalized string
+                    objects.add("racfid=" + matcher.group(index) + ",profiletype=" + ( index == 1 ? "user," : "group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
                 } else {
                     throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.PATTERN_FAILED, name));
                 }
