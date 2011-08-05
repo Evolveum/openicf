@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>IBM RACF Connector</name>
     <description>IBM RACF Connector</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/racf</url>
     <properties>
         <defaultConnectorFamily>mainframe</defaultConnectorFamily>
         <skipTests>true</skipTests>

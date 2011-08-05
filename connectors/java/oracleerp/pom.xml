@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>OracleERP Connector</name>
     <description>Connector for OracleERP</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/oracleerp</url>
     <properties>
         <defaultConnectorFamily>db</defaultConnectorFamily>
         <skipTests>true</skipTests>

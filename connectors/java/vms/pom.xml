@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>VMS Connector</name>
     <description>Connector for VMS</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/vms</url>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/vms</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/vms</developerConnection>

@@ -38,6 +38,11 @@
     <name>OpenICF Connectors Site</name>
     <description>Builder parent POM to build all connectors</description>
     <url>http://openicf.forgerock.org/connectors</url>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors</url>
+    </scm>
     <distributionManagement>
         <site>
             <id>forgerock.org</id>

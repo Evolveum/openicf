@@ -178,7 +178,7 @@ public class SpmlConnection  {
      * <li>password -- the password specified in the Configuration</li>
      * <li>memory -- a Map<String, Object> persisted between script invocations, which can be used as a store</li>
      * </ul>
-     * See {@link Connection#dispose()}
+     * See {@link org.identityconnectors.framework.spi.Connector#dispose()}
      */
     public void dispose() {
         String preCommand = _configuration.getPreDisconnectCommand();
@@ -197,7 +197,8 @@ public class SpmlConnection  {
         }
     }
     /**
-     * {@inheritDoc}
+     * 
+     * See {@link org.identityconnectors.framework.spi.operations.TestOp#test()}
      */
     public void test() {
         try {

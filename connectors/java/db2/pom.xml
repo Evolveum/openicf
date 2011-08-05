@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>DB2 Connector</name>
     <description>Uses plain JDBC calls to execute provisioning operations on DB2 resource. Tested with type4 and type2 JCC driver and with older type2 CLI driver.</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/db2</url>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/db2</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/db2</developerConnection>

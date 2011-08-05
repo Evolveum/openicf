@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>Dummy Connector</name>
     <description>Connector for Dummy</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/dummy</url>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dummy</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dummy</developerConnection>

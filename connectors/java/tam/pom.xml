@@ -36,7 +36,7 @@
     <packaging>bundle</packaging>
     <name>Tivoli Access Manager 6.1 Connector</name>
     <description>Connector for Tivoli Access Manager 6.1</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/tam</url>
     <issueManagement>
         <system>jira</system>
         <url>https://bugster.forgerock.org/jira/browse/ICFTAM</url>

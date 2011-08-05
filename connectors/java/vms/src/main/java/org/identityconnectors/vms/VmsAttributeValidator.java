@@ -106,14 +106,13 @@ public class VmsAttributeValidator {
         public boolean isValid(List<Object> dateList);
     };
 
-    /**
-     * Determine if the string represents a valid Boolean
-     * 
-     * @param date
-     * @return
-     */
-
     public static class ValidBoolean implements Validity {
+        /**
+         * Determine if the string represents a valid Boolean
+         *
+         * @param booleanList
+         * @return
+         */
         public boolean isValid(List<Object> booleanList) {
             if (booleanList.size()!=1)
                 return false;
@@ -121,14 +120,13 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     * Determine if the string represents a valid VMS owner
-     * 
-     * @param date
-     * @return
-     */
-
     public static class ValidOwner implements Validity {
+        /**
+         * Determine if the string represents a valid VMS owner
+         *
+         * @param ownerList
+         * @return
+         */
         public boolean isValid(List<Object> ownerList) {
             if (ownerList.size()!=1)
                 return false;
@@ -137,13 +135,13 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     * Determine if the string represents a valid VMS date stamp
-     * 
-     * @param date
-     * @return
-     */
     public static class ValidDate implements Validity {
+        /**
+         * Determine if the string represents a valid VMS date stamp
+         *
+         * @param dateList
+         * @return
+         */
         public boolean isValid(List<Object> dateList) {
             if (dateList.size()!=1)
                 return false;
@@ -158,13 +156,13 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     * Determine if the string represents a valid VMS date stamp, or "none"
-     * 
-     * @param date
-     * @return
-     */
     public static class ValidDateOrNone extends ValidDate {
+        /**
+         * Determine if the string represents a valid VMS date stamp, or "none"
+         *
+         * @param dateList
+         * @return
+         */
         public boolean isValid(List<Object> dateList) {
             if (dateList.size()!=1)
                 return false;
@@ -173,13 +171,13 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     * Determine if the string represents a number, or "none"
-     * 
-     * @param number
-     * @return
-     */
     public static class ValidNumberOrNone implements Validity {
+        /**
+         * Determine if the string represents a number, or "none"
+         *
+         * @param numberList
+         * @return
+         */
         public boolean isValid(List<Object> numberList) {
             if (numberList.size()!=1)
                 return false;
@@ -238,60 +236,60 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     *  Determine if the value for ALGORITHM is valid.
-     * <pre>
-     *          /ALGORITHM=keyword=type [=value]
-     * 
-     *       Sets the password encryption algorithm for a user. The keyword
-     *       VMS refers to the algorithm used in the operating system version
-     *       that is running on your system, whereas a customer algorithm is
-     *       one that is added through the $HASH_PASSWORD system service by
-     *       a customer site, by a layered product, or by a third party. The
-     *       customer algorithm is identified in $HASH_PASSWORD by an integer
-     *       in the range of 128 to 255. It must correspond with the number
-     *       used in the AUTHORIZE command MODIFY/ALGORITHM. By default,
-     *       passwords are encrypted with the VMS algorithm for the current
-     *       version of the operating system.
-     *
-     *       Keyword     Function
-     *
-     *       BOTH        Set the algorithm for primary and secondary
-     *                   passwords.
-     *
-     *       CURRENT     Set the algorithm for the primary, secondary, both,
-     *                   or no passwords, depending on account status. CURRENT
-     *                   is the default value.
-     *
-     *       PRIMARY     Set the algorithm for the primary password only.
-     *
-     *       SECONDARY   Set the algorithm for the secondary password only.
-     *
-     *       The following table lists password encryption algorithms:
-     *
-     *       Type        Definition
-     *
-     *       VMS         The algorithm used in the version of the operating
-     *                   system that is running on your system.
-     *
-     *       CUSTOMER    A numeric value in the range of 128 to 255 that
-     *                   identifies a customer algorithm.
-     *
-     *       The following example selects the VMS algorithm for Sontag's
-     *       primary password:
-     *
-     *       UAF>  MODIFY SONTAG/ALGORITHM=PRIMARY=VMS
-     *
-     *       If you select a site-specific algorithm, you must give a value to
-     *       identify the algorithm, as follows:
-     *
-     *       UAF>  MODIFY SONTAG/ALGORITHM=CURRENT=CUSTOMER=128
-     * </pre>
-     *
-     * @param algorithm
-     * @return
-     */
     public static class ValidAlgorithm implements Validity {
+        /**
+         *  Determine if the value for ALGORITHM is valid.
+         * <pre>
+         *          /ALGORITHM=keyword=type [=value]
+         *
+         *       Sets the password encryption algorithm for a user. The keyword
+         *       VMS refers to the algorithm used in the operating system version
+         *       that is running on your system, whereas a customer algorithm is
+         *       one that is added through the $HASH_PASSWORD system service by
+         *       a customer site, by a layered product, or by a third party. The
+         *       customer algorithm is identified in $HASH_PASSWORD by an integer
+         *       in the range of 128 to 255. It must correspond with the number
+         *       used in the AUTHORIZE command MODIFY/ALGORITHM. By default,
+         *       passwords are encrypted with the VMS algorithm for the current
+         *       version of the operating system.
+         *
+         *       Keyword     Function
+         *
+         *       BOTH        Set the algorithm for primary and secondary
+         *                   passwords.
+         *
+         *       CURRENT     Set the algorithm for the primary, secondary, both,
+         *                   or no passwords, depending on account status. CURRENT
+         *                   is the default value.
+         *
+         *       PRIMARY     Set the algorithm for the primary password only.
+         *
+         *       SECONDARY   Set the algorithm for the secondary password only.
+         *
+         *       The following table lists password encryption algorithms:
+         *
+         *       Type        Definition
+         *
+         *       VMS         The algorithm used in the version of the operating
+         *                   system that is running on your system.
+         *
+         *       CUSTOMER    A numeric value in the range of 128 to 255 that
+         *                   identifies a customer algorithm.
+         *
+         *       The following example selects the VMS algorithm for Sontag's
+         *       primary password:
+         *
+         *       UAF>  MODIFY SONTAG/ALGORITHM=PRIMARY=VMS
+         *
+         *       If you select a site-specific algorithm, you must give a value to
+         *       identify the algorithm, as follows:
+         *
+         *       UAF>  MODIFY SONTAG/ALGORITHM=CURRENT=CUSTOMER=128
+         * </pre>
+         *
+         * @param algorithmList
+         * @return
+         */
         public boolean isValid(List<Object> algorithmList) {
             if (algorithmList.size()!=1)
                 return false;
@@ -322,183 +320,183 @@ public class VmsAttributeValidator {
     }
     private static final Collection<String> ALGO_KEYS_LIST = makeList(new String[] {ALGO_KEY_BOTH, ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
 
-    /**
-     *  Determine if the value for FLAG(s) is valid.
-     * <pre>
-     *          /FLAGS=([NO]option[,...])
-     *
-     *       Specifies login flags for the user. The prefix NO clears the
-     *       flag. The options are as follows:
-     *
-     *       AUDIT        Enables or disables mandatory security auditing for
-     *                    a specific user. By default, the system does not
-     *                    audit the activities of specific users (NOAUDIT).
-     *
-     *       AUTOLOGIN    Restricts the user to the automatic login mechanism
-     *                    when logging in to an account. When set, the flag
-     *                    disables login by any terminal that requires entry
-     *                    of a user name and password. The default is to
-     *                    require a user name and password (NOAUTOLOGIN).
-     *
-     *       CAPTIVE      Prevents the user from changing any defaults at
-     *                    login, for example, /CLI or /LGICMD. It prevents
-     *                    the user from escaping the captive login command
-     *                    procedure specified by the /LGICMD qualifier and
-     *                    gaining access to the DCL command level. Refer to
-     *                    "Guidelines for Captive Command Procedures" in the
-     *                    HP OpenVMS Guide to System Security.
-     *
-     *                    The CAPTIVE flag also establishes an environment
-     *                    where Ctrl/Y interrupts are initially turned off;
-     *                    however, command procedures can still turn on Ctrl/Y
-     *                    interrupts with the DCL command SET CONTROL=Y. By
-     *                    default, an account is not captive (NOCAPTIVE).
-     *
-     *       DEFCLI       Restricts the user to the default command
-     *                    interpreter by prohibiting the use of the /CLI
-     *                    qualifier at login. By default, a user can choose
-     *                    a CLI (NODEFCLI).
-     *
-     *       DISCTLY      Establishes an environment where Ctrl/Y interrupts
-     *                    are initially turned off and are invalid until a
-     *                    SET CONTROL=Y is encountered. This could happen in
-     *                    SYLOGIN.COM or in a procedure called by SYLOGIN.COM.
-     *                    Once a SET CONTROL=Y is executed (which requires
-     *                    no privilege), a user can enter a Ctrl/Y and reach
-     *                    the DCL prompt ($).  If the intent of DISCTLY is
-     *                    to force execution of the login command files,
-     *                    then SYLOGIN.COM should issue the DCL command
-     *                    SET CONTROL=Y to turn on Ctrl/Y interrupts before
-     *                    exiting. By default, Ctrl/Y is enabled (NODISCTLY).
-     *
-     *       DISFORCE_    Removes the requirement that a user must change an
-     *       PWD_CHANGE   expired password at login. By default, a person can
-     *                    use an expired password only once (NODISFORCE_PWD_
-     *                    CHANGE) and then is forced to change the password
-     *                    after logging in. If the user does not select a new
-     *                    password, the user is locked out of the system.
-     *
-     *                    To use this feature, set a password expiration date
-     *                    with the /PWDLIFETIME qualifier.
-     *
-     *       DISIMAGE     Prevents the user from executing RUN and foreign
-     *                    commands. By default, a user can execute RUN and
-     *                    foreign commands (NODISIMAGE).
-     *
-     *       DISMAIL      Disables mail delivery to the user. By default, mail
-     *                    delivery is enabled (NODISMAIL).
-     *
-     *       DISNEWMAIL   Suppresses announcements of new mail at login.
-     *                    By default, the system announces new mail
-     *                    (NODISNEWMAIL).
-     *
-     *       DISPWDDIC    Disables automatic screening of new passwords
-     *                    against a system dictionary. By default, passwords
-     *                    are automatically screened (NODISPWDDIC).
-     *
-     *       DISPWDHIS    Disables automatic checking of new passwords against
-     *                    a list of the user's old passwords. By default, the
-     *                    system screens new passwords (NODISPWDHIS).
-     *
-     *       DISPWDSYNCH  Suppresses synchronization of the external password
-     *                    for this account. See bit 9 in the SECURITY_
-     *                    POLICY system parameter for systemwide password
-     *                    synchronization control.
-     *
-     *       DISRECONNECT Disables automatic reconnection to an existing
-     *                    process when a terminal connection has been
-     *                    interrupted. By default, automatic reconnection
-     *                    is enabled (NODISRECONNECT).
-     *
-     *       DISREPORT    Suppresses reports of the last login time, login
-     *                    failures, and other security reports. By default,
-     *                    login information is displayed (NODISREPORT).
-     *
-     *       DISUSER      Disables the account so the user cannot log in.
-     *                    For example, the DEFAULT account is disabled. By
-     *                    default, an account is enabled (NODISUSER).
-     *
-     *       DISWELCOME   Suppresses the welcome message (an informational
-     *                    message displayed during a local login). This
-     *                    message usually indicates the version number of
-     *                    the operating system that is running and the name of
-     *                    the node on which the user is logged in. By default,
-     *                    a system login message appears (NODISWELCOME).
-     *
-     *       EXTAUTH      Considers user to be authenticated by an external
-     *                    user name and password, not by the SYSUAF user name
-     *                    and password. (The system still uses the SYSUAF
-     *                    record to check a user's login restrictions and
-     *                    quotas and to create the user's process profile.)
-     *
-     *       GENPWD       Restricts the user to generated passwords.
-     *                    By default, users choose their own passwords
-     *                    (NOGENPWD).
-     *
-     *       LOCKPWD      Prevents the user from changing the password for
-     *                    the account. By default, users can change their
-     *                    passwords (NOLOCKPWD).
-     *
-     *       PWD_EXPIRED  Marks a password as expired. The user cannot log in
-     *                    if this flag is set. The LOGINOUT.EXE image sets the
-     *                    flag when both of the following conditions exist: a
-     *                    user logs in with the DISFORCE_PWD_CHANGE flag set,
-     *                    and the user's password expires. A system manager
-     *                    can clear this flag. By default, passwords are not
-     *                    expired after login (NOPWD_EXPIRED).
-     *
-     *       PWD2_        Marks a secondary password as expired. Users cannot
-     *       EXPIRED      log in if this flag is set. The LOGINOUT.EXE image
-     *                    sets the flag when both of the following conditions
-     *                    exist: a user logs in with the DISFORCE_PWD_CHANGE
-     *                    flag set, and the user's password expires. A system
-     *                    manager can clear this flag. By default, passwords
-     *                    are not set to expire after login (NOPWD2_EXPIRED).
-     *
-     *       PWDMIX       Enables case-sensitive and extended-character
-     *                    passwords.
-     *
-     *                    After PWDMIX is specified, you can then use mixed-
-     *                    case and extended characters in passwords. Be aware
-     *                    that before the PWDMIX flag is enabled, the system
-     *                    stores passwords in all upper-case. Therefore, until
-     *                    you change passwords, you must enter your pre-PWDMIX
-     *                    passwords in upper-case.
-     *
-     *                    To change the password after PWDMIX is enabled:
-     *
-     *                    o  You (the user) can use the DCL command SET
-     *                       PASSWORD, specifying the new mixed-case password
-     *                       (omitting quotation marks).
-     *
-     *                    o  You (the system manager) can use the AUTHORIZE
-     *                       command MODIFY/PASSWORD, and enclose the user's
-     *                       new mixed-case password in quotation marks " ".
-     *
-     *       RESTRICTED   Prevents the user from changing any defaults at
-     *                    login (for example, by specifying /LGICMD) and
-     *                    prohibits user specification of a CLI with the
-     *                    /CLI qualifier. The RESTRICTED flag establishes
-     *                    an environment where Ctrl/Y interrupts are initially
-     *                    turned off; however, command procedures can still
-     *                    turn on Ctrl/Y interrupts with the DCL command SET
-     *                    CONTROL=Y. Typically, this flag is used to prevent
-     *                    an applications user from having unrestricted access
-     *                    to the CLI. By default, a user can change defaults
-     *                    (NORESTRICTED).
-     *
-     *       VMSAUTH      Allows account to use standard (SYSUAF)
-     *                    authentication when the EXTAUTH flag would otherwise
-     *                    require external authentication. This depends on the
-     *                    application. An application specifies the VMS domain
-     *                    of interpretation when calling SYS$ACM to request
-     *                    standard VMS authentication for a user account that
-     *                    normally uses external authentication.
-     * </pre>
-     * @param flag
-     * @return
-     */
     public static class ValidFlagList implements Validity {
+        /**
+         *  Determine if the value for FLAG(s) is valid.
+         * <pre>
+         *          /FLAGS=([NO]option[,...])
+         *
+         *       Specifies login flags for the user. The prefix NO clears the
+         *       flag. The options are as follows:
+         *
+         *       AUDIT        Enables or disables mandatory security auditing for
+         *                    a specific user. By default, the system does not
+         *                    audit the activities of specific users (NOAUDIT).
+         *
+         *       AUTOLOGIN    Restricts the user to the automatic login mechanism
+         *                    when logging in to an account. When set, the flag
+         *                    disables login by any terminal that requires entry
+         *                    of a user name and password. The default is to
+         *                    require a user name and password (NOAUTOLOGIN).
+         *
+         *       CAPTIVE      Prevents the user from changing any defaults at
+         *                    login, for example, /CLI or /LGICMD. It prevents
+         *                    the user from escaping the captive login command
+         *                    procedure specified by the /LGICMD qualifier and
+         *                    gaining access to the DCL command level. Refer to
+         *                    "Guidelines for Captive Command Procedures" in the
+         *                    HP OpenVMS Guide to System Security.
+         *
+         *                    The CAPTIVE flag also establishes an environment
+         *                    where Ctrl/Y interrupts are initially turned off;
+         *                    however, command procedures can still turn on Ctrl/Y
+         *                    interrupts with the DCL command SET CONTROL=Y. By
+         *                    default, an account is not captive (NOCAPTIVE).
+         *
+         *       DEFCLI       Restricts the user to the default command
+         *                    interpreter by prohibiting the use of the /CLI
+         *                    qualifier at login. By default, a user can choose
+         *                    a CLI (NODEFCLI).
+         *
+         *       DISCTLY      Establishes an environment where Ctrl/Y interrupts
+         *                    are initially turned off and are invalid until a
+         *                    SET CONTROL=Y is encountered. This could happen in
+         *                    SYLOGIN.COM or in a procedure called by SYLOGIN.COM.
+         *                    Once a SET CONTROL=Y is executed (which requires
+         *                    no privilege), a user can enter a Ctrl/Y and reach
+         *                    the DCL prompt ($).  If the intent of DISCTLY is
+         *                    to force execution of the login command files,
+         *                    then SYLOGIN.COM should issue the DCL command
+         *                    SET CONTROL=Y to turn on Ctrl/Y interrupts before
+         *                    exiting. By default, Ctrl/Y is enabled (NODISCTLY).
+         *
+         *       DISFORCE_    Removes the requirement that a user must change an
+         *       PWD_CHANGE   expired password at login. By default, a person can
+         *                    use an expired password only once (NODISFORCE_PWD_
+         *                    CHANGE) and then is forced to change the password
+         *                    after logging in. If the user does not select a new
+         *                    password, the user is locked out of the system.
+         *
+         *                    To use this feature, set a password expiration date
+         *                    with the /PWDLIFETIME qualifier.
+         *
+         *       DISIMAGE     Prevents the user from executing RUN and foreign
+         *                    commands. By default, a user can execute RUN and
+         *                    foreign commands (NODISIMAGE).
+         *
+         *       DISMAIL      Disables mail delivery to the user. By default, mail
+         *                    delivery is enabled (NODISMAIL).
+         *
+         *       DISNEWMAIL   Suppresses announcements of new mail at login.
+         *                    By default, the system announces new mail
+         *                    (NODISNEWMAIL).
+         *
+         *       DISPWDDIC    Disables automatic screening of new passwords
+         *                    against a system dictionary. By default, passwords
+         *                    are automatically screened (NODISPWDDIC).
+         *
+         *       DISPWDHIS    Disables automatic checking of new passwords against
+         *                    a list of the user's old passwords. By default, the
+         *                    system screens new passwords (NODISPWDHIS).
+         *
+         *       DISPWDSYNCH  Suppresses synchronization of the external password
+         *                    for this account. See bit 9 in the SECURITY_
+         *                    POLICY system parameter for systemwide password
+         *                    synchronization control.
+         *
+         *       DISRECONNECT Disables automatic reconnection to an existing
+         *                    process when a terminal connection has been
+         *                    interrupted. By default, automatic reconnection
+         *                    is enabled (NODISRECONNECT).
+         *
+         *       DISREPORT    Suppresses reports of the last login time, login
+         *                    failures, and other security reports. By default,
+         *                    login information is displayed (NODISREPORT).
+         *
+         *       DISUSER      Disables the account so the user cannot log in.
+         *                    For example, the DEFAULT account is disabled. By
+         *                    default, an account is enabled (NODISUSER).
+         *
+         *       DISWELCOME   Suppresses the welcome message (an informational
+         *                    message displayed during a local login). This
+         *                    message usually indicates the version number of
+         *                    the operating system that is running and the name of
+         *                    the node on which the user is logged in. By default,
+         *                    a system login message appears (NODISWELCOME).
+         *
+         *       EXTAUTH      Considers user to be authenticated by an external
+         *                    user name and password, not by the SYSUAF user name
+         *                    and password. (The system still uses the SYSUAF
+         *                    record to check a user's login restrictions and
+         *                    quotas and to create the user's process profile.)
+         *
+         *       GENPWD       Restricts the user to generated passwords.
+         *                    By default, users choose their own passwords
+         *                    (NOGENPWD).
+         *
+         *       LOCKPWD      Prevents the user from changing the password for
+         *                    the account. By default, users can change their
+         *                    passwords (NOLOCKPWD).
+         *
+         *       PWD_EXPIRED  Marks a password as expired. The user cannot log in
+         *                    if this flag is set. The LOGINOUT.EXE image sets the
+         *                    flag when both of the following conditions exist: a
+         *                    user logs in with the DISFORCE_PWD_CHANGE flag set,
+         *                    and the user's password expires. A system manager
+         *                    can clear this flag. By default, passwords are not
+         *                    expired after login (NOPWD_EXPIRED).
+         *
+         *       PWD2_        Marks a secondary password as expired. Users cannot
+         *       EXPIRED      log in if this flag is set. The LOGINOUT.EXE image
+         *                    sets the flag when both of the following conditions
+         *                    exist: a user logs in with the DISFORCE_PWD_CHANGE
+         *                    flag set, and the user's password expires. A system
+         *                    manager can clear this flag. By default, passwords
+         *                    are not set to expire after login (NOPWD2_EXPIRED).
+         *
+         *       PWDMIX       Enables case-sensitive and extended-character
+         *                    passwords.
+         *
+         *                    After PWDMIX is specified, you can then use mixed-
+         *                    case and extended characters in passwords. Be aware
+         *                    that before the PWDMIX flag is enabled, the system
+         *                    stores passwords in all upper-case. Therefore, until
+         *                    you change passwords, you must enter your pre-PWDMIX
+         *                    passwords in upper-case.
+         *
+         *                    To change the password after PWDMIX is enabled:
+         *
+         *                    o  You (the user) can use the DCL command SET
+         *                       PASSWORD, specifying the new mixed-case password
+         *                       (omitting quotation marks).
+         *
+         *                    o  You (the system manager) can use the AUTHORIZE
+         *                       command MODIFY/PASSWORD, and enclose the user's
+         *                       new mixed-case password in quotation marks " ".
+         *
+         *       RESTRICTED   Prevents the user from changing any defaults at
+         *                    login (for example, by specifying /LGICMD) and
+         *                    prohibits user specification of a CLI with the
+         *                    /CLI qualifier. The RESTRICTED flag establishes
+         *                    an environment where Ctrl/Y interrupts are initially
+         *                    turned off; however, command procedures can still
+         *                    turn on Ctrl/Y interrupts with the DCL command SET
+         *                    CONTROL=Y. Typically, this flag is used to prevent
+         *                    an applications user from having unrestricted access
+         *                    to the CLI. By default, a user can change defaults
+         *                    (NORESTRICTED).
+         *
+         *       VMSAUTH      Allows account to use standard (SYSUAF)
+         *                    authentication when the EXTAUTH flag would otherwise
+         *                    require external authentication. This depends on the
+         *                    application. An application specifies the VMS domain
+         *                    of interpretation when calling SYS$ACM to request
+         *                    standard VMS authentication for a user account that
+         *                    normally uses external authentication.
+         * </pre>
+         * @param flagList
+         * @return
+         */
         public boolean isValid(List<Object> flagList) {
             return isValidList(flagList, FLAGS_LIST);
         }
@@ -514,37 +512,37 @@ public class VmsAttributeValidator {
     };
     public static final Collection<String> FLAGS_LIST = makeList(FLAGS_ARRAY);
 
-    /**
-     * <pre>
-     *          /GENERATE_PASSWORD[=keyword]
-     *          /NOGENERATE_PASSWORD (default)
-     *
-     *       Invokes the password generator to create user passwords.
-     *       Generated passwords can consist of 1 to 10 characters. Specify
-     *       one of the following keywords:
-     *
-     *       BOTH       Generate primary and secondary passwords.
-     *
-     *       CURRENT    Do whatever the DEFAULT account does (for example,
-     *                  generate primary, secondary, both, or no passwords).
-     *                  This is the default keyword.
-     *
-     *       PRIMARY    Generate primary password only.
-     *
-     *       SECONDARY  Generate secondary password only.
-     *
-     *       When you modify a password, the new password expires
-     *       automatically; it is valid only once (unless you specify
-     *       /NOPWDEXPIRED). On login, users are forced to change their
-     *       passwords (unless you specify /FLAGS=DISFORCE_PWD_CHANGE).
-     *
-     *       Note that the /GENERATE_PASSWORD and /PASSWORD qualifiers are
-     *       mutually exclusive.
-     * </pre>
-     * @param passwordTypeList
-     * @return
-     */
     public static class ValidGeneratePassword implements Validity {
+        /**
+         * <pre>
+         *          /GENERATE_PASSWORD[=keyword]
+         *          /NOGENERATE_PASSWORD (default)
+         *
+         *       Invokes the password generator to create user passwords.
+         *       Generated passwords can consist of 1 to 10 characters. Specify
+         *       one of the following keywords:
+         *
+         *       BOTH       Generate primary and secondary passwords.
+         *
+         *       CURRENT    Do whatever the DEFAULT account does (for example,
+         *                  generate primary, secondary, both, or no passwords).
+         *                  This is the default keyword.
+         *
+         *       PRIMARY    Generate primary password only.
+         *
+         *       SECONDARY  Generate secondary password only.
+         *
+         *       When you modify a password, the new password expires
+         *       automatically; it is valid only once (unless you specify
+         *       /NOPWDEXPIRED). On login, users are forced to change their
+         *       passwords (unless you specify /FLAGS=DISFORCE_PWD_CHANGE).
+         *
+         *       Note that the /GENERATE_PASSWORD and /PASSWORD qualifiers are
+         *       mutually exclusive.
+         * </pre>
+         * @param passwordTypeList
+         * @return
+         */
         public boolean isValid(List<Object> passwordTypeList) {
             if (passwordTypeList.size()!=1)
                 return false;
@@ -557,12 +555,12 @@ public class VmsAttributeValidator {
     };
     private static final Collection<String> PWD_TYPE_LIST = makeList(PWD_TYPE_ARRAY);
 
-    /**
-     * 
-     * @param privList
-     * @return
-     */
     public static class ValidPrivList implements Validity {
+        /**
+         *
+         * @param privList
+         * @return
+         */
         public boolean isValid(List<Object> privList) {
             return isValidList(privList, PRIVS_LIST);
         }
@@ -602,12 +600,12 @@ public class VmsAttributeValidator {
         }
     }
 
-    /**
-     * 
-     * @param privList
-     * @return
-     */
     public static class ValidPrimeDaysList implements Validity {
+         /**
+         *
+         * @param primeDaysList
+         * @return
+         */
         public boolean isValid(List<Object> primeDaysList) {
             return isValidList(primeDaysList, PRIMEDAYS_LIST);
         }
