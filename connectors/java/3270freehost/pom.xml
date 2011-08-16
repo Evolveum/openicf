@@ -35,7 +35,7 @@
     <packaging>jar</packaging>
     <name>IBM 3270 Terminal Freehost</name>
     <description>IBM 3270 Terminal Freehost Library</description>
-    <url>http://openicf.forgerock.org/connectors/${project.artifactId}</url>
+    <url>http://openicf.forgerock.org/connectors/3270freehost</url>
     <properties>
         <skipTests>true</skipTests>
         <contracts.skip>true</contracts.skip>
