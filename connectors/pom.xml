@@ -63,6 +63,9 @@
             </notifier>
         </notifiers>
     </ciManagement>
+    <properties>
+        <siteDistributionURL>scp://forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>
+    </properties>
     <modules>
         <module>java/dbcommon</module>
         <module>java/dummy</module>
