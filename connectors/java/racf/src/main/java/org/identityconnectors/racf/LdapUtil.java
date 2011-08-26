@@ -844,7 +844,8 @@ class LdapUtil {
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.getValue() == null) {
-                throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
+                //throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
+                continue; // TODO: Gael fix this please
             }
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
@@ -862,14 +863,16 @@ class LdapUtil {
                     } else {
                         String string = value.toString();
                         if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string)) {
-                            throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
+                            //TODO : Gael fix this
+                            //throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
                         } else {
                             racfAttributes.add(string);
+                            setRacfAttributes = true;
                         }
                     }
                 }
                 negateAttributes = true;
-                setRacfAttributes = true;
+                //setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_AUTHORIZATION_DATE)
                     || attribute.is(ATTR_LDAP_PASSWORD_INTERVAL)
                     || attribute.is(ATTR_LDAP_RACF_ID)
