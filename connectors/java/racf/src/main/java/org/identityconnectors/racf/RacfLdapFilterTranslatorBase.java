@@ -58,9 +58,11 @@ public abstract class RacfLdapFilterTranslatorBase extends AbstractFilterTransla
 
     @Override
     protected String createEqualsExpression(EqualsFilter filter, boolean not) {
-        if (!not && isNameAttribute(filter.getAttribute()))
-            return "("+getFilterAttributeName(filter.getAttribute())+"="+getUidValue(filter.getAttribute())+")";
-        else if (!not && isFilterAttribute(filter.getAttribute()))
+        // Gael: we now deal with UID and not DN anymore...
+        //if (!not && isNameAttribute(filter.getAttribute()))
+        //    return "("+getFilterAttributeName(filter.getAttribute())+"="+getUidValue(filter.getAttribute())+")";
+        //else 
+        if (!not && isFilterAttribute(filter.getAttribute()))
             return "("+getFilterAttributeName(filter.getAttribute())+"="+AttributeUtil.getAsStringValue(filter.getAttribute())+")";
         else
             return super.createEqualsExpression(filter, not);

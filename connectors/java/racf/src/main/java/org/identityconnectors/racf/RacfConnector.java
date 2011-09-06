@@ -114,7 +114,8 @@ public class RacfConnector implements Connector, CreateOp,
     private final SimpleDateFormat _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
     private static final Pattern _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern _connectionPattern = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*", Pattern.CASE_INSENSITIVE);
-
+    private final static Pattern _racfidPattern = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
+    
     public RacfConnector() {
     }
 
@@ -419,7 +420,8 @@ public class RacfConnector implements Connector, CreateOp,
                 try {
                     // We can special case getting at most just name
                     //
-                    name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
+                    // Gael: Get rid of this
+                    //name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
                     ConnectorObject object = null;
                     if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
@@ -437,7 +439,7 @@ public class RacfConnector implements Connector, CreateOp,
 
                         Map<String, Object> clValues = new HashMap<String, Object>();
                         if (commandLineSize > 0) {
-                            clValues = _clUtil.getAttributesFromCommandLine(objectClass, extractRacfIdFromLdapId(name), commandLineAttrs);
+                            clValues = _clUtil.getAttributesFromCommandLine(objectClass, name, commandLineAttrs);
                         }
                         object = buildObject(objectClass, ldapValues, clValues, attributesToGet, wantUid);
                     }
@@ -480,7 +482,7 @@ public class RacfConnector implements Connector, CreateOp,
             uid = (Uid) attributesFromLdap.remove(Uid.NAME);
             builder.setUid(uid);
             String name = (String) attributesFromLdap.remove(Name.NAME);
-            name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
+            //name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
             builder.setName(name);
             addAttributes(objectClass, attributesFromLdap, attributesToGet, builder);
         }
@@ -537,9 +539,10 @@ public class RacfConnector implements Connector, CreateOp,
         String defaultGroup = currentGroups.get(0);
 
         for (String currentGroup : currentGroups) {
-            if (!groups.contains(currentGroup) && !currentGroup.equals(defaultGroup)) {
+            if (!groups.contains(currentGroup) && !currentGroup.equals(defaultGroup)) {  //TODO improve this... lower/upper case issue
                 // Group is being eliminated
                 //
+                // TODO: CHECK THIS
                 String connectionName = createConnectionId(name, currentGroup);
                 delete(RACF_CONNECTION, new Uid(connectionName), null);
             }
@@ -551,6 +554,7 @@ public class RacfConnector implements Connector, CreateOp,
             if (!currentGroups.contains(newGroup)) {
                 // Group is being added
                 //
+                // TODO: CHECK THIS
                 String connectionName = createConnectionId(name, (String) newGroup);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
@@ -582,7 +586,8 @@ public class RacfConnector implements Connector, CreateOp,
     }
 
     private String createConnectionId(String name, String currentGroup) {
-        name = extractRacfIdFromLdapId(name);
+        //name = extractRacfIdFromLdapId(name);
+        // TODO: How can this work? current group is probably a DN
         currentGroup = extractRacfIdFromLdapId(currentGroup);
         String connectionName = "racfuserid=" + name + "+racfgroupid="
                 + currentGroup + ",profileType=connect," + _configuration.getSuffix();
@@ -628,7 +633,6 @@ public class RacfConnector implements Connector, CreateOp,
             return _clUtil.getGroupsForUserViaCommandLine(user);
         }
     }
-    private final static Pattern _racfidPattern = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
 
     /**
      * Extract the RACF account id from a RACF LDAP Uid.
@@ -656,7 +660,7 @@ public class RacfConnector implements Connector, CreateOp,
             return null;
         }
     }
-
+    
     static String extractRacfIdFromLdapId(String uidString) {
         Matcher matcher = _racfidPattern.matcher(uidString);
         if (matcher.matches()) {
