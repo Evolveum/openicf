@@ -39,11 +39,14 @@ import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 
 public class RacfLdapConnectorTests extends RacfConnectorTestBase {
+
     public static void main(String[] args) {
         RacfLdapConnectorTests tests = new RacfLdapConnectorTests();
         try {
-            tests.testCreate();
-        } catch (Exception e) {
+            System.out.println("FOOBAR***********");
+            tests.testSimpleCreate();
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -52,94 +55,101 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
     public static void beforeClass() {
         PropertyBag testProps = TestHelpers.getProperties(RacfConnector.class);
         
-        HOST_NAME         = testProps.getStringProperty("LDAP_HOST_NAME");
-        SYSTEM_PASSWORD   = testProps.getStringProperty("LDAP_SYSTEM_PASSWORD");
-        SUFFIX            = testProps.getStringProperty("LDAP_SUFFIX");
-        SYSTEM_USER       = testProps.getStringProperty("LDAP_SYSTEM_USER");
-       
-        SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
+        HOST_NAME = testProps.getStringProperty("LDAP_HOST_NAME");
+        SYSTEM_PASSWORD = testProps.getStringProperty("LDAP_SYSTEM_PASSWORD");
+        SUFFIX = testProps.getStringProperty("LDAP_SUFFIX");
+        SYSTEM_USER = testProps.getStringProperty("LDAP_SYSTEM_USER");
+        
+        SYSTEM_USER_LDAP = "racfid=" + SYSTEM_USER + ",profileType=user," + SUFFIX;
         
         AssertJUnit.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         AssertJUnit.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         AssertJUnit.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
         AssertJUnit.assertNotNull("SUFFIX must be specified", SUFFIX);
     }
-
+    
     protected void initializeCommandLineConfiguration(RacfConfiguration config) throws IOException {
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
         config.setUserObjectClasses(new String[]{"racfUser", "SAFTsoSegment"});
         config.setGroupObjectClasses(new String[]{"racfGroup"});
-
+        
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setUseSsl(USE_SSL);
         config.setHostPortNumber(HOST_LDAP_PORT);
         config.setSuffix(SUFFIX);
         config.setLdapPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setLdapUserName(SYSTEM_USER_LDAP);
-        config.setActiveSyncCertificate(new String[] {
-                "-----BEGIN CERTIFICATE-----",
-                "MIICVjCCAgCgAwIBAgIJAPsvnrb/wsffMA0GCSqGSIb3DQEBBAUAMFMxCzAJBgNV",
-                "BAYTAmZyMRMwEQYDVQQIEwpTb21lLVN0YXRlMQ8wDQYDVQQHEwZSZW5uZXMxEDAO",
-                "BgNVBAoTB2V4ZW1wbGUxDDAKBgNVBAMTA0lkbTAeFw0wNzAzMTMxOTM1MjNaFw0x",
-                "MDAzMTIxOTM1MjNaMFMxCzAJBgNVBAYTAmZyMRMwEQYDVQQIEwpTb21lLVN0YXRl",
-                "MQ8wDQYDVQQHEwZSZW5uZXMxEDAOBgNVBAoTB2V4ZW1wbGUxDDAKBgNVBAMTA0lk",
-                "bTBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQCaoVISvVd7NXm6nRbcW1xL7MWWupu+",
-                "ctdafakiR4MrDcytcJEo88QLn7Nc3DqbUHEkjRv7Y7dQT1CreUhOM9lpAgMBAAGj",
-                "gbYwgbMwHQYDVR0OBBYEFIpNz/LDpZXCZJad9kr4tBT9E3mBMIGDBgNVHSMEfDB6",
-                "gBSKTc/yw6WVwmSWnfZK+LQU/RN5gaFXpFUwUzELMAkGA1UEBhMCZnIxEzARBgNV",
-                "BAgTClNvbWUtU3RhdGUxDzANBgNVBAcTBlJlbm5lczEQMA4GA1UEChMHZXhlbXBs",
-                "ZTEMMAoGA1UEAxMDSWRtggkA+y+etv/Cx98wDAYDVR0TBAUwAwEB/zANBgkqhkiG",
-                "9w0BAQQFAANBAEc+BJtYMMn2Owmgt3w7lpUnrAPXHVyGsijK5k/cn0qqqkMDlBzq",
-                "/YiOz5RLMjhmH51rxn8E6jChoJ7i5JrHZa4=",
-                "-----END CERTIFICATE-----",
-        });
-        config.setActiveSyncPrivateKey(new String[] {
-                "-----BEGIN RSA PRIVATE KEY-----",
-                "MIIBOwIBAAJBAJqhUhK9V3s1ebqdFtxbXEvsxZa6m75y11p9qSJHgysNzK1wkSjz",
-                "xAufs1zcOptQcSSNG/tjt1BPUKt5SE4z2WkCAwEAAQJAOPYgU8LoDP0gAHyJxVbq",
-                "YxWvm9zWLowDhNQxj+0kBqGWGoRZOxgY1MdJv8mrnq3JnzfxlPcIuiPoVELeM2Kg",
-                "uQIhAMuiAuSIHnuQgZFRXolQ4G626VI7MzYwJCC+u/VMxsEjAiEAwmVClSg1wimN",
-                "ENANMO/oUYXdICnBcS+kyb5YZCOKcgMCIQDFM3lPrc6vZStE+qLtoigmr/ZWj0Qy",
-                "Bv8FwxCtJpQYNwIhAKlzKPnpxgqMu6lnIciBp2nAnUMXAscN97/fyx7nGBxPAiAM",
-                "uYmFLvmZg6MevmsCNl+KjZ4vNAO2SHrvgjFaZoC7tw==",
-                "-----END RSA PRIVATE KEY-----",
-        });
+        config.setActiveSyncCertificate(new String[]{
+                    "-----BEGIN CERTIFICATE-----",
+                    "MIICVjCCAgCgAwIBAgIJAPsvnrb/wsffMA0GCSqGSIb3DQEBBAUAMFMxCzAJBgNV",
+                    "BAYTAmZyMRMwEQYDVQQIEwpTb21lLVN0YXRlMQ8wDQYDVQQHEwZSZW5uZXMxEDAO",
+                    "BgNVBAoTB2V4ZW1wbGUxDDAKBgNVBAMTA0lkbTAeFw0wNzAzMTMxOTM1MjNaFw0x",
+                    "MDAzMTIxOTM1MjNaMFMxCzAJBgNVBAYTAmZyMRMwEQYDVQQIEwpTb21lLVN0YXRl",
+                    "MQ8wDQYDVQQHEwZSZW5uZXMxEDAOBgNVBAoTB2V4ZW1wbGUxDDAKBgNVBAMTA0lk",
+                    "bTBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQCaoVISvVd7NXm6nRbcW1xL7MWWupu+",
+                    "ctdafakiR4MrDcytcJEo88QLn7Nc3DqbUHEkjRv7Y7dQT1CreUhOM9lpAgMBAAGj",
+                    "gbYwgbMwHQYDVR0OBBYEFIpNz/LDpZXCZJad9kr4tBT9E3mBMIGDBgNVHSMEfDB6",
+                    "gBSKTc/yw6WVwmSWnfZK+LQU/RN5gaFXpFUwUzELMAkGA1UEBhMCZnIxEzARBgNV",
+                    "BAgTClNvbWUtU3RhdGUxDzANBgNVBAcTBlJlbm5lczEQMA4GA1UEChMHZXhlbXBs",
+                    "ZTEMMAoGA1UEAxMDSWRtggkA+y+etv/Cx98wDAYDVR0TBAUwAwEB/zANBgkqhkiG",
+                    "9w0BAQQFAANBAEc+BJtYMMn2Owmgt3w7lpUnrAPXHVyGsijK5k/cn0qqqkMDlBzq",
+                    "/YiOz5RLMjhmH51rxn8E6jChoJ7i5JrHZa4=",
+                    "-----END CERTIFICATE-----",});
+        config.setActiveSyncPrivateKey(new String[]{
+                    "-----BEGIN RSA PRIVATE KEY-----",
+                    "MIIBOwIBAAJBAJqhUhK9V3s1ebqdFtxbXEvsxZa6m75y11p9qSJHgysNzK1wkSjz",
+                    "xAufs1zcOptQcSSNG/tjt1BPUKt5SE4z2WkCAwEAAQJAOPYgU8LoDP0gAHyJxVbq",
+                    "YxWvm9zWLowDhNQxj+0kBqGWGoRZOxgY1MdJv8mrnq3JnzfxlPcIuiPoVELeM2Kg",
+                    "uQIhAMuiAuSIHnuQgZFRXolQ4G626VI7MzYwJCC+u/VMxsEjAiEAwmVClSg1wimN",
+                    "ENANMO/oUYXdICnBcS+kyb5YZCOKcgMCIQDFM3lPrc6vZStE+qLtoigmr/ZWj0Qy",
+                    "Bv8FwxCtJpQYNwIhAKlzKPnpxgqMu6lnIciBp2nAnUMXAscN97/fyx7nGBxPAiAM",
+                    "uYmFLvmZg6MevmsCNl+KjZ4vNAO2SHrvgjFaZoC7tw==",
+                    "-----END RSA PRIVATE KEY-----",});
     }
-
+    
     protected String getInstallationDataAttributeName() {
         return ATTR_LDAP_DATA;
     }
+
     protected String getDefaultGroupName() {
         return ATTR_LDAP_DEFAULT_GROUP;
     }
+
     protected String getAttributesAttributeName() {
         return ATTR_LDAP_ATTRIBUTES;
     }
-    protected String getOwnerAttributeName(){
+
+    protected String getOwnerAttributeName() {
         return ATTR_LDAP_OWNER;
     }
-    protected String getSupgroupAttributeName(){
+
+    protected String getSupgroupAttributeName() {
         return ATTR_LDAP_SUP_GROUP;
     }
-    protected String getGroupMembersAttributeName(){
+
+    protected String getGroupMembersAttributeName() {
         return ATTR_LDAP_GROUP_USERIDS;
     }
-    protected String getGroupsAttributeName(){
+
+    protected String getGroupsAttributeName() {
         return ATTR_LDAP_GROUPS;
     }
-    protected String getGroupConnOwnersAttributeName(){
+
+    protected String getGroupConnOwnersAttributeName() {
         return ATTR_LDAP_CONNECT_OWNER;
     }
-    protected String getTsoSizeName(){
+
+    protected String getTsoSizeName() {
         return ATTR_LDAP_TSO_LOGON_SIZE;
     }
-    protected Uid makeUid(String name, ObjectClass objectClass) {
-        return new Uid("racfid="+name+",profileType="+(objectClass.is(ObjectClass.ACCOUNT_NAME)?"USER,":"GROUP,")+SUFFIX);
-    }
 
-    @Test//@Ignore
+    protected Uid makeUid(String name, ObjectClass objectClass) {
+        return new Uid("racfid=" + name + ",profileType=" + ( objectClass.is(ObjectClass.ACCOUNT_NAME) ? "USER," : "GROUP," ) + SUFFIX);
+    }
+    
+    @Test(enabled = false)//@Ignore
     public void testSync() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -147,66 +157,69 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
             SyncUtil su = new SyncUtil(connector);
             SyncResultsHandler handler = new LocalSyncResultsHandler();
             Map map = new HashMap();
-            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { OperationalAttributes.PASSWORD_NAME });
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[]{OperationalAttributes.PASSWORD_NAME});
             OperationOptions options = new OperationOptions(map);
             su.sync(ObjectClass.ACCOUNT, null, handler, options);
-        } finally {
+        }
+        finally {
             connector.dispose();
         }
     }
-
-    @Test//@Ignore
+    
+    @Test(enabled = false)
     public void testListAllUsersWithUserQueries() throws Exception {
         {
             RacfConfiguration config = createConfiguration();
-            config.setUserQueries(new String[] { "(racfid=X*)" });
+            config.setUserQueries(new String[]{"(racfid=X*)"});
             RacfConnector connector = createConnector(config);
             try {
                 TestHandler handler = new TestHandler();
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                TestHelpers.search(connector, ObjectClass.ACCOUNT, null, handler, null);
                 for (ConnectorObject user : handler) {
                     AssertJUnit.assertFalse(user.getUid().getUidValue().startsWith("racfid=I"));
                 }
-            } finally {
+            }
+            finally {
                 connector.dispose();
             }
         }
         {
             RacfConfiguration config = createConfiguration();
-            config.setUserQueries(new String[] { "(racfid=I*)" });
+            config.setUserQueries(new String[]{"(racfid=I*)"});
             RacfConnector connector = createConnector(config);
             try {
                 TestHandler handler = new TestHandler();
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                TestHelpers.search(connector, ObjectClass.ACCOUNT, null, handler, null);
                 AssertJUnit.assertTrue(handler.iterator().hasNext());
                 for (ConnectorObject user : handler) {
                     AssertJUnit.assertTrue(user.getUid().getUidValue().startsWith("racfid=I"));
                 }
-            } finally {
+            }
+            finally {
                 connector.dispose();
             }
         }
         {
             RacfConfiguration config = createConfiguration();
-            config.setUserQueries(new String[] { "(racfid=Z*)", "(racfid=I*)" });
+            config.setUserQueries(new String[]{"(racfid=Z*)", "(racfid=I*)"});
             RacfConnector connector = createConnector(config);
             try {
                 TestHandler handler = new TestHandler();
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                TestHelpers.search(connector, ObjectClass.ACCOUNT, null, handler, null);
                 AssertJUnit.assertTrue(handler.iterator().hasNext());
                 for (ConnectorObject user : handler) {
                     AssertJUnit.assertTrue(
-                            user.getUid().getUidValue().startsWith("racfid=Z") ||
-                            user.getUid().getUidValue().startsWith("racfid=I")
-                            );
+                            user.getUid().getUidValue().startsWith("racfid=Z")
+                            || user.getUid().getUidValue().startsWith("racfid=I"));
                 }
-            } finally {
+            }
+            finally {
                 connector.dispose();
             }
         }
     }
-
-    @Test//@Ignore
+    
+    @Test(enabled = false)//@Ignore
     public void testModifyUser() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -215,7 +228,7 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
 //            displayUser(getUser("CICSUSER", connector));
             // Delete the user
             deleteUser(TEST_USER_UID, connector);
-    
+            
             Set<Attribute> attrs = fillInSampleUser(TEST_USER);
             connector.create(ObjectClass.ACCOUNT, attrs, null);
             ConnectorObject user = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
@@ -247,11 +260,11 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
-                Attribute size = AttributeBuilder.build(getTsoSizeName(), Integer.valueOf(1000)); 
+                Attribute size = AttributeBuilder.build(getTsoSizeName(), Integer.valueOf(1000));                
                 changed.add(size);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector, new String[] {getTsoSizeName()});
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector, new String[]{getTsoSizeName()});
                 assertAttribute(size, object);
             }
             if (false) // temporarily disable test
@@ -278,13 +291,15 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
                 try {
                     connector.update(ObjectClass.ACCOUNT, changed, null);
                     AssertJUnit.fail("Command should have failed");
-                } catch (IllegalArgumentException ce) {
+                }
+                catch (IllegalArgumentException ce) {
                     System.out.println(ce);
-                } catch (ConnectorException ce) {
+                }
+                catch (ConnectorException ce) {
                     System.out.println(ce);
                 }
             }
-    
+            
             ConnectorObject changedUser = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
             //Attribute racfInstallationData = changedUser.getAttributeByName("racfinstallationdata");
             Attribute racfInstallationData = changedUser.getAttributeByName(getInstallationDataAttributeName());
@@ -292,17 +307,17 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
             AssertJUnit.assertTrue(AttributeUtil.getStringValue(racfInstallationData).trim().equalsIgnoreCase("modified data"));
             displayConnectorObject(getUser(makeUid("IDM01", ObjectClass.ACCOUNT).getUidValue(), connector));
             displayConnectorObject(getUser(makeUid("IDM01", ObjectClass.ACCOUNT).getUidValue(), connector));
-        } finally {
+        }
+        finally {
             connector.dispose();
         }
     }
     
     private static class LocalSyncResultsHandler extends LocalHandler implements SyncResultsHandler {
-
+        
         public boolean handle(SyncDelta delta) {
             handle(delta.getObject());
             return true;
         }
     }
-
 }

@@ -78,8 +78,8 @@ public abstract class RacfConnectorTestBase {
     protected static String       SYSTEM_USER;
     protected static String       SYSTEM_USER_LDAP;
     protected static String       SUFFIX;
-    protected static String       TEST_USER = "TEST106";
-    protected static String       TEST_USER2 = "TEST106A";
+    protected static String       TEST_USER = "TEST001";
+    protected static String       TEST_USER2 = "TOTO2";
     protected static String       TEST_GROUP1 = "IDMGRP01";
     protected static String       TEST_GROUP2 = "IDMGRP02";
     protected static String       TEST_GROUP3 = "IDMGRP03";
@@ -111,7 +111,7 @@ public abstract class RacfConnectorTestBase {
         System.out.println("------------ New Test ---------------");
     }
 
-    @Test//@Ignore
+    @Test(enabled=true)//@Ignore
     public void testListAllUsers() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -129,13 +129,14 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
-    public void testListAllGroups() throws Exception {
+    
+    @Test(enabled=true)
+	public void testListAllGroups() throws Exception {
         RacfConfiguration config = createConfiguration();
         testListAllGroups(config);
     }
     
-    @Test
+    //@Test(enabled=true)
 	public void testListAllGroups(RacfConfiguration config) throws Exception {
         RacfConnector connector = createConnector(config);
         try {
@@ -165,7 +166,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 */
-    @Test//@Ignore
+    @Test(enabled=true)//@Ignore
     public void testListAllUsersNameOnly() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -187,7 +188,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
+    @Test(enabled=true)//@Ignore
     public void testListAllGroupsNameOnly() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -209,7 +210,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testGetSpecifiedUser() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -293,7 +294,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
     
-    @Test//@Ignore
+    @Test(enabled=true)//@Ignore
     public void testGetSpecifiedGroup() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -307,7 +308,8 @@ public abstract class RacfConnectorTestBase {
             TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
-                if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
+                if (group.getUid().getUidValue().equalsIgnoreCase("SYS1"))
+                //Gael if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
                     found = true;
                 count++;
             }
@@ -322,7 +324,7 @@ public abstract class RacfConnectorTestBase {
         return one.getUidValue().equalsIgnoreCase(two.getUidValue());
     }
     
-    @Test//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testModifyUser() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -483,7 +485,7 @@ public abstract class RacfConnectorTestBase {
         return null;
     }
 
-    @Test//@Ignore
+    @Test(enabled=true)//@Ignore
     public void testDumpSchema() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -525,16 +527,17 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
-    public void testCreate() throws Exception {
+    @Test(enabled=true)//@Ignore
+    public void testSimpleCreate() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
             Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+            Uid testUser = new Uid(TEST_USER);
     
             // Delete the account if it already exists
             //
-            deleteUser(TEST_USER_UID, connector);
+            deleteUser(testUser, connector);
     
             // Create the account
             //
@@ -545,7 +548,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testResolve() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -573,7 +576,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test
+    @Test(enabled=false)
     @Ignore
     public void testChangePassword() throws Exception {
         RacfConfiguration config = createConfiguration();
@@ -626,7 +629,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testGroups() throws Exception {
         
         RacfConfiguration config = createConfiguration();
@@ -730,7 +733,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testDelete() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -768,7 +771,8 @@ public abstract class RacfConnectorTestBase {
 
     protected Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
-        attrs.add(new Name(makeUid(testUser, ObjectClass.ACCOUNT).getUidValue()));
+        //attrs.add(new Name(makeUid(testUser, ObjectClass.ACCOUNT).getUidValue()));
+        attrs.add(new Name(testUser));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("password".toCharArray())));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.FALSE));
         //attrs.add(AttributeBuilder.build("objectclass", "racfUser"));

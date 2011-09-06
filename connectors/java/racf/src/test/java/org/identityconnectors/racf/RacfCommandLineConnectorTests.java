@@ -67,7 +67,7 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
     public static void main(String[] args) {
         RacfCommandLineConnectorTests tests = new RacfCommandLineConnectorTests();
         try {
-            tests.testCreate();
+            tests.testSimpleCreate();
         } catch (Exception e) {
             e.printStackTrace();
         }
