@@ -111,7 +111,7 @@ public abstract class RacfConnectorTestBase {
         System.out.println("------------ New Test ---------------");
     }
 
-    @Test(enabled=true)//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testListAllUsers() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -130,29 +130,7 @@ public abstract class RacfConnectorTestBase {
     }
 
     
-    @Test(enabled=true)
-	public void testListAllGroups() throws Exception {
-        RacfConfiguration config = createConfiguration();
-        testListAllGroups(config);
-    }
-    
-    //@Test(enabled=true)
-	public void testListAllGroups(RacfConfiguration config) throws Exception {
-        RacfConnector connector = createConnector(config);
-        try {
-            TestHandler handler = new TestHandler();
-            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, null);
-            int count = 0;
-            for (ConnectorObject group : handler) {
-                count++;
-                System.out.println("Read Group:"+group.getUid().getValue());
-            }
-            System.out.println("saw "+count);
-        } finally {
-            connector.dispose();
-        }
-    }
-    
+        
 /*
     @Test//@Ignore
     public void testXXX() throws Exception {
@@ -166,7 +144,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 */
-    @Test(enabled=true)//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testListAllUsersNameOnly() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -181,28 +159,6 @@ public abstract class RacfConnectorTestBase {
             for (ConnectorObject user : handler) {
                 count++;
                 System.out.println("Read User:"+user.getUid().getValue());
-            }
-            System.out.println("saw "+count);
-        } finally {
-            connector.dispose();
-        }
-    }
-
-    @Test(enabled=true)//@Ignore
-    public void testListAllGroupsNameOnly() throws Exception {
-        RacfConfiguration config = createConfiguration();
-        RacfConnector connector = createConnector(config);
-        try {
-            TestHandler handler = new TestHandler();
-            Map<String, Object> map = new HashMap<String, Object>();
-            String[] attributesToGet = { Name.NAME };
-            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
-            OperationOptions options = new OperationOptions(map);
-            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, options);
-            int count = 0;
-            for (ConnectorObject group : handler) {
-                count++;
-                System.out.println("Read Group:"+group.getUid().getValue());
             }
             System.out.println("saw "+count);
         } finally {
@@ -294,10 +250,84 @@ public abstract class RacfConnectorTestBase {
         }
     }
     
-    @Test(enabled=true)//@Ignore
+    // GROUPS UNIT  TESTS
+ 
+    @Test(enabled=false)
+	public void testListAllGroups() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        testListAllGroups(config);
+    }
+    
+    //@Test(enabled=true)
+	public void testListAllGroups(RacfConfiguration config) throws Exception {
+        RacfConnector connector = createConnector(config);
+        try {
+            TestHandler handler = new TestHandler();
+            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, null);
+            int count = 0;
+            for (ConnectorObject group : handler) {
+                count++;
+                System.out.println("Read Group:"+group.getUid().getValue());
+            }
+            System.out.println("saw "+count);
+        } finally {
+            connector.dispose();
+        }
+    }
+   
+    
+        @Test(enabled=false)//@Ignore
+    public void testListAllGroupsNameOnly() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            TestHandler handler = new TestHandler();
+            Map<String, Object> map = new HashMap<String, Object>();
+            String[] attributesToGet = { Name.NAME };
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
+            OperationOptions options = new OperationOptions(map);
+            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, options);
+            int count = 0;
+            for (ConnectorObject group : handler) {
+                count++;
+                System.out.println("Read Group:"+group.getUid().getValue());
+            }
+            System.out.println("saw "+count);
+        } finally {
+            connector.dispose();
+        }
+    }
+
+    
+    @Test(enabled=false)//@Ignore
     public void testGetSpecifiedGroup() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
+        String groupName = "UNIV1";
+        try {
+            boolean found = false;
+            int count = 0;
+            TestHandler handler = new TestHandler();
+            TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, groupName)), handler, null);
+            for (ConnectorObject group : handler) {
+                displayConnectorObject(group);
+                if (group.getUid().getUidValue().equalsIgnoreCase(groupName))
+                //Gael if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
+                    found = true;
+                count++;
+            }
+            AssertJUnit.assertTrue(found);
+            AssertJUnit.assertTrue(count==1);
+        } finally {
+            connector.dispose();
+        }
+    }
+    
+    @Test(enabled=false)//@Ignore
+    public void testGetSpecifiedGroupWithAttrToGet() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        String groupName = "UNIV1";
         try {
             boolean found = false;
             int count = 0;
@@ -305,10 +335,10 @@ public abstract class RacfConnectorTestBase {
             Map<String, Object> optionsMap = new HashMap<String, Object>();
             optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, getGroupMembersAttributeName(), getSupgroupAttributeName(), getOwnerAttributeName(), getInstallationDataAttributeName() });
             OperationOptions options = new OperationOptions(optionsMap);
-            TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
+            TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, groupName)), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
-                if (group.getUid().getUidValue().equalsIgnoreCase("SYS1"))
+                if (group.getUid().getUidValue().equalsIgnoreCase(groupName))
                 //Gael if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
                     found = true;
                 count++;
@@ -320,6 +350,33 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
+    @Test(enabled=true)//@Ignore
+    public void testGetSpecifiedGroupMembers() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        String groupName = "UNIV1";
+        try {
+            boolean found = false;
+            int count = 0;
+            TestHandler handler = new TestHandler();
+            Map<String, Object> optionsMap = new HashMap<String, Object>();
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, getGroupMembersAttributeName()});
+            OperationOptions options = new OperationOptions(optionsMap);
+            TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, groupName)), handler, options);
+            for (ConnectorObject group : handler) {
+                displayConnectorObject(group);
+                if (group.getUid().getUidValue().equalsIgnoreCase(groupName))
+                //Gael if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
+                    found = true;
+                count++;
+            }
+            AssertJUnit.assertTrue(found);
+            AssertJUnit.assertTrue(count==1);
+        } finally {
+            connector.dispose();
+        }
+    }
+    
     boolean equals(Uid one, Uid two) {
         return one.getUidValue().equalsIgnoreCase(two.getUidValue());
     }
@@ -485,7 +542,7 @@ public abstract class RacfConnectorTestBase {
         return null;
     }
 
-    @Test(enabled=true)//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testDumpSchema() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -527,7 +584,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    @Test(enabled=true)//@Ignore
+    @Test(enabled=false)//@Ignore
     public void testSimpleCreate() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
