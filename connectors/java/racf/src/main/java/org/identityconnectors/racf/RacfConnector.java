@@ -115,7 +115,7 @@ public class RacfConnector implements Connector, CreateOp,
     private static final Pattern _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern _connectionPattern = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*", Pattern.CASE_INSENSITIVE);
     private final static Pattern _racfidPattern = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
-    
+
     public RacfConnector() {
     }
 
@@ -131,7 +131,7 @@ public class RacfConnector implements Connector, CreateOp,
     /**
      * {@inheritDoc}
      */
-    public Configuration getConfiguration() {
+    public RacfConfiguration getConfiguration() {
         return this._configuration;
     }
 
@@ -139,8 +139,6 @@ public class RacfConnector implements Connector, CreateOp,
      * {@inheritDoc}
      */
     public void init(Configuration configuration) {
-        _accountAttributes = null;
-        _groupAttributes = null;
         try {
             _configuration = (RacfConfiguration) configuration;
             if (!_configuration.isNoCommandLine()) {
@@ -150,6 +148,10 @@ public class RacfConnector implements Connector, CreateOp,
                 _ldapUtil = new LdapUtil(this);
             }
             _connection = new RacfConnection(_configuration);
+            _accountAttributes = null;
+            _groupAttributes = null;
+            // We want to init _accountAttributes and _groupAtributes here
+            schema();
         }
         catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -377,7 +379,7 @@ public class RacfConnector implements Connector, CreateOp,
 
         try {
             TreeSet<String> attributesToGet = new TreeSet<String>();
-            schema();
+            //schema();
 
             if (options != null && options.getAttributesToGet() != null) {
                 attributesToGet = new TreeSet<String>();
@@ -660,7 +662,7 @@ public class RacfConnector implements Connector, CreateOp,
             return null;
         }
     }
-    
+
     static String extractRacfIdFromLdapId(String uidString) {
         Matcher matcher = _racfidPattern.matcher(uidString);
         if (matcher.matches()) {
@@ -741,9 +743,9 @@ public class RacfConnector implements Connector, CreateOp,
                 ConnectorObject object = iterator.next();
                 Attribute expired = object.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 if (expired != null) {
-                attributes.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
+                    attributes.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
+                }
             }
-        }
         }
         splitUpOutgoingAttributes(objectClass, attributes, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
@@ -912,7 +914,7 @@ public class RacfConnector implements Connector, CreateOp,
         // RACF SCHEMA
         // As documented here:
         // http://publib.boulder.ibm.com/infocenter/zvm/v5r4/index.jsp?topic=/com.ibm.zvm.v54.kldl0/tivp04.htm
-        
+
         // RACF Users
         //
         {
@@ -934,7 +936,7 @@ public class RacfConnector implements Connector, CreateOp,
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER, String.class));
-            
+
             // racfUser
             // RACFUSER Profile entry
             // SUP ( racfBaseCommon ) 
@@ -960,7 +962,7 @@ public class RacfConnector implements Connector, CreateOp,
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME, String.class));
-            
+
             // SAFDfpSegment
             // SAF DFP portions of a RACF USER or GROUP profile
             // SUP ( top )
@@ -971,7 +973,7 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_MGMT_CLASS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_STORAGE_CLASS, String.class));
             }
-            
+
             // SAFTsoSegment
             // OS/390 TSO information in a RACF USER profile
             // SUP ( top )
@@ -1187,7 +1189,7 @@ public class RacfConnector implements Connector, CreateOp,
             groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_ACCOUNTID, String.class));
 
             groupAttributes.add(buildNonupdateAttribute(Name.NAME, String.class, true));
-            
+
             // racfBaseCommon
             // Represents a commong base class for all RACF profiles.
             // MAY ( racfAuthorizationDate $ racfOwner $ racfInstallationData $ racfDatasetModel )
@@ -1195,7 +1197,7 @@ public class RacfConnector implements Connector, CreateOp,
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL, String.class));
             groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_AUTHORIZATION_DATE, String.class));
-            
+
             // racfGroup
             // Represents a RACF GROUP Profile entry
             // SUP ( racfBaseCommon )
@@ -1210,7 +1212,7 @@ public class RacfConnector implements Connector, CreateOp,
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_USER_ACCESS, String.class)); // I have a doubt about this one...
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL, String.class));
-            
+
             // racfGroupOvmSegment
             // Represents the OS/390 OVM Group information portion of a RACF GROUP profile
             // SUP ( top ) 
@@ -1218,7 +1220,7 @@ public class RacfConnector implements Connector, CreateOp,
             if (groupObjectClasses.contains("racfGroupOvmSegment")) {
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_GROUP_ID, String.class));
             }
-            
+
             // racfGroupOmvsSegment
             // Represents the OS/390 OMVS Group information portion of a RACF GROUP profile
             // SUP ( top ) 
@@ -1227,7 +1229,7 @@ public class RacfConnector implements Connector, CreateOp,
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_GROUP_ID, String.class));
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_GROUP_ID_KEYWORD, String.class));
             }
-            
+
             // SAFDfpSegment
             // Represents the SAF DFP portions of a RACF USER or GROUP profile
             // SUP ( top )
