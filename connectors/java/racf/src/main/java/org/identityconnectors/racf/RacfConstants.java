@@ -60,6 +60,8 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_TSO_USERDATA          = "SAFUserData";
     public static final String ATTR_LDAP_TSO_DEFAULT_UNIT      = "SAFDefaultUnit";
     public static final String ATTR_LDAP_TSO_SECURITY_LABEL    = "SAFTsoSecurityLabel";
+    public static final String ATTR_LDAP_TSO_HOLD_CLASS        = "SAFHoldClass";
+    public static final String ATTR_LDAP_TSO_JOB_CLASS         = "SAFJobClass";
     public static final String ATTR_LDAP_LANG_PRIMARY          = "racfPrimaryLanguage";
     public static final String ATTR_LDAP_LANG_SECONDARY        = "racfSecondaryLanguage";
     public static final String ATTR_LDAP_CICS_OPER_ID          = "racfOperatorIdentification";
@@ -67,6 +69,8 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_CICS_OPER_PRIORITY    = "racfOperatorPriority";
     public static final String ATTR_LDAP_CICS_OPER_RESIGNON    = "racfOperatorReSignon";
     public static final String ATTR_LDAP_CICS_TERM_TIMEOUT     = "racfTerminalTimeout";
+    public static final String ATTR_LDAP_CICS_RSLKEY           = "racfRslKey";
+    public static final String ATTR_LDAP_CICS_TSLKEY           = "racfTslKey";
     public static final String ATTR_LDAP_OP_STORAGE            = "racfStorageKeyword";
     public static final String ATTR_LDAP_OP_AUTH               = "racfAuthKeyword";
     public static final String ATTR_LDAP_OP_MFORM              = "racfMformKeyword";
@@ -82,6 +86,9 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_OP_MSCOPE_SYSTEMS     = "racfMscopeSystems";
     public static final String ATTR_LDAP_OP_ALTGROUP           = "racfAltGroupKeyword";
     public static final String ATTR_LDAP_OP_AUTO               = "racfAutoKeyword";
+    public static final String ATTR_LDAP_OP_HC                 = "racfHcKeyword";
+    public static final String ATTR_LDAP_OP_INTIDS             = "racfIntidsKeyword";
+    public static final String ATTR_LDAP_OP_UNKNIDS            = "racfUnknidsKeyword";
     public static final String ATTR_LDAP_WA_USER_NAME          = "racfWorkAttrUserName";
     public static final String ATTR_LDAP_WA_BUILDING           = "racfBuilding";
     public static final String ATTR_LDAP_WA_DEPARTMENT         = "racfDepartment";
@@ -100,6 +107,9 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_OMVS_MAX_THREADS      = "racfOmvsMaximumThreadsPerProcess";
     public static final String ATTR_LDAP_OMVS_MAX_MEMORY_MAP   = "racfOmvsMaximumMemoryMapArea";
     public static final String ATTR_LDAP_OMVS_MAX_PROCESSES    = "racfOmvsMaximumProcessesPerUID";
+    public static final String ATTR_LDAP_OMVS_MAX_MEMORY_LIMIT = "racfOmvsMemoryLimit";
+    public static final String ATTR_LDAP_OMVS_SHARED_MEM_MAX   = "racfOmvsSharedMemoryMaximum";
+    public static final String ATTR_LDAP_OMVS_UID_KEYWORD      = "racfOmvsUidKeyword";
     public static final String ATTR_LDAP_NV_INITIALCMD         = "racfNetviewInitialCommand";
     public static final String ATTR_LDAP_NV_DEFAULT_CONSOLE    = "racfDefaultConsoleName";
     public static final String ATTR_LDAP_NV_CTL                = "racfCTLKeyword";
@@ -132,6 +142,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_UNIVERSAL             = "racfGroupUniversal";
     public static final String ATTR_LDAP_OVM_GROUP_ID          = "racfOvmGroupId";
     public static final String ATTR_LDAP_OMVS_GROUP_ID         = "racfOmvsGroupId";
+    public static final String ATTR_LDAP_OMVS_GROUP_ID_KEYWORD = "racfOmvsGroupIdKeyword";
     public static final String ATTR_LDAP_USER_ACCESS           = "racfGroupUserAccess";
     
     // Attributes on Connection

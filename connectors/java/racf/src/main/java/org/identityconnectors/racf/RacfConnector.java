@@ -909,6 +909,10 @@ public class RacfConnector implements Connector, CreateOp,
                 groupObjectClasses.add(groupObjectClass);
             }
         }
+        // RACF SCHEMA
+        // As documented here:
+        // http://publib.boulder.ibm.com/infocenter/zvm/v5r4/index.jsp?topic=/com.ibm.zvm.v54.kldl0/tivp04.htm
+        
         // RACF Users
         //
         {
@@ -917,33 +921,63 @@ public class RacfConnector implements Connector, CreateOp,
             // Required Attributes
             //
             attributes.add(buildReadonlyAttribute(ATTR_LDAP_ACCOUNTID, String.class));
-            attributes.add(buildReadonlyAttribute(ATTR_LDAP_ID, String.class));
+
             attributes.add(buildNonupdateAttribute(Name.NAME, String.class, true));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP, String.class));
 
             // Optional Attributes (have RACF default values)
             //
+            // racfBaseCommon
+            // common base class for all RACF profiles  
+            // (SUP top )
+            // MAY ( racfOwner $ racfInstallationData $ racfDatasetModel $ racfAuthorizationDate )
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER, String.class));
+            
+            // racfUser
+            // RACFUSER Profile entry
+            // SUP ( racfBaseCommon ) 
+            // MUST ( racfid ) 
+            attributes.add(buildReadonlyAttribute(ATTR_LDAP_ID, String.class));
+            //MAY ( racfAuthorizationDate $ racfAttributes $ racfPassword $ racfPasswordChangeDate $
+            //      racfPasswordEnvelope $ racfPasswordInterval $ racfProgrammerName $ racfDefaultGroup $ 
+            //      racfLastAccess $ racfSecurityLabel $ racfSecurityCategoryList $ racfRevokeDate $ 
+            //      racfResumeDate $ racfLogonDays $ racfLogonTime $ racfClassName $ racfConnectGroupName $ 
+            //      racfConnectGroupAuthority $ racfConnectGroupUACC $ racfSecurityLevel $ racfPassPhrase $ 
+            //      racfPassPhraseChangeDate $ racfHavePasswordEnvelope $  racfPassPhraseEnvelope $ racfHavePassPhraseEnvelope )
             attributes.add(buildReadonlyAttribute(ATTR_LDAP_AUTHORIZATION_DATE, String.class));
-            attributes.add(buildReadonlyAttribute(ATTR_LDAP_PASSWORD_INTERVAL, String.class));
+            attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES, String.class, false));
             attributes.add(buildReadonlyAttribute(ATTR_LDAP_PASSWORD_CHANGE, String.class));
-            attributes.add(buildReadonlyAttribute(ATTR_LDAP_LAST_ACCESS, String.class));
+            // password envelope?
+            attributes.add(buildReadonlyAttribute(ATTR_LDAP_PASSWORD_INTERVAL, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROGRAMMER_NAME, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP, String.class));
+            attributes.add(buildReadonlyAttribute(ATTR_LDAP_LAST_ACCESS, String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_CAT_LIST, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME, String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME, String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL, String.class));
+            
+            // SAFDfpSegment
+            // SAF DFP portions of a RACF USER or GROUP profile
+            // SUP ( top )
+            // MAY ( SAFDfpDataApplication $ SAFDfpDataClass $ SAFDfpManagementClass $ SAFDfpStorageClass ) )
             if (userObjectClasses.contains("SAFDfpSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_APP, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_CLASS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_MGMT_CLASS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_STORAGE_CLASS, String.class));
             }
+            
+            // SAFTsoSegment
+            // OS/390 TSO information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( SAFAccountNumber $ SAFDestination $ SAFHoldClass $ SAFJobClass $ SAFMessageClass $
+            //       SAFDefaultLoginProc $ SAFLogonSize $ SAFMaximumRegionSize $ SAFDefaultSysoutClass $ SAFUserdata $
+            //       SAFDefaultUnit $ SAFTsoSecurityLabel $ SAFDefaultCommand ) 
             if (userObjectClasses.contains("SAFTsoSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_ACCOUNT_NUMBER, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_CMD, String.class));
@@ -956,18 +990,38 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_USERDATA, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_UNIT, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_SECURITY_LABEL, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_HOLD_CLASS, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_JOB_CLASS, String.class));
             }
+            // racfLanguageSegment
+            // OS/390 language information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfPrimaryLanguage $ racfSecondaryLanguage )
             if (userObjectClasses.contains("racfLanguageSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_PRIMARY, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_SECONDARY, String.class));
             }
+            // racfCicsSegment
+            // OS/390 CICS information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfOperatorClass $ racfOperatorIdentification $ racfOperatorPriority $ racfOperatorReSignon $
+            //       racfRslKey $ racfTerminalTimeout $ racfTslKey )
             if (userObjectClasses.contains("racfCicsSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_ID, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_CLASS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_PRIORITY, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_RESIGNON, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_TERM_TIMEOUT, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_TSLKEY, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_RSLKEY, String.class));
             }
+            // racfOperparmSegment
+            // OS/390 Operator parameters in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfStorageKeyword $ racfAuthKeyword $ racfMformKeyword $ racfLevelKeyword $ racfMonitorKeyword $
+            //       racfRoutcodeKeyword $ racfLogCommandResponseKeyword $ racfMGIDKeyword $ racfDOMKeyword $
+            //       racfKEYKeyword $ racfCMDSYSKeyword $ racfUDKeyword $ racfMscopeSystems $ racfAltGroupKeyword $
+            //       racfAutoKeyword $ racfHcKeyword $ racfIntidsKeyword $ racfUnknidsKeyword )
             if (userObjectClasses.contains("racfOperparmSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_STORAGE, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTH, String.class));
@@ -984,7 +1038,14 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MSCOPE_SYSTEMS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_ALTGROUP, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTO, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_HC, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_INTIDS, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_UNKNIDS, String.class));
             }
+            // racfWorkAttrSegment
+            // OS/390 work attributes information in a RACF USER profile' AUXILIARY SUP ( top )
+            // MAY ( racfWorkAttrUsername $ racfBuilding $ racfDepartment $ racfRoom $ racfAddressLine1 $
+            //       racfAddressLine2 $ racfAddressLine3 $ racfAddressLine4 $ racfWorkAttrAccountNumber )
             if (userObjectClasses.contains("racfWorkAttrSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_USER_NAME, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_BUILDING, String.class));
@@ -996,6 +1057,13 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE4, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ACCOUNT_NUMBER, String.class));
             }
+            // racfUserOmvsSegment
+            // OS/390 OMVS User information portion of a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfOmvsUid $ racfOmvsHome $ racfOmvsInitialProgram $ racfOmvsMaximumAddressSpaceSize $
+            // racfOmvsMaximumCPUTime $ racfOmvsMaximumFilesPerProcess $ racfOmvsMaximumMemoryMapArea $
+            // racfOmvsMaximumProcessesPerUID $ racfOmvsMaximumThreadsPerProcess $ racfOmvsMemoryLimit $
+            // racfOmvsSharedMemoryMaximum $ racfOmvsUidKeyword )
             if (userObjectClasses.contains("racfUserOmvsSegment")) {
                 attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_UID, String.class));
                 attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_HOME, String.class));
@@ -1006,7 +1074,15 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_FILES, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_THREADS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_MEMORY_MAP, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_MEMORY_LIMIT, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_SHARED_MEM_MAX, String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_UID_KEYWORD, String.class));
             }
+            // racfNetviewSegment
+            // OS/390 Netview information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfNetviewInitialCommand $ racfDefaultConsoleName $ racfCTLKeyword $ racfMSGRCVRKeyword $
+            //       racfNetviewOperatorClass $ racfDomains $ racfNGMFADMKeyword $ racfNGMFVSPNKeyword )
             if (userObjectClasses.contains("racfNetviewSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_INITIALCMD, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DEFAULT_CONSOLE, String.class));
@@ -1015,21 +1091,39 @@ public class RacfConnector implements Connector, CreateOp,
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_OPERATOR_CLASS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DOMAINS, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_NGMFADM, String.class));
+            }
+            // racfDCESegment
+            // OS/390 DCE information in a RACF USER profile'
+            // SUP ( top )
+            // MAY ( racfDCEAutoLogin $ racfDCEHomeCell $ racfDCEHomeCellUUID $ racfDCEPrincipal $ racfDCEUUID )
+            if (userObjectClasses.contains("racfDCESegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_UUID, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_PRINCIPAL, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_HOME_CELL, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_HOME_CELL_UUID, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_AUTOLOGIN, String.class));
             }
+            // racfUserOvmSegment
+            // OS/390 OVM User information portion of a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfOvmUid $ racfOvmHome $ racfOvmInitialProgram $ racfOvmFileSystemRoot )
             if (userObjectClasses.contains("racfUserOvmSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_UID, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_HOME, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_INITIAL_PROGRAM, String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_FILESYSTEM_ROOT, String.class));
             }
+            // racfLNotesSegment
+            // OS/390 LNOTES segment information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfLNotesShortName )
             if (userObjectClasses.contains("racfLNotesSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LN_SHORT_NAME, String.class));
             }
+            // racfNDSSegment
+            // OS/390 NDS segment information in a RACF USER profile
+            // SUP ( top )
+            // MAY ( racfNDSUserName ) )
             if (userObjectClasses.contains("racfNDSSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NDS_USER_NAME, String.class));
             }
@@ -1046,7 +1140,6 @@ public class RacfConnector implements Connector, CreateOp,
 
             // Multi-valued attributes
             //
-            attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES, String.class, false));
             attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUPS, String.class));
             attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_CONNECT_OWNER, String.class));
 
@@ -1090,9 +1183,11 @@ public class RacfConnector implements Connector, CreateOp,
         //
         {
             Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            // Artificial attr - Sun Idm compat I guess...
             groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_ACCOUNTID, String.class));
 
             groupAttributes.add(buildNonupdateAttribute(Name.NAME, String.class, true));
+            
             // racfBaseCommon
             // Represents a commong base class for all RACF profiles.
             // MAY ( racfAuthorizationDate $ racfOwner $ racfInstallationData $ racfDatasetModel )
@@ -1103,23 +1198,40 @@ public class RacfConnector implements Connector, CreateOp,
             
             // racfGroup
             // Represents a RACF GROUP Profile entry
+            // SUP ( racfBaseCommon )
             // MUST ( racfid )
-            // MAY ( racfSuperiorGroup $ racfGroupNoTermUAC $ racfSubGroupName $ racfGroupUserAccess $ racfGroupUserids )
+            // MAY ( racfSuperiorGroup $ racfGroupNoTermUAC $ racfSubGroupName $ racfGroupUserAccess $ racfGroupUserids ) ???
+            // MAY ( racfSuperiorGroup $ racfGroupNoTermUAC $ racfSubGroupName $ racfGroupUserids $ racfGroupUniversal ) )
+
             groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_ID, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC, String.class));
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP, String.class));
-            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_USER_ACCESS, String.class));
+            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_USER_ACCESS, String.class)); // I have a doubt about this one...
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS, String.class));
-            
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL, String.class));
             
+            // racfGroupOvmSegment
+            // Represents the OS/390 OVM Group information portion of a RACF GROUP profile
+            // SUP ( top ) 
+            // MAY ( racfOvmGroupId ) )
             if (groupObjectClasses.contains("racfGroupOvmSegment")) {
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_GROUP_ID, String.class));
             }
+            
+            // racfGroupOmvsSegment
+            // Represents the OS/390 OMVS Group information portion of a RACF GROUP profile
+            // SUP ( top ) 
+            // MAY ( racfOmvsGroupId $ racfOmvsGroupIdKeyword ) )
             if (groupObjectClasses.contains("racfGroupOmvsSegment")) {
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_GROUP_ID, String.class));
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_GROUP_ID_KEYWORD, String.class));
             }
+            
+            // SAFDfpSegment
+            // Represents the SAF DFP portions of a RACF USER or GROUP profile
+            // SUP ( top )
+            // MAY ( SAFDfpDataApplication $ SAFDfpDataClass $ SAFDfpManagementClass $ SAFDfpStorageClass ) )
             if (groupObjectClasses.contains("SAFDfpSegment")) {
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP, String.class));
                 groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS, String.class));
