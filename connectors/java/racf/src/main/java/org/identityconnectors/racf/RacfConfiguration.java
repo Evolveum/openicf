@@ -74,6 +74,8 @@ public class RacfConfiguration extends AbstractConfiguration {
     private String[]       _asCertificate;
     private String[]       _asPrivateKey;
     private String[]       _asFilterChangesBy;
+    
+    private Boolean        _isSunIdm = false;
 
     public RW3270Configuration getRW3270Configuration(int index) {
         return new RW3270ConfigurationProxy(this, index);
@@ -104,6 +106,9 @@ public class RacfConfiguration extends AbstractConfiguration {
     public RacfConfiguration() {
         setUserObjectClasses(new String[] { 
                 "racfUser",
+                "SAFTsoSegment",
+                "racfUserOmvsSegment",
+                "racfUserOvmSegment",
                 "racfCicsSegment",
                 "racfDCESegment",
                 "SAFDfpSegment",
@@ -112,17 +117,17 @@ public class RacfConfiguration extends AbstractConfiguration {
                 "racfLNotesSegment",
                 "racfNDSSegment",
                 "racfNetviewSegment",
-                "racfUserOmvsSegment",
                 "racfOperparmSegment",
-                "racfUserOvmSegment",
                 "racfProxySegment",
-                "SAFTsoSegment",
-                "racfWorkAttrSegment"});
+                "racfWorkAttrSegment"
+        });
         setGroupObjectClasses(new String[] { 
                 "racfGroup",
                 "racfGroupOvmSegment",
                 "racfGroupOmvsSegment",
-                "SAFDfpSegment"});
+                "SAFDfpSegment"
+        });
+        
         //setConnectScript(getLoginScript());
         //setDisconnectScript(getLogoffScript());
         setSegmentNames(new String[] { 
@@ -669,6 +674,15 @@ public class RacfConfiguration extends AbstractConfiguration {
 
     public void setActiveSyncPasswordDecryptorClass(String decryptorClass) {
         _asDecryptorClass = decryptorClass;
+    }
+    
+    @ConfigurationProperty
+    public boolean getIsSunIdm(){
+        return _isSunIdm;
+    }
+    
+    public void setIsSunIdm(boolean sunIdm){
+        _isSunIdm = sunIdm;
     }
 
     @SuppressWarnings("unchecked")
