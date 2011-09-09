@@ -370,9 +370,9 @@ public class RacfConnector implements Connector, CreateOp,
         List<String> names = null;
 
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-            names = getUsers(query);
+            names = getUsers(query); // Need to exit if null...
         } else if (objectClass.is(RACF_GROUP_NAME)) {
-            names = getGroups(query);
+            names = getGroups(query); // Need to exit if null...
         } else {
             throw new ConnectorException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
         }
@@ -383,7 +383,7 @@ public class RacfConnector implements Connector, CreateOp,
 
             if (options != null && options.getAttributesToGet() != null) {
                 attributesToGet = new TreeSet<String>();
-                for (String name : options.getAttributesToGet()) {
+                for (String name : options.getAttributesToGet()) { //TODO: Gael - Selected objectclass should be validated here... otherwise we pick every attributes from connector config
                     attributesToGet.add(name);
                 }
             } else {
@@ -422,15 +422,11 @@ public class RacfConnector implements Connector, CreateOp,
                 try {
                     // We can special case getting at most just name
                     //
-                    // Gael: Get rid of this
-                    //name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
                     ConnectorObject object = null;
                     if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                         builder.setObjectClass(objectClass);
                         builder.setUid(name);
-                        // Gael: ConnectorObject needs a Name - removed the if condition
-                        // if (getNameOnly)
                         builder.setName(name);
                         object = builder.build();
                     } else {
@@ -1202,14 +1198,12 @@ public class RacfConnector implements Connector, CreateOp,
             // Represents a RACF GROUP Profile entry
             // SUP ( racfBaseCommon )
             // MUST ( racfid )
-            // MAY ( racfSuperiorGroup $ racfGroupNoTermUAC $ racfSubGroupName $ racfGroupUserAccess $ racfGroupUserids ) ???
             // MAY ( racfSuperiorGroup $ racfGroupNoTermUAC $ racfSubGroupName $ racfGroupUserids $ racfGroupUniversal ) )
 
             groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_ID, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC, String.class));
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP, String.class));
-            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_USER_ACCESS, String.class)); // I have a doubt about this one...
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS, String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL, String.class));
 

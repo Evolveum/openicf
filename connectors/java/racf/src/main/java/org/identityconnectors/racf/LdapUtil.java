@@ -406,7 +406,7 @@ class LdapUtil {
 
         // Now special case 'name-only', since that includes accountId
         //
-        if (attributesToGet.size() == 0) {
+        if (attributesToGet.isEmpty()) {
             Uid uid = new Uid(name);
             attributesRead.put(Uid.NAME, uid);
             attributesRead.put(Name.NAME, name);
@@ -469,23 +469,22 @@ class LdapUtil {
         //
         // TODO: Gael - a lot here. We need to handle universal groups.
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            if (owners && (attributesRead.get(ATTR_LDAP_GROUP_USERIDS) != null)) {
-                    List<String> ownersForGroup = new ArrayList<String>();
-                    List<String> usersForGroup = new ArrayList<String>();
-                    //Set<String> connectAttributesToGet = new HashSet<String>();
-                    // connectAttributesToGet.add(ATTR_LDAP_OWNER);
-                    if (attributesRead.get(ATTR_LDAP_GROUP_USERIDS) instanceof String){
-                        usersForGroup.add((String)attributesRead.get(ATTR_LDAP_GROUP_USERIDS));
-                    }
-                    else{
-                        usersForGroup.addAll((List<String>)attributesRead.get(ATTR_LDAP_GROUP_USERIDS));
-                    }
-                    for (String user : usersForGroup) {
-                        user = RacfConnector.extractRacfIdFromLdapId(user);
-                        String root = "racfuserid=" + user + "+racfgroupid=" + name + ",profileType=Connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
-                        ownersForGroup.add(RacfConnector.extractRacfIdFromLdapId(getConnectOwner(root)));
-                    }
-                    attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForGroup);
+            if (owners && ( attributesRead.get(ATTR_LDAP_GROUP_USERIDS) != null )) {
+                List<String> ownersForGroup = new ArrayList<String>();
+                List<String> usersForGroup = new ArrayList<String>();
+                //Set<String> connectAttributesToGet = new HashSet<String>();
+                // connectAttributesToGet.add(ATTR_LDAP_OWNER);
+                if (attributesRead.get(ATTR_LDAP_GROUP_USERIDS) instanceof String) {
+                    usersForGroup.add((String) attributesRead.get(ATTR_LDAP_GROUP_USERIDS));
+                } else {
+                    usersForGroup.addAll((List<String>) attributesRead.get(ATTR_LDAP_GROUP_USERIDS));
+                }
+                for (String user : usersForGroup) {
+                    user = RacfConnector.extractRacfIdFromLdapId(user);
+                    String root = "racfuserid=" + user + "+racfgroupid=" + name + ",profileType=Connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+                    ownersForGroup.add(RacfConnector.extractRacfIdFromLdapId(getConnectOwner(root)));
+                }
+                attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForGroup);
             }
         }
 
@@ -609,10 +608,10 @@ class LdapUtil {
         // Remap GROUP attributes as needed
         //
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            if (attributesRead.containsKey(ATTR_LDAP_SUP_GROUP)) {  
+            if (attributesRead.containsKey(ATTR_LDAP_SUP_GROUP)) {
                 Object value = attributesRead.get(ATTR_LDAP_SUP_GROUP);
                 if (value instanceof String) {
-                    if (((String) value).startsWith("racfid=NONE,")){
+                    if (( (String) value ).startsWith("racfid=NONE,")) {
                         attributesRead.put(ATTR_LDAP_SUP_GROUP, null);
                     }
                 }
@@ -841,13 +840,21 @@ class LdapUtil {
             }
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
-                //
+                continue;
             } else if (attribute.is("objectclass")) {
                 BasicAttribute objectClassAttribute = new BasicAttribute("objectclass");
                 for (Object value : attribute.getValue()) {
                     objectClassAttribute.add(value);
                 }
                 basicAttributes.put(objectClassAttribute);
+            } else if (attribute.is(ATTR_LDAP_DATA)) {
+                // TODO: GAEL Ignore the default NO INSTALLATION DATA
+                continue;
+            } else if (attribute.is(ATTR_LDAP_MODEL)) {
+                // TODO: GAEL Ignore the default NO MODEL DATASET
+                continue;
+            //} else if (attribute.is(ATTR_LDAP_SUP_GROUP)) {
+                // TOFO: GAEL - Need to verifiy superior group exists
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
                     if (value == null) {

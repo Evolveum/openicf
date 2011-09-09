@@ -143,7 +143,6 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_OVM_GROUP_ID          = "racfOvmGroupId";
     public static final String ATTR_LDAP_OMVS_GROUP_ID         = "racfOmvsGroupId";
     public static final String ATTR_LDAP_OMVS_GROUP_ID_KEYWORD = "racfOmvsGroupIdKeyword";
-    public static final String ATTR_LDAP_USER_ACCESS           = "racfGroupUserAccess";
     
     // Attributes on Connection
     //
