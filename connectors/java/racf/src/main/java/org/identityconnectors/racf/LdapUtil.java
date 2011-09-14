@@ -785,7 +785,7 @@ class LdapUtil {
                     Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
 
                     ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE,
-                            createLdapAttributesFromConnectorAttributes(objectClass, attributes));
+                            createLdapAttributesFromConnectorAttributes(objectClass, attributes)); // TODO: Gael - we should not use REPLACE, it has bad side effects
                     if (members != null) {
                         _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
                     }

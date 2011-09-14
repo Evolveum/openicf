@@ -534,7 +534,7 @@ public class RacfConnector implements Connector, CreateOp,
         List<Object> owners = ownersAttribute == null ? null : ownersAttribute.getValue();
 
         List<String> currentGroups = getGroupsForUser(name);
-        String defaultGroup = currentGroups.get(0);
+        String defaultGroup = currentGroups.get(0); // TODO: Gael - This is a wrong assumption.... 
 
         for (String currentGroup : currentGroups) {
             if (!groups.contains(currentGroup) && !currentGroup.equals(defaultGroup)) {  //TODO improve this... lower/upper case issue
