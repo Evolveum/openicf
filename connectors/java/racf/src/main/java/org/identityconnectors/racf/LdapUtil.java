@@ -175,7 +175,12 @@ class LdapUtil {
                 //( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(createDnFromName(objectClass, id), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 if (groups != null) {
-                    _connector.setGroupMembershipsForUser(id, groups, owners);
+                    if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null){
+                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners,(String)attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
+                        }
+                        else{
+                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners);
+                        }
                 }
                 // Now, process the deferred attributes
                 //
@@ -769,7 +774,12 @@ class LdapUtil {
                     ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
 
                     if (groups != null) {
-                        _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
+                        if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null){
+                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners,(String)attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
+                        }
+                        else{
+                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
+                        }
                     }
                 }
                 catch (NamingException e) {

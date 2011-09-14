@@ -528,16 +528,22 @@ public class RacfConnector implements Connector, CreateOp,
     }
 
     void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute) {
+        setGroupMembershipsForUser(name, groupsAttribute, ownersAttribute,null);
+    }
+    
+    void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute, String defaultGroup) {
         checkConnectionConsistency(groupsAttribute, ownersAttribute);
 
         List<Object> groups = groupsAttribute.getValue();
         List<Object> owners = ownersAttribute == null ? null : ownersAttribute.getValue();
 
         List<String> currentGroups = getGroupsForUser(name);
-        String defaultGroup = currentGroups.get(0); // TODO: Gael - This is a wrong assumption.... 
+        if (defaultGroup == null) {
+            defaultGroup = currentGroups.get(0); // TODO: Gael - This is a wrong assumption.... on LDAP at least
+        }
 
         for (String currentGroup : currentGroups) {
-            if (!groups.contains(currentGroup) && !currentGroup.equals(defaultGroup)) {  //TODO improve this... lower/upper case issue
+            if (!groups.contains(currentGroup) && !currentGroup.equalsIgnoreCase(defaultGroup)) {  //TODO improve this... lower/upper case issue
                 // Group is being eliminated
                 //
                 // TODO: CHECK THIS
