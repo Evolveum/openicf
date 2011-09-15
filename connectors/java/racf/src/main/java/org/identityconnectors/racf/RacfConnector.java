@@ -537,7 +537,7 @@ public class RacfConnector implements Connector, CreateOp,
         List<Object> groups = groupsAttribute.getValue();
         List<Object> owners = ownersAttribute == null ? null : ownersAttribute.getValue();
 
-        List<String> currentGroups = getGroupsForUser(name);
+        List<String> currentGroups = getGroupsForUser(name); // TODO: Gael - This does not work with UNIVERSAL GROUPS
         if (defaultGroup == null) {
             defaultGroup = currentGroups.get(0); // TODO: Gael - This is a wrong assumption.... on LDAP at least
         }

@@ -28,10 +28,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,12 +178,11 @@ class LdapUtil {
                 //( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(createDnFromName(objectClass, id), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 if (groups != null) {
-                    if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null){
-                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners,(String)attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
-                        }
-                        else{
-                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners);
-                        }
+                    if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null) {
+                        _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners, (String) attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
+                    } else {
+                        _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, owners);
+                    }
                 }
                 // Now, process the deferred attributes
                 //
@@ -271,7 +273,8 @@ class LdapUtil {
                 Matcher matcher = _connectionPattern.matcher(name);
                 if (matcher.matches()) {
                     //use normalized string
-                    objects.add("racfid=" + matcher.group(index) + ",profiletype=" + ( index == 1 ? "user," : "group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
+                    //objects.add("racfid=" + matcher.group(index) + ",profiletype=" + ( index == 1 ? "user," : "group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
+                    objects.add(matcher.group(index));
                 } else {
                     throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.PATTERN_FAILED, name));
                 }
@@ -755,30 +758,43 @@ class LdapUtil {
         if (uid != null) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
                 try {
-                    Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
-                    Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
                     Attribute expired = attributes.get(ATTR_LDAP_EXPIRED);
                     Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
 
-                    _connector.throwErrorIfNull(groups);
-                    _connector.throwErrorIfNull(groupOwners);
-
+                    String[] attrToFetch = new String[attributes.size()];
+                    int i = 0;
+                    for (Attribute attribute : attributes.values()) {
+                        attrToFetch[i] = attribute.getName().toLowerCase();
+                        i++;
+                    }
                     if (expired != null && password == null) {
                         throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
                     }
 
-                    if (!userExists(uid.getUidValue())) {
+                    SearchControls subTreeControls = new SearchControls(SearchControls.OBJECT_SCOPE, 0, 0, attrToFetch, true, true);
+                    String search = "racfid=" + uid.getUidValue() + ",profileType=user," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+                    NamingEnumeration<SearchResult> users = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, "(objectclass=*)", subTreeControls);
+
+                    if (!users.hasMoreElements()) {
                         throw new UnknownUidException();
                     }
+                    Attributes diffValues = diffEntries(createLdapAttributesFromConnectorAttributes(objectClass, attributes), users.next().getAttributes());
+                    if (diffValues.size() > 0) {
+                        Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
+                        Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
+                        diffValues.remove(ATTR_LDAP_GROUPS);
+                        diffValues.remove(ATTR_LDAP_CONNECT_OWNER);
+                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        //( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
 
-                    ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
-
-                    if (groups != null) {
-                        if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null){
-                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners,(String)attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
-                        }
-                        else{
-                            _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
+                        if (groups != null) {
+                            _connector.throwErrorIfNull(groups);
+                            _connector.throwErrorIfNull(groupOwners);
+                            if (attributes.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
+                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners, (String) attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
+                            } else {
+                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
+                            }
                         }
                     }
                 }
@@ -863,7 +879,7 @@ class LdapUtil {
             } else if (attribute.is(ATTR_LDAP_MODEL)) {
                 // TODO: GAEL Ignore the default NO MODEL DATASET
                 continue;
-            //} else if (attribute.is(ATTR_LDAP_SUP_GROUP)) {
+                //} else if (attribute.is(ATTR_LDAP_SUP_GROUP)) {
                 // TOFO: GAEL - Need to verifiy superior group exists
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
@@ -1004,7 +1020,56 @@ class LdapUtil {
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             return "racfid=" + name.toUpperCase() + ",profiletype=group," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
         } else {
-            return null;
+            return name;
         }
+    }
+
+    private Attributes diffEntries(Attributes newValues, Attributes curValues) {
+        NamingEnumeration<javax.naming.directory.Attribute> attrEnum = (NamingEnumeration<javax.naming.directory.Attribute>) curValues.getAll();
+        try {
+            while (attrEnum.hasMore()) {
+                javax.naming.directory.Attribute curAttr = attrEnum.next();
+                javax.naming.directory.Attribute newAttr = newValues.get(curAttr.getID());
+                if (( newAttr != null ) && ( curAttr.size() == newAttr.size() )) {
+                    // ok.. we have the attribute both in current entry and new entry
+                    // lets compare.
+                    if (newAttr.size() == 0) {
+                        // Houston.. we have an empty one
+                    }
+                    if (newAttr.size() == 1) {
+                        Object newValue = newAttr.get();
+                        Object curValue = curAttr.get();
+                        if (( newValue instanceof String ) && ( curValue instanceof String )) {
+                            if (( (String) newValue ).equalsIgnoreCase(_connector.extractRacfIdFromLdapId((String) curValue))) {
+                                newValues.remove(newAttr.getID());
+                            }
+                        }
+                    } else { //multi value attr
+                        NamingEnumeration newValue = newAttr.getAll();
+                        NamingEnumeration curValue = curAttr.getAll();
+                        ArrayList newList = new ArrayList();
+                        ArrayList curList = new ArrayList();
+                        while(newValue.hasMoreElements())
+                            newList.add(newValue.next());
+                        while(curValue.hasMoreElements())
+                            curList.add(curValue.next());
+                        
+                        if (newList.size() == curList.size()) {
+                            ArrayList safeCurList = new ArrayList();
+                            for (Object s : curList) {
+                                safeCurList.add(_connector.extractRacfIdFromLdapId((String) s));
+                            }
+                            newList.removeAll(safeCurList);
+                            if (newList.isEmpty()) {
+                                newValues.remove(newAttr.getID());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+        }
+        return newValues;
     }
 }
