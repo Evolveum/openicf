@@ -32,18 +32,33 @@
 
 Solaris Connector
 
-  Etiam adipiscing urna sit amet metus auctor porttitor. Fusce pharetra.
+The Solaris Connector allows you to integrate with the Solaris operating system. 
 
-* Overview
+* Supported Versions
+The connector supports the following versions of Solairs:
 
-  Cras tempor consequat vulputate. Nam vulputate metus et urna facilisis sit amet malesuada tellus commodo.
-  Nulla id augue at odio tristique hendrerit. Sed a pellentesque urna. Maecenas pretium, libero vel porttitor fringilla,
-  justo augue vehicula tellus, eget porta sem mauris.
+- 8
+- 9
+- 10
 
-  []
+* Connector Configuration Notes
+The Solaris connector integrates with the Solaris Operating System using either Secure Shell (SSH) or via telnet. SSH is the prefered method of integration as it provides a secure communication between OpenIDM and the Solaris server.
 
-* Usage
+* Connector Installation Notes
+To install the connector, place the connector in the $OPENIDM/connectors folder. OpenIDM will automatically pick up the connector. Ensure there is a valid openicf connector configuration file. 
 
-  Instructions on how to configure the Solaris Connector {{{./configuration.html}here}}.
+* Usage Notes
+The Solaris connector primarily provides support for the following Solaris commands:
 
+- useradd, usermod, userdel
+- groupadd, groupmod, groupdel
+- passwd
 
+The specifics of these commands can be provided using the man pages for each command.
+
+* Supported OpenICF features
+Enable/Disable account
+Rename account
+Pass-through authentication
+Before/after actions
+Resource Object Management
