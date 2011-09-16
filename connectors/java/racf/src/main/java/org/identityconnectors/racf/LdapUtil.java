@@ -778,24 +778,24 @@ class LdapUtil {
                     if (!users.hasMoreElements()) {
                         throw new UnknownUidException();
                     }
-                    Attributes diffValues = diffEntries(createLdapAttributesFromConnectorAttributes(objectClass, attributes), users.next().getAttributes());
+                    Attributes curAttrs = users.next().getAttributes();
+                    Attributes diffValues = diffEntries(createLdapAttributesFromConnectorAttributes(objectClass, attributes), curAttrs);
                     if (diffValues.size() > 0) {
                         Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
                         Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
-                        diffValues.remove(ATTR_LDAP_GROUPS);
-                        diffValues.remove(ATTR_LDAP_CONNECT_OWNER);
-                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
-                        //( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
-
-                        if (groups != null) {
+                        if ((groups != null)&&(diffValues.remove(ATTR_LDAP_GROUPS) != null)) {
+                            diffValues.remove(ATTR_LDAP_CONNECT_OWNER);
                             _connector.throwErrorIfNull(groups);
                             _connector.throwErrorIfNull(groupOwners);
-                            if (attributes.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
-                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners, (String) attributes.get(ATTR_LDAP_DEFAULT_GROUP).getValue().get(0));
+                            if (curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
+                                //if (attributes.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
+                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners,curAttrs.get(ATTR_LDAP_GROUPS) ,(String)curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()).get());
                             } else {
                                 _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
                             }
                         }
+                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        //( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
                     }
                 }
                 catch (NamingException e) {
@@ -845,7 +845,7 @@ class LdapUtil {
     }
 
     private Attributes createLdapAttributesFromConnectorAttributes(ObjectClass objectClass, Map<String, Attribute> attributes) {
-        Attributes basicAttributes = new BasicAttributes();
+        Attributes basicAttributes = new BasicAttributes(true);
         Set<ObjectClassInfo> objectClassInfos = _schema.getObjectClassInfo();
         ObjectClassInfo accountInfo = null;
         for (ObjectClassInfo objectClassInfo : objectClassInfos) {

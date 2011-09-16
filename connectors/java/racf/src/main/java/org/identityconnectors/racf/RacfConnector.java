@@ -26,6 +26,7 @@ import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -41,6 +42,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -528,19 +530,37 @@ public class RacfConnector implements Connector, CreateOp,
     }
 
     void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute) {
-        setGroupMembershipsForUser(name, groupsAttribute, ownersAttribute,null);
+        setGroupMembershipsForUser(name, groupsAttribute, ownersAttribute, null, null);
     }
-    
+
     void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute, String defaultGroup) {
+        setGroupMembershipsForUser(name, groupsAttribute, ownersAttribute, null, defaultGroup);
+    }
+
+    void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute, javax.naming.directory.Attribute curGroupsAttribute, String defaultGroup) {
         checkConnectionConsistency(groupsAttribute, ownersAttribute);
 
         List<Object> groups = groupsAttribute.getValue();
         List<Object> owners = ownersAttribute == null ? null : ownersAttribute.getValue();
+        List<String> currentGroups;
 
-        List<String> currentGroups = getGroupsForUser(name); // TODO: Gael - This does not work with UNIVERSAL GROUPS
+        if (curGroupsAttribute == null) {
+            currentGroups = getGroupsForUser(name);
+        } else {
+            currentGroups = new ArrayList();
+            try {
+                NamingEnumeration curValue = curGroupsAttribute.getAll();
+                while (curValue.hasMoreElements()) {
+                    currentGroups.add(extractRacfIdFromLdapId((String) curValue.next()));
+                }
+            }
+            catch (Exception e) {
+            }
+        }
         if (defaultGroup == null) {
             defaultGroup = currentGroups.get(0); // TODO: Gael - This is a wrong assumption.... on LDAP at least
         }
+        defaultGroup = extractRacfIdFromLdapId(defaultGroup);
 
         for (String currentGroup : currentGroups) {
             if (!groups.contains(currentGroup) && !currentGroup.equalsIgnoreCase(defaultGroup)) {  //TODO improve this... lower/upper case issue
