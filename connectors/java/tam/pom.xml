@@ -44,7 +44,7 @@
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/java/bundles/sso/tam</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/java/bundles/sso/tam</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/java/bundles/sso/tam</url>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/tam</url>
     </scm>
     <properties>
         <defaultConnectorFamily>sso</defaultConnectorFamily>

@@ -32,12 +32,69 @@
 
 Configuration
 
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sapien purus, congue a tincidunt non, mollis vitae
-    diam. Fusce pharetra massa interdum nisl ultrices mattis. Cras eget est ultricies magna auctor condimentum.
-    Phasellus sed elit erat, a ultricies arcu. Proin vitae volutpat ante. Quisque porta tempor elit, non aliquam tortor
-    sodales nec. Sed imperdiet metus sed orci adipiscing faucibus. Nulla facilisi. Nulla massa tortor, dapibus a
-    vehicula vel, cursus vel mi. Integer sed lacus velit. Etiam dignissim varius turpis ut ullamcorper. Integer
-    lobortis imperdiet dui, ut porta nulla interdum ac. Nulla neque lorem, bibendum et venenatis a, convallis in arcu.
-    In sagittis neque ac mauris venenatis id elementum elit lacinia. Phasellus porttitor turpis eu ipsum pharetra
-    eleifend. Integer ac magna sit amet mi luctus scelerisque at a odio. Quisque sed mi nibh, ac pretium felis.
-    Nunc congue sapien sit amet ipsum elementum ac euismod justo mollis. Etiam dictum elementum libero sed sagittis.
+* Configuration Properties
+
+** Required
+
+*-------------+----------+-------------+------------------+
+ <<Property>> | <<Type>> | <<Default>> | <<Descriptions>>
+*-------------+----------+-------------+------------------+
+ password | GuardedString | | Password for the login account. This property is coupled with loginUser.
+*-------------+----------+-------------+------------------+
+ loginUser | String | | The distinguished name with which to authenticate to the LDAP server.
+*-------------+----------+-------------+------------------+
+ loginShellPrompt | String | | The full shell prompt for the login account. This is used by the adapter to determine when to send a command and when to stop capturing output.
+*-------------+----------+-------------+------------------+
+ host | String | | The name or IP address of the Solaris server is running.
+*-------------+----------+-------------+------------------+
+
+
+** Optional
+
+*-------------+----------+-------------+------------------+
+ <<Property>> | <<Type>> | <<Default>> | <<Descriptions>>
+*-------------+----------+-------------+------------------+
+ port | int | 23 | Port number used to communicate with the resource. This value may depend on the value of Connection Type. The standard value for telnet is 23; the standard value for SSH is 22
+*-------------+----------+-------------+------------------+
+ rootUser | String | | Leave this field blank if the user account entered in the Login User field has permission to manage this resource (create user accounts). Otherwise, enter the name of the user account that does have permission to manage this resource. This is often the root account. When connecting to this resource, the initial login is done as the Login User. If a Root User is specified, the su command is used to log in as the Root User before managing the resource.
+*-------------+----------+-------------+------------------+
+ credentials | GuardedString | | Password for the Root User account. Leave blank if the Root User field is blank.
+*-------------+----------+-------------+------------------+
+ rootShellPrompt | String | | Enter the full shell prompt for the root account. This is used by the adapter to determine when to send a command and when to stop capturing output. Leave blank if the Root User field is blank.
+*-------------+----------+-------------+------------------+
+ sudoAuthorization | boolean | false | Indicate whether the admin commands are to authorize the user through the sudo utility. Enter a value of TRUE to use sudo or FALSE for standard authorization.
+*-------------+----------+-------------+------------------+
+ connectionType | String | TELNET | Specify the script connection protocol type. The default protocol is Telnet. Supported protocols are Telnet, SSH, and SSHPUBKEY.
+*-------------+----------+-------------+------------------+
+ privateKey | GuardedString | | Specify the private key for SSH connection. A private key is required for key/pair based authentication. If a private key is specified, you must enter SSHPUBKEY as the value for the Connection Type field. Do not use this field if you implement password-based authentication. This attribute makes sense for ConnectionType#SSHPUBKEY.
+*-------------+----------+-------------+------------------+
+ passphrase | GuardedString | | Specify the passphrase, used during key generation. This attribute makes sense for ConnectionType#SSHPUBKEY
+*-------------+----------+-------------+------------------+
+ blockSize | int | 100 | When performing full scan SolarisEntries#getAllAccounts on all the accounts we can limit the number of accounts fetched at once.
+*-------------+----------+-------------+------------------+
+ blockFetchTimeout | int | 6000 | Specify the number of seconds a block fetch operation is to execute before timing out. The default value is 600 seconds.
+*-------------+----------+-------------+------------------+
+ mutexAcquireTimeout | int | 60 | Mutex Acquire Timeout Unit: seconds
+*-------------+----------+-------------+------------------+
+ makeDirectory | boolean | | Indicate whether the user''s home directory should be created. Enter a value of TRUE to create the user''s home directory or FALSE to do nothing. The user''s home directory will be created in /home unless set by using a <b>dir</b> attribute setting in the schema map to set the home directory path.
+*-------------+----------+-------------+------------------+
+ homeBaseDirectory | String | | Indicate the home directory base to be used when creating user home directories. The accountID will be appended to this value to form the user home directory.
+*-------------+----------+-------------+------------------+
+ defaultPrimaryGroup | String | | Default group a new user will be placed in.
+*-------------+----------+-------------+------------------+
+ loginShell | String | | Default shell a new user will be given.
+*-------------+----------+-------------+------------------+
+ skeletonDirectory | String | | Specify a directory to use to copy default files to the user''s home directory. Typically this is /etc/skel. This directory must already exist.
+*-------------+----------+-------------+------------------+
+ deleteHomeDirectory | boolean | false | Specifies whether an accounts home directory should be deleted when the account is deleted.
+*-------------+----------+-------------+------------------+
+ systemDatabaseType | String | FILES | Specify the system database type in use. The default type is FILES. Supported types are NIS.
+*-------------+----------+-------------+------------------+
+ nisBuildDirectory | String | /var/yp | Enter the directory name where the NIS build files are located.
+*-------------+----------+-------------+------------------+
+ nisPwdDir | String |  /etc | Enter the directory name where the NIS password source files are located
+*-------------+----------+-------------+------------------+
+ nisShadowPasswordSupport | boolean | false | Specify TRUE if the NIS database used shadow passwords, FALSE otherwise.
+*-------------+----------+-------------+------------------+
+ commandTimeout | int |  24000 | This is the time that we wait for, when we are capturing some string from the response of the resource. Note (backward compatibility): This is the successor of Default Capture Timeout, Default Wait For Timeout, Default Wait For Ignore Case Timeout from the Solaris resource adapter Units: milliseconds.
+*-------------+----------+-------------+------------------+

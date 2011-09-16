@@ -48,16 +48,17 @@
             <item name="Connectors" href="../"/>
         </menu>
         <menu name="Overview" img="images/arrow_right.png">
-            <item name="Introduction" href="index.html"/>
+            <!--item name="Introduction" href="index.html"/>
             <item name="Compatibility" href="compatibility.html"/>
             <item name="Installation" href="installation.html"/>
             <item name="Configuration" href="configuration.html"/>
             <item name="About" href="aboutpage.html"/>
-            <item name="Changes" href="changelog.html"/>
+            <item name="Changes" href="changelog.html"/-->
             <item name="Install API" href="install_api.html"/>
-            <item name="IBM API Documentation (PDF)" href="http://publib.boulder.ibm.com/infocenter/tivihelp/v2r1/topic/com.ibm.itame.doc/am611_adminJ_devref.pdf"/>
-            <item name="FAQ" href="faq.html"/>
-            <item name="Embedded" href="embedded.html"/>
+            <item name="API Documentation" href="http://publib.boulder.ibm.com/infocenter/tivihelp/v2r1/topic/com.ibm.itame.doc/am611_adminJ_devref.pdf"/>
+            <item name="Error Message Reference" href="http://publib.boulder.ibm.com/infocenter/tivihelp/v2r1/topic/com.ibm.itame.doc/am611_messages.pdf"/>
+            <!--item name="FAQ" href="faq.html"/>
+            <item name="Embedded" href="embedded.html"/-->
         </menu>
         <menu ref="reports"/>
     </body>
