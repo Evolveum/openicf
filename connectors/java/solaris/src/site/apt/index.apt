@@ -34,31 +34,36 @@ Solaris Connector
 
 The Solaris Connector allows you to integrate with the Solaris operating system. 
 
-* Supported Versions
-The connector supports the following versions of Solairs:
+Supported Versions
+   
+   The connector supports the following versions of Solairs:
 
-- 8
-- 9
-- 10
+   - 8
+   - 9
+   - 10
 
-* Connector Configuration Notes
-The Solaris connector integrates with the Solaris Operating System using either Secure Shell (SSH) or via telnet. SSH is the prefered method of integration as it provides a secure communication between OpenIDM and the Solaris server.
+Connector Configuration Notes
 
-* Connector Installation Notes
-To install the connector, place the connector in the $OPENIDM/connectors folder. OpenIDM will automatically pick up the connector. Ensure there is a valid openicf connector configuration file. 
+   The Solaris connector integrates with the Solaris Operating System using either Secure Shell (SSH) or via telnet. SSH is the prefered method of integration as it provides a secure communication between OpenIDM and the Solaris server.
 
-* Usage Notes
-The Solaris connector primarily provides support for the following Solaris commands:
+Connector Installation Notes
+   
+   To install the connector, place the connector in the $OPENIDM/connectors folder. OpenIDM will automatically pick up the connector. Ensure there is a valid openicf connector configuration file. 
 
-- useradd, usermod, userdel
-- groupadd, groupmod, groupdel
-- passwd
+Usage Notes
+   
+   The Solaris connector primarily provides support for the following Solaris commands:
 
-The specifics of these commands can be provided using the man pages for each command.
+   - useradd, usermod, userdel
+   - groupadd, groupmod, groupdel
+   - passwd
 
-* Supported OpenICF features
-Enable/Disable account
-Rename account
-Pass-through authentication
-Before/after actions
-Resource Object Management
+   The specifics of these commands can be provided using the man pages for each command.
+
+Supported OpenICF features
+
+   Enable/Disable account
+   Rename account
+   Pass-through authentication
+   Before/after actions
+   Resource Object Management
