@@ -93,7 +93,8 @@ messageCatalogPaths = {"org.identityconnectors.racf.Messages",
     "org.identityconnectors.rw3270.wrq.Messages",
     "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfConnector implements Connector, CreateOp,
-        DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer, ResolveUsernameOp {
+        DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, ResolveUsernameOp {
+    //DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer, ResolveUsernameOp {
 
     static final List<String> POSSIBLE_ATTRIBUTES = Arrays.asList(
             "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
@@ -1409,32 +1410,32 @@ public class RacfConnector implements Connector, CreateOp,
         return _configuration.getLdapUserName() != null;
     }
 
-    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
-        List<Object> values = attribute.getValue();
-        List<Object> newValues = new LinkedList<Object>();
-        String name = attribute.getName().toUpperCase();
-        if (values == null) {
-            return AttributeBuilder.build(name);
-        }
-        for (Object value : values) {
-            if (value instanceof String) {
-                if (!LdapUtil.isUidValued(name)) {
-                    newValues.add(( (String) value ).toUpperCase());
-                } else {
-                    newValues.add(LdapUtil.createUniformUid(( (String) value ), _configuration.getSuffix()));
-                }
-            } else {
-                newValues.add(value);
-            }
-        }
-        if (attribute instanceof Name) {
-            return new Name(LdapUtil.createUniformUid((String) newValues.get(0), _configuration.getSuffix()));
-        } else if (attribute instanceof Uid) {
-            return new Uid(LdapUtil.createUniformUid((String) newValues.get(0), _configuration.getSuffix()));
-        } else {
-            return AttributeBuilder.build(name, newValues);
-        }
-    }
+//    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+//        List<Object> values = attribute.getValue();
+//        List<Object> newValues = new LinkedList<Object>();
+//        String name = attribute.getName().toUpperCase();
+//        if (values == null) {
+//            return AttributeBuilder.build(name);
+//        }
+//        for (Object value : values) {
+//            if (value instanceof String) {
+//                if (!LdapUtil.isUidValued(name)) {
+//                    newValues.add(( (String) value ).toUpperCase());
+//                } else {
+//                    newValues.add(LdapUtil.createUniformUid(( (String) value ), _configuration.getSuffix()));
+//                }
+//            } else {
+//                newValues.add(value);
+//            }
+//        }
+//        if (attribute instanceof Name) {
+//            return new Name(LdapUtil.createUniformUid((String) newValues.get(0), _configuration.getSuffix()));
+//        } else if (attribute instanceof Uid) {
+//            return new Uid(LdapUtil.createUniformUid((String) newValues.get(0), _configuration.getSuffix()));
+//        } else {
+//            return AttributeBuilder.build(name, newValues);
+//        }
+//    }
 
     Long convertFromResumeRevokeFormat(Object value) {
         try {

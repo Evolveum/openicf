@@ -704,33 +704,43 @@ class LdapUtil {
             javax.naming.directory.Attribute attribute = attributeEnum.next();
             // Some attributes expect Lists, but may return a singleton,
             // these must be mapped back into Lists
-            //
+            Object value = getValueFromAttribute(attribute);
             if (ATTR_LDAP_GROUPS.equalsIgnoreCase(attribute.getID())) {
-                Object value = getValueFromAttribute(attribute);
                 if (!( value instanceof List )) {
                     List newValue = new LinkedList();
                     newValue.add(value);
                     value = newValue;
                 }
                 attributesRead.put(attribute.getID(), value);
-            } else {
-                Object value = getValueFromAttribute(attribute);
-                if ("NONE".equals(value) && isIntegerAttribute(attribute.getID())) {
-                    value = null;
-                }
+            }
+            // Gael: We need to get rid of some attributes if they have "NONE" or "NONE SPECIFIED"
+            // as their value. Not seen this with ZOS 1.12 but happens with 1.5
+            else if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) {}
+            else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) {}
+            else{
                 attributesRead.put(attribute.getID(), value);
             }
         }
         return ldapObject;
     }
 
-    private boolean isIntegerAttribute(String name) {
+    private boolean isNoneAttribute(String name) {
         return ATTR_LDAP_OMVS_MAX_CPUTIME.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_ADDR_SPACE.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_FILES.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_MEMORY_MAP.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_THREADS.equalsIgnoreCase(name)
-                || ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name);
+                || ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name)
+                || ATTR_LDAP_CLASS_NAME.equalsIgnoreCase(name)
+                || ATTR_LDAP_REVOKE_DATE.equalsIgnoreCase(name)
+                || ATTR_LDAP_RESUME_DATE.equalsIgnoreCase(name)
+                || ATTR_LDAP_ATTRIBUTES.equalsIgnoreCase(name);
+    }
+    
+    private boolean isNoneSpecifiedAttribute(String name) {
+        return ATTR_LDAP_SECURITY_LEVEL.equalsIgnoreCase(name)
+                || ATTR_LDAP_SECURITY_CAT_LIST.equalsIgnoreCase(name)
+                || ATTR_LDAP_SECURITY_LABEL.equalsIgnoreCase(name);
     }
 
     static Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
