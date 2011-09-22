@@ -717,6 +717,8 @@ class LdapUtil {
             // as their value. Not seen this with ZOS 1.12 but happens with 1.5
             else if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) {}
             else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) {}
+            else if ("NO-INSTALLATION-DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) {}
+            else if ("NO-MODEL-NAME".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) {}
             else{
                 attributesRead.put(attribute.getID(), value);
             }
