@@ -874,7 +874,7 @@ class LdapUtil {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.getValue() == null) { // TODO Gael this is an issue (see INSTALLATION DATA or OMVSHOME)
                 //throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
-                continue; // TODO: Gael fix this please
+                continue;
             }
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
@@ -885,14 +885,14 @@ class LdapUtil {
                     objectClassAttribute.add(value);
                 }
                 basicAttributes.put(objectClassAttribute);
-            } else if (attribute.is(ATTR_LDAP_DATA)) {
-                // TODO: GAEL Ignore the default NO INSTALLATION DATA
-                continue;
-            } else if (attribute.is(ATTR_LDAP_MODEL)) {
+            //} else if (attribute.is(ATTR_LDAP_DATA)) {
+                //TODO: GAEL Ignore the default NO INSTALLATION DATA
+              //  continue;
+            // } else if (attribute.is(ATTR_LDAP_MODEL)) {
                 // TODO: GAEL Ignore the default NO MODEL DATASET
-                continue;
+               // continue;
                 //} else if (attribute.is(ATTR_LDAP_SUP_GROUP)) {
-                // TOFO: GAEL - Need to verifiy superior group exists
+                // TODO: GAEL - Need to verifiy superior group exists
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
                     if (value == null) {
