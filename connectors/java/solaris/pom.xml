@@ -30,7 +30,7 @@
         <artifactId>connectors-parent</artifactId>
         <version>1.1.0.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.unix</groupId>
+    <groupId>org.forgerock.openicf.connectors.os</groupId>
     <artifactId>solaris</artifactId>
     <packaging>bundle</packaging>
     <name>Solaris Connector</name>
@@ -45,8 +45,8 @@
         <defaultConnectorFamily>unix</defaultConnectorFamily>
         <skipTests>true</skipTests>
         <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/connector-${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>expect4j,jsch,connector-test-common,oro</embedded.dependencies>
+        <privateConfigPath>${user.home}/.connectors/connector-solaris/config</privateConfigPath>
+        <embedded.dependencies>expect4j,jsch,connector-test-common,oro,commons-net</embedded.dependencies>
         <connectorPackage>org.identityconnectors.solaris</connectorPackage>
         <connectorClass>SolarisConnector</connectorClass>
     </properties>
@@ -68,11 +68,11 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
+    <!--profiles>
         <profile>
             <id>with-embedded-dependencies</id>
             <properties>
-                <embedded.dependencies>expect4j,jsch,connector-test-common,oro</embedded.dependencies>
+                <embedded.dependencies>expect4j,jsch,connector-test-common,oro,commons-net</embedded.dependencies>
             </properties>
         </profile>
         <profile>
@@ -80,7 +80,7 @@
             <properties>
             </properties>
         </profile>
-    </profiles>
+    </profiles-->
     <dependencies>
         <!--
         Download from http://expect4j.googlecode.com/files/expect4j-1.0.jar
@@ -90,13 +90,19 @@
             <groupId>com.google.p.expect4j</groupId>
             <artifactId>expect4j</artifactId>
             <version>1.0</version>
-            <!--scope>system</scope>
-            <systemPath>${basedir}/lib/expect4j-1.0.jar</systemPath-->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.42</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.forgerock.openicf.framework</groupId>
@@ -107,6 +113,7 @@
             <groupId>oro</groupId>
             <artifactId>oro</artifactId>
             <version>2.0.8</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

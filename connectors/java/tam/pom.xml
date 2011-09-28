@@ -94,6 +94,7 @@
             <groupId>com.tivoli.am</groupId>
             <artifactId>admin-api</artifactId>
             <version>6.1</version>
+            <scope>provided</scope>
             <!--scope>system</scope>
             <systemPath>${basedir}/lib/PD.jar</systemPath-->
         </dependency>

@@ -326,7 +326,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.password = password;
     }
 
-    @ConfigurationProperty(order = 4, required = true)
+    @ConfigurationProperty(order = 4, required = true, confidential = true)
     public GuardedString getPassword() {
         return password;
     }
@@ -349,7 +349,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         rootUser = name;
     }
 
-    @ConfigurationProperty(order = 7)
+    @ConfigurationProperty(order = 7, confidential = true)
     public GuardedString getCredentials() {
         return credentials;
     }
@@ -394,7 +394,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
     
-    @ConfigurationProperty(order = 11)
+    @ConfigurationProperty(order = 11, confidential = true)
     public GuardedString getPrivateKey() {
         return privateKey;
     }
@@ -403,7 +403,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.privateKey = privateKey;
     }
     
-    @ConfigurationProperty(order = 12)
+    @ConfigurationProperty(order = 12, confidential = true)
     public GuardedString getPassphrase() {
         return passphrase;
     }

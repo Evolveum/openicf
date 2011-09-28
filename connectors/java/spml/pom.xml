@@ -68,20 +68,6 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>openspml</embedded.dependencies>
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>openspml</embedded.dependencies>
-            </properties>
-        </profile>
-    </profiles>
     <dependencies>
         <!--
         Download from /lib/openspml2-toolkit.jar
@@ -91,6 +77,7 @@
             <groupId>org.openspml</groupId>
             <artifactId>openspml</artifactId>
             <version>2.0</version>
+            <scope>provided</scope>
             <!--scope>system</scope>
             <systemPath>${basedir}/lib/openspml2-toolkit.jar</systemPath-->
         </dependency>
