@@ -76,6 +76,7 @@ public class RacfConfiguration extends AbstractConfiguration {
     private String[]       _asFilterChangesBy;
     
     private Boolean        _isSunIdm = false;
+    private Boolean        _isTDS = true;
 
     public RW3270Configuration getRW3270Configuration(int index) {
         return new RW3270ConfigurationProxy(this, index);
@@ -683,6 +684,15 @@ public class RacfConfiguration extends AbstractConfiguration {
     
     public void setIsSunIdm(boolean sunIdm){
         _isSunIdm = sunIdm;
+    }
+    
+    @ConfigurationProperty
+    public boolean getIsTivoliDirectoryServer(){
+        return _isTDS;
+    }
+    
+    public void setIsTivoliDirectoryServer(boolean TDS){
+        _isTDS = TDS;
     }
 
     @SuppressWarnings("unchecked")
