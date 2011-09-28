@@ -515,12 +515,19 @@ class LdapUtil {
                         }
                     }
                 }
+
+                // TODO: Gael - Until I find the meaning of PASSWORD in the racfattributes,
+                // I remove it (I see it in 1.12, not in 1.5)
+                realRacfAttributes.remove("PASSWORD");
                 // __ENABLE__ is indicated by the REVOKED ATTRIBUTE
                 // We also remove REVOKED from attribute list, since we display it separately
                 //
                 boolean revoked = realRacfAttributes.remove("REVOKED");
                 attributesRead.put(OperationalAttributes.ENABLE_NAME, !revoked);
-                attributesRead.put(ATTR_LDAP_ATTRIBUTES, realRacfAttributes);
+                // avoid empty list
+                if (!realRacfAttributes.isEmpty()) {
+                    attributesRead.put(ATTR_LDAP_ATTRIBUTES, realRacfAttributes);
+                }
             }
             // Last Access date must be converted
             //
@@ -712,14 +719,13 @@ class LdapUtil {
                     value = newValue;
                 }
                 attributesRead.put(attribute.getID(), value);
-            }
-            // Gael: We need to get rid of some attributes if they have "NONE" or "NONE SPECIFIED"
+            } // Gael: We need to get rid of some attributes if they have "NONE" or "NONE SPECIFIED"
             // as their value. Not seen this with ZOS 1.12 but happens with 1.5
-            else if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) {}
-            else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) {}
-            else if ("NO-INSTALLATION-DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) {}
-            else if ("NO-MODEL-NAME".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) {}
-            else{
+            else if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) {
+            } else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) {
+            } else if ("NO-INSTALLATION-DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) {
+            } else if ("NO-MODEL-NAME".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) {
+            } else {
                 attributesRead.put(attribute.getID(), value);
             }
         }
@@ -738,7 +744,7 @@ class LdapUtil {
                 || ATTR_LDAP_RESUME_DATE.equalsIgnoreCase(name)
                 || ATTR_LDAP_ATTRIBUTES.equalsIgnoreCase(name);
     }
-    
+
     private boolean isNoneSpecifiedAttribute(String name) {
         return ATTR_LDAP_SECURITY_LEVEL.equalsIgnoreCase(name)
                 || ATTR_LDAP_SECURITY_CAT_LIST.equalsIgnoreCase(name)
@@ -766,77 +772,70 @@ class LdapUtil {
         Map<String, Attribute> attributes = CollectionUtil.newCaseInsensitiveMap();
         attributes.putAll(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
+        String profileType = "group";
+
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME) && !objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
+            throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
+        }
 
         if (uid != null) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-                try {
-                    Attribute expired = attributes.get(ATTR_LDAP_EXPIRED);
-                    Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
+                profileType = "user";
+                Attribute expired = attributes.get(ATTR_LDAP_EXPIRED);
+                Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
+                if (expired != null && password == null) {
+                    throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+                }
+            }
 
-                    String[] attrToFetch = new String[attributes.size()];
-                    int i = 0;
-                    for (Attribute attribute : attributes.values()) {
-                        attrToFetch[i] = attribute.getName().toLowerCase();
-                        i++;
-                    }
-                    if (expired != null && password == null) {
-                        throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
-                    }
+            String[] attrToFetch = new String[attributes.size()];
+            int i = 0;
+            for (Attribute attribute : attributes.values()) {
+                attrToFetch[i] = attribute.getName().toLowerCase();
+                i++;
+            }
+            try {
+                SearchControls subTreeControls = new SearchControls(SearchControls.OBJECT_SCOPE, 0, 0, attrToFetch, true, true);
+                String search = "racfid=" + uid.getUidValue() + ",profileType=" + profileType + "," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+                NamingEnumeration<SearchResult> entries = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, "(objectclass=*)", subTreeControls);
 
-                    SearchControls subTreeControls = new SearchControls(SearchControls.OBJECT_SCOPE, 0, 0, attrToFetch, true, true);
-                    String search = "racfid=" + uid.getUidValue() + ",profileType=user," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
-                    NamingEnumeration<SearchResult> users = ( (RacfConnection) _connector.getConnection() ).getDirContext().search(search, "(objectclass=*)", subTreeControls);
+                if (!entries.hasMoreElements()) {
+                    throw new UnknownUidException();
+                }
+                Attributes curAttrs = entries.next().getAttributes();
+                Attributes diffValues = diffEntries(createLdapAttributesFromConnectorAttributes(objectClass, attributes), curAttrs);
 
-                    if (!users.hasMoreElements()) {
-                        throw new UnknownUidException();
-                    }
-                    Attributes curAttrs = users.next().getAttributes();
-                    Attributes diffValues = diffEntries(createLdapAttributesFromConnectorAttributes(objectClass, attributes), curAttrs);
-                    if (diffValues.size() > 0) {
+                if (diffValues.size() > 0) {
+                    if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
                         Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
                         Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
-                        if ((groups != null)&&(diffValues.remove(ATTR_LDAP_GROUPS) != null)) {
+                        if (( groups != null ) && ( diffValues.remove(ATTR_LDAP_GROUPS) != null )) {
                             diffValues.remove(ATTR_LDAP_CONNECT_OWNER);
                             _connector.throwErrorIfNull(groups);
                             _connector.throwErrorIfNull(groupOwners);
                             if (curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
-                                //if (attributes.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()) != null) {
-                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners,curAttrs.get(ATTR_LDAP_GROUPS) ,(String)curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()).get());
+                                _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners, curAttrs.get(ATTR_LDAP_GROUPS), (String) curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()).get());
                             } else {
                                 _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
                             }
                         }
-                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
-                        //( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
+                        ((RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                    } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
+                        Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
+                        Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
+                        ((RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        if (members != null) {
+                            _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
+                        }
                     }
                 }
-                catch (NamingException e) {
-                    if (e.toString().contains("INVALID USER")) {
-                        throw new AlreadyExistsException();
-                    } else {
-                        throw new ConnectorException(e);
-                    }
+            }
+            catch (NamingException e) {
+                if (e.toString().contains("INVALID USER") || e.toString().contains("INVALID GROUP")) {
+                    throw new AlreadyExistsException();
+                } else {
+                    throw new ConnectorException(e);
                 }
-            } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-                try {
-                    Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
-                    Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
-
-                    ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE,
-                            createLdapAttributesFromConnectorAttributes(objectClass, attributes)); // TODO: Gael - we should not use REPLACE, it has bad side effects
-                    if (members != null) {
-                        _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
-                    }
-                }
-                catch (NamingException e) {
-                    if (e.toString().contains("INVALID GROUP")) {
-                        throw new AlreadyExistsException();
-                    } else {
-                        throw new ConnectorException(e);
-                    }
-                }
-            } else {
-                throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
             }
         }
         return uid;
@@ -885,22 +884,19 @@ class LdapUtil {
                     objectClassAttribute.add(value);
                 }
                 basicAttributes.put(objectClassAttribute);
-            //} else if (attribute.is(ATTR_LDAP_DATA)) {
-                //TODO: GAEL Ignore the default NO INSTALLATION DATA
-              //  continue;
-            // } else if (attribute.is(ATTR_LDAP_MODEL)) {
-                // TODO: GAEL Ignore the default NO MODEL DATASET
-               // continue;
                 //} else if (attribute.is(ATTR_LDAP_SUP_GROUP)) {
                 // TODO: GAEL - Need to verifiy superior group exists
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
-                    if (value == null) {
+                    if (value == null) { // TODO: check if this is not too restrictive
                         throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String) null));
                     } else {
                         String string = value.toString();
                         if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string)) {
                             //TODO Gael: solve this issue with PASSWORD ATTRIBUTE, throws this exception on UPDATE op
+                            //This is also wrong since racfAttributes can be used to set many keywords for both altuser and adduser
+                            // add: racfattributes
+                            // racfattributes: resume norevoke => check this anyway...
                             //throw new IllegalArgumentException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
                         } else {
                             racfAttributes.add(string);
@@ -1061,11 +1057,13 @@ class LdapUtil {
                         NamingEnumeration curValue = curAttr.getAll();
                         ArrayList newList = new ArrayList();
                         ArrayList curList = new ArrayList();
-                        while(newValue.hasMoreElements())
+                        while (newValue.hasMoreElements()) {
                             newList.add(newValue.next());
-                        while(curValue.hasMoreElements())
+                        }
+                        while (curValue.hasMoreElements()) {
                             curList.add(curValue.next());
-                        
+                        }
+
                         if (newList.size() == curList.size()) {
                             ArrayList safeCurList = new ArrayList();
                             for (Object s : curList) {
