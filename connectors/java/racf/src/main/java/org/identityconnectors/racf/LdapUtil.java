@@ -170,12 +170,10 @@ class LdapUtil {
                 }
 
                 String id = name.getNameValue();
-                //Uid uid = new Uid(createUniformUid(id));
                 Uid uid = new Uid(id);
                 Map<String, Attribute> newAttributes = CollectionUtil.newCaseInsensitiveMap();
                 newAttributes.putAll(attributes);
                 addObjectClass(objectClass, newAttributes);
-                //( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 ( (RacfConnection) _connector.getConnection() ).getDirContext().createSubcontext(createDnFromName(objectClass, id), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 if (groups != null) {
                     if (attributes.get(ATTR_LDAP_DEFAULT_GROUP) != null) {
@@ -206,7 +204,6 @@ class LdapUtil {
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
 
                 String id = name.getNameValue();
-                //Uid uid = new Uid(createUniformUid(id));
                 Uid uid = new Uid(id);
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
@@ -272,8 +269,6 @@ class LdapUtil {
                 String name = userRoot.getNameInNamespace();
                 Matcher matcher = _connectionPattern.matcher(name);
                 if (matcher.matches()) {
-                    //use normalized string
-                    //objects.add("racfid=" + matcher.group(index) + ",profiletype=" + ( index == 1 ? "user," : "group," ) + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix());
                     objects.add(matcher.group(index));
                 } else {
                     throw new ConnectorException(( (RacfConfiguration) _connector.getConfiguration() ).getMessage(RacfMessages.PATTERN_FAILED, name));
@@ -564,7 +559,7 @@ class LdapUtil {
                 attributesRead.put(ATTR_LDAP_TSO_MAX_REGION_SIZE, converted);
             }
             // password change date must be converted
-            //
+            //TODO: if does not contain password change date attr in TDS => means pwd expired
             if (attributesRead.containsKey(ATTR_LDAP_PASSWORD_CHANGE)) {
                 Object value = attributesRead.get(ATTR_LDAP_PASSWORD_CHANGE);
                 Long converted = _connector.convertFromRacfTimestamp(value);
@@ -573,6 +568,9 @@ class LdapUtil {
                 //
                 Boolean expired = "00.000".equals(value);
                 attributesRead.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
+            }
+            else{
+                attributesRead.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, true);
             }
             // Revoke date must be converted
             //

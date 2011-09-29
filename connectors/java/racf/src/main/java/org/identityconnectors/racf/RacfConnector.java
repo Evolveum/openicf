@@ -61,6 +61,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
@@ -115,6 +116,7 @@ public class RacfConnector implements Connector, CreateOp,
     //
     private final SimpleDateFormat _dateFormat = new SimpleDateFormat("MM/dd/yy");
     private final SimpleDateFormat _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
+    private final SimpleDateFormat _resumeRevokeFormatTDS = new SimpleDateFormat("MM/dd/yy");
     private static final Pattern _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern _connectionPattern = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*", Pattern.CASE_INSENSITIVE);
     private final static Pattern _racfidPattern = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
@@ -760,7 +762,9 @@ public class RacfConnector implements Connector, CreateOp,
             Uid uid = AttributeUtil.getUidAttribute(attrs);
             List<String> query = createFilterTranslator(objectClass, options).translate(new EqualsFilter(uid));
             LocalHandler handler = new LocalHandler();
-            executeQuery(objectClass, query.get(0), handler, options);
+            OperationOptionsBuilder localOptionsBuilder = new OperationOptionsBuilder();
+            localOptionsBuilder.setAttributesToGet(ATTR_LDAP_PASSWORD_CHANGE);
+            executeQuery(objectClass, query.get(0), handler, localOptionsBuilder.build());
             Iterator<ConnectorObject> iterator = handler.iterator();
             if (iterator.hasNext()) {
                 ConnectorObject object = iterator.next();
@@ -1439,7 +1443,10 @@ public class RacfConnector implements Connector, CreateOp,
 
     Long convertFromResumeRevokeFormat(Object value) {
         try {
-            return _resumeRevokeFormat.parse(value.toString()).getTime();
+            if (_configuration.getIsTivoliDirectoryServer())  //TODO: check if no side effect on cmdline util
+                return _resumeRevokeFormatTDS.parse(value.toString()).getTime();
+            else
+                return _resumeRevokeFormat.parse(value.toString()).getTime();
         }
         catch (ParseException pe) {
             return null;
