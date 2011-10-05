@@ -41,7 +41,7 @@
         <skipTests>true</skipTests>
         <contracts.skip>true</contracts.skip>
         <privateConfigPath>${user.home}/.connectors/connector-${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>3270common,3270freehost,3270wrq,3270hod,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro</embedded.dependencies>
+        <embedded.dependencies>3270common,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro</embedded.dependencies>
         <connectorPackage>org.identityconnectors.racf</connectorPackage>
         <connectorClass>RacfConnector</connectorClass>
     </properties>
@@ -67,30 +67,13 @@
         <profile>
             <id>with-embedded-dependencies</id>
             <properties>
-                <embedded.dependencies>3270common,3270freehost,3270wrq,3270hod,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro,freehost,hod40connector,RWebSDK</embedded.dependencies>
+                <embedded.dependencies>3270common,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro</embedded.dependencies>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>com.ibm.racf</groupId>
-                    <artifactId>freehost</artifactId>
-                    <version>1.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.ibm.racf</groupId>
-                    <artifactId>hod40connector</artifactId>
-                    <version>1.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.ibm.racf</groupId>
-                    <artifactId>RWebSDK</artifactId>
-                    <version>1.0</version>
-                </dependency>
-            </dependencies>
         </profile>
         <profile>
             <id>active-embedded-dependencies</id>
             <properties>
-                <embedded.dependencies>3270common,3270freehost,3270wrq,3270hod,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro</embedded.dependencies>
+                <embedded.dependencies>3270common,patternparser,bcprov-jdk15,bcmail-jdk15,expect4j,oro</embedded.dependencies>
             </properties>
         </profile>
     </profiles>
@@ -98,21 +81,6 @@
         <dependency>
             <groupId>org.forgerock.openicf.connectors.mainframe</groupId>
             <artifactId>3270common</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.forgerock.openicf.connectors.mainframe</groupId>
-            <artifactId>3270freehost</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.forgerock.openicf.connectors.mainframe</groupId>
-            <artifactId>3270wrq</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.forgerock.openicf.connectors.mainframe</groupId>
-            <artifactId>3270hod</artifactId>
             <version>1.1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
