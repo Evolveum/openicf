@@ -450,7 +450,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
                     + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
                     + getCfg().app() + "fnd_responsibility_vl where responsibility_name = ?)";
 
-            final String msg = "Oracle ERP SQL: RESP_ID = {1}, RESP_APPL_ID = {2}";
+            final String msg = "Oracle ERP SQL: RESP_ID = {0}, RESP_APPL_ID = {1}";
 
             ArrayList<SQLParam> params = new ArrayList<SQLParam>();
             params.add(new SQLParam("userId", getCfg().getUserId()));
