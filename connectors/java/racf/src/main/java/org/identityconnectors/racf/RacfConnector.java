@@ -116,7 +116,6 @@ public class RacfConnector implements Connector, CreateOp,
     //
     private final SimpleDateFormat _dateFormat = new SimpleDateFormat("MM/dd/yy");
     private final SimpleDateFormat _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
-    private final SimpleDateFormat _resumeRevokeFormatTDS = new SimpleDateFormat("MM/dd/yy");
     private static final Pattern _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern _connectionPattern = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*", Pattern.CASE_INSENSITIVE);
     private final static Pattern _racfidPattern = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
@@ -1440,13 +1439,9 @@ public class RacfConnector implements Connector, CreateOp,
 //            return AttributeBuilder.build(name, newValues);
 //        }
 //    }
-
     Long convertFromResumeRevokeFormat(Object value) {
         try {
-            if (_configuration.getIsTivoliDirectoryServer())  //TODO: check if no side effect on cmdline util
-                return _resumeRevokeFormatTDS.parse(value.toString()).getTime();
-            else
-                return _resumeRevokeFormat.parse(value.toString()).getTime();
+            return _resumeRevokeFormat.parse(value.toString()).getTime();
         }
         catch (ParseException pe) {
             return null;

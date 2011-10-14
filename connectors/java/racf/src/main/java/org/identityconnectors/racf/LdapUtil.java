@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.racf;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.ArrayList;
@@ -495,7 +497,9 @@ class LdapUtil {
         //
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             // 'racfattributes' comes back as a String, we need to transform it into a list
-            //
+            // Gael: This code handles well the diff between ISS LDAP and TDS LDAP
+            // TDS LDAP returns RACF Attributes as a LIST whereas ISS LDAP sometimes
+            // returns a single value with multiple values separated by a space.
             Object racfAttributes = attributesRead.get(ATTR_LDAP_ATTRIBUTES);
             if (racfAttributes != null) {
                 List<String> realRacfAttributes = new ArrayList<String>();
@@ -525,10 +529,24 @@ class LdapUtil {
                 }
             }
             // Last Access date must be converted
-            //
+            // TODO: Gael - All these dates convert are wrong with TDS.
+            // Formats have changed
+            // 1.5 : yy.ddd
+            // 1.11, 1.12: mm/dd/yy
             if (attributesRead.containsKey(ATTR_LDAP_LAST_ACCESS)) {
                 Object value = attributesRead.get(ATTR_LDAP_LAST_ACCESS);
-                Long converted = _connector.convertFromRacfTimestamp(value);
+                Long converted = null;
+                if (_connector.getConfiguration().getIsTivoliDirectoryServer()) {
+                    try {
+                        SimpleDateFormat lastAccessTDS = new SimpleDateFormat("MM/dd/yy");
+                        converted = lastAccessTDS.parse(value.toString()).getTime();
+                    }
+                    catch (ParseException pe) {
+                        converted = null;
+                    }
+                } else {
+                    converted = _connector.convertFromRacfTimestamp(value);
+                }
                 attributesRead.put(PredefinedAttributes.LAST_LOGIN_DATE_NAME, converted);
             }
             // TSO SIZE must be converted
@@ -559,17 +577,26 @@ class LdapUtil {
                 attributesRead.put(ATTR_LDAP_TSO_MAX_REGION_SIZE, converted);
             }
             // password change date must be converted
-            //TODO: if does not contain password change date attr in TDS => means pwd expired
             if (attributesRead.containsKey(ATTR_LDAP_PASSWORD_CHANGE)) {
                 Object value = attributesRead.get(ATTR_LDAP_PASSWORD_CHANGE);
-                Long converted = _connector.convertFromRacfTimestamp(value);
+                Long converted = null;
+                if (_connector.getConfiguration().getIsTivoliDirectoryServer()) {
+                    try {
+                        SimpleDateFormat pwdChangedTDS = new SimpleDateFormat("MM/dd/yy");
+                        converted = pwdChangedTDS.parse(value.toString()).getTime();
+                    }
+                    catch (ParseException pe) {
+                        converted = null;
+                    }
+                } else {
+                    converted = _connector.convertFromRacfTimestamp(value);
+                }
                 attributesRead.put(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, converted);
                 // password change date is 00.000 if expired
                 //
                 Boolean expired = "00.000".equals(value);
                 attributesRead.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
-            }
-            else{
+            } else { //If no password change date attr in TDS => means pwd expired
                 attributesRead.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, true);
             }
             // Revoke date must be converted
@@ -577,7 +604,18 @@ class LdapUtil {
             long now = new Date().getTime();
             if (attributesRead.containsKey(ATTR_LDAP_REVOKE_DATE)) {
                 Object value = attributesRead.get(ATTR_LDAP_REVOKE_DATE);
-                Long converted = _connector.convertFromResumeRevokeFormat(value);
+                Long converted = null;
+                if (_connector.getConfiguration().getIsTivoliDirectoryServer()) {
+                    try {
+                        SimpleDateFormat resumeRevokeFormatTDS = new SimpleDateFormat("MM/dd/yy");
+                        converted = resumeRevokeFormatTDS.parse(value.toString()).getTime();
+                    }
+                    catch (ParseException pe) {
+                        converted = null;
+                    }
+                } else {
+                    converted = _connector.convertFromResumeRevokeFormat(value);
+                }
                 if (converted == null || converted < now) {
                     attributesRead.put(OperationalAttributes.DISABLE_DATE_NAME, null);
                 } else {
@@ -588,7 +626,18 @@ class LdapUtil {
             //
             if (attributesRead.containsKey(ATTR_LDAP_RESUME_DATE)) {
                 Object value = attributesRead.get(ATTR_LDAP_RESUME_DATE);
-                Long converted = _connector.convertFromResumeRevokeFormat(value);
+                Long converted = null;
+                if (_connector.getConfiguration().getIsTivoliDirectoryServer()) {
+                    try {
+                        SimpleDateFormat resumeRevokeFormatTDS = new SimpleDateFormat("MM/dd/yy");
+                        converted = resumeRevokeFormatTDS.parse(value.toString()).getTime();
+                    }
+                    catch (ParseException pe) {
+                        converted = null;
+                    }
+                } else {
+                    converted = _connector.convertFromResumeRevokeFormat(value);
+                }
                 if (converted == null || converted < now) {
                     attributesRead.put(OperationalAttributes.ENABLE_DATE_NAME, null);
                 } else {
@@ -710,6 +759,22 @@ class LdapUtil {
             // Some attributes expect Lists, but may return a singleton,
             // these must be mapped back into Lists
             Object value = getValueFromAttribute(attribute);
+            
+            // Gael: We need to get rid of some attributes if they have "NONE" or "NONE SPECIFIED"
+            // as their value. This was before ZOS 1.11 and TDS
+            if (!_connector.getConfiguration().getIsTivoliDirectoryServer()){
+                    if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) continue;
+                    else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) continue;
+                    else if ("NO-INSTALLATION-DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("NO INSTALLATION DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("NO-MODEL-NAME".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("NO MODEL DATA SET".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("UNKNOWN".equals(value) && ATTR_LDAP_PROGRAMMER_NAME.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("UNKNOWN".equals(value) && ATTR_LDAP_LAST_ACCESS.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("ANYTIME".equals(value) && ATTR_LDAP_LOGON_TIME.equalsIgnoreCase(attribute.getID())) continue;
+                    else if ("NO SUBGROUPS".equals(value) && ATTR_LDAP_SUB_GROUPS.equalsIgnoreCase(attribute.getID())) continue;
+                    else{}
+            }
             if (ATTR_LDAP_GROUPS.equalsIgnoreCase(attribute.getID())) {
                 if (!( value instanceof List )) {
                     List newValue = new LinkedList();
@@ -717,13 +782,8 @@ class LdapUtil {
                     value = newValue;
                 }
                 attributesRead.put(attribute.getID(), value);
-            } // Gael: We need to get rid of some attributes if they have "NONE" or "NONE SPECIFIED"
-            // as their value. Not seen this with ZOS 1.12 but happens with 1.5
-            else if ("NONE".equals(value) && isNoneAttribute(attribute.getID())) {
-            } else if ("NONE SPECIFIED".equals(value) && isNoneSpecifiedAttribute(attribute.getID())) {
-            } else if ("NO-INSTALLATION-DATA".equals(value) && ATTR_LDAP_DATA.equalsIgnoreCase(attribute.getID())) {
-            } else if ("NO-MODEL-NAME".equals(value) && ATTR_LDAP_MODEL.equalsIgnoreCase(attribute.getID())) {
-            } else {
+            } 
+            else {
                 attributesRead.put(attribute.getID(), value);
             }
         }
@@ -737,6 +797,10 @@ class LdapUtil {
                 || ATTR_LDAP_OMVS_MAX_MEMORY_MAP.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_THREADS.equalsIgnoreCase(name)
                 || ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_UID.equalsIgnoreCase(name)
+                || ATTR_LDAP_OVM_UID.equalsIgnoreCase(name)
+                || ATTR_LDAP_OMVS_GROUP_ID.equalsIgnoreCase(name)
+                || ATTR_LDAP_OVM_GROUP_ID.equalsIgnoreCase(name)
                 || ATTR_LDAP_CLASS_NAME.equalsIgnoreCase(name)
                 || ATTR_LDAP_REVOKE_DATE.equalsIgnoreCase(name)
                 || ATTR_LDAP_RESUME_DATE.equalsIgnoreCase(name)
@@ -746,7 +810,9 @@ class LdapUtil {
     private boolean isNoneSpecifiedAttribute(String name) {
         return ATTR_LDAP_SECURITY_LEVEL.equalsIgnoreCase(name)
                 || ATTR_LDAP_SECURITY_CAT_LIST.equalsIgnoreCase(name)
-                || ATTR_LDAP_SECURITY_LABEL.equalsIgnoreCase(name);
+                || ATTR_LDAP_SECURITY_LABEL.equalsIgnoreCase(name)
+                || ATTR_LDAP_LANG_PRIMARY.equalsIgnoreCase(name)
+                || ATTR_LDAP_LANG_SECONDARY.equalsIgnoreCase(name);
     }
 
     static Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
@@ -817,11 +883,11 @@ class LdapUtil {
                                 _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
                             }
                         }
-                        ((RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
                     } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
                         Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
                         Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
-                        ((RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
                         if (members != null) {
                             _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
                         }
