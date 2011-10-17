@@ -155,21 +155,31 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
      * @see org.identityconnectors.framework.spi.Connector#init(org.identityconnectors.framework.spi.Configuration)
      */
     public void init(Configuration config) {
-        synchronized (TAMConnector.class) {
-            configuration = (TAMConfiguration) config;
-            if (count == 0) {
-                PDMessages msgs = new PDMessages();
+        try {
+            synchronized (TAMConnector.class) {
+                configuration = (TAMConfiguration) config;
                 try {
-                    log.info("Initializing PDAdmin.");
-                    PDAdmin.initialize(TAMConfiguration.CONNECTOR_NAME, msgs);
-                    processMessages("init", msgs);
-                } catch (PDException e) {
-                    log.error(e, "Init Error");
+                    if (count == 0) {
+                        PDMessages msgs = new PDMessages();
+                        log.info("Initializing PDAdmin.");
+                        PDAdmin.initialize(TAMConfiguration.CONNECTOR_NAME, msgs);
+                        processMessages("init", msgs);
+                    }
+                    count++;
+                }
+                catch (PDException e) {
                     convertPDExceptionToConnectorException(e);
                 }
+                createPDContext();
             }
-            count++;
-            createPDContext();
+        }
+        catch (Exception e) {
+            dispose();
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            } else {
+                throw new ConnectorException(e);
+            }
         }
         log.info("initialized TAMConnector");
     }
@@ -189,8 +199,8 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     log.info("Shutting down PDAdmin.");
                     PDAdmin.shutdown(msgs);
                     processMessages(method, msgs);
-                } catch (PDException e) {
-                    log.error(method, e);
+                }
+                catch (PDException e) {
                     handlePDException(e);
                 }
             }
@@ -244,9 +254,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 if (ctxt == null) {
                     throw new ConnectorIOException("TAM_START_PD_CONTEXT_ERROR");
                 }
-            } catch (MalformedURLException e) {
+            }
+            catch (MalformedURLException e) {
                 throw new ConnectorException(e);
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
             }
         }
@@ -352,11 +364,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     boolean ssoUser,
                     PDMessages messages)
                     throws PDException
-
+                    
                     Creates a user in the Policy Director Management Server by importing an existing user from the user registry.
-
+                    
                     This constructor corresponds to the ivadmin_user_import() C API.
-
+                    
                     Parameters:
                     context - the context for communicating with the Policy Director Management Server.
                     pdName - the Policy Director user name. This value may not be null and must have a non-zero length.
@@ -394,11 +406,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     boolean noPwdPolicy,
                     PDMessages messages)
                     throws PDException
-
+                    
                     Creates a user in the Policy Director Management Server.
-
+                    
                     This constructor corresponds to the ivadmin_user_create() C API.
-
+                    
                     Parameters:
                     context - the context for communicating with the Policy Director Management Server.
                     pdName - the Policy Director user name. This value may not be null and must have a non-zero length.
@@ -444,9 +456,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 if (groupCredList != null) {
                     updateGSOCredentials(name.getNameValue(), PDSSOCred.PDSSOCRED_SSORESOURCEGROUP, groupCredList, msgs);
                 }
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
@@ -464,11 +478,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     java.lang.String container,
                     PDMessages messages)
                     throws PDException
-
+                    
                     Creates a group in the Policy Director Management Server by importing it from the group directory.
-
+                    
                     This constructor corresponds to the ivadmin_group_import() C API.
-
+                    
                     Parameters:
                     context - the context for communicating with the Policy Director Management Server.
                     pdName - the Policy Director group name.
@@ -494,9 +508,9 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     java.lang.String container,
                     PDMessages messages)
                     throws PDException
-
+                    
                     Creates a group in the Policy Director Management Server.
-
+                    
                     Parameters:
                     context - the context for communicating with the Policy Director Management Server.
                     pdName - the Policy Director group name. This value may not be null and must have a nonzero length.
@@ -518,9 +532,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                         processMessages(method, msgs);
                     }
                 }
-            } catch (PDException e) {
-                handlePDException(e);
-            } catch (Exception e) {
+            }
+            catch (PDException e) {
+                convertPDExceptionToConnectorException(e);
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else {
@@ -544,21 +560,26 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
         final String method = "executeQuery";
         log.info("Entry {0}", method);
         Set<String> attributesToGet = null;
-        if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            if (options != null && options.getAttributesToGet() != null) {
-                attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
-            } else {
-                attributesToGet = new HashSet<String>(5);
-                for (AttributeInfo a : schema().findObjectClassInfo(ObjectClass.ACCOUNT_NAME).getAttributeInfo()) {
+        if (options != null && options.getAttributesToGet() != null) {
+            attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
+        } else {
+            ObjectClassInfo oci = schema().findObjectClassInfo(objClass.getObjectClassValue());
+            if (oci != null) {
+                attributesToGet = new HashSet<String>();
+                for (AttributeInfo a : oci.getAttributeInfo()) {
                     attributesToGet.add(a.getName());
                 }
+            } else {
+                throw new ConnectorException("Object class " + objClass.getObjectClassValue() + "is not supported");
             }
+        }
 
-            if (StringUtil.isBlank(query)) {
-                query = PDUser.PDUSER_ALLPATTERN;
-            }
 
+        if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             try {
+                if (StringUtil.isBlank(query)) {
+                    query = PDUser.PDUSER_ALLPATTERN;
+                }
                 PDMessages msgs = new PDMessages();
                 ArrayList userList = PDUser.listUsers(ctxt,
                         query,
@@ -576,75 +597,86 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     return;
                 }
 
-
-                for (Object o : userList) {
-                    String name = (String) o;
-                    PDUser pdUser = new PDUser(ctxt, name, msgs);
-                    processMessages(method, msgs);
-                    if (log.isInfo()) {
-                        log.info("Process PDUser: {0} \n" + "RegistryName={1}\n" + "FirstName={2}\n" + "LastName={3}\n" + "Descr={4}\n" + "Groups={5}\n" + "SSOUser={6}\n", name, pdUser.getRgyName(), pdUser.getFirstName(), pdUser.getLastName(), pdUser.getDescription(), pdUser.getGroups(), pdUser.isSSOUser());
+                if (getNamesOnly(attributesToGet)) {
+                    for (Object o : userList) {
+                        String name = (String) o;
+                        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                        bld.setUid(name);
+                        bld.setName(name);
+                        handler.handle(bld.build());
                     }
-                    ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                    //TODO: FIX ME
-                    bld.setUid(pdUser.getId());
-                    bld.setName(pdUser.getId());
-                    bld.addAttribute(ATTR_REGISTRY_NAME, pdUser.getRgyName());
+                } else {
+                    for (Object o : userList) {
+                        String name = (String) o;
+                        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
 
-                    Map<String, List<String>> gsoCreds = null;
+                        PDUser pdUser = new PDUser(ctxt, name, msgs);
+                        processMessages(method, msgs);
+                        if (log.isInfo()) {
+                            log.info("Process PDUser: {0} \n" + "RegistryName={1}\n" + "FirstName={2}\n" + "LastName={3}\n" + "Descr={4}\n" + "Groups={5}\n" + "SSOUser={6}\n", name, pdUser.getRgyName(), pdUser.getFirstName(), pdUser.getLastName(), pdUser.getDescription(), pdUser.getGroups(), pdUser.isSSOUser());
+                        }
 
-                    for (String attrName : attributesToGet) {
+                        bld.setUid(pdUser.getId());
+                        bld.setName(pdUser.getId());
+                        bld.addAttribute(ATTR_REGISTRY_NAME, pdUser.getRgyName());
 
-                        if (ATTR_FIRST_NAME.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(ATTR_FIRST_NAME, pdUser.getFirstName());
-                            continue;
-                        }
-                        if (ATTR_LAST_NAME.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(ATTR_LAST_NAME, pdUser.getLastName());
-                            continue;
-                        }
-                        if (PredefinedAttributes.DESCRIPTION.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(PredefinedAttributes.DESCRIPTION, pdUser.getDescription());
-                            continue;
-                        }
-                        if (PredefinedAttributes.GROUPS_NAME.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(PredefinedAttributes.GROUPS_NAME, pdUser.getGroups());
-                            continue;
-                        }
-                        if (ATTR_SSO_USER.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(ATTR_SSO_USER, Boolean.valueOf(pdUser.isSSOUser()));
-                            continue;
-                        }
-                        if (ATTR_GSO_WEB_CREDENTIALS.equalsIgnoreCase(attrName)) {
-                            if (gsoCreds == null) {
-                                gsoCreds = getUserGSOCredentials(name, msgs);
+                        Map<String, List<String>> gsoCreds = null;
+
+                        for (String attrName : attributesToGet) {
+
+                            if (ATTR_FIRST_NAME.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_FIRST_NAME, pdUser.getFirstName());
+                                continue;
                             }
-
-                            bld.addAttribute(ATTR_GSO_WEB_CREDENTIALS, gsoCreds.get(PDSSOCred.PDSSOCRED_SSORESOURCE));
-                            continue;
-                        }
-                        if (ATTR_GSO_GROUP_CREDENTIALS.equalsIgnoreCase(attrName)) {
-                            if (gsoCreds == null) {
-                                gsoCreds = getUserGSOCredentials(name, msgs);
+                            if (ATTR_LAST_NAME.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_LAST_NAME, pdUser.getLastName());
+                                continue;
                             }
-                            bld.addAttribute(ATTR_GSO_GROUP_CREDENTIALS, gsoCreds.get(PDSSOCred.PDSSOCRED_SSORESOURCEGROUP));
-                            continue;
+                            if (PredefinedAttributes.DESCRIPTION.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(PredefinedAttributes.DESCRIPTION, pdUser.getDescription());
+                                continue;
+                            }
+                            if (PredefinedAttributes.GROUPS_NAME.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(PredefinedAttributes.GROUPS_NAME, pdUser.getGroups());
+                                continue;
+                            }
+                            if (ATTR_SSO_USER.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_SSO_USER, Boolean.valueOf(pdUser.isSSOUser()));
+                                continue;
+                            }
+                            if (ATTR_GSO_WEB_CREDENTIALS.equalsIgnoreCase(attrName)) {
+                                if (gsoCreds == null) {
+                                    gsoCreds = getUserGSOCredentials(name, msgs);
+                                }
+
+                                bld.addAttribute(ATTR_GSO_WEB_CREDENTIALS, gsoCreds.get(PDSSOCred.PDSSOCRED_SSORESOURCE));
+                                continue;
+                            }
+                            if (ATTR_GSO_GROUP_CREDENTIALS.equalsIgnoreCase(attrName)) {
+                                if (gsoCreds == null) {
+                                    gsoCreds = getUserGSOCredentials(name, msgs);
+                                }
+                                bld.addAttribute(ATTR_GSO_GROUP_CREDENTIALS, gsoCreds.get(PDSSOCred.PDSSOCRED_SSORESOURCEGROUP));
+                                continue;
+                            }
+                            if (ATTR_EXPIRE_PASSWORD.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_EXPIRE_PASSWORD, pdUser.isPasswordValid());
+                                continue;
+                            }
+                            if (OperationalAttributes.ENABLE_NAME.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(OperationalAttributes.ENABLE_NAME, pdUser.isAccountValid());
+                                continue;
+                            }
                         }
-                        if (ATTR_EXPIRE_PASSWORD.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(ATTR_EXPIRE_PASSWORD, pdUser.isPasswordValid());
-                            continue;
-                        }
-                        if (OperationalAttributes.ENABLE_NAME.equalsIgnoreCase(attrName)) {
-                            bld.addAttribute(OperationalAttributes.ENABLE_NAME, pdUser.isAccountValid());
-                            continue;
-                        }
+                        // create the connector object..
+                        handler.handle(bld.build());
                     }
-                    // create the connector object..
-                    handler.handle(bld.build());
                 }
-
-            } catch (PDException e) {
-                handlePDException(e);
-            } catch (Exception e) {
+            }
+            catch (PDException e) {
+                convertPDExceptionToConnectorException(e);
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
@@ -655,25 +687,49 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 PDMessages msgs = new PDMessages();
                 boolean listByRegistryName = false;
                 ArrayList objectList = PDGroup.listGroups(ctxt, query, PDGroup.PDGROUP_MAXRETURN, listByRegistryName, msgs);
-                //TODO: optimise the gets
 
-                for (Object o : objectList) {
-                    String name = (String) o;
-                    PDGroup pdGroup = new PDGroup(ctxt, name, msgs);
+                if (getNamesOnly(attributesToGet)) {
+                    for (Object o : objectList) {
+                        String name = (String) o;
+                        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                        bld.setObjectClass(objClass);
+                        bld.setUid(name);
+                        bld.setName(name);
+                        handler.handle(bld.build());
+                    }
+                } else {
+                    for (Object o : objectList) {
+                        String name = (String) o;
+                        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                        bld.setObjectClass(objClass);
 
-                    ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                    bld.setUid(pdGroup.getId());
-                    bld.setName(pdGroup.getId());
-                    bld.addAttribute(ATTR_REGISTRY_NAME, pdGroup.getRgyName());
-                    bld.addAttribute(PredefinedAttributes.DESCRIPTION, pdGroup.getDescription());
-                    bld.addAttribute(ATTR_GROUP_MEMBERS, pdGroup.getMembers());
-                    // create the connector object..
-                    handler.handle(bld.build());
+                        PDGroup pdGroup = new PDGroup(ctxt, name, msgs);
+                        bld.setUid(pdGroup.getId());
+                        bld.setName(pdGroup.getId());
+                        for (String attrName : attributesToGet) {
+                            if (ATTR_REGISTRY_NAME.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_REGISTRY_NAME, pdGroup.getRgyName());
+                                continue;
+                            }
+                            if (ATTR_GROUP_MEMBERS.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(ATTR_GROUP_MEMBERS, pdGroup.getMembers());
+                                continue;
+                            }
+                            if (PredefinedAttributes.DESCRIPTION.equalsIgnoreCase(attrName)) {
+                                bld.addAttribute(PredefinedAttributes.DESCRIPTION, pdGroup.getDescription());
+                                continue;
+                            }
+                        }
+                        // create the connector object..
+                        handler.handle(bld.build());
+                    }
                 }
 
-            } catch (PDException e) {
-                handlePDException(e);
-            } catch (Exception e) {
+            }
+            catch (PDException e) {
+                convertPDExceptionToConnectorException(e);
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else if (objClass.is(TYPE_GSO_RESOURCE)) {
@@ -686,9 +742,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     bld.setName((String) o);
                     handler.handle(bld.build());
                 }
-            } catch (PDException e) {
-                handlePDException(e);
-            } catch (Exception e) {
+            }
+            catch (PDException e) {
+                convertPDExceptionToConnectorException(e);
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else if (objClass.is(TYPE_GSO_GROUP_RESOURCE)) {
@@ -701,13 +759,34 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     bld.setName((String) o);
                     handler.handle(bld.build());
                 }
-            } catch (PDException e) {
-                handlePDException(e);
-            } catch (Exception e) {
+            }
+            catch (PDException e) {
+                convertPDExceptionToConnectorException(e);
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         }
         log.info("Exit {0}", method);
+    }
+
+    /**
+     * Help to optimize the operation if the list method is enought.
+     * 
+     * @param attributesToGet list of attributes to return.
+     * @return true if the {@code attributesToGet} contains only the __NAME__ and __UID__
+     */
+    private boolean getNamesOnly(Set<String> attributesToGet) {
+        boolean result = null == attributesToGet || attributesToGet.isEmpty() || attributesToGet.size() > 2;
+        if (!result) {
+            result = true;
+            for (String attr : attributesToGet) {
+                if (!Name.NAME.equals(attr) || !Uid.NAME.equals(attr)) {
+                    result = false;
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -803,9 +882,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 }
 
 
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
 
@@ -836,9 +917,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 log.info("PDUser.deleteUser(ctxt,{0},{1},msgs)", uid.getUidValue(), deleteFromRegistry);
                 PDUser.deleteUser(ctxt, uid.getUidValue(), deleteFromRegistry, msgs);
                 processMessages(method, msgs);
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
@@ -847,9 +930,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 log.info("PDGroup.deleteGroup(ctxt,{0},{1},msgs)", uid.getUidValue(), deleteFromRegistry);
                 PDGroup.deleteGroup(ctxt, uid.getUidValue(), deleteFromRegistry, msgs);
                 processMessages(method, msgs);
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         } else {
@@ -941,9 +1026,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                 if (pdUser.isPasswordValid()) {
                     uid = new Uid(user);
                 }
-            } catch (PDException e) {
+            }
+            catch (PDException e) {
                 convertPDExceptionToConnectorException(e);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new ConnectorException(e);
             }
         }
@@ -1052,13 +1139,16 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     if (msgCode == 348132087) {
                         e = new AlreadyExistsException(msg.getMsgText(), pd);
                     } else {
-                        e = new ConnectorIOException("Access Manager Exception: " + msgCode);
+                        e = new ConnectorIOException(convertPDMessage(msg), pd);
                     }
                     // code: 813334644 = "HPDJA0116E   Cannot contact server."
                     // code: 320938184 = "HPDIA0200W   Authentication failed. You have used an invalid user name, password or client certificate."
                     // code: 348132087 = "HPDMG0759W   The user name already exists in the registry."
                     // code: 348132117 = "HPDMG0789W   The user Distinguished Name (DN) cannot be created because it already exists."
-
+                    // code: 348132089 = "HPDMG0761W   The entry referred to by the Distinguished Name (DN) must be a person entry."
+                    // code: 348132082 = "HPDMG0754W   The entry was not found. If a user or group is being created, ensure that the Distinguished Name (DN) specified has the correct syntax and is valid."
+                    // code: 348132396 = "HPDMG1068E   An invalid group identification or Distinguished Name (DN) was specified."
+                    // code: 348132090 = ""
                 }
             }
             throw e;
@@ -1069,6 +1159,31 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
             }
         }
         log.info("Exit {0}", method);
+    }
+
+    private static String convertPDMessage(PDMessage msg) {
+        StringBuilder sb = new StringBuilder("Access Manager Exception ");
+        if (PDMessage.PDMESSAGE_SEVERITY_INFO == msg.getMsgSeverity()) {
+            sb.append("[INFO]");
+        } else if (PDMessage.PDMESSAGE_SEVERITY_WARNING == msg.getMsgSeverity()) {
+            sb.append("[WARNING]");
+        } else if (PDMessage.PDMESSAGE_SEVERITY_ERROR == msg.getMsgSeverity()) {
+            sb.append("[ERROR]");
+        } else {
+            sb.append("[OTHER]");
+        }
+        sb.append(" [").append(msg.getMsgCode()).append("] - ").append(msg.getMsgText());
+        if (null != msg.getMsgArgs()) {
+            sb.append(" args{");
+            for (int i = 0; i < msg.getMsgArgs().length; i++) {
+                if (i != 0) {
+                    sb.append(", ");
+                }
+                sb.append(i).append(":").append(msg.getMsgArgs()[i]);
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
     protected void updateGSOCredentialPasswords(String uid, GuardedStringAccessor password) {
@@ -1092,9 +1207,11 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
                     processMessages(method, msgs);
                 }
             }
-        } catch (PDException e) {
+        }
+        catch (PDException e) {
             convertPDExceptionToConnectorException(e);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new ConnectorException(e);
         }
         log.info("Exit {0}", method);
