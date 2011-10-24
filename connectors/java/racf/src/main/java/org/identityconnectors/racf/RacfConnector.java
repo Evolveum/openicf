@@ -41,6 +41,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -257,9 +259,9 @@ public class RacfConnector implements Connector, CreateOp,
                 // Even when we are in command-line form, use LDAP-style names for connection attributes,
                 // since we don't get them via parsing
                 //
-                commandLineAttrs.add(attribute);
+                commandLineAttrs.add(convertToBasicASCII(attribute));
             } else {
-                ldapAttrs.add(attribute);
+                ldapAttrs.add(convertToBasicASCII(attribute));
             }
         }
     }
@@ -1439,6 +1441,29 @@ public class RacfConnector implements Connector, CreateOp,
 //            return AttributeBuilder.build(name, newValues);
 //        }
 //    }
+    Attribute convertToBasicASCII(Attribute attribute) {
+        if (_configuration.getConvertToASCII()) {
+            List<Object> values = attribute.getValue();
+            List<Object> newValues = new LinkedList<Object>();
+            String name = attribute.getName();
+
+            for (Object value : values) {
+                if (value instanceof String) {
+                    newValues.add(Normalizer.normalize(( (String) value ), Form.NFD).replaceAll("[\\p{InCombining_Diacritical_Marks}]+", "").replaceAll("[\\P{InBasic_Latin}]+", "_"));
+                } else {
+                    newValues.add(value);
+                }
+            }
+            if (!( attribute instanceof Name || attribute instanceof Uid )) {
+                return AttributeBuilder.build(name, newValues);
+            } else {
+                return attribute;
+            }
+        } else {
+            return attribute;
+        }
+    }
+
     Long convertFromResumeRevokeFormat(Object value) {
         try {
             return _resumeRevokeFormat.parse(value.toString()).getTime();

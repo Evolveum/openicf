@@ -77,6 +77,7 @@ public class RacfConfiguration extends AbstractConfiguration {
     
     private Boolean        _isSunIdm = false;
     private Boolean        _isTDS = true;
+    private Boolean        _convertToASCII = true;
 
     public RW3270Configuration getRW3270Configuration(int index) {
         return new RW3270ConfigurationProxy(this, index);
@@ -693,6 +694,15 @@ public class RacfConfiguration extends AbstractConfiguration {
     
     public void setIsTivoliDirectoryServer(boolean TDS){
         _isTDS = TDS;
+    }
+    
+    @ConfigurationProperty
+    public boolean getConvertToASCII(){
+        return _convertToASCII;
+    }
+    
+    public void setConvertToASCII(boolean convert){
+        _convertToASCII = convert;
     }
 
     @SuppressWarnings("unchecked")
