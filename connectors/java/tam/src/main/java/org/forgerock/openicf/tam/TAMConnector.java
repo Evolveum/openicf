@@ -777,16 +777,16 @@ public class TAMConnector implements PoolableConnector, AuthenticateOp, CreateOp
      * @return true if the {@code attributesToGet} contains only the __NAME__ and __UID__
      */
     private boolean getNamesOnly(Set<String> attributesToGet) {
-        boolean result = null == attributesToGet || attributesToGet.isEmpty() || attributesToGet.size() > 2;
-        if (!result) {
-            result = true;
+        if (null != attributesToGet && !attributesToGet.isEmpty() && attributesToGet.size() < 3) {
             for (String attr : attributesToGet) {
-                if (!Name.NAME.equals(attr) || !Uid.NAME.equals(attr)) {
-                    result = false;
+                if (!Name.NAME.equals(attr) && !Uid.NAME.equals(attr)) {
+                    return false;
                 }
             }
+            return true;
+        } else {
+            return false;
         }
-        return result;
     }
 
     /**
