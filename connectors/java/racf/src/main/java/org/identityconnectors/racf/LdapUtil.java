@@ -884,6 +884,20 @@ class LdapUtil {
                             }
                         }
                         ( (RacfConnection) _connector.getConnection() ).getDirContext().modifyAttributes(createDnFromName(objectClass, uid.getUidValue()), DirContext.REPLACE_ATTRIBUTE, diffValues);
+                        if (diffValues.get(ATTR_LDAP_DEFAULT_GROUP) != null) {
+                            boolean toRemove = true;
+                            for (Object gr : groups.getValue()) {
+                                if (((String)gr).equalsIgnoreCase((String)curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()).get())) {
+                                    toRemove = false;
+                                    break;
+                                }
+                            }
+                            if (toRemove) {
+                                String defGroup = RacfConnector.extractRacfIdFromLdapId((String)curAttrs.get(ATTR_LDAP_DEFAULT_GROUP.toUpperCase()).get());
+                                String dn = "racfgroupid="+ defGroup +"+racfuserid="+uid.getUidValue()+ ",profileType=connect," + ( (RacfConfiguration) _connector.getConfiguration() ).getSuffix();
+                                ( (RacfConnection) _connector.getConnection() ).getDirContext().destroySubcontext(dn);
+                            }
+                        }
                     } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
                         Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
                         Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
