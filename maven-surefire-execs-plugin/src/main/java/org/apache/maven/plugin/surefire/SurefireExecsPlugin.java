@@ -68,9 +68,9 @@ public class SurefireExecsPlugin
      */
     private boolean skipExec;
     /**
-     * Set this to "true" to bypass unit tests entirely. Its use is NOT RECOMMENDED, especially if you
-     * enable it using the "maven.test.skip" property, because maven.test.skip disables both running the
-     * tests and compiling the tests.  Consider using the <code>skipTests</code> parameter instead.
+     * Set this to "true" to bypass unit tests entirely. Its use is NOT RECOMMENDED, especially if you enable it using
+     * the "maven.test.skip" property, because maven.test.skip disables both running the tests and compiling the tests.
+     * Consider using the <code>skipTests</code> parameter instead.
      *
      * @parameter default-value="false" expression="${maven.test.skip}"
      */
@@ -90,15 +90,15 @@ public class SurefireExecsPlugin
      */
     private File basedir;
     /**
-     * The directory containing generated test classes of the project being tested.
-     * This will be included at the beginning of the test classpath.                                                                                                                            *
+     * The directory containing generated test classes of the project being tested. This will be included at the
+     * beginning of the test classpath. *
      *
      * @parameter default-value="${project.build.testOutputDirectory}"
      */
     private File testClassesDirectory;
     /**
-     * The directory containing generated classes of the project being tested.
-     * This will be included after the test classes in the test classpath.
+     * The directory containing generated classes of the project being tested. This will be included after the test
+     * classes in the test classpath.
      *
      * @parameter default-value="${project.build.outputDirectory}"
      */
@@ -111,21 +111,21 @@ public class SurefireExecsPlugin
      */
     private MavenProject project;
     /**
-     * List of dependencies to exclude from the test classpath.
-     * Each dependency string must follow the format <i>groupId:artifactId</i>.
-     * For example: <i>org.acme:project-a</i>
+     * List of dependencies to exclude from the test classpath. Each dependency string must follow the format
+     * <i>groupId:artifactId</i>. For example: <i>org.acme:project-a</i>
      *
      * @parameter
      * @since 2.6
      */
     private List classpathDependencyExcludes;
     /**
-     * A dependency scope to exclude from the test classpath.
-     * The scope can be one of the following scopes:
+     * A dependency scope to exclude from the test classpath. The scope can be one of the following scopes:
      * <p/>
-     * <ul><li><i>compile</i> - system, provided, compile
+     * <ul>
+     * <li><i>compile</i> - system, provided, compile
      * <li><i>runtime</i> - compile, runtime
-     * <li><i>test</i> - system, provided, compile, runtime, test</ul>
+     * <li><i>test</i> - system, provided, compile, runtime, test
+     * </ul>
      *
      * @parameter default-value=""
      * @since 2.6
@@ -154,44 +154,38 @@ public class SurefireExecsPlugin
     private File testSourceDirectory;
     /**
      * Specify this parameter to run individual tests by file name, overriding the <code>includes/excludes</code>
-     * parameters.  Each pattern you specify here will be used to create an
-     * include pattern formatted like <code>**&#47;${test}.java</code>, so you can just type "-Dtest=MyTest"
-     * to run a single test called "foo/MyTest.java".<br/>
-     * This parameter overrides the <code>includes/excludes</code> parameters, and the TestNG
-     * <code>suiteXmlFiles</code> parameter.
-     *
-     * since 2.7.3
-     * You can execute a limited number of method in the test with adding #myMethod or #my*ethod.
-     * Si type "-Dtest=MyTest#myMethod"
-     * <b>supported for junit 4.x and testNg</b>
+     * parameters. Each pattern you specify here will be used to create an include pattern formatted like
+     * <code>**&#47;${test}.java</code>, so you can just type "-Dtest=MyTest" to run a single test called
+     * "foo/MyTest.java".<br/>
+     * This parameter overrides the <code>includes/excludes</code> parameters, and the TestNG <code>suiteXmlFiles</code>
+     * parameter.
+     * <p/>
+     * since 2.7.3 You can execute a limited number of method in the test with adding #myMethod or #my*ethod. Si type
+     * "-Dtest=MyTest#myMethod" <b>supported for junit 4.x and testNg</b>
      *
      * @parameter expression="${test}"
      */
     private String test;
     /**
      * A list of &lt;include> elements specifying the tests (by pattern) that should be included in testing. When not
-     * specified and when the <code>test</code> parameter is not specified, the default includes will be
-     * <code><br/>
+     * specified and when the <code>test</code> parameter is not specified, the default includes will be <code><br/>
      * &lt;includes><br/>
      * &nbsp;&lt;include>**&#47;Test*.java&lt;/include><br/>
      * &nbsp;&lt;include>**&#47;*Test.java&lt;/include><br/>
      * &nbsp;&lt;include>**&#47;*TestCase.java&lt;/include><br/>
      * &lt;/includes><br/>
-     * </code>
-     * This parameter is ignored if the TestNG <code>suiteXmlFiles</code> parameter is specified.
+     * </code> This parameter is ignored if the TestNG <code>suiteXmlFiles</code> parameter is specified.
      *
      * @parameter
      */
     private List includes;
     /**
      * A list of &lt;exclude> elements specifying the tests (by pattern) that should be excluded in testing. When not
-     * specified and when the <code>test</code> parameter is not specified, the default excludes will be
-     * <code><br/>
+     * specified and when the <code>test</code> parameter is not specified, the default excludes will be <code><br/>
      * &lt;excludes><br/>
      * &nbsp;&lt;exclude>**&#47;*$*&lt;/exclude><br/>
      * &lt;/excludes><br/>
-     * </code>
-     * (which excludes all inner classes).<br>
+     * </code> (which excludes all inner classes).<br>
      * This parameter is ignored if the TestNG <code>suiteXmlFiles</code> parameter is specified.
      *
      * @parameter
@@ -221,8 +215,15 @@ public class SurefireExecsPlugin
      */
     private Map systemPropertyVariables;
     /**
-     * List of properties for configuring all TestNG related configurations. This is the new
-     * preferred method of configuring TestNG.
+     * List of System properties, loaded from a file, to pass to the JUnit tests.
+     *
+     * @parameter
+     * @since 2.8.2
+     */
+    private File systemPropertiesFile;
+    /**
+     * List of properties for configuring all TestNG related configurations. This is the new preferred method of
+     * configuring TestNG.
      *
      * @parameter
      * @since 2.4
@@ -257,13 +258,22 @@ public class SurefireExecsPlugin
      */
     private String reportFormat;
     /**
+     * Add custom text into report filename: TEST-testClassName-reportNameSuffix.xml,
+     * testClassName-reportNameSuffix.txt and testClassName-reportNameSuffix-output.txt.
+     * File TEST-testClassName-reportNameSuffix.xml has changed attributes 'testsuite'--'name'
+     * and 'testcase'--'classname' - reportNameSuffix is added to the attribute value.
+     *
+     * @parameter expression="${surefire.reportNameSuffix}" default-value=""
+     */
+    private String reportNameSuffix;
+    /**
      * Option to generate a file test report or just output the test report to the console.
      *
      * @parameter expression="${surefire.useFile}" default-value="true"
      */
     private boolean useFile;
     /**
-     * When forking, set this to "true" to redirect the unit test standard output to a file (found in
+     * Set this to "true" to redirect the unit test standard output to a file (found in
      * reportsDirectory/testName-output.txt).
      *
      * @parameter expression="${maven.test.redirectTestOutputToFile}" default-value="false"
@@ -302,10 +312,9 @@ public class SurefireExecsPlugin
      */
     private String argLine;
     /**
-     * Attach a debugger to the forked JVM.  If set to "true", the process will suspend and
-     * wait for a debugger to attach on port 5005.  If set to some other string, that
-     * string will be appended to the argLine, allowing you to configure arbitrary
-     * debuggability options (without overwriting the other options specified through the <code>argLine</code>
+     * Attach a debugger to the forked JVM. If set to "true", the process will suspend and wait for a debugger to attach
+     * on port 5005. If set to some other string, that string will be appended to the argLine, allowing you to configure
+     * arbitrary debuggability options (without overwriting the other options specified through the <code>argLine</code>
      * parameter).
      *
      * @parameter expression="${maven.surefire.debug}"
@@ -313,8 +322,8 @@ public class SurefireExecsPlugin
      */
     private String debugForkedProcess;
     /**
-     * Kill the forked test process after a certain number of seconds.  If set to 0,
-     * wait forever for the process, never timing out.
+     * Kill the forked test process after a certain number of seconds. If set to 0, wait forever for the process, never
+     * timing out.
      *
      * @parameter expression="${surefire.timeout}"
      * @since 2.4
@@ -336,16 +345,17 @@ public class SurefireExecsPlugin
     private File workingDirectory;
     /**
      * When false it makes tests run using the standard classloader delegation instead of the default Maven isolated
-     * classloader. Only used when forking (forkMode is not "none").<br/> Setting it to false helps with some problems
-     * caused by conflicts between xml parsers in the classpath and the Java 5 provider parser.
+     * classloader. Only used when forking (forkMode is not "none").<br/>
+     * Setting it to false helps with some problems caused by conflicts between xml parsers in the classpath and the
+     * Java 5 provider parser.
      *
      * @parameter expression="${childDelegation}" default-value="false"
      * @since 2.1
      */
     private boolean childDelegation;
     /**
-     * (TestNG only) Groups for this test. Only classes/methods/etc decorated with one of the groups specified here will be included
-     * in test run, if specified.<br/>
+     * (TestNG only) Groups for this test. Only classes/methods/etc decorated with one of the groups specified here will
+     * be included in test run, if specified.<br/>
      * This parameter is ignored if the <code>suiteXmlFiles</code> parameter is specified.
      *
      * @parameter expression="${groups}"
@@ -353,8 +363,8 @@ public class SurefireExecsPlugin
      */
     private String groups;
     /**
-     * (TestNG only) Excluded groups. Any methods/classes/etc with one of the groups specified in this list will specifically not be
-     * run.<br/>
+     * (TestNG only) Excluded groups. Any methods/classes/etc with one of the groups specified in this list will
+     * specifically not be run.<br/>
      * This parameter is ignored if the <code>suiteXmlFiles</code> parameter is specified.
      *
      * @parameter expression="${excludedGroups}"
@@ -362,10 +372,11 @@ public class SurefireExecsPlugin
      */
     private String excludedGroups;
     /**
-     * (TestNG only) List of &lt;suiteXmlFile> elements specifying TestNG suite xml file locations. Note that <code>suiteXmlFiles</code> is incompatible
-     * with several other parameters of this plugin, like <code>includes/excludes</code>.<br/>
-     * This parameter is ignored if the <code>test</code> parameter is specified (allowing you to run a single
-     * test instead of an entire suite).
+     * (TestNG only) List of &lt;suiteXmlFile> elements specifying TestNG suite xml file locations. Note that
+     * <code>suiteXmlFiles</code> is incompatible with several other parameters of this plugin, like
+     * <code>includes/excludes</code>.<br/>
+     * This parameter is ignored if the <code>test</code> parameter is specified (allowing you to run a single test
+     * instead of an entire suite).
      *
      * @parameter
      * @since 2.2
@@ -386,8 +397,8 @@ public class SurefireExecsPlugin
      */
     private String testNGArtifactName;
     /**
-     * (TestNG/JUnit 4.7 provider only) The attribute thread-count allows you to specify how many threads should be allocated for this execution. Only
-     * makes sense to use in conjunction with the <code>parallel</code> parameter.
+     * (TestNG/JUnit 4.7 provider only) The attribute thread-count allows you to specify how many threads should be
+     * allocated for this execution. Only makes sense to use in conjunction with the <code>parallel</code> parameter.
      *
      * @parameter expression="${threadCount}"
      * @since 2.2
@@ -401,19 +412,21 @@ public class SurefireExecsPlugin
      */
     private boolean perCoreThreadCount;
     /**
-     * (JUnit 4.7 provider) Indicates that the thread pool will be unlimited. The <code>parallel</code> parameter and the actual number of classes/methods
-     * will decide. Setting this to "true" effectively disables <code>perCoreThreadCount</code> and <code>threadCount</code>. Defaults to "false".
+     * (JUnit 4.7 provider) Indicates that the thread pool will be unlimited. The <code>parallel</code> parameter and
+     * the actual number of classes/methods will decide. Setting this to "true" effectively disables
+     * <code>perCoreThreadCount</code> and <code>threadCount</code>. Defaults to "false".
      *
      * @parameter expression="${useUnlimitedThreads}" default-value="false"
      * @since 2.5
      */
     private boolean useUnlimitedThreads;
     /**
-     * (TestNG only) When you use the <code>parallel</code> attribute, TestNG will try to run all your test methods in separate threads, except for
-     * methods that depend on each other, which will be run in the same thread in order to respect their order of
-     * execution.
+     * (TestNG only) When you use the <code>parallel</code> attribute, TestNG will try to run all your test methods in
+     * separate threads, except for methods that depend on each other, which will be run in the same thread in order to
+     * respect their order of execution.
      * <p/>
-     * (JUnit 4.7 provider) Supports values "classes"/"methods"/"both" to run in separate threads, as controlled by <code>threadCount</code>.
+     * (JUnit 4.7 provider) Supports values "classes"/"methods"/"both" to run in separate threads, as controlled by
+     * <code>threadCount</code>.
      *
      * @parameter expression="${parallel}"
      * @since 2.2
@@ -473,13 +486,12 @@ public class SurefireExecsPlugin
      */
     private boolean useSystemClassLoader;
     /**
-     * By default, Surefire forks your tests using a manifest-only JAR; set this parameter
-     * to "false" to force it to launch your tests with a plain old Java classpath.
-     * (See http://maven.apache.org/plugins/maven-surefire-plugin/examples/class-loading.html
-     * for a more detailed explanation of manifest-only JARs and their benefits.)
+     * By default, Surefire forks your tests using a manifest-only JAR; set this parameter to "false" to force it to
+     * launch your tests with a plain old Java classpath. (See
+     * http://maven.apache.org/plugins/maven-surefire-plugin/examples/class-loading.html for a more detailed explanation
+     * of manifest-only JARs and their benefits.)
      * <p/>
-     * Beware, setting this to "false" may cause your tests to
-     * fail on Windows if your classpath is too long.
+     * Beware, setting this to "false" may cause your tests to fail on Windows if your classpath is too long.
      *
      * @parameter expression="${surefire.useManifestOnlyJar}" default-value="true"
      * @since 2.4.3
@@ -515,11 +527,12 @@ public class SurefireExecsPlugin
      */
     private Boolean parallelMavenExecution;
     /**
-     * Defines the order the tests will be run in. Supported values are "alphabetical", "reversealphabetical",
-     * "random", "hourly" (alphabetical on even hours, reverse alphabetical on odd hours) and "filesystem".<p/>
+     * Defines the order the tests will be run in. Supported values are "alphabetical", "reversealphabetical", "random",
+     * "hourly" (alphabetical on even hours, reverse alphabetical on odd hours) and "filesystem".
      * <p/>
-     * Odd/Even for hourly is determined at the time the of scanning the classpath, meaning it could change during
-     * a multi-module build.
+     * <p/>
+     * Odd/Even for hourly is determined at the time the of scanning the classpath, meaning it could change during a
+     * multi-module build.
      *
      * @parameter default-value="filesystem"
      * @since 2.7

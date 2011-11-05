@@ -96,7 +96,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">databasetable-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./databasetable">Documentation</a>
+                                <a href="./openicf-databasetable-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -126,7 +126,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">db2-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./db2">Documentation</a>
+                                <a href="./openicf-db2-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -156,7 +156,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">mysqluser-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./mysqluser">Documentation</a>
+                                <a href="./openicf-mysqluser-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -186,7 +186,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">oracle-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./oracle">Documentation</a>
+                                <a href="./openicf-oracle-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -216,7 +216,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">scriptedsql-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./scriptedsql">Documentation</a>
+                                <a href="./openicf-scriptedsql-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

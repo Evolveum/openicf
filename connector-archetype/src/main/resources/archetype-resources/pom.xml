@@ -35,7 +35,7 @@
         <version>${compatibility_version}.${framework_version}</version>
     </parent>
     <groupId>${groupId}</groupId>
-    <artifactId>${artifactId}</artifactId>
+    <artifactId>openicf-${artifactId}-connector</artifactId>
     <version>${compatibility_version}.${version}</version>
     <packaging>bundle</packaging>
     <name>${connector_name} Connector</name>
@@ -43,7 +43,7 @@
     <url>https://openicf.forgerock.org/connectors/${artifactId}</url>
     <issueManagement>
         <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/${jira_project}</url>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/${jira_componentId}</url>
     </issueManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/${artifactId}</connection>
@@ -51,12 +51,13 @@
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/${artifactId}</url>
     </scm>
     <properties>
-        <defaultConnectorFamily>${connector_family}</defaultConnectorFamily>
         <skipTests>false</skipTests>
         <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${symbol_dollar}{user.home}/.connectors/connector-${symbol_dollar}{project.artifactId}/config</privateConfigPath>
+        <privateConfigPath>${symbol_dollar}{user.home}/.connectors/${symbol_dollar}{project.artifactId}/config</privateConfigPath>
         <connectorPackage>${package}</connectorPackage>
         <connectorClass>${connector_name}Connector</connectorClass>
+        <jira.componentIds>${jira_componentId}</jira.componentIds>
+        <jira.versionPrefix>${symbol_dollar}{project.artifactId}</jira.versionPrefix>
     </properties>
     <repositories>
         <repository>

@@ -91,7 +91,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">openportal-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./openportal">Documentation</a>
+                                <a href="./openicf-openportal-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -121,7 +121,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">spml-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./spml">Documentation</a>
+                                <a href="./openicf-spml-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

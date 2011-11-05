@@ -91,7 +91,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">oracleerp-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./oracleerp">Documentation</a>
+                                <a href="./openicf-oracleerp-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

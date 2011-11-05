@@ -92,7 +92,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">RACF-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./racf">Documentation</a>
+                                <a href="./openicf-racf-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

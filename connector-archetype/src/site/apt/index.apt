@@ -88,7 +88,7 @@ mvn archetype:generate \
     [INFO] Using property: connector_family = <<misc>>
     Define value for property 'connector_name': : <<Sample>>
     [INFO] Using property: framework_version = 0.0-SNAPSHOT
-    [INFO] Using property: jira_project = ICFXXX
+    [INFO] Using property: jira_componentId = 10191
     [INFO] Using property: poolable_connector = no
     Confirm properties configuration:
     groupId: org.forgerock.openicf.misc
@@ -112,7 +112,7 @@ mvn archetype:generate \
     connector_family: misc
     connector_name: Sample
     framework_version: 0.0-SNAPSHOT
-    jira_project: ICFXXX
+    jira_componentId: 10191
     poolable_connector: no
      Y: :
     [INFO] ------------------------------------------------------------------------

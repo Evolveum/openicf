@@ -92,7 +92,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">ldap-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./ldap/index.html">Documentation</a>
+                                <a href="./openicf-ldap-connector/index.html">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

@@ -92,7 +92,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">solaris-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./solaris">Documentation</a>
+                                <a href="./openicf-solaris-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>
@@ -122,7 +122,7 @@
                                 <a href="http://maven.forgerock.org/repo/snapshots/org/forgerock/openicf/connectors/">vms-1.1.0.0-SNAPSHOT.jar</a>
                             </td>
                             <td>
-                                <a href="./vms">Documentation</a>
+                                <a href="./openicf-vms-connector">Documentation</a>
                             </td>
                             <td>Java 1.5</td>
                             <td>

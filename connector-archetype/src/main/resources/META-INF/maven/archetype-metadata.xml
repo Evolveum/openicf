@@ -45,8 +45,8 @@
     <requiredProperty key="OP_AUTHENTICATE">
       <defaultValue>yes</defaultValue>
     </requiredProperty>
-    <requiredProperty key="jira_project">
-      <defaultValue>ICFXXX</defaultValue>
+    <requiredProperty key="jira_componentId">
+      <defaultValue>10191</defaultValue>
     </requiredProperty>
     <requiredProperty key="OP_TEST">
       <defaultValue>yes</defaultValue>

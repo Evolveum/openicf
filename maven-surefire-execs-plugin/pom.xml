@@ -24,36 +24,79 @@
     <parent>
         <groupId>org.forgerock</groupId>
         <artifactId>forgerock-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <groupId>org.forgerock.openicf</groupId>
-    <artifactId>maven-surefire-execs-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>surefire-execs-maven-plugin</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
-    <name>OpenICF Maven Surefire Executions Plugin</name>
+    <name>OpenICF Surefire Executions Maven Plugin</name>
     <description>The Surefire Execs Plugin is used during the test phase of the build lifecycle to execute the unit and the contract tests of a connector.</description>
-    <distributionManagement>
-        <site>
-            <id>forgerock.org</id>
-            <url>scp://openicf.forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs/maven-surefire-execs-plugin</url>
-        </site>
-    </distributionManagement>
+    <inceptionYear>2011</inceptionYear>
+    <url>http://openicf.forgerock.org</url>
+    <licenses>
+        <license>
+            <name>CDDL-1.0</name>
+            <url>http://www.opensource.org/licenses/cddl1.php</url>
+            <comments>Common Development and Distribution License (CDDL) 1.0.
+            This license applies to OpenICF source code as indicated in the
+            sources.
+            </comments>
+            <distribution>repo</distribution>
+        </license>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/maven-surefire-execs-plugin</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/maven-surefire-execs-plugin</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/java/maven-surefire-execs-plugin</url>
     </scm>
-
+    <distributionManagement>
+        <site>
+            <id>forgerock.org</id>
+            <url>${siteDistributionURL}/maven-surefire-execs-plugin</url>
+        </site>
+    </distributionManagement>
+    
+    <repositories>
+        <repository>
+            <id>forgerock-staging-repository</id>
+            <name>ForgeRock Release Repository</name>
+            <url>http://maven.forgerock.org/repo/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>forgerock-snapshots-repository</id>
+            <name>ForgeRock Snapshot Repository</name>
+            <url>http://maven.forgerock.org/repo/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10172</url>
+    </issueManagement>
+    <properties>
+        <siteDistributionURL>scp://openicf.forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.8</version>
+            <version>2.10</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
-            <version>2.0.5</version>
+            <version>3.0</version>
         </dependency>
     </dependencies>
 
