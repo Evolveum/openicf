@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ! CCPL HEADER START
+  !
+  ! This work is licensed under the Creative Commons
+  ! Attribution-NonCommercial-NoDerivs 3.0 Unported License.
+  ! To view a copy of this license, visit
+  ! http://creativecommons.org/licenses/by-nc-nd/3.0/
+  ! or send a letter to Creative Commons, 444 Castro Street,
+  ! Suite 900, Mountain View, California, 94041, USA.
+  !
+  ! See the License for the specific language governing permissions
+  ! and limitations under the License.
+  !
+  ! If applicable, add the following below this CCPL HEADER, with the fields
+  ! enclosed by brackets "[]" replaced with your own identifying information:
+  !      Portions Copyright [yyyy] [name of copyright owner]
+  !
+  ! CCPL HEADER END
+  !
+  !      Copyright 2012 ForgeRock AS
+  !
+-->
+<document
+ xmlns="http://maven.apache.org/XDOC/2.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+ <properties>
+  <title>The open source Identity Connector Framework</title>
+  <author email="openicf-dev@forgerock.org">ForgeRock AS</author>
+ </properties>
+ <body>
+  <section name="About the OpenICF Project">
+   <!--p>The OpenICF community actively develops open source directory services,
+   including a high performance, highly available, secure directory server,
+   built-in data replication, client tools, and an LDAP SDK. OpenDJ offers
+   extensive LDAPv3 support. OpenDJ DSML gateway enables applications
+   accessing directory data through DSMLv2. All modules are 100% Java based
+   and require Java 1.6.</p>
+   <p>Coming soon on the <a
+   href="https://wikis.forgerock.org/confluence/display/OPENDJ/OpenDJ+Roadmap"
+   >OpenDJ Roadmap</a>, you see that the community plans to add RESTful web
+   services access to the directory, and to develop directory proxy services
+   with virtual directory capabilities such as data mapping and connectors
+   for non-directory data sources.</p-->
+  </section>
+  <section name="Welcome Users">
+   <p>The OpenICF community shares an interest in improving and extending
+   OpenICF software, and in adapting OpenICF to best fit our needs.</p>
+   <p>You are welcome to join us. Here are some ways to get started.</p>
+   <ul>
+    <li>Download and install a build from the <a
+    href="http://www.forgerock.org/openicf.html">download page</a>.</li>
+    <li>Join the <a
+    href="https://lists.forgerock.org/mailman/listinfo/openicf">OpenICF
+    mailing list</a> to ask questions, make suggestions, and tell us what
+    you think of OpenICF.</li>
+    <li><a
+    href="https://idp.forgerock.org/openam/UI/Login?service=register">Register
+    to join the community</a>.</li>
+    <li>Read and edit <a
+    href="https://wikis.forgerock.org/confluence/display/OPENIDM/">OpenIDM Wiki
+    documentation</a>.</li>
+    <li>Chat on irc.freenode.net #openidm.</li>
+   </ul>
+   <p>Looking forward to hearing from you.</p>
+  </section>
+  <section name="Welcome Developers">
+   <p>If you are a Java developer interested in OpenICF, there are plenty of
+   ways you can get actively involved in the community in addition to joining
+   as an OpenICF user.</p>
+   <ul>
+    <li>Get the source. See instructions in the <a
+    href="/source-repository.html"
+    >Guide to OpenICF Subversion</a>.</li>
+    <li>Make sure you <a
+    href="https://idp.forgerock.org/openam/UI/Login?service=register">register
+    to join the community</a>, thus also registering to <a
+    href="https://bugster.forgerock.org/jira/browse/OPENICF">report issues, and
+    describe requests for enhancements</a>, as well as to edit <a
+    href="https://wikis.forgerock.org/confluence/display/OPENIDM/">OpenIDM Wiki
+    documentation</a>.</li>
+    <li>Participate and discuss your work on the <a
+    href="https://lists.forgerock.org/mailman/listinfo/openicf-dev">OpenICF
+    developer mailing list</a> in addition to the <a
+    href="https://lists.forgerock.org/mailman/listinfo/openicf">OpenICF
+    mailing list</a>.</li>
+   </ul>
+  </section>
+  <section name="Welcome Partners">
+   <p>Want to partner with other OpenICF community members to bring solutions
+   based on OpenICF to your customers?</p>
+   <ul>
+    <li>Come show off your expertise on the <a
+    href="https://lists.forgerock.org/mailman/listinfo/openicf">mailing list</a>
+    and in the chat room at irc.freenode.net #openidm.</li>
+    <li>Post your success stories and white papers on the <a
+    href="https://wikis.forgerock.org/confluence/display/OPENIDM/">OpenIDM
+    Wiki</a>.</li>
+   </ul>
+  </section>
+ </body>
+</document>
+
