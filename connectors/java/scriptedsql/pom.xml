@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011 ForgeRock AS. All rights reserved.
+ Copyright © 2011-2012 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,11 +27,11 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.0.1-SNAPSHOT</version>
     </parent>
     <groupId>org.forgerock.openicf.connectors.db</groupId>
     <artifactId>openicf-scriptedsql-connector</artifactId>
-    <version>1.1.0.0-SNAPSHOT</version>
+    <version>1.1.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Scripted SQL Connector</name>
     <description>A Database connector that uses Groovy scripts to perform actions</description>
@@ -49,7 +49,8 @@
         <skipTests>true</skipTests>
         <contracts.skip>true</contracts.skip>
         <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>dbcommon</embedded.dependencies>
+        <openicf.osgi.embed>dbcommon</openicf.osgi.embed>
+        <openicf.osgi.dynamic.import>*</openicf.osgi.dynamic.import>
         <connectorPackage>org.forgerock.openicf.scriptedsql</connectorPackage>
         <connectorClass>ScriptedSQLConnector</connectorClass>
         <jira.componentIds>10178</jira.componentIds>
@@ -73,48 +74,11 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-    </profiles>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Embed-Dependency>${embedded.dependencies}</Embed-Dependency>
-                        <Embed-Directory>lib</Embed-Directory>
-                        <Embed-Transitive>true</Embed-Transitive>
-                        <Export-Package>${connectorPackage}.*</Export-Package>
-                        <Import-Package>*</Import-Package>
-                        <DynamicImport-Package>*</DynamicImport-Package>
-                        <ConnectorBundle-FrameworkVersion>${ConnectorBundle-FrameworkVersion}</ConnectorBundle-FrameworkVersion>
-                        <ConnectorBundle-Name>${ConnectorBundle-Name}</ConnectorBundle-Name>
-                        <ConnectorBundle-Version>${ConnectorBundle-Version}</ConnectorBundle-Version>
-                        <Subversion-Revision>${Subversion-Revision}</Subversion-Revision>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
     <dependencies>
         <dependency>
             <groupId>org.forgerock.openicf.connectors.misc</groupId>
             <artifactId>dbcommon</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
+            <version>1.1.0.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
