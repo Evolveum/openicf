@@ -54,6 +54,7 @@
         <menu ref="reports"/>
     </body>
     <custom>
+        <googleAnalytics>UA-23412190-10</googleAnalytics>
         <openproject>
             <href>http://openicf.forgerock.org</href>
             <src>images/openicf-tagline-195x65.png</src>
