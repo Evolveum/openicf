@@ -2,9 +2,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   ~
-  ~ Copyright © 2011. ForgeRock AS. All rights reserved.
+  ~ Copyright (c) 2012. ForgeRock Inc. All rights reserved.
   ~
   ~ The contents of this file are subject to the terms
   ~ of the Common Development and Distribution License
@@ -24,7 +24,6 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
-  ~ $Id$
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -51,6 +50,8 @@
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/${artifactId}</url>
     </scm>
     <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
         <skipTests>false</skipTests>
         <contracts.skip>true</contracts.skip>
         <privateConfigPath>${symbol_dollar}{user.home}/.connectors/${symbol_dollar}{project.artifactId}/config</privateConfigPath>
@@ -58,6 +59,7 @@
         <connectorClass>${connector_name}Connector</connectorClass>
         <jira.componentIds>${jira_componentId}</jira.componentIds>
         <jira.versionPrefix>${symbol_dollar}{project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>${jira_fixVersionIds}</jira.fixVersionIds>
     </properties>
     <repositories>
         <repository>
@@ -77,18 +79,5 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <!-- Example: <embedded.dependencies>dbcommon</embedded.dependencies> -->
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-            </properties>
-        </profile>
-    </profiles>
 
 </project>

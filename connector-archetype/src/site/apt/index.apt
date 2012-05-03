@@ -5,9 +5,9 @@
     Date
    -------------------------
 ~~
-~~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+~~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 ~~
-~~ Copyright © 2011. ForgeRock AS. All rights reserved.
+~~ Copyright (c) 2011-2012. ForgeRock Inc. All rights reserved.
 ~~
 ~~ The contents of this file are subject to the terms
 ~~ of the Common Development and Distribution License
@@ -38,7 +38,7 @@ How to create new connector
 
     These properties are customisable: 
         -DartifactId=<<sample>>
-        -Dversion=<<1.0-SNAPSHOT>>
+        -Dversion=<<0.0-SNAPSHOT>>
         -Dpackage=<<org.forgerock.openicf.sample>>
         -Dconnector_name=<<Sample>>
 
@@ -52,7 +52,7 @@ mvn archetype:generate \
     -DarchetypeRepository=http://maven.forgerock.org/repo/snapshots \
     -DgroupId=org.forgerock.openicf.connectors.misc \
     -DartifactId=sample \
-    -Dversion=1.0-SNAPSHOT \
+    -Dversion=0.0-SNAPSHOT \
     -Dpackage=org.forgerock.openicf.sample \
     -Dconnector_name=Sample
 +---
@@ -63,61 +63,111 @@ mvn archetype:generate \
     $ mvn archetype:generate -DarchetypeCatalog=local
     [INFO] Scanning for projects...
     [INFO]
+    [INFO] ------------------------------------------------------------------------
+    [INFO] Building Maven Stub Project (No POM) 1
+    [INFO] ------------------------------------------------------------------------
+    [INFO]
+    [INFO] >>> maven-archetype-plugin:2.2:generate (default-cli) @ standalone-pom >>>
+    [INFO]
+    [INFO] <<< maven-archetype-plugin:2.2:generate (default-cli) @ standalone-pom <<<
+    [INFO]
+    [INFO] --- maven-archetype-plugin:2.2:generate (default-cli) @ standalone-pom ---
     [INFO] Generating project in Interactive mode
     Choose archetype:
-    1: local -> connector-archetype (OpenICF Connector Development Archetype)
-    Choose a number: : 1
-    Define value for property 'groupId': : org.forgerock.openicf.<<misc>>
-    Define value for property 'artifactId': : <<sample>>
+    1: local -> org.forgerock.openicf:connector-archetype (OpenICF Connector Development Archetype)
+    Choose a number or apply filter (format: [groupId:]artifactId, case sensitive contains): : 1
+    Define value for property 'groupId': : org.forgerock.openicf.connectors
+    Define value for property 'artifactId': : sample
     Define value for property 'version':  1.0-SNAPSHOT: :
-    Define value for property 'package':  org.forgerock.openicf.<<sample>>: :
-    [INFO] Using property: ALL_OPERATIONS = yes
-    [INFO] Using property: OP_AUTHENTICATE = yes
-    [INFO] Using property: OP_CREATE = yes
-    [INFO] Using property: OP_DELETE = yes
-    [INFO] Using property: OP_RESOLVEUSERNAME = yes
-    [INFO] Using property: OP_SCHEMA = yes
-    [INFO] Using property: OP_SCRIPTONCONNECTOR = yes
-    [INFO] Using property: OP_SCRIPTONRESOURCE = yes
-    [INFO] Using property: OP_SEARCH = yes
-    [INFO] Using property: OP_SYUPDATENC = yes
-    [INFO] Using property: OP_TEST = yes
-    [INFO] Using property: OP_UPDATE = yes
-    [INFO] Using property: OP_UPDATEATTRIBUTEVALUES = yes
+    Define value for property 'package':  org.forgerock.openicf.connectors: : org.forgerock.openicf.connectors.sample
+    [INFO] Using property: ALL_OPERATIONS = n
+    [INFO] Using property: OP_AUTHENTICATE = n
+    [INFO] Using property: OP_CREATE = y
+    [INFO] Using property: OP_DELETE = y
+    [INFO] Using property: OP_RESOLVEUSERNAME = n
+    [INFO] Using property: OP_SCHEMA = n
+    [INFO] Using property: OP_SCRIPTONCONNECTOR = n
+    [INFO] Using property: OP_SCRIPTONRESOURCE = n
+    [INFO] Using property: OP_SEARCH = y
+    [INFO] Using property: OP_SYNC = n
+    [INFO] Using property: OP_TEST = y
+    [INFO] Using property: OP_UPDATE = y
+    [INFO] Using property: OP_UPDATEATTRIBUTEVALUES = n
+    [INFO] Using property: attributeNormalizer = n
     [INFO] Using property: compatibility_version = 1.1
-    [INFO] Using property: connector_family = <<misc>>
-    Define value for property 'connector_name': : <<Sample>>
-    [INFO] Using property: framework_version = 0.0-SNAPSHOT
+    [INFO] Using property: connector_family = misc
+    Define value for property 'connector_name': : Sample
+    [INFO] Using property: framework_version = 0.1-SNAPSHOT
     [INFO] Using property: jira_componentId = 10191
-    [INFO] Using property: poolable_connector = no
+    [INFO] Using property: jira_fixVersionIds = 0
+    [INFO] Using property: poolableConnector = n
     Confirm properties configuration:
-    groupId: org.forgerock.openicf.misc
+    groupId: org.forgerock.openicf.connectors
     artifactId: sample
     version: 1.0-SNAPSHOT
-    package: org.forgerock.openicf.sample
-    ALL_OPERATIONS: yes
-    OP_AUTHENTICATE: yes
-    OP_CREATE: yes
-    OP_DELETE: yes
-    OP_RESOLVEUSERNAME: yes
-    OP_SCHEMA: yes
-    OP_SCRIPTONCONNECTOR: yes
-    OP_SCRIPTONRESOURCE: yes
-    OP_SEARCH: yes
-    OP_SYUPDATENC: yes
-    OP_TEST: yes
-    OP_UPDATE: yes
-    OP_UPDATEATTRIBUTEVALUES: yes
+    package: org.forgerock.openicf.connectors.sample
+    ALL_OPERATIONS: n
+    OP_AUTHENTICATE: n
+    OP_CREATE: y
+    OP_DELETE: y
+    OP_RESOLVEUSERNAME: n
+    OP_SCHEMA: n
+    OP_SCRIPTONCONNECTOR: n
+    OP_SCRIPTONRESOURCE: n
+    OP_SEARCH: y
+    OP_SYNC: n
+    OP_TEST: y
+    OP_UPDATE: y
+    OP_UPDATEATTRIBUTEVALUES: n
+    attributeNormalizer: n
     compatibility_version: 1.1
     connector_family: misc
     connector_name: Sample
-    framework_version: 0.0-SNAPSHOT
+    framework_version: 0.1-SNAPSHOT
     jira_componentId: 10191
-    poolable_connector: no
-     Y: :
+    jira_fixVersionIds: 0
+    poolableConnector: n
+     Y: : y
+    [INFO] ----------------------------------------------------------------------------
+    [INFO] Using following parameters for creating project from Archetype: connector-archetype:1.0.0-SNAPSHOT
+    [INFO] ----------------------------------------------------------------------------
+    [INFO] Parameter: groupId, Value: org.forgerock.openicf.connectors
+    [INFO] Parameter: artifactId, Value: sample
+    [INFO] Parameter: version, Value: 1.0-SNAPSHOT
+    [INFO] Parameter: package, Value: org.forgerock.openicf.connectors.sample
+    [INFO] Parameter: packageInPathFormat, Value: org/forgerock/openicf/connectors/sample
+    [INFO] Parameter: OP_SCRIPTONCONNECTOR, Value: n
+    [INFO] Parameter: artifactId, Value: sample
+    [INFO] Parameter: ALL_OPERATIONS, Value: n
+    [INFO] Parameter: OP_DELETE, Value: y
+    [INFO] Parameter: OP_RESOLVEUSERNAME, Value: n
+    [INFO] Parameter: package, Value: org.forgerock.openicf.connectors.sample
+    [INFO] Parameter: version, Value: 1.0-SNAPSHOT
+    [INFO] Parameter: OP_AUTHENTICATE, Value: n
+    [INFO] Parameter: OP_TEST, Value: y
+    [INFO] Parameter: attributeNormalizer, Value: n
+    [INFO] Parameter: OP_UPDATEATTRIBUTEVALUES, Value: n
+    [INFO] Parameter: groupId, Value: org.forgerock.openicf.connectors
+    [INFO] Parameter: framework_version, Value: 0.1-SNAPSHOT
+    [INFO] Parameter: poolableConnector, Value: n
+    [INFO] Parameter: jira_componentId, Value: 10191
+    [INFO] Parameter: connector_name, Value: Sample
+    [INFO] Parameter: OP_UPDATE, Value: y
+    [INFO] Parameter: jira_fixVersionIds, Value: 0
+    [INFO] Parameter: OP_SEARCH, Value: y
+    [INFO] Parameter: OP_CREATE, Value: y
+    [INFO] Parameter: compatibility_version, Value: 1.1
+    [INFO] Parameter: connector_family, Value: misc
+    [INFO] Parameter: OP_SYNC, Value: n
+    [INFO] Parameter: OP_SCHEMA, Value: n
+    [INFO] Parameter: OP_SCRIPTONRESOURCE, Value: n
+    [INFO] project created from Archetype in dir: sample
     [INFO] ------------------------------------------------------------------------
     [INFO] BUILD SUCCESS
     [INFO] ------------------------------------------------------------------------
+    [INFO] Total time: 5:51.433s
+    [INFO] Finished at: Thu May 03 14:18:16 CEST 2012
+    [INFO] Final Memory: 8M/1015M
     [INFO] ------------------------------------------------------------------------
     $ cd sample
     $ mvn install

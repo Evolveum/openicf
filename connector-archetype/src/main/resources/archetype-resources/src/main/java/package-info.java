@@ -1,6 +1,6 @@
 #set( $symbol_pound = '#' )
-#set( $symbol_dollar = '$' )
-#set( $symbol_escape = '\' )
+        #set( $symbol_dollar = '$' )
+        #set( $symbol_escape = '\' )
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -24,34 +24,9 @@
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
-package ${package};
 
 /**
- * Class to represent a ${connector_name} Connection
+ * This is the core package for the connector.
  *
- * @author ${symbol_dollar}author${symbol_dollar}
- * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
-public class ${connector_name}Connection {
-
-    private ${connector_name}Configuration configuration;
-
-    public ${connector_name}Connection(${connector_name}Configuration configuration) {
-        this.configuration = configuration;
-    }
-
-    /**
-     * Release internal resources
-     */
-    public void dispose() {
-        //implementation
-    }
-
-    /**
-     * If internal connection is not usable, throw IllegalStateException
-     */
-    public void test() {
-        //implementation
-    }
-
-}
+package ${package};

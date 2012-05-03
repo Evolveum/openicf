@@ -23,9 +23,9 @@
  "Portions Copyrighted 2011 [name of copyright owner]"
 -->
 
-<project xmlns="http://maven.apache.org/DECORATION/1.0.1"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.0.1 http://maven.apache.org/xsd/decoration-1.0.1.xsd">
+<project xmlns="http://maven.apache.org/DECORATION/1.1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.1.0 http://maven.apache.org/xsd/decoration-1.1.0.xsd">
     <skin>
         <groupId>org.forgerock.commons</groupId>
         <artifactId>forgerock-community-skin</artifactId>
@@ -36,15 +36,17 @@
     <body>
         <breadcrumbs>
             <item name="Developer Community" href="http://www.forgerock.org" />
-            <item name="OpenICF" href="http://openicf.forgerock.org"/>
+            <item name="OpenICF" href="../index.html"/>
         </breadcrumbs>        
         <menu ref="reports"/>
     </body>
     <custom>
+        <googleAnalytics>UA-23412190-10</googleAnalytics>
         <openproject>
             <href>http://openicf.forgerock.org</href>
             <src>images/openicf-tagline-195x65.png</src>
             <alt>OpenICF</alt>
         </openproject>
+        <siteSearchFQDN>openicf.forgerock.org</siteSearchFQDN>
     </custom>
 </project>

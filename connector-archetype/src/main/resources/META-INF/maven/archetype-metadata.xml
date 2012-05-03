@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   ~
-  ~ Copyright © 2011. ForgeRock AS. All rights reserved.
+  ~ Copyright (c) 2011-2012. ForgeRock Inc. All rights reserved.
   ~
   ~ The contents of this file are subject to the terms
   ~ of the Common Development and Distribution License
@@ -23,113 +23,115 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
-  ~ $Id$
 -->
 
-<archetype-descriptor xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd" name="connector-archetype"
-    xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <requiredProperties>
-    <requiredProperty key="OP_SCRIPTONCONNECTOR">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="ALL_OPERATIONS">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_DELETE">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_RESOLVEUSERNAME">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_AUTHENTICATE">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="jira_componentId">
-      <defaultValue>10191</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_TEST">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="poolable_connector">
-      <defaultValue>no</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_UPDATEATTRIBUTEVALUES">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="framework_version">
-      <defaultValue>0.0-SNAPSHOT</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="connector_name">
-    </requiredProperty>
-    <requiredProperty key="OP_UPDATE">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_SEARCH">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_CREATE">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="compatibility_version">
-      <defaultValue>1.1</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_SYUPDATENC">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="connector_family">
-      <defaultValue>misc</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_SCHEMA">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-    <requiredProperty key="OP_SCRIPTONRESOURCE">
-      <defaultValue>yes</defaultValue>
-    </requiredProperty>
-  </requiredProperties>
-  <fileSets>
-    <fileSet filtered="true" packaged="true" encoding="UTF-8">
-      <directory>src/main/java</directory>
-      <includes>
-        <include>**/*.java</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" packaged="true" encoding="UTF-8">
-      <directory>src/main/resources</directory>
-      <includes>
-        <include>**/*.properties</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" packaged="true" encoding="UTF-8">
-      <directory>src/test/java</directory>
-      <includes>
-        <include>**/*.java</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" encoding="UTF-8">
-      <directory>src/test/config</directory>
-      <includes>
-        <include>**/*.groovy</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" encoding="UTF-8">
-      <directory>src/site</directory>
-      <includes>
-        <include>**/*.xml</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" encoding="UTF-8">
-      <directory>src/site</directory>
-      <includes>
-        <include>**/*.apt</include>
-        <include>**/*.fml</include>
-      </includes>
-    </fileSet>
-    <fileSet filtered="true" encoding="UTF-8">
-      <directory></directory>
-      <includes>
-        <include>releases-pom.xml</include>
-      </includes>
-    </fileSet>
-  </fileSets>
+<archetype-descriptor
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd"
+        name="connector-archetype"
+        xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <requiredProperties>
+        <requiredProperty key="connector_name">
+        </requiredProperty>
+        <requiredProperty key="compatibility_version">
+            <defaultValue>1.1</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="framework_version">
+            <defaultValue>0.1-SNAPSHOT</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="connector_family">
+            <defaultValue>misc</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="jira_componentId">
+            <defaultValue>10191</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="jira_fixVersionIds">
+            <defaultValue>0</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="poolableConnector">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="attributeNormalizer">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="ALL_OPERATIONS">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_AUTHENTICATE">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_CREATE">
+            <defaultValue>y</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_DELETE">
+            <defaultValue>y</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_RESOLVEUSERNAME">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_SCHEMA">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_SCRIPTONCONNECTOR">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_SCRIPTONRESOURCE">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_SEARCH">
+            <defaultValue>y</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_SYNC">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_TEST">
+            <defaultValue>y</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_UPDATEATTRIBUTEVALUES">
+            <defaultValue>n</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="OP_UPDATE">
+            <defaultValue>y</defaultValue>
+        </requiredProperty>
+    </requiredProperties>
+    <fileSets>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8">
+            <directory>src/main/java</directory>
+            <includes>
+                <include>**/*.java</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8">
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>**/*.properties</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true" packaged="true" encoding="UTF-8">
+            <directory>src/test/java</directory>
+            <includes>
+                <include>**/*.java</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true" encoding="UTF-8">
+            <directory>src/test/config</directory>
+            <includes>
+                <include>**/*.groovy</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true" encoding="UTF-8">
+            <directory>src/site</directory>
+            <includes>
+                <include>**/*.xml</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true" encoding="UTF-8">
+            <directory>src/site</directory>
+            <includes>
+                <include>**/*.apt</include>
+                <include>**/*.fml</include>
+                <include>**/*.xml</include>
+            </includes>
+        </fileSet>
+    </fileSets>
 </archetype-descriptor>

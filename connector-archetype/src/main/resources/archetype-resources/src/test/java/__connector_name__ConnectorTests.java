@@ -2,9 +2,9 @@
 #set( $symbol_dollar = '$' )
 #set( $symbol_escape = '\' )
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2011 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -23,7 +23,6 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * ${symbol_dollar}Id${symbol_dollar}
  */
 package ${package};
 
@@ -65,7 +64,7 @@ public class ${connector_name}ConnectorTests {
     private static final GuardedString PASSWORD = properties.getProperty("configuration.password", GuardedString.class);
 
     //set up logging
-    private static final Log log = Log.getLog(${connector_name}ConnectorTests.class);
+    private static final Log LOGGER = Log.getLog(${connector_name}ConnectorTests.class);
 
     @BeforeClass
     public static void setUp() {
@@ -76,6 +75,10 @@ public class ${connector_name}ConnectorTests {
         //
         //other setup work to do before running tests
         //
+
+        //Configuration config = new ${connector_name}Configuration();
+        //Map<String, ? extends Object> configData = (Map<String, ? extends Object>) properties.getProperty("configuration",Map.class)
+        //TestHelpers.fillConfiguration(
     }
 
     @AfterClass
@@ -87,14 +90,14 @@ public class ${connector_name}ConnectorTests {
 
     @Test
     public void exampleTest1() {
-        log.info("Running Test 1...");
+        LOGGER.info("Running Test 1...");
         //You can use TestHelpers to do some of the boilerplate work in running a search
         //TestHelpers.search(theConnector, ObjectClass.ACCOUNT, filter, handler, null);
     }
 
     @Test
     public void exampleTest2() {
-        log.info("Running Test 2...");
+        LOGGER.info("Running Test 2...");
         //Another example using TestHelpers
         //List<ConnectorObject> results = TestHelpers.searchToList(theConnector, ObjectClass.GROUP, filter);
     }
