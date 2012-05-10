@@ -68,8 +68,9 @@ public class ${connector_name}Configuration extends AbstractConfiguration {
     }
 
 
-    @ConfigurationProperty(order = 1, displayMessageKey = "HOST_PROPERTY_DISPLAY",
-            helpMessageKey = "HOST_PROPERTY_HELP", required = true, confidential = false)
+    @ConfigurationProperty(order = 1, displayMessageKey = "host.display",
+            groupMessageKey ="basic.group", helpMessageKey = "host.help",
+            required = true, confidential = false)
     public String getHost() {
         return host;
     }
@@ -79,8 +80,9 @@ public class ${connector_name}Configuration extends AbstractConfiguration {
     }
 
 
-    @ConfigurationProperty(order = 2, displayMessageKey = "REMOTE_USER_PROPERTY_DISPLAY",
-            helpMessageKey = "REMOTE_USER_PROPERTY_HELP", required = true, confidential = false)
+    @ConfigurationProperty(order = 2, displayMessageKey = "remoteUser.display",
+            groupMessageKey ="basic.group", helpMessageKey = "remoteUser.help",
+            required = true, confidential = false)
     public String getRemoteUser() {
         return remoteUser;
     }
@@ -89,8 +91,9 @@ public class ${connector_name}Configuration extends AbstractConfiguration {
         this.remoteUser = remoteUser;
     }
 
-    @ConfigurationProperty(order = 3, displayMessageKey = "PASSWORD_PROPERTY_DISPLAY",
-            helpMessageKey = "PASSWORD_PROPERTY_HELP", confidential = true)
+    @ConfigurationProperty(order = 3, displayMessageKey = "password.display",
+            groupMessageKey ="basic.group", helpMessageKey = "password.help",
+            confidential = true)
     public GuardedString getPassword() {
         return password;
     }

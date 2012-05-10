@@ -94,7 +94,6 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.Connector;
 #end
 import org.identityconnectors.framework.spi.ConnectorClass;
-import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
@@ -114,8 +113,10 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
+#set( $connectorName = $connector_name.toLowerCase())
 @ConnectorClass(
-        displayNameKey = "${connector_name}",
+        displayNameKey = "${connectorName}.connector.display",
+        categoryKey="${connector_family}.category",
         configurationClass = ${connector_name}Configuration.class)
 public class ${connector_name}Connector implements
 #if ( $poolable_connector_safe )
@@ -189,7 +190,7 @@ public class ${connector_name}Connector implements
     /**
      * Callback method to receive the {@link Configuration}.
      *
-     * @see Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)
+     * @see org.identityconnectors.framework.spi.Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)
      */
     public void init(Configuration configuration1) {
         this.configuration = (${connector_name}Configuration) configuration1;
@@ -199,7 +200,7 @@ public class ${connector_name}Connector implements
     /**
      * Disposes of the {@link ${connector_name}Connector}'s resources.
      *
-     * @see Connector${symbol_pound}dispose()
+     * @see org.identityconnectors.framework.spi.Connector${symbol_pound}dispose()
      */
     public void dispose() {
         configuration = null;
