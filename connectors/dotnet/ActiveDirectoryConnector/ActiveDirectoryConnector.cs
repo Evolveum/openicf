@@ -99,6 +99,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
         private static Schema _schema = null;
+        private DirectoryEntry _dirHandler = null;
+        //private DirectorySearcher searcher = null;
         public ActiveDirectoryConnector()
         {
             // populate default attributes and Schema
@@ -112,6 +114,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             Uid uid = null;
             bool created = false;
+            DirectoryEntry containerDe = null;
             DirectoryEntry newDe = null;
 
             // I had lots of problems here.  Here are the things
@@ -142,7 +145,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ActiveDirectoryUtils.GetParentDn(nameAttribute.GetNameValue()));
             String ldapEntryPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, 
                 nameAttribute.GetNameValue());
-            
+
             try
             {
                 if (!DirectoryEntry.Exists(ldapContainerPath))
@@ -151,7 +154,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 // Get the correct container, and put the new user in it
-                DirectoryEntry containerDe = new DirectoryEntry(ldapContainerPath,
+                containerDe = new DirectoryEntry(ldapContainerPath,
                     _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                 newDe = containerDe.Children.Add(
                     ActiveDirectoryUtils.GetRelativeName(nameAttribute),
@@ -159,7 +162,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 if (oclass.Equals(ActiveDirectoryConnector.groupObjectClass))
                 {
-                    ConnectorAttribute groupAttribute = 
+                    ConnectorAttribute groupAttribute =
                         ConnectorAttributeUtil.Find(ActiveDirectoryConnector.ATT_GROUP_TYPE, attributes);
                     if (groupAttribute != null)
                     {
@@ -174,7 +177,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 newDe.CommitChanges();
                 created = true;
                 // default to creating users enabled
-                if ((ObjectClass.ACCOUNT.Equals(oclass)) && 
+                if ((ObjectClass.ACCOUNT.Equals(oclass)) &&
                     (ConnectorAttributeUtil.Find(OperationalAttributes.ENABLE_NAME, attributes) == null))
                 {
                     attributes.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
@@ -213,7 +216,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 throw;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 Console.WriteLine("caught exception:" + exception);
                 Trace.TraceError(exception.Message);
@@ -224,6 +227,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     newDe.DeleteTree();
                 }
                 throw;
+            }
+            finally
+            {
+                if (containerDe != null)
+                {
+                    containerDe.Dispose();
+                }
+                if (newDe != null)
+                {
+                    newDe.Dispose();
+                }
             }
 
             if (!oclass.Equals(ObjectClass.ACCOUNT))
@@ -250,6 +264,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
             configuration.Validate();
             _configuration = (ActiveDirectoryConfiguration)configuration;
             _utils = new ActiveDirectoryUtils(_configuration);
+
+            // since we are a poolable connector, let's establish a persistent connection to AD
+            bool useGC = false;
+            if (_configuration.SearchChildDomains)
+            {
+                useGC = true;
+            }
+            string path = GetSearchContainerPath(useGC, _configuration.LDAPHostName, _configuration.Container);
+            Trace.TraceInformation("Search: Getting root node for search");
+            _dirHandler = new DirectoryEntry(path,_configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+            //searcher = new DirectorySearcher(_dirHandler);
         }
 
         #endregion
@@ -258,6 +283,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         public virtual void Dispose()
         {
+            if (_dirHandler != null)
+            {
+                _dirHandler.Dispose();
+            }
         }
 
         #endregion
@@ -405,7 +434,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ResultsHandler handler, OperationOptions options)
         {
             try
-            {                
+            {
                 bool useGC = false;
                 if (_configuration.SearchChildDomains)
                 {
@@ -538,146 +567,197 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Trace.TraceInformation("Setting search string to \'{0}\'", query);
             }
 
-            string path;
-            path = GetSearchContainerPath(useGlobalCatalog, serverName, searchRoot);
-
-            Trace.TraceInformation("Search: Getting root node for search");
-            DirectoryEntry searchRootEntry = new DirectoryEntry(path,
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-            DirectorySearcher searcher = new DirectorySearcher(searchRootEntry, query);
-            searcher.PageSize = 1000;
-            searcher.SearchScope = searchScope;
-            
-            if (includeDeleted)
+            DirectorySearcher searcher = null;
+            DirectoryEntry searchRootEntry = null;
+            try
             {
-                searcher.Tombstone = true;
-            }
-
-            if (sortOption != null)
-            {
-                searcher.Sort = sortOption;
-            }
-
-            Trace.TraceInformation("Search: Performing query");
-            SearchResultCollection resultSet = searcher.FindAll();
-            Trace.TraceInformation("Search: found {0} results", resultSet.Count);
-            ICollection<string> attributesToReturn = null;
-            if (resultSet.Count > 0)
-            {
-                attributesToReturn = GetAttributesToReturn(oclass, options);
-            }
-
-            Trace.TraceInformation("Building connectorObjects");
-            foreach (SearchResult result in resultSet)
-            {
-                try
+                if (searchRoot.Equals(_configuration.Container, StringComparison.OrdinalIgnoreCase))
                 {
-                    Trace.TraceInformation("Found object {0}", result.Path);
-                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                    builder.ObjectClass = oclass;
+                    searcher = new DirectorySearcher(_dirHandler, query);
+                }
+                else
+                {
+                    // options give a different root context for search, let use a new connection
+                    string path;
+                    path = GetSearchContainerPath(useGlobalCatalog, serverName, searchRoot);
+                    Trace.TraceInformation("Search: Getting root node for search");
+                    searchRootEntry = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+                    searcher = new DirectorySearcher(searchRootEntry, query);
+                }
 
-                    bool isDeleted = false;
-                    if (result.Properties.Contains(ATT_IS_DELETED))
+                searcher.PageSize = 1000;
+                searcher.SearchScope = searchScope;
+
+                if (includeDeleted)
+                {
+                    searcher.Tombstone = true;
+                }
+
+                if (sortOption != null)
+                {
+                    searcher.Sort = sortOption;
+                }
+
+                Trace.TraceInformation("Search: Performing query");
+
+                // trying to avoid FindAll() as much as possible
+                ICollection<string> attributesToReturn = null;
+
+                //if (query.Contains("objectGUID="))
+                //{
+                //    // we assume exact query
+                //    SearchResult res = searcher.FindOne();
+                //    if (res != null)
+                //    {
+                //        attributesToReturn = GetAttributesToReturn(oclass, options);
+                //        Trace.TraceInformation("Building connectorObject");
+                //        buildConnectorObject(res, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
+                //    }
+                //}
+                //else
+                //{
+                    SearchResultCollection resultSet = searcher.FindAll();
+                    Trace.TraceInformation("Search: found {0} results", resultSet.Count);
+
+                    if (resultSet.Count > 0)
                     {
-                        ResultPropertyValueCollection pvc = result.Properties[ATT_IS_DELETED];
-                        if (pvc.Count > 0)
+                        attributesToReturn = GetAttributesToReturn(oclass, options);
+                        Trace.TraceInformation("Building connectorObjects");
+                        foreach (SearchResult result in resultSet)
                         {
-                            isDeleted = (bool)pvc[0];
+                            buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
                         }
                     }
+                    // Important to dispose to avoid memory leak
+                    resultSet.Dispose();
+                //}
+            }
+            catch (Exception e)
+            {
+                Trace.TraceWarning(e.Message);
+            }
+            finally
+            {
+                //searcher.Dispose();
+                if (searchRootEntry != null)
+                {
+                    searchRootEntry.Dispose();
+                }
+            }
+        }
 
-                    if (isDeleted.Equals(false))
+
+        private void buildConnectorObject(SearchResult result, ObjectClass oclass, bool useGlobalCatalog, string searchRoot, ICollection<string> attributesToReturn, ResultsHandler handler)
+        {
+            try
+            {
+                Trace.TraceInformation("Found object {0}", result.Path);
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.ObjectClass = oclass;
+
+                bool isDeleted = false;
+                if (result.Properties.Contains(ATT_IS_DELETED))
+                {
+                    ResultPropertyValueCollection pvc = result.Properties[ATT_IS_DELETED];
+                    if (pvc.Count > 0)
                     {
-                        // if we were using the global catalog (gc), we have to 
-                        // now retrieve the object from a domain controller (dc) 
-                        // because the gc may not have have all of the attributes,
-                        // depending on which attributes are replicated to the gc.                    
-                        SearchResult savedGcResult = null;
-                        SearchResult savedDcResult = result;
-                        if (useGlobalCatalog)
+                        isDeleted = (bool)pvc[0];
+                    }
+                }
+
+                if (isDeleted.Equals(false))
+                {
+                    // if we were using the global catalog (gc), we have to 
+                    // now retrieve the object from a domain controller (dc) 
+                    // because the gc may not have have all of the attributes,
+                    // depending on which attributes are replicated to the gc.                    
+                    SearchResult savedGcResult = null;
+                    SearchResult savedDcResult = result;
+                    if (useGlobalCatalog)
+                    {
+                        savedGcResult = result;
+
+                        String dcSearchRootPath = ActiveDirectoryUtils.GetLDAPPath(
+                            _configuration.LDAPHostName, searchRoot);
+
+                        DirectoryEntry dcSearchRoot = new DirectoryEntry(dcSearchRootPath,
+                            _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
+                        string dcSearchQuery = String.Format("(" + ATT_DISTINGUISHED_NAME + "={0})",
+                            ActiveDirectoryUtils.GetDnFromPath(savedGcResult.Path));
+                        DirectorySearcher dcSearcher =
+                            new DirectorySearcher(dcSearchRoot, dcSearchQuery);
+                        savedDcResult = dcSearcher.FindOne();
+                        if (savedDcResult == null)
                         {
-                            savedGcResult = result;
+                            // in this case, there is no choice, but to use
+                            // what is in the global catalog.  We would have 
+                            //liked to have read from the regular ldap, but there
+                            // is not one.  This is the case for domainDNS objects
+                            // (at least for child domains in certain or maybe all
+                            // circumstances).
+                            savedDcResult = savedGcResult;
+                        }
+                        dcSearcher.Dispose();
+                        dcSearchRoot.Dispose();
+                    }
 
-                            String dcSearchRootPath = ActiveDirectoryUtils.GetLDAPPath(
-                                _configuration.LDAPHostName, searchRoot);
-
-                            DirectoryEntry dcSearchRoot = new DirectoryEntry(dcSearchRootPath,
-                                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-                            string dcSearchQuery = String.Format("(" + ATT_DISTINGUISHED_NAME + "={0})",
-                                ActiveDirectoryUtils.GetDnFromPath(savedGcResult.Path));
-                            DirectorySearcher dcSearcher =
-                                new DirectorySearcher(dcSearchRoot, dcSearchQuery);
-                            savedDcResult = dcSearcher.FindOne();
-                            if (savedDcResult == null)
-                            {
-                                // in this case, there is no choice, but to use
-                                // what is in the global catalog.  We would have 
-                                //liked to have read from the regular ldap, but there
-                                // is not one.  This is the case for domainDNS objects
-                                // (at least for child domains in certain or maybe all
-                                // circumstances).
-                                savedDcResult = savedGcResult;
-                            }
+                    foreach (string attributeName in attributesToReturn)
+                    {
+                        SearchResult savedResults = savedDcResult;
+                        // if we are using the global catalog, we had to get the
+                        // dc's version of the directory entry, but for usnchanged, 
+                        // we need the gc version of it
+                        if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
+                            StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            savedResults = savedGcResult;
                         }
 
-                        foreach (string attributeName in attributesToReturn)
-                        {
-                            SearchResult savedResults = savedDcResult;
-                            // if we are using the global catalog, we had to get the
-                            // dc's version of the directory entry, but for usnchanged, 
-                            // we need the gc version of it
-                            if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
-                                StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                savedResults = savedGcResult;
-                            }
-
-                            AddAttributeIfNotNull(builder,
-                                _utils.GetConnectorAttributeFromADEntry(
-                                oclass, attributeName, savedResults));
-                        }
+                        AddAttributeIfNotNull(builder,
+                            _utils.GetConnectorAttributeFromADEntry(
+                            oclass, attributeName, savedResults));
                     }
-                    else
-                    {
-                        // get uid
-                        AddAttributeIfNotNull(builder,
-                            _utils.GetConnectorAttributeFromADEntry(
-                            oclass, Uid.NAME, result));
-
-                        // get uid
-                        AddAttributeIfNotNull(builder,
-                            _utils.GetConnectorAttributeFromADEntry(
-                            oclass, Name.NAME, result));
-
-                        // get usnchanged
-                        AddAttributeIfNotNull(builder,
-                            _utils.GetConnectorAttributeFromADEntry(
-                            oclass, ATT_USN_CHANGED, result));
-
-                        // add isDeleted 
-                        builder.AddAttribute(ATT_IS_DELETED, true);
-                    }
-
-                    String msg = String.Format("Returning ''{0}''",
-                        (result.Path != null) ? result.Path : "<path is null>");
-                    Trace.TraceInformation(msg);
-                    handler(builder.Build());
                 }
-                catch (DirectoryServicesCOMException e)
+                else
                 {
-                    // there is a chance that we found the result, but
-                    // in the mean time, it was deleted.  In that case, 
-                    // log an error and continue
-                    Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
-                    Trace.TraceWarning(e.Message);
+                    // get uid
+                    AddAttributeIfNotNull(builder,
+                        _utils.GetConnectorAttributeFromADEntry(
+                        oclass, Uid.NAME, result));
+
+                    // get uid
+                    AddAttributeIfNotNull(builder,
+                        _utils.GetConnectorAttributeFromADEntry(
+                        oclass, Name.NAME, result));
+
+                    // get usnchanged
+                    AddAttributeIfNotNull(builder,
+                        _utils.GetConnectorAttributeFromADEntry(
+                        oclass, ATT_USN_CHANGED, result));
+
+                    // add isDeleted 
+                    builder.AddAttribute(ATT_IS_DELETED, true);
                 }
-                catch (Exception e)
-                {
-                    // In that case, of any error, try to continue
-                    Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.");
-                    Trace.TraceWarning(e.Message);
-                }
+
+                String msg = String.Format("Returning ''{0}''",
+                    (result.Path != null) ? result.Path : "<path is null>");
+                Trace.TraceInformation(msg);
+                handler(builder.Build());
+            }
+            catch (DirectoryServicesCOMException e)
+            {
+                // there is a chance that we found the result, but
+                // in the mean time, it was deleted.  In that case, 
+                // log an error and continue
+                Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
+                Trace.TraceWarning(e.Message);
+            }
+            catch (Exception e)
+            {
+                // In that case, of any error, try to continue
+                Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.");
+                Trace.TraceWarning(e.Message);
             }
         }
       
@@ -837,6 +917,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     updatedUid = new Uid(ActiveDirectoryUtils.NormalizeLdapString(dnUid));
                 }
             }
+            updateEntry.Dispose();
             return updatedUid;
         }
 
@@ -879,6 +960,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // delete this entry and all it's children
                 de.DeleteTree();
             }
+            de.Dispose();
         }
 
         #endregion
@@ -1041,6 +1123,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 DirectoryEntry domainDe = domain.GetDirectoryEntry();
                 deleteObjectsSearchRoot = ActiveDirectoryUtils.GetDnFromPath(domainDe.Path);
+                domainDe.Dispose();
             }
             ExecuteQuery(objClass, deletedQuery, syncResults.SyncHandler, builder.Build(),
                 true, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),

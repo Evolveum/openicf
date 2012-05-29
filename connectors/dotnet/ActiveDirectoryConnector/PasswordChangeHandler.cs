@@ -123,6 +123,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 WindowsIdentity windowsId = new WindowsIdentity(tokenHandle);
                 Uid uid = GetUidFromSid(windowsId.User);
+                windowsId.Dispose();
                 return uid;
             }
             catch(Exception e)
@@ -145,8 +146,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry userDe = new DirectoryEntry(
                 ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, sidString),
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-            return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(userDe.Guid.ToByteArray()));
+            byte[] guid = userDe.Guid.ToByteArray();
+            userDe.Dispose();
+            return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(guid));
         }
 
         internal Uid GetUidFromSamAccountName(String sAMAccountName)

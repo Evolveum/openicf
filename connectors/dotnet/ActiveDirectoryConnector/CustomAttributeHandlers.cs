@@ -375,6 +375,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
                     groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Remove(distinguishedName);
                     groupDe.CommitChanges();
+                    groupDe.Dispose();
                 }
 
                 foreach (Object obj in groupsToAdd)
@@ -388,6 +389,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
                     groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Add(distinguishedName);
                     groupDe.CommitChanges();
+                    groupDe.Dispose();
                 }
             }
             else
@@ -897,13 +899,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return null;
             }
 
-            DirectoryEntry parentDe = searchResult.GetDirectoryEntry().Parent;
+            DirectoryEntry de = searchResult.GetDirectoryEntry();
+            DirectoryEntry parentDe = de.Parent;
             String container = "";
             if (parentDe != null)
             {
                 container = ActiveDirectoryUtils.GetDnFromPath(parentDe.Path);
             }
-
+            parentDe.Dispose();
+            de.Dispose();
             return ConnectorAttributeBuilder.Build(
                 ActiveDirectoryConnector.ATT_CONTAINER, container);
         }
@@ -947,11 +951,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 return null;
             }
-
+            DirectoryEntry de = searchResult.GetDirectoryEntry();
             bool disabled = UserAccountControl.IsSet(
-                searchResult.GetDirectoryEntry().Properties[UserAccountControl.UAC_ATTRIBUTE_NAME],
+                de.Properties[UserAccountControl.UAC_ATTRIBUTE_NAME],
                 UserAccountControl.ACCOUNTDISABLE);
-
+            de.Dispose();
             return ConnectorAttributeBuilder.BuildEnabled(!disabled);
         }
 
@@ -1070,6 +1074,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         UserAccountControl.DONT_EXPIRE_PASSWORD);
                     ca = ConnectorAttributeBuilder.Build(attributeName, pne);
                 }
+                de.Dispose();
             }
             return ca;
         }

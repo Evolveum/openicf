@@ -472,6 +472,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ActiveDirectoryUtils.GetLDAPPath(serverName, uid.GetUidValue()),
                 adminUserName, adminPassword);
             string dn = (string)foundDirectoryEntry.Properties["distinguishedName"][0];
+            foundDirectoryEntry.Dispose();
             foundDirectoryEntry = new DirectoryEntry(
                 ActiveDirectoryUtils.GetLDAPPath(serverName, dn),
                 adminUserName, adminPassword);
@@ -611,6 +612,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                             DirectoryEntry newContainerDe = new DirectoryEntry(newContainerLdapPath,
                                 config.DirectoryAdminName, config.DirectoryAdminPassword);
                             directoryEntry.MoveTo(newContainerDe);
+                            newContainerDe.Dispose();
                         }
                     }
                     catch (Exception e)

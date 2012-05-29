@@ -100,11 +100,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {
                     T value = (T)result;
                     return value;
-                }                
-            }catch (Exception e)
+                }
+            }
+            catch (Exception e)
             {
                 Trace.TraceWarning("Unable to retrieve property called {0}", name);
                 Trace.TraceWarning(e.Message);
+            }
+            finally
+            {
+                directoryEntry.Dispose();
             }
 
             // if the name didn't exist, return 'defaultValue'
