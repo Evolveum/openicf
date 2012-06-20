@@ -600,37 +600,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 Trace.TraceInformation("Search: Performing query");
 
-                // trying to avoid FindAll() as much as possible
                 ICollection<string> attributesToReturn = null;
 
-                //if (query.Contains("objectGUID="))
-                //{
-                //    // we assume exact query
-                //    SearchResult res = searcher.FindOne();
-                //    if (res != null)
-                //    {
-                //        attributesToReturn = GetAttributesToReturn(oclass, options);
-                //        Trace.TraceInformation("Building connectorObject");
-                //        buildConnectorObject(res, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
-                //    }
-                //}
-                //else
-                //{
-                    SearchResultCollection resultSet = searcher.FindAll();
-                    Trace.TraceInformation("Search: found {0} results", resultSet.Count);
+                SearchResultCollection resultSet = searcher.FindAll();
+                Trace.TraceInformation("Search: found {0} results", resultSet.Count);
 
-                    if (resultSet.Count > 0)
+                if (resultSet.Count > 0)
+                {
+                    attributesToReturn = GetAttributesToReturn(oclass, options);
+                    Trace.TraceInformation("Building connectorObjects");
+                    foreach (SearchResult result in resultSet)
                     {
-                        attributesToReturn = GetAttributesToReturn(oclass, options);
-                        Trace.TraceInformation("Building connectorObjects");
-                        foreach (SearchResult result in resultSet)
-                        {
-                            buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
-                        }
+                        buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
                     }
-                    // Important to dispose to avoid memory leak
-                    resultSet.Dispose();
-                //}
+                }
+                // Important to dispose to avoid memory leak
+                resultSet.Dispose();
             }
             catch (Exception e)
             {

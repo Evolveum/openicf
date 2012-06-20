@@ -54,6 +54,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
     /// </summary>
     internal class CustomAttributeHandlers
     {
+        // Max range retrieval to obtain the members of a group
+        private static readonly int GRP_MEMBERS_MAXRANGE = 1500;
         // names from active directory attributes to ignore during
         // generic translation 
         IList<string> IgnoreADAttributeNames_account = new List<string>();
@@ -170,6 +172,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Accounts);
             GetCaFromDeDelegates.Add(PredefinedAttributes.GROUPS_NAME,
                 GetCaFromDe_OpAtt_Groups);
+            GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_MEMBER,
+                GetCaFromDe_OpAtt_GroupMembers);
             GetCaFromDeDelegates.Add(OperationalAttributes.ENABLE_NAME,
                 GetCaFromDe_OpAtt_Enabled);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
@@ -840,6 +844,122 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return attributeBuilder.Build();
         }
 
+        private ConnectorAttribute GetCaFromDe_OpAtt_GroupMembers(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            ConnectorAttributeBuilder attributeBuilder = new ConnectorAttributeBuilder();
+
+            if (attributeName == null)
+            {
+                return null;
+            }
+           
+            attributeBuilder.Name = attributeName;
+
+            ResultPropertyValueCollection pvc = null;
+            if (searchResult.Properties.Contains(attributeName))
+            {
+                pvc = searchResult.Properties[attributeName];
+            }
+
+            // Range issue most probably...
+            // see: http://msdn.microsoft.com/en-us/library/ms817827.aspx
+            if (pvc.Count == 0)
+            {
+                DirectoryEntry entry = null;
+                DirectorySearcher searcher = null;
+                
+                int first = 0;
+                int last = first + (GRP_MEMBERS_MAXRANGE - 1);
+                bool badQuery = false;
+                bool quit = false;
+                string memberRange;
+
+                try
+                {
+                    entry = searchResult.GetDirectoryEntry();
+                    searcher = new DirectorySearcher(entry);
+                    searcher.Filter = "(objectClass=*)";
+                    do
+                    {
+                        if (!badQuery)
+                        {
+                            memberRange = String.Format("member;range={0}-{1}", first, last);
+                        }
+                        else
+                        {
+                            memberRange = String.Format("member;range={0}-*", first);
+                        }
+                        searcher.PropertiesToLoad.Clear();
+                        searcher.PropertiesToLoad.Add(memberRange);
+                        SearchResult sresult = searcher.FindOne();
+                        if (sresult.Properties.Contains(memberRange))
+                        {
+                            foreach (object valueObject in sresult.Properties[memberRange])
+                            {
+                                if ((valueObject == null) || (FrameworkUtil.IsSupportedAttributeType(valueObject.GetType())))
+                                {
+                                    attributeBuilder.AddValue(valueObject);
+                                }
+                            }
+                            if (badQuery)
+                            {
+                                quit = true;
+                            }
+                        }
+                        else
+                        {
+                            badQuery = true;
+                        }
+                        if (!badQuery)
+                        {
+                            first = last + 1;
+                            last = first + (GRP_MEMBERS_MAXRANGE - 1);
+                        }
+                    }
+                    while (!quit);
+                }
+                catch (Exception ex)
+                {
+                }
+                finally
+                {
+                    if (entry != null)
+                    {
+                        entry.Dispose();
+                    }
+                    if (searcher != null)
+                    {
+                        searcher.Dispose();
+                    }
+                }
+                return attributeBuilder.Build();
+            }
+            else if (pvc == null)
+            {
+                return null;
+            }
+            else
+            {
+                for (int i = 0; i < pvc.Count; i++)
+                {
+                    Object valueObject = pvc[i];
+                    if ((pvc[i] == null) ||
+                        (FrameworkUtil.IsSupportedAttributeType(valueObject.GetType())))
+                    {
+                        attributeBuilder.AddValue(pvc[i]);
+                    }
+                    else
+                    {
+                        Trace.TraceWarning(
+                            "Unsupported attribute type ... calling ToString (Name: \'{0}\'({1}) Type: \'{2}\' String Value: \'{3}\'",
+                            attributeName, i, pvc[i].GetType(), pvc[i].ToString());
+                        attributeBuilder.AddValue(pvc[i].ToString());
+                    }
+                }
+            }
+            return attributeBuilder.Build();
+        }
         private ConnectorAttribute GetCaFromDe_OpAtt_Name(
             ObjectClass oclass, string attributeName, SearchResult searchResult)
         {
