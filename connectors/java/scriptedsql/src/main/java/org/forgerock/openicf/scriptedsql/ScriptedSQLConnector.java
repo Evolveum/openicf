@@ -265,9 +265,13 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
 
             try {
                 // This should return the UID...
-                String uid = (String) createExecutor.execute(arguments);
-                log.ok("create ok");
-                return new Uid(uid);
+                Object uidAfter = createExecutor.execute(arguments);
+                if (uidAfter instanceof String) {
+                    log.ok("create ok");
+                    return new Uid((String) uidAfter);
+                } else {
+                    throw new ConnectorException("Create script didn't return with the 'uid' value");
+                }
             }
             catch (Exception e) {
                 throw new ConnectorException("create script error", e);
@@ -722,13 +726,16 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             }
         }
         try {
-            updateExecutor.execute(arguments);
-            log.ok("update (" + method + ") ok");
+            Object uidAfter = updateExecutor.execute(arguments);
+            if (uidAfter instanceof String) {
+                log.ok("update (" + method + ") ok");
+                return new Uid((String) uidAfter);
+            }
         }
         catch (Exception e) {
             throw new ConnectorException("update(" + method + ") script error", e);
         }
-        return new Uid(AttributeUtil.getNameFromAttributes(attrs).getNameValue());
+        throw new ConnectorException("Update script didn't return with the 'uid' value");
     }
 
     private String readFile(String filename) {
