@@ -51,7 +51,7 @@
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
-        <skipTests>false</skipTests>
+        <skipTests>true</skipTests>
         <contracts.skip>true</contracts.skip>
         <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
         <connectorPackage>org.forgerock.openicf.connectors.googleapps</connectorPackage>
@@ -59,7 +59,7 @@
         <jira.componentIds>10213</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
         <jira.fixVersionIds>10223</jira.fixVersionIds>
-        <openicf.osgi.embed>gdata-appsforyourdomain,gdata-client,gdata-core</openicf.osgi.embed>
+        <openicf.osgi.embed>gdata-appsforyourdomain,gdata-client,gdata-core,guava</openicf.osgi.embed>
     </properties>
     <repositories>
         <repository>

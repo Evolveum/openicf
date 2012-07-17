@@ -32,15 +32,15 @@ import org.identityconnectors.contract.data.groovy.Lazy
 import org.identityconnectors.common.security.GuardedString
 
 // Connector WRONG configuration for ValidateApiOpTests
-connector.i1.wrong.host=""
+connector.i1.wrong.connectionUrl=""
 connector.i2.wrong.login=""
 connector.i3.wrong.password=new GuardedString("".toCharArray())
 
 
 configuration{
-    ssl = false
-    host="__configureme__"
-    remoteUser="__configureme__"
+    connectionUrl = "__configureme__"
+    domain="__configureme__"
+    login="__configureme__"
     password=new GuardedString("__configureme__".toCharArray())
 }
 
@@ -58,5 +58,3 @@ testsuite {
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
     Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())  
 } // testsuite
-
-HOST="0.0.0.0"
