@@ -25,30 +25,29 @@
  */
 package org.forgerock.openicf.scriptedsql;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
-
-import org.identityconnectors.common.security.*;
-import org.identityconnectors.framework.spi.*;
-import org.identityconnectors.framework.spi.operations.*;
-import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.framework.common.FrameworkUtil;
+import java.io.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.identityconnectors.common.logging.Log;
-
-import org.identityconnectors.common.security.GuardedString.Accessor;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.security.GuardedString.Accessor;
+import org.identityconnectors.framework.common.FrameworkUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.Configuration;
+import org.identityconnectors.framework.spi.Connector;
+import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.*;
 
-// import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 /**
  * Main implementation of the ScriptedJDBC Connector
- * 
+ *
  * @author gael
  * @version 1.0
  * @since 1.0
@@ -87,7 +86,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
 
     /**
      * Callback method to receive the {@link Configuration}.
-     * 
+     *
      * @see Connector#init
      */
     public void init(Configuration cfg) {
@@ -99,92 +98,29 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
         // evaluated and compiled.
         // We privilege the script file over the script string
         // if script filename is null, then we use the script string
-        // ClassLoader cl = getClass().getClassLoader();
-        // ClassLoader tcl = Thread.currentThread().getContextClassLoader();
-        
-        try {
-            String script = config.getCreateScript();
-            if (config.getCreateScriptFileName() != null) {
-                script = readFile(config.getCreateScriptFileName());
-            }
-            if (script.length() > 0) {
-                createExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Create script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Create script parse error", e);
-        }
-        try {
-            String script = config.getUpdateScript();
-            if (config.getUpdateScriptFileName() != null) {
-                script = readFile(config.getUpdateScriptFileName());
-            }
-            if (script.length() > 0) {
-                updateExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Update script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Update script parse error", e);
-        }
-        try {
-            String script = config.getDeleteScript();
-            if (config.getDeleteScriptFileName() != null) {
-                script = readFile(config.getDeleteScriptFileName());
-            }
-            if (script.length() > 0) {
-                deleteExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Delete script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Delete script parse error", e);
-        }
-        try {
-            String script = config.getSearchScript();
-            if (config.getSearchScriptFileName() != null) {
-                script = readFile(config.getSearchScriptFileName());
-            }
-            if (script.length() > 0) {
-                searchExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Search script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Search script parse error", e);
-        }
-        try {
-            String script = config.getSyncScript();
-            if (config.getSyncScriptFileName() != null) {
-                script = readFile(config.getSyncScriptFileName());
-            }
-            if (script.length() > 0) {
-                syncExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Sync script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Sync script parse error", e);
-        }
-        try {
-            String script = config.getTestScript();
-            if (config.getTestScriptFileName() != null) {
-                script = readFile(config.getTestScriptFileName());
-            }
-            if (script.length() > 0) {
-                testExecutor = factory.newScriptExecutor(getClass().getClassLoader(), script, true);
-                log.ok("Test script ok");
-            }
-        }
-        catch (Exception e) {
-            throw new ConnectorException("Test script parse error", e);
-        }
+
+        createExecutor = getScriptExecutor(config.getCreateScript(), config.getCreateScriptFileName());
+        log.ok("Create script loaded");
+
+        updateExecutor = getScriptExecutor(config.getUpdateScript(), config.getUpdateScriptFileName());
+        log.ok("Update script loaded");
+
+        deleteExecutor = getScriptExecutor(config.getDeleteScript(), config.getDeleteScriptFileName());
+        log.ok("Delete script loaded");
+
+        searchExecutor = getScriptExecutor(config.getSearchScript(), config.getSearchScriptFileName());
+        log.ok("Search script loaded");
+
+        syncExecutor = getScriptExecutor(config.getSyncScript(), config.getSyncScriptFileName());
+        log.ok("Sync script loaded");
+
+        testExecutor = getScriptExecutor(config.getTestScript(), config.getTestScriptFileName());
+        log.ok("Test script loaded");
     }
 
     /**
      * Disposes of the {@link ScriptedSQLConnector}'s resources.
-     * 
+     *
      * @see Connector#dispose()
      */
     public void dispose() {
@@ -199,9 +135,9 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
         connection.test();
     }
 
-    /******************
+    /**
      * SPI Operations
-     ******************/
+     */
     /**
      * {@inheritDoc}
      */
@@ -220,15 +156,19 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public Uid create(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
+        if (config.isReloadScriptOnExecution()) {
+            createExecutor = getScriptExecutor(config.getCreateScript(), config.getCreateScriptFileName());
+            log.ok("Create script loaded");
+        }
         if (createExecutor != null) {
             if (objClass == null) {
                 throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
             }
-            log.ok("Object class ok:" + objClass.getObjectClassValue());
+            log.ok("Object class: {0}",objClass.getObjectClassValue());
+
             if (attrs == null || attrs.isEmpty()) {
                 throw new IllegalArgumentException(config.getMessage("MSG_INVALID_ATTRIBUTE_SET"));
             }
-            log.ok("Attribute set is not empty");
 
             final Map<String, Object> arguments = new HashMap<String, Object>();
 
@@ -238,8 +178,8 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             arguments.put("objectClass", objClass.getObjectClassValue());
             arguments.put("options", options.getOptions());
             // We give the id (name) as an argument, more friendly than dealing with __NAME__
-            arguments.put("id",AttributeUtil.getNameFromAttributes(attrs).getNameValue());
-            
+            arguments.put("id", AttributeUtil.getNameFromAttributes(attrs).getNameValue());
+
             Map<String, List> attrMap = new HashMap();
             for (Attribute attr : attrs) {
                 attrMap.put(attr.getName(), attr.getValue());
@@ -248,7 +188,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             attrMap.remove("__NAME__");
             arguments.put("attributes", attrMap);
 
-            // Password - if allowed we provide it in clear, can't be arsed to do that in the script
+            // Password - if allowed we provide it in clear
             if (config.getClearTextPasswordToScript()) {
                 GuardedString gpasswd = AttributeUtil.getPasswordValue(attrs);
                 if (gpasswd != null) {
@@ -264,17 +204,16 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             }
 
             try {
-                // This should return the UID...
                 Object uidAfter = createExecutor.execute(arguments);
                 if (uidAfter instanceof String) {
-                    log.ok("create ok");
+                    log.ok("{0} created",uidAfter);
                     return new Uid((String) uidAfter);
                 } else {
-                    throw new ConnectorException("Create script didn't return with the 'uid' value");
+                    throw new ConnectorException("Create script didn't return with the __UID__ value");
                 }
             }
             catch (Exception e) {
-                throw new ConnectorException("create script error", e);
+                throw new ConnectorException("Create script error", e);
             }
         } else {
             throw new UnsupportedOperationException();
@@ -285,50 +224,41 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public Uid update(ObjectClass objClass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
-        if (updateExecutor != null) {
-            return genericUpdate("UPDATE", objClass, uid, replaceAttributes, options);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        return genericUpdate("UPDATE", objClass, uid, replaceAttributes, options);
     }
 
     /**
      * {@inheritDoc}
      */
     public Uid addAttributeValues(ObjectClass objClass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
-        if (updateExecutor != null) {
-            return genericUpdate("ADD_ATTRIBUTE_VALUES", objClass, uid, valuesToAdd, options);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        return genericUpdate("ADD_ATTRIBUTE_VALUES", objClass, uid, valuesToAdd, options);
     }
 
     /**
      * {@inheritDoc}
      */
     public Uid removeAttributeValues(ObjectClass objClass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
-        if (updateExecutor != null) {
-            return genericUpdate("REMOVE_ATTRIBUTE_VALUES", objClass, uid, valuesToRemove, options);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        return genericUpdate("REMOVE_ATTRIBUTE_VALUES", objClass, uid, valuesToRemove, options);
     }
 
     /**
      * {@inheritDoc}
      */
     public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
+        if (config.isReloadScriptOnExecution()) {
+            deleteExecutor = getScriptExecutor(config.getDeleteScript(), config.getDeleteScriptFileName());
+            log.ok("Delete script loaded");
+        }
         if (deleteExecutor != null) {
             if (objClass == null) {
                 throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
             }
-            log.ok("Object class ok:" + objClass.getObjectClassValue());
+            log.ok("Object class: {0}",objClass.getObjectClassValue());
 
             if (uid == null || ( uid.getUidValue() == null )) {
                 throw new IllegalArgumentException(config.getMessage("MSG_UID_BLANK"));
             }
             final String id = uid.getUidValue();
-            log.ok("The Uid is present");
 
             final Map<String, Object> arguments = new HashMap<String, Object>();
 
@@ -341,13 +271,10 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
 
             try {
                 deleteExecutor.execute(arguments);
-                log.ok("delete ok");
+                log.ok("{0} deleted",id);
             }
             catch (Exception e) {
-                throw new ConnectorException("delete script error", e);
-            }
-            finally {
-                // clean up.. ??? should we close?
+                throw new ConnectorException("Delete script error", e);
             }
         } else {
             throw new UnsupportedOperationException();
@@ -365,11 +292,10 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public FilterTranslator<Map> createFilterTranslator(ObjectClass objClass, OperationOptions options) {
-        log.info("check the ObjectClass");
         if (objClass == null) {
             throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
         }
-        log.ok("The ObjectClass is ok");
+        log.ok("ObjectClass: {0}",objClass.getObjectClassValue());
         return new ScriptedSQLFilterTranslator();
     }
 
@@ -377,16 +303,19 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objClass, Map query, ResultsHandler handler, OperationOptions options) {
-        log.info("check the ObjectClass");
-        if (objClass == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+        if (config.isReloadScriptOnExecution()) {
+            searchExecutor = getScriptExecutor(config.getSearchScript(), config.getSearchScriptFileName());
+            log.ok("Search script loaded");
         }
-        log.ok("The ObjectClass is ok");
-        if (handler == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
-        }
-        log.ok("The result handler is ok");
+
         if (searchExecutor != null) {
+            if (objClass == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+            }
+            log.ok("ObjectClass: {0}",objClass.getObjectClassValue());
+            if (handler == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
+            }
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("objectClass", objClass.getObjectClassValue());
@@ -395,16 +324,12 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             arguments.put("options", options.getOptions());
             arguments.put("query", query);
             try {
-                // We expect the script to return a list of Maps
                 List<Map> results = (List<Map>) searchExecutor.execute(arguments);
-                log.ok("search ok");
+                log.ok("Search ok");
                 processResults(objClass, results, handler);
             }
             catch (Exception e) {
-                throw new ConnectorException("search script error", e);
-            }
-            finally {
-                // clean up.. ??? should we close?
+                throw new ConnectorException("Search script error", e);
             }
         } else {
             throw new UnsupportedOperationException();
@@ -415,16 +340,19 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public void sync(ObjectClass objClass, SyncToken token, SyncResultsHandler handler, final OperationOptions options) {
-        log.info("check the ObjectClass");
-        if (objClass == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+        if (config.isReloadScriptOnExecution()) {
+            syncExecutor = getScriptExecutor(config.getSyncScript(), config.getSyncScriptFileName());
+            log.ok("Sync script loaded");
         }
-        log.ok("The ObjectClass is ok");
-        if (handler == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
-        }
-        log.ok("The result handler is not null");
+
         if (syncExecutor != null) {
+            if (objClass == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+            }
+            log.ok("ObjectClass: {0}",objClass.getObjectClassValue());
+            if (handler == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
+            }
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("objectClass", objClass.getObjectClassValue());
@@ -433,16 +361,12 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             arguments.put("options", options.getOptions());
             arguments.put("token", token.getValue());
             try {
-                // We expect the script to return a list of Maps
                 List<Map> results = (List<Map>) syncExecutor.execute(arguments);
-                log.ok("test ok");
+                log.ok("Sync ok");
                 processDeltas(objClass, results, handler);
             }
             catch (Exception e) {
                 throw new ConnectorException("Sync script error", e);
-            }
-            finally {
-                // clean up.. ??? should we close?
             }
         } else {
             throw new UnsupportedOperationException();
@@ -453,13 +377,17 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public SyncToken getLatestSyncToken(ObjectClass objClass) {
-        SyncToken st = null;
-        log.info("check the ObjectClass");
-        if (objClass == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+        if (config.isReloadScriptOnExecution()) {
+            syncExecutor = getScriptExecutor(config.getSyncScript(), config.getSyncScriptFileName());
+            log.ok("Sync script loaded");
         }
-        log.ok("The ObjectClass is ok");
         if (syncExecutor != null) {
+            SyncToken st = null;
+            if (objClass == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+            }
+            log.ok("ObjectClass: {0}",objClass.getObjectClassValue());
+
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("objectClass", objClass.getObjectClassValue());
@@ -469,20 +397,15 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                 // We expect the script to return a value (or null) that makes the sync token
                 // !! result has to be one of the framework known types...
                 Object result = syncExecutor.execute(arguments);
-                log.ok("test ok");
+                log.ok("GetLatestSyncToken ok");
                 FrameworkUtil.checkAttributeType(result.getClass());
                 st = new SyncToken(result);
             }
             catch (java.lang.IllegalArgumentException ae) {
-                // Houston, we have an issue with the token...
-                // will stay null...
-                log.error("Token is not of a supported type");
+                throw new ConnectorException("Unknown Token type", ae);
             }
             catch (Exception e) {
-                throw new ConnectorException("Get Latest Sync Token script error", e);
-            }
-            finally {
-                // clean up.. ??? should we close?
+                throw new ConnectorException("Sync (GetLatestSyncToken) script error", e);
             }
             return st;
         } else {
@@ -534,30 +457,29 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public void test() {
         config.validate();
 
-        try {
-            if (testExecutor != null) {
-                Map<String, Object> arguments = new HashMap<String, Object>();
-                arguments.put("connection", connection.getSqlConnection());
-                arguments.put("action", "TEST");
-                arguments.put("log", log);
-                // TODO: Do we need to provide some options?
-                // Maybe a good idea to pass JDBC config in case
-                // connection needs to be worked in script
-
-                // what do we return? Nothing... it's a test.
-                // Test should throw an exception if needed
-                testExecutor.execute(arguments);
-                log.ok("test ok");
-            }
+        if (config.isReloadScriptOnExecution()) {
+            testExecutor = getScriptExecutor(config.getTestScript(), config.getTestScriptFileName());
+            log.ok("Test script loaded");
         }
-        catch (Exception e) {
-            throw new ConnectorException("test script error", e);
+
+        if (testExecutor != null) {
+            Map<String, Object> arguments = new HashMap<String, Object>();
+            arguments.put("connection", connection.getSqlConnection());
+            arguments.put("action", "TEST");
+            arguments.put("log", log);
+            try {
+                testExecutor.execute(arguments);
+                log.ok("Test ok");
+            }
+            catch (Exception e) {
+                throw new ConnectorException("Test script error", e);
+            }
         }
     }
 
-    /*******************
+    /*
      * Private methods
-     *******************/
+     */
     private void processResults(ObjectClass objClass, List<Map> results, ResultsHandler handler) {
 
         // Let's iterate over the results:
@@ -569,16 +491,12 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                 // Special first
                 if (attrName.equalsIgnoreCase("__UID__")) {
                     if (attrValue == null) {
-                        log.error("Uid cannot be null.");
-                        String msg = "Uid cannot be null.";
-                        throw new IllegalArgumentException(msg);
+                        throw new IllegalArgumentException("Uid cannot be null");
                     }
                     cobld.setUid(attrValue.toString());
                 } else if (attrName.equalsIgnoreCase("__NAME__")) {
                     if (attrValue == null) {
-                        log.error("Name cannot be null.");
-                        String msg = "Name cannot be null.";
-                        throw new IllegalArgumentException(msg);
+                        throw new IllegalArgumentException("Name cannot be null");
                     }
                     cobld.setName(attrValue.toString());
                 } else if (attrName.equalsIgnoreCase("password")) {
@@ -593,7 +511,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             }
             cobld.setObjectClass(objClass);
             handler.handle(cobld.build());
-            log.ok("ConnectorObject is builded");
+            log.ok("ConnectorObject is built");
         }
     }
 
@@ -611,11 +529,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             SyncDeltaBuilder syncbld = new SyncDeltaBuilder();
             String uid = (String) result.get("uid");
             if (uid != null && !uid.isEmpty()) {
-
-                // Uid
                 syncbld.setUid(new Uid(uid));
-
-                // Token
                 Object token = result.get("token");
                 // Null token, set some acceptable value
                 if (token == null) {
@@ -674,90 +588,95 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     }
 
     private Uid genericUpdate(String method, ObjectClass objClass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        if (objClass == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+        if (config.isReloadScriptOnExecution()) {
+            updateExecutor = getScriptExecutor(config.getUpdateScript(), config.getUpdateScriptFileName());
+            log.ok("Update ({0}) script loaded",method);
         }
-        log.ok("Object class ok:" + objClass.getObjectClassValue());
+        if (updateExecutor != null) {
 
-        if (attrs == null || attrs.isEmpty()) {
-            throw new IllegalArgumentException(config.getMessage("MSG_INVALID_ATTRIBUTE_SET"));
-        }
-        log.ok("Attribute set is not empty");
+            if (objClass == null) {
+                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
+            }
+            log.ok("Object class: {0}",objClass.getObjectClassValue());
 
-        if (uid == null || ( uid.getUidValue() == null )) {
-            throw new IllegalArgumentException(config.getMessage("MSG_UID_BLANK"));
-        }
-        final String id = uid.getUidValue();
-        log.ok("The Uid is present");
+            if (attrs == null || attrs.isEmpty()) {
+                throw new IllegalArgumentException(config.getMessage("MSG_INVALID_ATTRIBUTE_SET"));
+            }
 
-        final Map<String, Object> arguments = new HashMap<String, Object>();
+            if (uid == null || ( uid.getUidValue() == null )) {
+                throw new IllegalArgumentException(config.getMessage("MSG_UID_BLANK"));
+            }
+            final String id = uid.getUidValue();
 
-        arguments.put("connection", connection.getSqlConnection());
-        arguments.put("action", method);
-        arguments.put("log", log);
-        arguments.put("objectClass", objClass.getObjectClassValue());
-        arguments.put("uid", id);
-        arguments.put("options", options.getOptions());
+            final Map<String, Object> arguments = new HashMap<String, Object>();
 
-        Map<String, List> attrMap = new HashMap();
-        for (Attribute attr : attrs) {
-            if (OperationalAttributes.isOperationalAttribute(attr)) {
-                if (method.equalsIgnoreCase("UPDATE")) {
+            arguments.put("connection", connection.getSqlConnection());
+            arguments.put("action", method);
+            arguments.put("log", log);
+            arguments.put("objectClass", objClass.getObjectClassValue());
+            arguments.put("uid", id);
+            arguments.put("options", options.getOptions());
+
+            Map<String, List> attrMap = new HashMap();
+            for (Attribute attr : attrs) {
+                if (OperationalAttributes.isOperationalAttribute(attr)) {
+                    if (method.equalsIgnoreCase("UPDATE")) {
+                        attrMap.put(attr.getName(), attr.getValue());
+                    }
+                } else {
                     attrMap.put(attr.getName(), attr.getValue());
                 }
-            } else {
-                attrMap.put(attr.getName(), attr.getValue());
             }
-        }
-        arguments.put("attributes", attrMap);
+            arguments.put("attributes", attrMap);
 
-        // Do we need to update the password?
-        if (config.getClearTextPasswordToScript() && method.equalsIgnoreCase("UPDATE")) {
-            GuardedString gpasswd = AttributeUtil.getPasswordValue(attrs);
-            if (gpasswd != null) {
-                gpasswd.access(new Accessor() {
+            // Do we need to update the password?
+            if (config.getClearTextPasswordToScript() && method.equalsIgnoreCase("UPDATE")) {
+                GuardedString gpasswd = AttributeUtil.getPasswordValue(attrs);
+                if (gpasswd != null) {
+                    gpasswd.access(new Accessor() {
 
-                    public void access(char[] clearChars) {
-                        arguments.put("password", clearChars.toString());
-                    }
-                });
-            } else {
-                arguments.put("password", null);
+                        public void access(char[] clearChars) {
+                            arguments.put("password", clearChars.toString());
+                        }
+                    });
+                } else {
+                    arguments.put("password", null);
+                }
             }
-        }
-        try {
-            Object uidAfter = updateExecutor.execute(arguments);
-            if (uidAfter instanceof String) {
-                log.ok("update (" + method + ") ok");
-                return new Uid((String) uidAfter);
+            try {
+                Object uidAfter = updateExecutor.execute(arguments);
+                if (uidAfter instanceof String) {
+                    log.ok("{0} updated ({1})",uidAfter,method );
+                    return new Uid((String) uidAfter);
+                }
             }
+            catch (Exception e) {
+                throw new ConnectorException("Update(" + method + ") script error", e);
+            }
+            throw new ConnectorException("Update script didn't return with the __UID__ value");
+        } else {
+            throw new UnsupportedOperationException();
         }
-        catch (Exception e) {
-            throw new ConnectorException("update(" + method + ") script error", e);
-        }
-        throw new ConnectorException("Update script didn't return with the 'uid' value");
     }
 
     private String readFile(String filename) {
         File file = new File(filename);
         StringBuffer contents = new StringBuffer();
         BufferedReader reader = null;
+        String text;
 
         try {
             reader = new BufferedReader(new FileReader(file));
-            String text = null;
-
-            // repeat until all lines is read
             while (( text = reader.readLine() ) != null) {
                 contents.append(text).append(System.getProperty(
                         "line.separator"));
             }
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new ConnectorException(filename + " not found", e);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            throw new ConnectorException(filename, e);
         }
         finally {
             try {
@@ -766,9 +685,27 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                 }
             }
             catch (IOException e) {
-                e.printStackTrace();
+                throw new ConnectorException(filename, e);
             }
         }
         return contents.toString();
+    }
+
+    private ScriptExecutor getScriptExecutor(String script, String scriptFileName) {
+        String scriptCode = script;
+        ScriptExecutor scriptExec = null;
+
+        try {
+            if (scriptFileName != null) {
+                scriptCode = readFile(scriptFileName);
+            }
+            if (scriptCode.length() > 0) {
+                scriptExec = factory.newScriptExecutor(getClass().getClassLoader(), scriptCode, true);
+            }
+        }
+        catch (Exception e) {
+            throw new ConnectorException("Script error", e);
+        }
+        return scriptExec;
     }
 }

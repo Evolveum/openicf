@@ -25,16 +25,13 @@
  */
 package org.forgerock.openicf.scriptedsql;
 
-import org.identityconnectors.framework.spi.AbstractConfiguration;
-import org.identityconnectors.framework.spi.ConfigurationProperty;
+import java.io.File;
 import org.identityconnectors.common.StringUtil;
-
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.dbcommon.JNDIUtil;
-
-import java.io.File;
+import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
 
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
@@ -61,7 +58,8 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     // DatabaseTableConfiguration
     // =======================================================================
     /**
-     * How to quote a column in SQL statements. Possible values can be NONE, SINGLE, DOUBLE, BRACKETS, BACKSLASH
+     * How to quote a column in SQL statements. Possible values can be NONE,
+     * SINGLE, DOUBLE, BRACKETS, BACKSLASH
      */
     private String quoting = EMPTY_STR;  // GAEL check with DBTAble connector constantsEMPTY_STR;
 
@@ -77,6 +75,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * NameQuote Setter
+     *
      * @param value
      */
     public void setQuoting(String value) {
@@ -99,6 +98,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * host Setter
+     *
      * @param value
      */
     public void setHost(String value) {
@@ -112,7 +112,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     /**
      * port getter
      *
-     * @return quoting value
+     * @return port value
      */
     @ConfigurationProperty(order = 3, displayMessageKey = "PORT_DISPLAY", helpMessageKey = "PORT_HELP")
     public String getPort() {
@@ -121,14 +121,16 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * port Setter
+     *
      * @param value
      */
     public void setPort(String value) {
         this.port = value;
     }
     /**
-     * Database Login User name. This user name is used to connect to database. The provided user name and password
-     * should have rights to insert/update/delete the rows in the configured identity holder table.
+     * Database Login User name. This user name is used to connect to database.
+     * The provided user name and password should have rights to
+     * insert/update/delete the rows in the configured identity holder table.
      * Required configuration property, and should be validated
      */
     private String user = EMPTY_STR;
@@ -148,8 +150,9 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         this.user = value;
     }
     /**
-     * Database access Password. This password is used to connect to database. The provided user name and password
-     * should have rights to insert/update/delete the rows in the configured identity holder table.
+     * Database access Password. This password is used to connect to database.
+     * The provided user name and password should have rights to
+     * insert/update/delete the rows in the configured identity holder table.
      * Required configuration property, and should be validated
      */
     private GuardedString password;
@@ -188,13 +191,13 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         this.database = value;
     }
     /**
-     * The Driver class. The jdbcDriver is located by connector framework to connect to database.
-     * Required configuration property, and should be validated
-     * Oracle: oracle.jdbc.driver.OracleDriver
-     * MySQL: com.mysql.jdbc.Driver
-     * db2: COM.ibm.db2.jdbc.net.DB2Driver
-     * MSSQL server: com.microsoft.sqlserver.jdbc.SQLServerDriver
-     * Sybase: com.sybase.jdbc2.jdbc.SybDriver
+     * The Driver class. The jdbcDriver is located by connector framework to
+     * connect to database. Required configuration property, and should be
+     * validated. 
+     * Oracle: oracle.jdbc.driver.OracleDriver 
+     * MySQL: com.mysql.jdbc.Driver db2: COM.ibm.db2.jdbc.net.DB2Driver 
+     * MSSQL: com.microsoft.sqlserver.jdbc.SQLServerDriver 
+     * Sybase: com.sybase.jdbc2.jdbc.SybDriver 
      * Derby: org.apache.derby.jdbc.ClientDriver
      * Derby embedded: org.apache.derby.jdbc.EmbeddedDriver
      *
@@ -216,15 +219,13 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         this.jdbcDriver = value;
     }
     /**
-     * Database connection URL. The url is used to connect to database.
-     * Required configuration property, and should be validated
-     * Oracle   jdbc:oracle:thin:@%h:%p:%d
-     * MySQL    jdbc:mysql://%h:%p/%d
-     * Sybase   jdbc:sybase:Tds:%h:%p/%d
-     * DB2      jdbc:db2://%h:%p/%d
-     * SQL      jdbc:sqlserver://%h:%p;DatabaseName=%d
-     * Derby    jdbc:derby://%h:%p/%d
-     * Derby embedded jdbc:derby:%d
+     * Database connection URL. The url is used to connect to database. Required
+     * configuration property, and should be validated. 
+     * Oracle: jdbc:oracle:thin:@%h:%p:%d MySQL jdbc:mysql://%h:%p/%d 
+     * Sybase: jdbc:sybase:Tds:%h:%p/%d DB2 jdbc:db2://%h:%p/%d 
+     * SQL: jdbc:sqlserver://%h:%p;DatabaseName=%d 
+     * Derby: jdbc:derby://%h:%p/%d 
+     * Derby: embedded jdbc:derby:%d
      */
     private String jdbcUrlTemplate = "jdbc:mysql://%h:%p/%d";
 
@@ -245,13 +246,37 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         this.jdbcUrlTemplate = value;
     }
     /**
-     * The empty string setting
-     * allow conversion of a null into an empty string for not-null char columns
+     * With autoCommit set to true, each SQL statement is treated as a
+     * transaction. It is automatically committed right after it is executed.
      */
-    public boolean enableEmptyString = false;
+    private boolean autoCommit = true;
+
+    /**
+     * Accessor for the autoCommit property
+     *
+     * @return the autoCommit
+     */
+    public boolean isAutoCommit() {
+        return autoCommit;
+    }
+
+    /**
+     * Setter for the autoCommit property.
+     *
+     * @param autoCommit
+     */
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
+    }
+    /**
+     * The empty string setting allow conversion of a null into an empty string
+     * for not-null char columns
+     */
+    private boolean enableEmptyString = false;
 
     /**
      * Accessor for the enableEmptyString property
+     *
      * @return the enableEmptyString
      */
     @ConfigurationProperty(order = 12, displayMessageKey = "ENABLE_EMPTY_STRING_DISPLAY", helpMessageKey = "ENABLE_EMPTY_STRING_HELP")
@@ -261,20 +286,22 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Setter for the enableEmptyString property.
+     *
      * @param enableEmptyString the enableEmptyString to set
      */
     public void setEnableEmptyString(boolean enableEmptyString) {
         this.enableEmptyString = enableEmptyString;
     }
     /**
-     * Some database drivers will throw the SQLError when setting the
-     * parameters to the statement with zero ErrorCode. This mean no error.
-     * This switch allow to switch off ignoring this SQLError
+     * Some database drivers will throw the SQLError when setting the parameters
+     * to the statement with zero ErrorCode. This mean no error. This switch
+     * allow to switch off ignoring this SQLError
      */
     public boolean rethrowAllSQLExceptions = true;
 
     /**
      * Accessor for the rethrowAllSQLExceptions property
+     *
      * @return the rethrowAllSQLExceptions
      */
     @ConfigurationProperty(order = 14, displayMessageKey = "RETHROW_ALL_SQLEXCEPTIONS_DISPLAY", helpMessageKey = "RETHROW_ALL_SQLEXCEPTIONS_HELP")
@@ -284,20 +311,23 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Setter for the rethrowAllSQLExceptions property.
+     *
      * @param rethrowAllSQLExceptions the rethrowAllSQLExceptions to set
      */
     public void setRethrowAllSQLExceptions(boolean rethrowAllSQLExceptions) {
         this.rethrowAllSQLExceptions = rethrowAllSQLExceptions;
     }
     /**
-     * Some JDBC drivers (ex: Oracle) may not be able to get correct string representation of
-     * TIMESTAMP data type of the column from the database table.
-     * To get correct value , one needs to use rs.getTimestamp() rather rs.getString().
+     * Some JDBC drivers (ex: Oracle) may not be able to get correct string
+     * representation of TIMESTAMP data type of the column from the database
+     * table. To get correct value , one needs to use rs.getTimestamp() rather
+     * rs.getString().
      */
     public boolean nativeTimestamps = false;
 
     /**
      * Accessor for the nativeTimestamps property
+     *
      * @return the nativeTimestamps
      */
     @ConfigurationProperty(order = 15, displayMessageKey = "NATIVE_TIMESTAMPS_DISPLAY", helpMessageKey = "NATIVE_TIMESTAMPS_HELP")
@@ -307,19 +337,21 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Setter for the nativeTimestamps property.
+     *
      * @param nativeTimestamps the nativeTimestamps to set
      */
     public void setNativeTimestamps(boolean nativeTimestamps) {
         this.nativeTimestamps = nativeTimestamps;
     }
     /**
-     * Some JDBC drivers (ex: DerbyDB) may need to access all the datatypes with native types
-     * to get correct value.
+     * Some JDBC drivers (ex: DerbyDB) may need to access all the datatypes with
+     * native types to get correct value.
      */
     public boolean allNative = false;
 
     /**
      * Accessor for the allNativeproperty
+     *
      * @return the allNative
      */
     @ConfigurationProperty(order = 16, displayMessageKey = "ALL_NATIVE_DISPLAY", helpMessageKey = "ALL_NATIVE_HELP")
@@ -329,20 +361,23 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Setter for the allNative property.
+     *
      * @param allNative the allNative to set
      */
     public void setAllNative(boolean allNative) {
         this.allNative = allNative;
     }
     /**
-     * The new connection validation query. The query can be empty. Then the auto commit true/false
-     * command is applied by default. This can be insufficient on some database drivers because of caching
-     * Then the validation query is required.
+     * The new connection validation query. The query can be empty. Then the
+     * auto commit true/false command is applied by default. This can be
+     * insufficient on some database drivers because of caching Then the
+     * validation query is required.
      */
     private String validConnectionQuery;
 
     /**
      * connection validation query getter
+     *
      * @return validConnectionQuery value
      */
     @ConfigurationProperty(order = 17, displayMessageKey = "VALID_CONNECTION_QUERY_DISPLAY", helpMessageKey = "VALID_CONNECTION_QUERY_HELP")
@@ -352,6 +387,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Connection validation query setter
+     *
      * @param value
      */
     public void setValidConnectionQuery(String value) {
@@ -367,6 +403,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the datasource
+     *
      * @return datasource value
      */
     @ConfigurationProperty(order = 20, displayMessageKey = "DATASOURCE_DISPLAY", helpMessageKey = "DATASOURCE_HELP")
@@ -387,6 +424,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the jndiFactory
+     *
      * @return jndiFactory value
      */
     @ConfigurationProperty(order = 21, displayMessageKey = "JNDI_PROPERTIES_DISPLAY", helpMessageKey = "JNDI_PROPERTIES_HELP")
@@ -410,6 +448,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the scripting language string
+     *
      * @return adapterCompat value
      */
     public String getScriptingLanguage() {
@@ -418,6 +457,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the scripting language string
+     *
      * @param value
      */
     public void setScriptingLanguage(String value) {
@@ -430,6 +470,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the clearTextPasswordToScript boolean
+     *
      * @return value
      */
     public boolean getClearTextPasswordToScript() {
@@ -438,10 +479,36 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the clearTextPasswordToScript value
+     *
      * @param value
      */
     public void setClearTextPasswordToScript(boolean value) {
         this.clearTextPasswordToScript = value;
+    }
+    /**
+     * By default, scripts are loaded and compiled when a connector instance
+     * is created and initialized. Setting reloadScriptOnExecution to true will
+     * make the connector load and compile the script every time it is called.
+     * Use only for test/debug purpose since this can have a significant impact on performance.
+     */
+    private boolean reloadScriptOnExecution = false;
+
+    /**
+     * Accessor for the reloadScriptOnExecution property
+     *
+     * @return the autoCommit
+     */
+    public boolean isReloadScriptOnExecution() {
+        return reloadScriptOnExecution;
+    }
+
+    /**
+     * Setter for the reloadScriptOnExecution property.
+     *
+     * @param reloadScriptOnExecution
+     */
+    public void setReloadScriptOnExecution(boolean reloadScriptOnExecution) {
+        this.reloadScriptOnExecution = reloadScriptOnExecution;
     }
     /**
      * Create script string
@@ -450,6 +517,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Create script string
+     *
      * @return value
      */
     public String getCreateScript() {
@@ -458,6 +526,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Create script string
+     *
      * @param value
      */
     public void setCreateScript(String value) {
@@ -470,6 +539,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Update script string
+     *
      * @return updateScript value
      */
     public String getUpdateScript() {
@@ -478,6 +548,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Update script string
+     *
      * @param value
      */
     public void setUpdateScript(String value) {
@@ -490,6 +561,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Delete script string
+     *
      * @return deleteScript value
      */
     public String getDeleteScript() {
@@ -498,6 +570,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Delete script string
+     *
      * @param value
      */
     public void setDeleteScript(String value) {
@@ -510,6 +583,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Search script string
+     *
      * @return searchScript value
      */
     public String getSearchScript() {
@@ -518,6 +592,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Search script string
+     *
      * @param value
      */
     public void setSearchScript(String value) {
@@ -530,6 +605,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Sync script string
+     *
      * @return syncScript value
      */
     public String getSyncScript() {
@@ -538,6 +614,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Sync script string
+     *
      * @param value
      */
     public void setSyncScript(String value) {
@@ -550,6 +627,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Test script string
+     *
      * @return testScript value
      */
     public String getTestScript() {
@@ -558,6 +636,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Test script string
+     *
      * @param value
      */
     public void setTestScript(String value) {
@@ -570,6 +649,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Create script FileName
+     *
      * @return value
      */
     public String getCreateScriptFileName() {
@@ -578,6 +658,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Create script FileName
+     *
      * @param value
      */
     public void setCreateScriptFileName(String value) {
@@ -590,6 +671,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Update script FileName
+     *
      * @return updateScriptFileName value
      */
     public String getUpdateScriptFileName() {
@@ -598,6 +680,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Update script FileName
+     *
      * @param value
      */
     public void setUpdateScriptFileName(String value) {
@@ -610,6 +693,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Delete script FileName
+     *
      * @return deleteScriptFileName value
      */
     public String getDeleteScriptFileName() {
@@ -618,6 +702,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Delete script FileName
+     *
      * @param value
      */
     public void setDeleteScriptFileName(String value) {
@@ -630,6 +715,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Search script FileName
+     *
      * @return searchScriptFileName value
      */
     public String getSearchScriptFileName() {
@@ -638,6 +724,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Search script FileName
+     *
      * @param value
      */
     public void setSearchScriptFileName(String value) {
@@ -650,6 +737,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Sync script FileName
+     *
      * @return syncScriptFileName value
      */
     public String getSyncScriptFileName() {
@@ -658,6 +746,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Sync script FileName
+     *
      * @param value
      */
     public void setSyncScriptFileName(String value) {
@@ -670,6 +759,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Return the Test script FileName
+     *
      * @return testScriptFileName value
      */
     public String getTestScriptFileName() {
@@ -678,6 +768,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Set the Test script FileName
+     *
      * @param value
      */
     public void setTestScriptFileName(String value) {
@@ -746,26 +837,27 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         }
 
         // Validate the actions
-        
+
         log.info("Checking Create Script filename");
-        checkFileIsReadable("Create",getCreateScriptFileName());
+        checkFileIsReadable("Create", getCreateScriptFileName());
         log.info("Checking Update Script filename");
-        checkFileIsReadable("Update",getUpdateScriptFileName());
+        checkFileIsReadable("Update", getUpdateScriptFileName());
         log.info("Checking Delete Script filename");
-        checkFileIsReadable("Delete",getDeleteScriptFileName());
+        checkFileIsReadable("Delete", getDeleteScriptFileName());
         log.info("Checking Search Script filename");
-        checkFileIsReadable("Search",getSearchScriptFileName());
+        checkFileIsReadable("Search", getSearchScriptFileName());
         log.info("Checking Sync Script filename");
-        checkFileIsReadable("Sync",getSyncScriptFileName());
+        checkFileIsReadable("Sync", getSyncScriptFileName());
         log.info("Checking Test Script filename");
-        checkFileIsReadable("Test",getTestScriptFileName());
+        checkFileIsReadable("Test", getTestScriptFileName());
 
         log.ok("Configuration is valid");
     }
 
     /**
-     * Format a URL given a template. Recognized template characters are:
-     *  % literal % h host p port d database
+     * Format a URL given a template. Recognized template characters are: %
+     * literal % h host p port d database
+     *
      * @return the database url
      */
     public String formatUrlTemplate() {
@@ -798,6 +890,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Format the connector message
+     *
      * @param key key of the message
      * @return return the formated message
      */
@@ -809,6 +902,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     /**
      * Format message with arguments
+     *
      * @param key key of the message
      * @param objects arguments
      * @return the localized message string
@@ -818,15 +912,15 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         log.ok("Get for a key {0} connector message {1}", key, fmt);
         return fmt;
     }
-    
-    private void checkFileIsReadable(String type,String fileName){
+
+    private void checkFileIsReadable(String type, String fileName) {
         if (fileName == null) {
-            log.info(type+" Script Filename is null");
+            log.info("{0} Script Filename is null",type);
         } else {
             File f = new File(fileName);
             try {
                 if (f.canRead()) {
-                    log.ok(fileName + " is readable");
+                    log.ok("{0} is readable",fileName);
                 } else {
                     throw new IllegalArgumentException("Can't read " + fileName);
                 }

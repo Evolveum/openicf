@@ -25,23 +25,20 @@
  */
 package org.forgerock.openicf.scriptedsql;
 
-import org.identityconnectors.framework.common.exceptions.*;
-
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Hashtable;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectionBrokenException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import java.util.*;
-
 /**
- * Class to represent a ScriptedJDBC Connection 
- *  
+ * Class to represent a ScriptedJDBC Connection
+ *
  * @author gael
  * @version 1.0
  * @since 1.0
@@ -54,7 +51,6 @@ public class ScriptedSQLConnection {
     public ScriptedSQLConnection(ScriptedSQLConfiguration configuration) {
         _configuration = configuration;
     }
-
     /**
      * Setup logging for the {@link ScriptedSQLConnection}.
      */
@@ -66,12 +62,9 @@ public class ScriptedSQLConnection {
      */
     private static Connection connect(ScriptedSQLConfiguration config) {
         Connection connection;
-        // User
         final String login = config.getUser();
-        // Password
         final GuardedString password = config.getPassword();
 
-        // Data source anyone?
         final String datasource = config.getDatasource();
         if (StringUtil.isNotBlank(datasource)) {
             log.info("Get a new connection using datasource {0}", datasource);
@@ -83,24 +76,27 @@ public class ScriptedSQLConnection {
             } else {
                 connection = SQLUtil.getDatasourceConnection(datasource, prop);
             }
-            log.ok("The new connection using datasource {0} created", datasource);
+            log.ok("The new connection using datasource {0} is created", datasource);
         } else {
             final String driver = config.getJdbcDriver();
             final String connectionUrl = config.formatUrlTemplate();
             log.info("Getting a new connection using connection url {0} and user {1}", connectionUrl, login);
             connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, login, password);
-            log.ok("The new connection using connection url {0} and user {1} created", connectionUrl, login);
+            log.ok("The new connection using connection url {0} and user {1} is created", connectionUrl, login);
         }
 
-        //Disable auto-commit mode
+        //Set auto-commit mode 
         try {
-            if (connection.getAutoCommit()) {
-                log.info("setAutoCommit(false)");
+            if (config.isAutoCommit()) {
+                log.info("Setting AutoCommit to true");
+                connection.setAutoCommit(true);
+            } else {
+                log.info("Setting AutoCommit to false");
                 connection.setAutoCommit(false);
             }
-        } catch (SQLException expected) {
-            //expected
-            log.error(expected, "setAutoCommit(false) exception");
+        }
+        catch (SQLException expected) {
+            log.error(expected, "setAutoCommit() exception");
         }
         return connection;
     }
@@ -116,15 +112,24 @@ public class ScriptedSQLConnection {
      * If internal connection is not usable, throw IllegalStateException
      */
     public void test() {
-        //implementation
+        try {
+            if (null == getSqlConnection() || sqlConn.isClosed() || !sqlConn.isValid(2)) {
+                throw new ConnectionBrokenException("JDBC connection is broken");
+            }
+        }
+        catch (SQLException e) {
+            throw ConnectionBrokenException.wrap(e);
+        }
+
     }
 
     /**
      * Get the internal JDBC connection.
+     *
      * @return the connection
      */
     public Connection getSqlConnection() {
-        if (sqlConn == null){
+        if (sqlConn == null) {
             sqlConn = connect(_configuration);
         }
         return this.sqlConn;
@@ -132,6 +137,7 @@ public class ScriptedSQLConnection {
 
     /**
      * Set the internal JDBC connection.
+     *
      * @param connection
      */
     public void setSqlConnection(Connection connection) {
