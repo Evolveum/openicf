@@ -601,21 +601,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Trace.TraceInformation("Search: Performing query");
 
                 ICollection<string> attributesToReturn = null;
-
-                SearchResultCollection resultSet = searcher.FindAll();
-                Trace.TraceInformation("Search: found {0} results", resultSet.Count);
-
-                if (resultSet.Count > 0)
+                SearchResultCollection resultSet = null;
+                int count = 0;
+                attributesToReturn = GetAttributesToReturn(oclass, options);
+                try
                 {
-                    attributesToReturn = GetAttributesToReturn(oclass, options);
-                    Trace.TraceInformation("Building connectorObjects");
+                    resultSet = searcher.FindAll();
                     foreach (SearchResult result in resultSet)
                     {
                         buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
+                        count++;
                     }
                 }
-                // Important to dispose to avoid memory leak
-                resultSet.Dispose();
+                finally
+                {
+                    Trace.TraceInformation("Search: found {0} results", count);
+                    // Important to dispose to avoid memory leak
+                    if (resultSet != null)
+                    {
+                        resultSet.Dispose();
+                    }
+                }
             }
             catch (Exception e)
             {
