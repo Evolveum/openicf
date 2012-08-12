@@ -26,6 +26,7 @@
 package org.forgerock.openicf.scriptedsql;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -502,7 +503,9 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                 } else if (attrName.equalsIgnoreCase("password")) {
                     // is there a chance we fetch password from search?
                 } else {
-                    if (attrValue != null) {
+                    if (attrValue instanceof Collection) {
+                        cobld.addAttribute(AttributeBuilder.build(attrName, (Collection)attrValue));
+                    } else if (attrValue != null) {
                         cobld.addAttribute(AttributeBuilder.build(attrName, attrValue));
                     } else {
                         cobld.addAttribute(AttributeBuilder.build(attrName));
@@ -569,7 +572,9 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                     for (Map.Entry<String, List> attr : ( (Map<String, List>) result.get("attributes") ).entrySet()) {
                         final String attrName = attr.getKey();
                         final Object attrValue = attr.getValue();
-                        if (attrValue != null) {
+                        if (attrValue instanceof Collection) {
+                            cobld.addAttribute(AttributeBuilder.build(attrName, (Collection)attrValue));
+                        } else if (attrValue != null) {
                             cobld.addAttribute(AttributeBuilder.build(attrName, attrValue));
                         } else {
                             cobld.addAttribute(AttributeBuilder.build(attrName));
