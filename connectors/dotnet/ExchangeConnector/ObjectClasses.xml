@@ -213,6 +213,7 @@
       </AttributeInfo>
       <AttributeInfo name="ObjectClass" type="String">
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+        <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
       <AttributeInfo name="WhenChanged" type="String">
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
