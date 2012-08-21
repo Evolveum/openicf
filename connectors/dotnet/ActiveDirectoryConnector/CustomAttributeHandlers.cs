@@ -861,6 +861,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 pvc = searchResult.Properties[attributeName];
             }
+            else
+                // Group without members
+            {
+                return null;
+            }
 
             // Range issue most probably...
             // see: http://msdn.microsoft.com/en-us/library/ms817827.aspx
