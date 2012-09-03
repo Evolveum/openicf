@@ -41,7 +41,7 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 /**
  * This is an implementation of AbstractFilterTranslator that gives a concrete representation
  * of which filters can be applied at the connector level (natively). If the
- * ${connector_name} doesn't support a certain expression type, that factory
+ * ${connectorName} doesn't support a certain expression type, that factory
  * method should return null. This level of filtering is present only to allow any
  * native constructs that may be available to help reduce the result set for the framework,
  * which will (strictly) reapply all filters specified after the connector does the initial
@@ -50,7 +50,7 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
-public class ${connector_name}FilterTranslator extends AbstractFilterTranslator<String> {
+public class ${connectorName}FilterTranslator extends AbstractFilterTranslator<String> {
 
     /**
      * {@inheritDoc}

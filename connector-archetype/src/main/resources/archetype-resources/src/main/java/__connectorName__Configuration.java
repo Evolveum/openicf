@@ -34,12 +34,12 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
- * parameters to initialize the ${connector_name} Connector.
+ * parameters to initialize the ${connectorName} Connector.
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
-public class ${connector_name}Configuration extends AbstractConfiguration {
+public class ${connectorName}Configuration extends AbstractConfiguration {
 
 
     // Exposed configuration properties.
@@ -63,7 +63,7 @@ public class ${connector_name}Configuration extends AbstractConfiguration {
     /**
      * Constructor
      */
-    public ${connector_name}Configuration() {
+    public ${connectorName}Configuration() {
 
     }
 

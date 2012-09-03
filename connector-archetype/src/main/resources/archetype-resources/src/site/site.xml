@@ -26,9 +26,9 @@
  !
 -->
 
-<project xmlns="http://maven.apache.org/DECORATION/1.1.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.1.0 http://maven.apache.org/xsd/decoration-1.1.0.xsd">
+<project xmlns="http://maven.apache.org/DECORATION/1.3.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.3.0 http://maven.apache.org/xsd/decoration-1.3.0.xsd">
     <skin>
         <groupId>org.forgerock.commons</groupId>
         <artifactId>forgerock-community-skin</artifactId>
@@ -42,17 +42,11 @@
             <item name="Developer Community" href="http://www.forgerock.org" />
             <item name="OpenICF" href="../../index.html"/>
             <item name="Connectors" href="../index.html" />
-            <item name="${connector_name} Connector" href="./index.html" />
+            <item name="${connectorName} Connector" href="./index.html" />
         </breadcrumbs>
         <menu name="Overview" img="images/arrow_right.png">
             <item name="Introduction" href="openicf-report.html"/>
             <item name="FAQ" href="faq.html"/>
-            <!--item name="Compatibility" href="compatibility.html"/>
-            <item name="Installation" href="installation.html"/>
-            <item name="Configuration" href="configuration.html"/>
-            <item name="About" href="aboutpage.html"/>
-            <item name="Changes" href="changelog.html"/>
-            <item name="Embedded" href="embedded.html"/-->
         </menu>
         <menu ref="reports"/>
     </body>
@@ -63,6 +57,6 @@
             <src>images/openicf-tagline-195x65.png</src>
             <alt>OpenICF</alt>
         </openproject>
-        <siteSearchFQDN>openicf.forgerock.org</siteSearchFQDN>
+        <siteSearchFQDN>forgerock.org</siteSearchFQDN>
     </custom>
 </project>

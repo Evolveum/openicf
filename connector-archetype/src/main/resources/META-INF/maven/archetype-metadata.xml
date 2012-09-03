@@ -31,16 +31,13 @@
         xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <requiredProperties>
-        <requiredProperty key="connector_name">
+        <requiredProperty key="connectorName">
         </requiredProperty>
         <requiredProperty key="compatibility_version">
             <defaultValue>1.1</defaultValue>
         </requiredProperty>
         <requiredProperty key="framework_version">
             <defaultValue>0.1-SNAPSHOT</defaultValue>
-        </requiredProperty>
-        <requiredProperty key="connector_family">
-            <defaultValue>misc</defaultValue>
         </requiredProperty>
         <requiredProperty key="jira_componentId">
             <defaultValue>10191</defaultValue>
@@ -106,6 +103,18 @@
             <includes>
                 <include>**/*.properties</include>
             </includes>
+        </fileSet>
+        <fileSet filtered="true" encoding="UTF-8">
+            <directory>src/main/docbkx</directory>
+            <includes>
+                <include>**/*.xml</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="false" encoding="UTF-8">
+            <directory>src/main/docbkx</directory>
+            <excludes>
+                <exclude>**/*.xml</exclude>
+            </excludes>
         </fileSet>
         <fileSet filtered="true" packaged="true" encoding="UTF-8">
             <directory>src/test/java</directory>

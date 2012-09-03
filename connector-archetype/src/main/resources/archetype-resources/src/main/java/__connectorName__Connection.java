@@ -27,16 +27,16 @@
 package ${package};
 
 /**
- * Class to represent a ${connector_name} Connection
+ * Class to represent a ${connectorName} Connection
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
-public class ${connector_name}Connection {
+public class ${connectorName}Connection {
 
-    private ${connector_name}Configuration configuration;
+    private ${connectorName}Configuration configuration;
 
-    public ${connector_name}Connection(${connector_name}Configuration configuration) {
+    public ${connectorName}Connection(${connectorName}Configuration configuration) {
         this.configuration = configuration;
     }
 

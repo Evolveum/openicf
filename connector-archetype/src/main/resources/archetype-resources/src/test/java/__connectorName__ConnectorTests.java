@@ -45,18 +45,18 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Attempts to test the {@link ${connector_name}Connector} with the framework.
+ * Attempts to test the {@link ${connectorName}Connector} with the framework.
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
-public class ${connector_name}ConnectorTests {
+public class ${connectorName}ConnectorTests {
 
     /*
     * Example test properties.
     * See the Javadoc of the TestHelpers class for the location of the public and private configuration files.
     */
-    private static final PropertyBag properties = TestHelpers.getProperties(${connector_name}Connector.class);
+    private static final PropertyBag properties = TestHelpers.getProperties(${connectorName}Connector.class);
     // Host is a public property read from public configuration file
     private static final String HOST = properties.getStringProperty("configuration.host");
     // Login and password are private properties read from private configuration file 
@@ -64,7 +64,7 @@ public class ${connector_name}ConnectorTests {
     private static final GuardedString PASSWORD = properties.getProperty("configuration.password", GuardedString.class);
 
     //set up logging
-    private static final Log LOGGER = Log.getLog(${connector_name}ConnectorTests.class);
+    private static final Log LOGGER = Log.getLog(${connectorName}ConnectorTests.class);
 
     @BeforeClass
     public static void setUp() {
@@ -76,7 +76,7 @@ public class ${connector_name}ConnectorTests {
         //other setup work to do before running tests
         //
 
-        //Configuration config = new ${connector_name}Configuration();
+        //Configuration config = new ${connectorName}Configuration();
         //Map<String, ? extends Object> configData = (Map<String, ? extends Object>) properties.getProperty("configuration",Map.class)
         //TestHelpers.fillConfiguration(
     }
@@ -102,10 +102,10 @@ public class ${connector_name}ConnectorTests {
         //List<ConnectorObject> results = TestHelpers.searchToList(theConnector, ObjectClass.GROUP, filter);
     }
 
-    protected ConnectorFacade getFacade(${connector_name}Configuration config) {
+    protected ConnectorFacade getFacade(${connectorName}Configuration config) {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         // **test only**
-        APIConfiguration impl = TestHelpers.createTestConfiguration(${connector_name}Connector.class, config);
+        APIConfiguration impl = TestHelpers.createTestConfiguration(${connectorName}Connector.class, config);
         return factory.newInstance(impl);
     }
 }

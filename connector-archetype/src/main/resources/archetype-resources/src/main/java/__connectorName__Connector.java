@@ -108,7 +108,7 @@ import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
- * Main implementation of the ${connector_name} Connector
+ * Main implementation of the ${connectorName} Connector
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
@@ -117,8 +117,8 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 @ConnectorClass(
         displayNameKey = "${connectorName}.connector.display",
         categoryKey="${connector_family}.category",
-        configurationClass = ${connector_name}Configuration.class)
-public class ${connector_name}Connector implements
+        configurationClass = ${connectorName}Configuration.class)
+public class ${connectorName}Connector implements
 #if ( $poolable_connector_safe )
         PoolableConnector
 #else
@@ -165,20 +165,20 @@ public class ${connector_name}Connector implements
 #end
     {
     /**
-     * Setup logging for the {@link ${connector_name}Connector}.
+     * Setup logging for the {@link ${connectorName}Connector}.
      */
-    private static final Log LOGGER = Log.getLog(${connector_name}Connector.class);
+    private static final Log LOGGER = Log.getLog(${connectorName}Connector.class);
 
     /**
      * Place holder for the Connection created in the init method
      */
-    private ${connector_name}Connection connection;
+    private ${connectorName}Connection connection;
 
     /**
      * Place holder for the {@link Configuration} passed into the init() method
-     * {@link ${connector_name}Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)}.
+     * {@link ${connectorName}Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)}.
      */
-    private ${connector_name}Configuration configuration;
+    private ${connectorName}Configuration configuration;
 
     /**
      * Gets the Configuration context for this connector.
@@ -193,12 +193,12 @@ public class ${connector_name}Connector implements
      * @see org.identityconnectors.framework.spi.Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)
      */
     public void init(Configuration configuration1) {
-        this.configuration = (${connector_name}Configuration) configuration1;
-        this.connection = new ${connector_name}Connection(this.configuration);
+        this.configuration = (${connectorName}Configuration) configuration1;
+        this.connection = new ${connectorName}Connection(this.configuration);
     }
 
     /**
-     * Disposes of the {@link ${connector_name}Connector}'s resources.
+     * Disposes of the {@link ${connectorName}Connector}'s resources.
      *
      * @see org.identityconnectors.framework.spi.Connector${symbol_pound}dispose()
      */

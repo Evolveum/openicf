@@ -34,11 +34,11 @@
         <version>${compatibility_version}.${framework_version}</version>
     </parent>
     <groupId>${groupId}</groupId>
-    <artifactId>openicf-${artifactId}-connector</artifactId>
+    <artifactId>${artifactId}</artifactId>
     <version>${compatibility_version}.${version}</version>
     <packaging>bundle</packaging>
-    <name>${connector_name} Connector</name>
-    <description>Connector for ${connector_name}</description>
+    <name>${connectorName} Connector</name>
+    <description>Connector for ${connectorName}</description>
     <url>https://openicf.forgerock.org/connectors/${artifactId}</url>
     <issueManagement>
         <system>jira</system>
@@ -54,12 +54,12 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <skipTests>false</skipTests>
         <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${symbol_dollar}{user.home}/.connectors/${symbol_dollar}{project.artifactId}/config</privateConfigPath>
         <connectorPackage>${package}</connectorPackage>
-        <connectorClass>${connector_name}Connector</connectorClass>
+        <connectorClass>${connectorName}Connector</connectorClass>
         <jira.componentIds>${jira_componentId}</jira.componentIds>
         <jira.versionPrefix>${symbol_dollar}{project.artifactId}</jira.versionPrefix>
         <jira.fixVersionIds>${jira_fixVersionIds}</jira.fixVersionIds>
+        <googleAnalyticsAccountId>UA-23412190-10</googleAnalyticsAccountId>
     </properties>
     <repositories>
         <repository>
@@ -79,5 +79,47 @@
             </releases>
         </repository>
     </repositories>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-report-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>docbkx</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.commons</groupId>
+                <artifactId>forgerock-doc-maven-plugin</artifactId>
+                <version>1.1.0-SNAPSHOT</version>
+                <inherited>false</inherited>
+                <configuration>
+                    <projectName>OpenICF</projectName>
+                    <googleAnalyticsId>${googleAnalyticsAccountId}</googleAnalyticsId>
+                    <docbkxSourceDirectory>${symbol_dollar}{project.build.directory}/openicf-docbkx</docbkxSourceDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build-doc</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>layout-doc</id>
+                        <phase>site</phase>
+                        <goals>
+                            <goal>layout</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
