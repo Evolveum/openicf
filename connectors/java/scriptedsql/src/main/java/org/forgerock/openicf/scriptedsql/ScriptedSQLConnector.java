@@ -196,7 +196,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                     gpasswd.access(new Accessor() {
 
                         public void access(char[] clearChars) {
-                            arguments.put("password", clearChars.toString());
+                            arguments.put("password", new String(clearChars));
                         }
                     });
                 } else {
@@ -641,7 +641,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                     gpasswd.access(new Accessor() {
 
                         public void access(char[] clearChars) {
-                            arguments.put("password", clearChars.toString());
+                            arguments.put("password", new String(clearChars));
                         }
                     });
                 } else {
