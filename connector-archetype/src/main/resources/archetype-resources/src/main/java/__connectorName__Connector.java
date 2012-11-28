@@ -116,7 +116,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 #set( $connectorName = $connector_name.toLowerCase())
 @ConnectorClass(
         displayNameKey = "${connectorName}.connector.display",
-        categoryKey="${connector_family}.category",
         configurationClass = ${connectorName}Configuration.class)
 public class ${connectorName}Connector implements
 #if ( $poolable_connector_safe )
@@ -167,7 +166,7 @@ public class ${connectorName}Connector implements
     /**
      * Setup logging for the {@link ${connectorName}Connector}.
      */
-    private static final Log LOGGER = Log.getLog(${connectorName}Connector.class);
+    private static final Log logger = Log.getLog(${connectorName}Connector.class);
 
     /**
      * Place holder for the Connection created in the init method

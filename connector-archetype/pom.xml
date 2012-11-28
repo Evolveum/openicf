@@ -82,7 +82,7 @@
         <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10173</url>
     </issueManagement>
     <ciManagement>
-        <system>hudson</system>
+        <system>jenkins</system>
         <url>http://builds.forgerock.org/job/OpenICF - Connector Archetype</url>
         <notifiers>
             <notifier>
@@ -162,11 +162,18 @@
                         <configuration>
                             <goals>
                                 <goal>verify</goal>
+                                <goal>site</goal>
                             </goals>
+                            <profiles>
+                                <profile>generate-docbook</profile>
+                            </profiles>
                             <pomIncludes>
                                 <pomInclude>*/*/pom.xml</pomInclude>
                             </pomIncludes>
                             <projectsDirectory>${project.build.directory}/it/projects</projectsDirectory>
+                            <properties>
+                                <maven.test.skip>true</maven.test.skip>
+                            </properties>
                         </configuration>
                     </execution>
                 </executions>

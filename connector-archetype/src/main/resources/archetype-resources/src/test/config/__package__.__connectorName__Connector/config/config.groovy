@@ -52,7 +52,7 @@ testsuite {
     bundleJar=System.getProperty("bundleJar")
     bundleName=System.getProperty("bundleName")
     bundleVersion=System.getProperty("bundleVersion")
-    connectorName=""    
+    connectorName=System.getProperty("connectorName")
 
     // ValidateApiOpTests:
     Validate.iterations="3"
