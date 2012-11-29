@@ -23,7 +23,7 @@
  *
  * $Id$
  */
-package org.forgerock.openicf.scriptedsql;
+package org.forgerock.openicf.connectors.scriptedsql;
 
 import java.sql.Connection;
 import java.sql.SQLException;

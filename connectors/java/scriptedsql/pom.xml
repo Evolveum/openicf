@@ -29,8 +29,8 @@
         <artifactId>connectors-parent</artifactId>
         <version>1.1.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.db</groupId>
-    <artifactId>openicf-scriptedsql-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>scriptedsql-connector</artifactId>
     <version>1.1.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Scripted SQL Connector</name>
@@ -45,13 +45,14 @@
         <system>jira</system>
         <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10178</url>
     </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - ScriptedSQL Connector</url>
+    </ciManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
         <openicf.osgi.embed>dbcommon</openicf.osgi.embed>
         <openicf.osgi.dynamic.import>*</openicf.osgi.dynamic.import>
-        <connectorPackage>org.forgerock.openicf.scriptedsql</connectorPackage>
+        <connectorPackage>org.forgerock.openicf.connectors.scriptedsql</connectorPackage>
         <connectorClass>ScriptedSQLConnector</connectorClass>
         <jira.componentIds>10178</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
@@ -82,4 +83,41 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-all</artifactId>
+                        <version>2.0.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.forgerock.openicf.connectors.misc</groupId>
+                        <artifactId>dbcommon</artifactId>
+                        <version>1.1.0.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>5.1.21</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>

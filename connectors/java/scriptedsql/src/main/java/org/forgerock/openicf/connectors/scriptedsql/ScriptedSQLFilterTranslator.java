@@ -23,7 +23,7 @@
  *
  * $Id$
  */
-package org.forgerock.openicf.scriptedsql;
+package org.forgerock.openicf.connectors.scriptedsql;
 
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.filter.*;
