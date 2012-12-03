@@ -32,17 +32,21 @@
         <artifactId>connectors-parent</artifactId>
         <version>1.1.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.cloud</groupId>
-    <artifactId>openicf-googleapps-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>googleapps-connector</artifactId>
     <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>GoogleApps Connector</name>
     <description>Connector for GoogleApps</description>
-    <url>https://openicf.forgerock.org/connectors/googleapps</url>
+    <url>https://openicf.forgerock.org/connectors/googleapps-connector</url>
     <issueManagement>
         <system>jira</system>
         <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10213</url>
     </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - GoogleApps Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/googleapps</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/googleapps</developerConnection>
@@ -51,9 +55,6 @@
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
         <connectorPackage>org.forgerock.openicf.connectors.googleapps</connectorPackage>
         <connectorClass>GoogleAppsConnector</connectorClass>
         <jira.componentIds>10213</jira.componentIds>
@@ -118,7 +119,29 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>12.0</version>
+            <version>13.0.1</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>
