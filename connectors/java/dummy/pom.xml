@@ -27,27 +27,29 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.misc</groupId>
-    <artifactId>openicf-dummy-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>dummy-connector</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Dummy Connector</name>
     <description>Connector for Dummy</description>
-    <url>http://openicf.forgerock.org/connectors/dummy</url>
+    <url>https://openicf.forgerock.org/connectors/dummy-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10191</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - Dummy Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dummy</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dummy</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/dummy</url>
     </scm>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10191</url>
-    </issueManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
         <connectorPackage>org.identityconnectors.dummy</connectorPackage>
         <connectorClass>DummyConnector</connectorClass>
         <jira.componentIds>10191</jira.componentIds>
@@ -71,4 +73,13 @@
             </releases>
         </repository>
     </repositories>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

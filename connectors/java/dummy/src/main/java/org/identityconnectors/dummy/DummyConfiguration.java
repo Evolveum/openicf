@@ -24,6 +24,8 @@ package org.identityconnectors.dummy;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Arrays;
+
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 
 public class DummyConfiguration extends AbstractConfiguration
@@ -423,4 +425,81 @@ public class DummyConfiguration extends AbstractConfiguration
         13L, 14L
     };
     private File _fileArray[];
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DummyConfiguration that = (DummyConfiguration) o;
+
+        if (_booleanPrim != that._booleanPrim) return false;
+        if (_char != that._char) return false;
+        if (Double.compare(that._doublePrim, _doublePrim) != 0) return false;
+        if (Float.compare(that._floatPrim, _floatPrim) != 0) return false;
+        if (_int != that._int) return false;
+        if (_longPrim != that._longPrim) return false;
+        if (_boolean != null ? !_boolean.equals(that._boolean) : that._boolean != null) return false;
+        if (!Arrays.equals(_booleanArray, that._booleanArray)) return false;
+        if (!Arrays.equals(_booleanPrimArray, that._booleanPrimArray)) return false;
+        if (!Arrays.equals(_charArray, that._charArray)) return false;
+        if (_character != null ? !_character.equals(that._character) : that._character != null) return false;
+        if (!Arrays.equals(_characterArray, that._characterArray)) return false;
+        if (_double != null ? !_double.equals(that._double) : that._double != null) return false;
+        if (!Arrays.equals(_doubleArray, that._doubleArray)) return false;
+        if (!Arrays.equals(_doublePrimArray, that._doublePrimArray)) return false;
+        if (_file != null ? !_file.equals(that._file) : that._file != null) return false;
+        if (!Arrays.equals(_fileArray, that._fileArray)) return false;
+        if (_float != null ? !_float.equals(that._float) : that._float != null) return false;
+        if (!Arrays.equals(_floatArray, that._floatArray)) return false;
+        if (!Arrays.equals(_floatPrimArray, that._floatPrimArray)) return false;
+        if (!Arrays.equals(_intArray, that._intArray)) return false;
+        if (_integer != null ? !_integer.equals(that._integer) : that._integer != null) return false;
+        if (!Arrays.equals(_integerArray, that._integerArray)) return false;
+        if (_long != null ? !_long.equals(that._long) : that._long != null) return false;
+        if (!Arrays.equals(_longArray, that._longArray)) return false;
+        if (!Arrays.equals(_longPrimArray, that._longPrimArray)) return false;
+        if (_string != null ? !_string.equals(that._string) : that._string != null) return false;
+        if (!Arrays.equals(_stringArray, that._stringArray)) return false;
+        if (_uri != null ? !_uri.equals(that._uri) : that._uri != null) return false;
+        if (!Arrays.equals(_uriArray, that._uriArray)) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        int result;
+        long temp;
+        result = _charArray != null ? Arrays.hashCode(_charArray) : 0;
+        result = 31 * result + (_string != null ? _string.hashCode() : 0);
+        result = 31 * result + (_integer != null ? _integer.hashCode() : 0);
+        result = 31 * result + (_long != null ? _long.hashCode() : 0);
+        result = 31 * result + (_boolean != null ? _boolean.hashCode() : 0);
+        result = 31 * result + (_float != null ? _float.hashCode() : 0);
+        result = 31 * result + (_double != null ? _double.hashCode() : 0);
+        result = 31 * result + (_uri != null ? _uri.hashCode() : 0);
+        result = 31 * result + _int;
+        result = 31 * result + (int) _char;
+        result = 31 * result + (_character != null ? _character.hashCode() : 0);
+        temp = _doublePrim != +0.0d ? Double.doubleToLongBits(_doublePrim) : 0L;
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (_floatPrim != +0.0f ? Float.floatToIntBits(_floatPrim) : 0);
+        result = 31 * result + (_booleanPrim ? 1 : 0);
+        result = 31 * result + (int) (_longPrim ^ (_longPrim >>> 32));
+        result = 31 * result + (_file != null ? _file.hashCode() : 0);
+        result = 31 * result + (_stringArray != null ? Arrays.hashCode(_stringArray) : 0);
+        result = 31 * result + (_integerArray != null ? Arrays.hashCode(_integerArray) : 0);
+        result = 31 * result + (_longArray != null ? Arrays.hashCode(_longArray) : 0);
+        result = 31 * result + (_booleanArray != null ? Arrays.hashCode(_booleanArray) : 0);
+        result = 31 * result + (_floatArray != null ? Arrays.hashCode(_floatArray) : 0);
+        result = 31 * result + (_doubleArray != null ? Arrays.hashCode(_doubleArray) : 0);
+        result = 31 * result + (_uriArray != null ? Arrays.hashCode(_uriArray) : 0);
+        result = 31 * result + (_intArray != null ? Arrays.hashCode(_intArray) : 0);
+        result = 31 * result + (_characterArray != null ? Arrays.hashCode(_characterArray) : 0);
+        result = 31 * result + (_doublePrimArray != null ? Arrays.hashCode(_doublePrimArray) : 0);
+        result = 31 * result + (_floatPrimArray != null ? Arrays.hashCode(_floatPrimArray) : 0);
+        result = 31 * result + (_booleanPrimArray != null ? Arrays.hashCode(_booleanPrimArray) : 0);
+        result = 31 * result + (_longPrimArray != null ? Arrays.hashCode(_longPrimArray) : 0);
+        result = 31 * result + (_fileArray != null ? Arrays.hashCode(_fileArray) : 0);
+        return result;
+    }
 }

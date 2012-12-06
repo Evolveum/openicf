@@ -25,6 +25,9 @@ package org.identityconnectors.dummy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.identityconnectors.framework.common.FrameworkUtil;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -33,11 +36,12 @@ import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.*;
 
 @ConnectorClass(displayNameKey="DummyConnector",configurationClass=DummyConfiguration.class)
 public class DummyConnector
-    implements Connector, CreateOp, DeleteOp, SearchOp<String>, UpdateOp, SchemaOp
+    implements PoolableConnector, CreateOp, DeleteOp, SearchOp<String>, UpdateOp, SchemaOp
 {
 
     public DummyConnector() {
@@ -46,14 +50,25 @@ public class DummyConnector
     public void dispose() {
     }
 
+    public void checkAlive() {
+    }
+
     public Configuration getConfiguration() {
         return _configuration;
     }
 
     public void init(Configuration cfg) {
         _configuration = (DummyConfiguration)cfg;
-        _connection = new DummyConnection();
-        _schema = schema();
+        _cacheKey = Integer.valueOf(cfg.hashCode());
+        ConcurrentMap<Uid, Set<Attribute>> initialMap = new ConcurrentHashMap<Uid, Set<Attribute>>();
+        _map = _objectCacheMap.putIfAbsent(_cacheKey, initialMap);
+        if (_map == null) {
+            _map = initialMap;
+        }
+        if (null == _schema) {
+            //The concurrent call is harmless here
+            _schema = schema();
+        }
     }
 
     public Uid create(ObjectClass objClass, Set<Attribute> attrs, OperationOptions options) {
@@ -82,8 +97,7 @@ public class DummyConnector
     }
 
     public synchronized Uid generateUid() {
-        _uidIndex++;
-        return new Uid((new StringBuilder()).append(_uidIndex).append("").toString());
+        return new Uid((new StringBuilder()).append(_uidIndex.getAndIncrement()).append(_cacheKey).toString());
     }
 
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
@@ -113,7 +127,7 @@ public class DummyConnector
                 int length = attributes.length;
                 for(int i = 0; i < length; i++) {
                     String attribute = attributes[i];
-                    Attribute fetchedAttribute = (Attribute)map.get(attribute);
+                    Attribute fetchedAttribute = map.get(attribute);
                     if (fetchedAttribute!=null) {
                         builder.addAttribute(new Attribute[] {
                             fetchedAttribute
@@ -121,7 +135,7 @@ public class DummyConnector
                     }
                 }
             }
-            builder.setUid((Uid)entry.getKey());
+            builder.setUid(entry.getKey());
         }
 
     }
@@ -140,7 +154,7 @@ public class DummyConnector
             throw new UnknownUidException();
         } else {
             Name name = (Name)attrMap.remove(Name.NAME);
-            Attribute currentPassword = (Attribute)attrMap.remove(OperationalAttributeInfos.CURRENT_PASSWORD);
+            Attribute currentPassword = attrMap.remove(OperationalAttributeInfos.CURRENT_PASSWORD);
             Set<Attribute> object = _map.get(uid);
             validateAttributes(objclass, attrs, false);
             object.addAll(attrMap.values());
@@ -252,10 +266,13 @@ public class DummyConnector
         
     }
 
-    private static int _uidIndex;
+    private static final AtomicInteger _uidIndex = new AtomicInteger();
     private static Schema _schema;
-    private static Class<? extends Object> _supportedTypes[] = FrameworkUtil.getAllSupportedAttributeTypes().toArray(new Class[0]);
-    private static Map<Uid, Set<Attribute>> _map = new HashMap<Uid, Set<Attribute>>();
-    private DummyConfiguration _configuration;
-    private DummyConnection _connection;
+    private static final Class<? extends Object> _supportedTypes[] = FrameworkUtil.getAllSupportedAttributeTypes().toArray(new Class[0]);
+    private static final ConcurrentMap<Integer, ConcurrentMap<Uid, Set<Attribute>>> _objectCacheMap =
+            new ConcurrentHashMap<Integer, ConcurrentMap<Uid, Set<Attribute>>>();
+
+    private ConcurrentMap<Uid, Set<Attribute>> _map = null;
+    private DummyConfiguration _configuration= null;
+    private Integer _cacheKey= null;
 }
