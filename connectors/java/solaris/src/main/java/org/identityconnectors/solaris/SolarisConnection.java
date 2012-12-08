@@ -316,7 +316,12 @@ public class SolarisConnection {
      */
     private void sendInternal(String string, boolean isLog) throws IOException {
         expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
-        log.ok((isLog) ? ("Data: " + string + "\n") : "Data: *******\n");
+        if (isLog){
+            log.ok("Data: {0}",string);
+        }
+        else{
+            log.ok("Data: *******");
+        }
     }
     
     /**
@@ -640,7 +645,7 @@ public class SolarisConnection {
             // handle error message processing, throw an exception if error found
             handleRejects(cecList);
         } else {
-            log.ok("Data:" + output + "\n");
+            log.ok("Data: {0}",output);
             output = trimOutput(output);
         }
 

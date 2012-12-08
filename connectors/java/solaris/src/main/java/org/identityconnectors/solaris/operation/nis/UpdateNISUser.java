@@ -124,7 +124,7 @@ public class UpdateNISUser extends AbstractNISOp {
                 break;
             }// switch
             if (matched) {
-                log.ok(userEntry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
+                log.ok("{0} attribute '{1}' got value '{2}'",userEntry.getName(),key.toString(),value);
             }
         }// for
         

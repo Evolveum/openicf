@@ -93,19 +93,19 @@ public class CreateNISUser extends AbstractNISOp {
 
             homedirBuffer.append(accountId);
             homedir = homedirBuffer.toString();
-            log.ok(accountId + " got " + homedir + " from Configuration attribute 'homeBaseDir'");
+            log.ok("{0) got {1} from Configuration attribute 'homeBaseDir'",accountId,homedir);
         }
         
         String loginGroup = config.getDefaultPrimaryGroup();
         if (StringUtil.isNotBlank(loginGroup)) {
             gid = loginGroup;
-            log.ok(accountId + " got " + loginGroup + " from Configuration attribute 'defaultPrimaryGroup'");
+            log.ok("{0} got {1} from Configuration attribute 'defaultPrimaryGroup'",accountId,loginGroup);
         }
         
         String loginShell  = config.getLoginShell();
         if (StringUtil.isNotBlank(loginShell)) {
             shell = loginShell;
-            log.ok(accountId + " got " + loginShell + " from Configuration attribute 'loginShell'");
+            log.ok("{0} got {1} from Configuration attribute 'loginShell'",accountId,loginShell);
         }
         
         // Get specified user attributes, which can override above resource attributes
@@ -136,7 +136,7 @@ public class CreateNISUser extends AbstractNISOp {
                 break;
             }// switch
             if (matched) {
-                log.ok(entry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
+                log.ok("{0} attribute '{1}' got value '{2}'",entry.getName(),key.toString(),value);
             }
         }// for
         
