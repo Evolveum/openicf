@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011-2012 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2012 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,15 +27,15 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.1-SNAPSHOT</version>
+        <version>1.1.1.0</version>
     </parent>
     <groupId>org.forgerock.openicf.connectors</groupId>
     <artifactId>scriptedsql-connector</artifactId>
-    <version>1.1.0.1-SNAPSHOT</version>
+    <version>1.1.1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Scripted SQL Connector</name>
     <description>A Database connector that uses Groovy scripts to perform actions</description>
-    <url>http://openicf.forgerock.org/connectors/scriptedsql</url>
+    <url>http://openicf.forgerock.org/connectors/scriptedsql-connector</url>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/scriptedsql</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/scriptedsql</developerConnection>
