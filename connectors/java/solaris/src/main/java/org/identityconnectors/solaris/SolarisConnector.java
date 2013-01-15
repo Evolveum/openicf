@@ -293,7 +293,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         log.info("test()");
         configuration.validate();        
         checkAlive();
-        testCheckCommandsAndPermissions();
+        if (configuration.isCheckCommandsAvailability()){
+            testCheckCommandsAndPermissions();
+        }
     }
 
     /**

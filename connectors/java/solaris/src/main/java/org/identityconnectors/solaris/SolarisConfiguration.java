@@ -288,6 +288,17 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * Units: milliseconds.
      */
     private int commandTimeout = 24000;
+    
+    /**
+     * <b>Check commands availability</b>
+     * 
+     * By default, the connector checks if the necessary commands
+     * for user management are available.
+     * 
+     * This might be turned off for some hardened machines. Defaults to true
+     */
+    private boolean checkCommandsAvailability = true;
+    
 
     /*            ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
@@ -537,6 +548,16 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setCommandTimeout(int commandTimeout) {
         this.commandTimeout = commandTimeout;
     }
+    
+    @ConfigurationProperty(order = 27)
+    public boolean isCheckCommandsAvailability() {
+        return checkCommandsAvailability;
+    }
+
+    public void setCheckCommandsAvailability(boolean checkCommands) {
+        checkCommandsAvailability = checkCommands;
+    }
+    
 
     /*            *********** AUXILIARY METHODS ***************** */
     /**
