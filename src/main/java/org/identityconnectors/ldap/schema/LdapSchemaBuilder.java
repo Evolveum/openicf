@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2011 Radovan Semancik (Evolveum)
  */
 package org.identityconnectors.ldap.schema;
 
@@ -27,6 +28,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -51,10 +53,16 @@ class LdapSchemaBuilder {
     private final LdapConnection conn;
     private final LdapNativeSchema nativeSchema;
     private Schema schema;
+    private Set<String> ignoredAttrs;
 
     public LdapSchemaBuilder(LdapConnection conn) {
         this.conn = conn;
         this.nativeSchema = conn.createNativeSchema();
+        this.ignoredAttrs = CollectionUtil.newCaseInsensitiveSet();
+    }
+    
+    public Set<String> getIgnoredAttrs() {
+    	return ignoredAttrs;
     }
 
     public Schema getSchema() {
@@ -115,6 +123,9 @@ class LdapSchemaBuilder {
         Set<String> optionalAttrs = getOptionalAttributes(ldapClasses);
         // OpenLDAP's ipProtocol has MUST ( ... $ description ) MAY ( description )
         optionalAttrs.removeAll(requiredAttrs);
+        
+        requiredAttrs.removeAll(ignoredAttrs);
+        optionalAttrs.removeAll(ignoredAttrs);
 
         addAttributeInfos(ldapClasses, requiredAttrs, EnumSet.of(Flags.REQUIRED), null, result);
         addAttributeInfos(ldapClasses, optionalAttrs, null, null, result);

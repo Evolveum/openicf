@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2011 Radovan Semancik
  */
 package org.identityconnectors.ldap;
 
@@ -44,6 +45,8 @@ import org.identityconnectors.common.security.GuardedByteArray;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.security.GuardedByteArray.Accessor;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
@@ -422,6 +425,30 @@ public class LdapConfiguration extends AbstractConfiguration {
 
     public void setAccountUserNameAttributes(String... accountUserNameAttributes) {
         accountConfig.setShortNameLdapAttributes(Arrays.asList(accountUserNameAttributes));
+    }
+    
+    public String[] getAccountOperationalAttributes() {
+        Set<AttributeInfo> operationalAttributeInfos = accountConfig.getOperationalAttributes();
+        String[] operationalAttributeNames = new String[operationalAttributeInfos.size()];
+        int i = 0;
+        for (AttributeInfo attrInfo : operationalAttributeInfos) {
+        	operationalAttributeNames[i] = attrInfo.getName();
+        	i++;
+        }
+        return operationalAttributeNames;
+    }
+
+    public void setAccountOperationalAttributes(String... accountOperationalAttributes) {
+    	Set<AttributeInfo> operationalAttributes = accountConfig.getOperationalAttributes();
+    	operationalAttributes.clear();
+    	operationalAttributes.add(LdapConstants.PASSWORD);
+    	for(String attrName : accountOperationalAttributes) {
+    		if (LdapConstants.PASSWORD.getName().equals(attrName)) {
+    			// Already in the list
+    			continue;
+    		}
+    		operationalAttributes.add(new AttributeInfoBuilder(attrName).build());
+    	}
     }
 
     public String getAccountSearchFilter() {

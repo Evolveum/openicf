@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2011 Radovan Semancik (Evolveum)
  */
 package org.identityconnectors.ldap.schema;
 
@@ -102,7 +103,13 @@ public class LdapSchemaMapping {
 
     public Schema schema() {
         if (schema == null) {
-            schema = new LdapSchemaBuilder(conn).getSchema();
+        	LdapSchemaBuilder builder = new LdapSchemaBuilder(conn);
+        	if (conn.getConfiguration().getPasswordAttribute() != null) {
+        		// This attribute is already exposed as _PASSWORD_, exposing it also using its
+        		// native name would lead to inconsistencies.
+        		builder.getIgnoredAttrs().add(conn.getConfiguration().getPasswordAttribute());
+        	}
+        	schema = builder.getSchema();
         }
         return schema;
     }
