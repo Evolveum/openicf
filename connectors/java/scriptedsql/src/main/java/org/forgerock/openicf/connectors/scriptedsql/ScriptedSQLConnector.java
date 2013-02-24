@@ -360,7 +360,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             arguments.put("action", "SYNC");
             arguments.put("log", log);
             arguments.put("options", options.getOptions());
-            arguments.put("token", token.getValue());
+            arguments.put("token", token != null ? token.getValue() : null);
             try {
                 List<Map> results = (List<Map>) syncExecutor.execute(arguments);
                 log.ok("Sync ok");
