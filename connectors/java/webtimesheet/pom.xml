@@ -76,7 +76,7 @@
         <profile>
             <id>with-embedded-dependencies</id>
             <properties>
-                <!-- Example: <embedded.dependencies>dbcommon</embedded.dependencies> -->
+                <embedded.dependencies>httpclient,httpcore,commons-codec,json</embedded.dependencies>
             </properties>
         </profile>
         <profile>
@@ -85,5 +85,16 @@
             </properties>
         </profile>
     </profiles>
-
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
+        </dependency>
+    </dependencies>
 </project>

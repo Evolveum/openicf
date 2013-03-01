@@ -25,13 +25,15 @@
 package org.forgerock.openicf.webtimesheet;
 
 import java.util.*;
-
 import org.identityconnectors.common.security.*;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.common.logging.Log;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Main implementation of the WebTimeSheet Connector
@@ -41,39 +43,49 @@ import org.identityconnectors.common.logging.Log;
  */
 @ConnectorClass(
         displayNameKey = "WebTimeSheet",
-        configurationClass = WebTimeSheetConfiguration.class)
-public class WebTimeSheetConnector implements PoolableConnector, AuthenticateOp, ResolveUsernameOp, CreateOp, DeleteOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp, SearchOp<String>, SyncOp, TestOp, UpdateAttributeValuesOp {
+configurationClass = WebTimeSheetConfiguration.class)
+public class WebTimeSheetConnector implements PoolableConnector, CreateOp, UpdateOp, DeleteOp, SchemaOp, SearchOp<String>, TestOp {
+
+    public static final java.lang.String ATTR_LAST_NAME = "LastName";
+    public static final java.lang.String ATTR_FIRST_NAME = "FirstName";
+    public static final java.lang.String ATTR_LOGIN_NAME = "LoginName";
+    public static final java.lang.String ATTR_ID = "Id";
+    public static final java.lang.String ATTR_EMPLOYEE_ID = "EmployeeId";
+    public static final java.lang.String ATTR_INTERNAL_EMAIL = "Email";
+    public static final java.lang.String ATTR_PARENT_ID = "ParentDepartmentId";
+    public static final java.lang.String ATTR_DEPARTMENT = "DepartmentId";
+    public static final java.lang.String ATTR_DOMAIN = "Domain";
+    public static final java.lang.String ATTR_AUTH_TYPE = "AuthenticationType";
+    public static final java.lang.String OBCLASS_DEPARTMENT_NAME = "Department";
     /**
      * Setup logging for the {@link WebTimeSheetConnector}.
      */
     private static final Log log = Log.getLog(WebTimeSheetConnector.class);
-
     /**
      * Place holder for the Connection created in the init method
      */
     private WebTimeSheetConnection connection;
-
     /**
      * Place holder for the {@link Configuration} passed into the init() method
-     * {@link WebTimeSheetConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * {@link WebTimeSheetConnector#init}.
      */
-    private WebTimeSheetConfiguration configuration;
+    private WebTimeSheetConfiguration config;
 
     /**
      * Gets the Configuration context for this connector.
      */
     public Configuration getConfiguration() {
-        return this.configuration;
+        return this.config;
     }
 
     /**
      * Callback method to receive the {@link Configuration}.
      *
-     * @see Connector#init(org.identityconnectors.framework.spi.Configuration)
+     * @see Connector#init
      */
-    public void init(Configuration configuration1) {
-        this.configuration = (WebTimeSheetConfiguration) configuration1;
-        this.connection = new WebTimeSheetConnection(this.configuration);
+    public void init(Configuration cfg) {
+        this.config = (WebTimeSheetConfiguration) cfg;
+        this.connection = new WebTimeSheetConnection(this.config);
     }
 
     /**
@@ -82,7 +94,7 @@ public class WebTimeSheetConnector implements PoolableConnector, AuthenticateOp,
      * @see Connector#dispose()
      */
     public void dispose() {
-        configuration = null;
+        config = null;
         if (connection != null) {
             connection.dispose();
             connection = null;
@@ -93,135 +105,277 @@ public class WebTimeSheetConnector implements PoolableConnector, AuthenticateOp,
         connection.test();
     }
 
-    /******************
+    /**
+     * ****************
      * SPI Operations
      *
-     * Implement the following operations using the contract and
-     * description found in the Javadoc for these methods.
-     ******************/
+     * Implement the following operations using the contract and description
+     * found in the Javadoc for these methods.
+     *****************
+     */
+    /**
+     * {@inheritDoc}
+     */
+    public Uid create(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
+        AttributesAccessor a = new AttributesAccessor(attrs);
+        if (ObjectClass.ACCOUNT.equals(objClass)) {
+            
+            return connection.getClient().createUser(attrs, "1");
+
+        } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
+            throw new IllegalArgumentException("Creation of Departments not yet implimented");
+        } else {
+            throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
+        }
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Uid authenticate(final ObjectClass objectClass, final String userName, final GuardedString password, final OperationOptions options) {
-        throw new UnsupportedOperationException();
+    public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
+        if (ObjectClass.ACCOUNT.equals(objClass)) {
+                    connection.getClient().deleteUser(uid.getUidValue());
+        } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
+            throw new IllegalArgumentException("Deletions of Departments not yet implimented");
+        } else {
+            throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
+        }
     }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public Uid resolveUsername(final ObjectClass objectClass, final String userName, final OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public Uid create(final ObjectClass objectClass, final Set<Attribute> createAttributes, final OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public void delete(final ObjectClass objectClass, final Uid uid, final OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
 
     /**
      * {@inheritDoc}
      */
     public Schema schema() {
-        throw new UnsupportedOperationException();
+        if (config == null) {
+            throw new IllegalStateException("Configuration object has not been set.");
+        }
+        SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
+
+        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+
+        //User Objects
+
+        // Required Attributes
+        //
+        AttributeInfoBuilder aib = new AttributeInfoBuilder();
+        //aib.setCreateable(true);
+        aib.setUpdateable(false);
+        aib.setName(Name.NAME);
+        attributes.add(aib.build());
+
+        aib.setName(ATTR_ID);
+        attributes.add(aib.build());
+
+
+        // regular attributes
+        //
+        attributes.add(AttributeInfoBuilder.build(ATTR_LAST_NAME));
+        attributes.add(AttributeInfoBuilder.build(ATTR_FIRST_NAME));
+        attributes.add(AttributeInfoBuilder.build(ATTR_LOGIN_NAME));
+        attributes.add(AttributeInfoBuilder.build(ATTR_DEPARTMENT));
+        attributes.add(AttributeInfoBuilder.build(ATTR_EMPLOYEE_ID));
+        attributes.add(AttributeInfoBuilder.build(ATTR_INTERNAL_EMAIL));
+        attributes.add(AttributeInfoBuilder.build(ATTR_DOMAIN));
+        attributes.add(AttributeInfoBuilder.build(ATTR_AUTH_TYPE));
+
+        // Operational attributes
+        //
+        attributes.add(OperationalAttributeInfos.PASSWORD);
+        attributes.add(OperationalAttributeInfos.ENABLE);
+
+        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+
+
+        // Department objects
+        //
+        attributes = new HashSet<AttributeInfo>();
+        aib = new AttributeInfoBuilder();
+        aib.setUpdateable(false);
+        aib.setName(Name.NAME);
+        attributes.add(aib.build());
+        aib.setName(ATTR_ID);
+        attributes.add(aib.build());
+
+        aib.setName(ATTR_ID);
+        attributes.add(aib.build());
+
+        aib.setName(ATTR_PARENT_ID);
+        attributes.add(aib.build());
+
+        ObjectClassInfoBuilder oib = new ObjectClassInfoBuilder();
+        oib.addAllAttributeInfo(attributes);
+        oib.setContainer(true);
+        oib.setType(OBCLASS_DEPARTMENT_NAME);
+
+
+
+        // TODO: define supported Op's for Department in schema
+        schemaBuilder.defineObjectClass(oib.build());
+
+
+
+        return schemaBuilder.build();
     }
 
+    public FilterTranslator<String> createFilterTranslator(ObjectClass objClass, OperationOptions options) {
+        return new WebTimeSheetFilterTranslator();
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
+    public void executeQuery(ObjectClass objClass, String query, ResultsHandler handler, OperationOptions options) {
+        if (ObjectClass.ACCOUNT.equals(objClass)) {
+            JSONObject response;
+            if (query == null) {
+                response = connection.getClient().listUsers(query);
+            } else {
+                response = connection.getClient().getUser(query);
+            }
+            
+            try {
+                JSONArray users = response.getJSONArray("Value");
+                for (int a = 0; a < users.length(); a++) {
+                    this.buildUser(users.getJSONObject(a), handler);
+                }
+            }
+            catch (JSONException ex) {
+            }
+            /*        } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
+             String parent = null;
+             if (options.getContainer() != null) {
+             parent = options.getContainer().getUid().getUidValue();
+             }
+             NodeList depts = connection.getClient().listDepartments(query, options.getScope(), parent);
+             log.info("{0} Departments Returned", depts.getLength());
+             for (int a = 0; a < depts.getLength(); a++) {
+             this.buildDepartment(depts.item(a), handler);
+             }
+             */
+        } else {
+            throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
+        }
 
+    }
+    /*  public void executeQuery(ObjectClass objClass, String query, ResultsHandler handler, OperationOptions options) {
+     if (ObjectClass.ACCOUNT.equals(objClass)) {
+     NodeList users = connection.getClient().listUsers(query);
+     log.info("{0} Users Returned", users.getLength());
+     for (int a = 0; a < users.getLength(); a++) {
+     this.buildUser(users.item(a), handler);
+     }
+     } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
+     String parent = null;
+     if (options.getContainer() != null) {
+     parent = options.getContainer().getUid().getUidValue();
+     }
+     NodeList depts = connection.getClient().listDepartments(query, options.getScope(), parent);
+     log.info("{0} Departments Returned", depts.getLength());
+     for (int a = 0; a < depts.getLength(); a++) {
+     this.buildDepartment(depts.item(a), handler);
+     }
+     } else {
+     throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
+     }
+
+
+
+     throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
+
+     }*/
 
     /**
      * {@inheritDoc}
      */
-    public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
-        throw new UnsupportedOperationException();
+    public Uid update(ObjectClass objclass,
+            Uid uid,
+            Set<Attribute> replaceAttributes,
+            OperationOptions options) {
+         if (ObjectClass.ACCOUNT.equals(objclass)) {
+            return connection.getClient().updateUser(uid.getUidValue(), replaceAttributes);
+         } 
+         /*else if (objclass.is(OBCLASS_DEPARTMENT_NAME)) {
+         throw new IllegalArgumentException("Modifications to Departments not yet implimented");
+         } */
+         else {
+         throw new IllegalArgumentException("Unsupported objectclass '" + objclass + "'");
+         }
     }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public FilterTranslator<String> createFilterTranslator(ObjectClass objectClass, OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public void sync(ObjectClass objectClass, SyncToken token, SyncResultsHandler handler, final OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public SyncToken getLatestSyncToken(ObjectClass objectClass) {
-        throw new UnsupportedOperationException();
-    }
-
 
     /**
      * {@inheritDoc}
      */
     public void test() {
-        throw new UnsupportedOperationException();
+        log.info("test connection");
+        connection.test();
     }
 
+    protected void buildUser(JSONObject result, ResultsHandler handler) {
+        try {
+            ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+            builder.setObjectClass(ObjectClass.ACCOUNT);
 
-    /**
-     * {@inheritDoc}
-     */
-    public Uid update(ObjectClass objectClass,
-                      Uid uid,
-                      Set<Attribute> replaceAttributes,
-                      OperationOptions options) {
-        throw new UnsupportedOperationException();
+            log.info("Building {1} results with Object: {0}", result.toString(), ObjectClass.ACCOUNT);
+
+            if (result.getString("Type").equalsIgnoreCase("Replicon.Domain.User")) {
+            } else {
+                log.error("Result is not a Replicon.Domain.User object");
+            }
+
+            log.info("Person contains {0} attributes", result.length());
+
+           
+
+            JSONObject props = result.getJSONObject("Properties");
+
+            log.info("Person contains {0} properties", props.length());
+
+            
+            builder.setUid(result.getString("Identity"));
+            builder.setName(props.getString("LoginName"));
+            
+            
+            Iterator itr = props.keys();
+            while (itr.hasNext()) {
+                String key = (String) itr.next();
+                String value = null;
+                try {
+                value = props.getString(key);
+                //log.info("Found Prop: {0} value: {1}", key, value);
+                } catch (JSONException ex) {}
+                if ((value != null) && (!(value.equalsIgnoreCase("null")))) {
+                    // this is not great but it seems that JSON object strings break OpenIDM's parsing
+                    if (!(value.contains("{"))){
+                        log.info("Building Attr: {0} value: {1}", key, value);
+                        builder.addAttribute(AttributeBuilder.build(key, value));
+                    }
+                }
+
+            }
+            
+            ConnectorObject co = builder.build();
+            
+            log.info("Handling Connector Object Name: {0} Uid: {1} Class: {2}", co.getName(),co.getUid(),co.getObjectClass().getDisplayNameKey());
+            
+            //Build and call handler for the person
+            handler.handle(co);
+        }
+        catch (JSONException ex) {
+            log.error("Error parsing JSON reult");
+        }
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
-    public Uid addAttributeValues(ObjectClass objectClass,
-                                  Uid uid,
-                                  Set<Attribute> valuesToAdd,
-                                  OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Uid removeAttributeValues(ObjectClass objectClass,
-                                     Uid uid,
-                                     Set<Attribute> valuesToRemove,
-                                     OperationOptions options) {
-        throw new UnsupportedOperationException();
+   
+    private String getPlainPassword(GuardedString password) {
+        if (password == null) {
+            return null;
+        }
+        final StringBuffer buf = new StringBuffer();
+        password.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                buf.append(clearChars);
+            }
+        });
+        return buf.toString();
     }
 }

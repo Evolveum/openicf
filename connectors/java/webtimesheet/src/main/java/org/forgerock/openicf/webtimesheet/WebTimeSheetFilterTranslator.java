@@ -27,20 +27,30 @@ package org.forgerock.openicf.webtimesheet;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
- * This is an implementation of AbstractFilterTranslator that gives a concrete representation
- * of which filters can be applied at the connector level (natively). If the
- * WebTimeSheet doesn't support a certain expression type, that factory
- * method should return null. This level of filtering is present only to allow any
- * native constructs that may be available to help reduce the result set for the framework,
- * which will (strictly) reapply all filters specified after the connector does the initial
- * filtering.<p><p>Note: The generic query type is most commonly a String, but does not have to be.
+ * This is an implementation of AbstractFilterTranslator that gives a concrete
+ * representation of which filters can be applied at the connector level
+ * (natively). If the WebTimeSheet doesn't support a certain expression type,
+ * that factory method should return null. This level of filtering is present
+ * only to allow any native constructs that may be available to help reduce the
+ * result set for the framework, which will (strictly) reapply all filters
+ * specified after the connector does the initial filtering.<p><p>Note: The
+ * generic query type is most commonly a String, but does not have to be.
  *
  * @author $author$
  * @version $Revision$ $Date$
  */
 public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<String> {
+
+    /**
+     * Setup logging for the {@link WebTimeSheetConnector}.
+     */
+    private static final Log log = Log.getLog(WebTimeSheetFilterTranslator.class);
 
     /**
      * {@inheritDoc}
@@ -53,16 +63,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
          * you must make sure that the executeQuery() (if you implemented Search) 
          * method handles it appropriately.
          */
-        String name = filter.getAttribute().getName();
-        String value = AttributeUtil.getAsStringValue(filter.getAttribute());
-        if (StringUtil.isBlank(value)) {
-            return null;
-        } else if (not) {
-            //create an expression that means "not contains" or "doesn't contain" if possible
-            return name + "!=*" + value + "*";
-        } else {
-            return name + "=*" + value + "*";
-        }
+        return null;
     }
 
     /**
@@ -70,6 +71,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
+        log.info("createEndsWithExpression");
         return null;
     }
 
@@ -78,6 +80,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createStartsWithExpression(StartsWithFilter filter, boolean not) {
+        log.info("createStartsWithExpression");
         return null;
     }
 
@@ -86,7 +89,47 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createEqualsExpression(EqualsFilter filter, boolean not) {
-        return null;
+        log.info("createEqualsExpression");
+        String name = filter.getAttribute().getName();
+        String value = AttributeUtil.getAsStringValue(filter.getAttribute());
+        log.info("Filter Attribute: {0} Value: {1}", name, value);
+        if (StringUtil.isBlank(value)) {
+            return null;
+        } else if (not) {
+            //create an expression that means "not contains" or "doesn't contain" if possible
+            throw new IllegalArgumentException("Unsupported filter: NOT EQUALS");
+        } else {
+            if (name.equalsIgnoreCase("__NAME__")) {
+                JSONObject query = new JSONObject();
+                try {
+                    query.put("Action", "Query");
+                    query.put("DomainType", "Replicon.Domain.User");
+                    query.put("QueryType", "UserByLoginName");
+                    query.put("Args", new JSONArray().put(value));
+                }
+                catch (JSONException ex) {
+                    log.error("Unable to prepare JSON query", ex);
+                }
+                return query.toString();
+            }
+            if (name.equalsIgnoreCase("__UID__")) {
+                JSONObject query = new JSONObject();
+                int uid = Integer.parseInt(value);
+                JSONArray uidArray = new JSONArray().put(uid);
+                try {
+                    query.put("Action", "Query");
+                    query.put("DomainType", "Replicon.Domain.User");
+                    query.put("QueryType", "UserById");
+                    query.put("Args", new JSONArray().put(uidArray));
+                }
+                catch (JSONException ex) {
+                    log.error("Unable to prepare JSON query", ex);
+                }
+                return query.toString();
+            } else {
+                throw new IllegalArgumentException("Unsupported filter Attribute: " + name);
+            }
+        }
     }
 
     /**
@@ -94,6 +137,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createAndExpression(String leftExpression, String rightExpression) {
+        log.info("createAndExpression");
         return null;
     }
 
@@ -102,6 +146,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createOrExpression(String leftExpression, String rightExpression) {
+        log.info("createOrExpression");
         return null;
     }
 
@@ -110,6 +155,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createGreaterThanExpression(GreaterThanFilter filter, boolean not) {
+        log.info("createGreaterThanExpression");
         return null;
     }
 
@@ -118,6 +164,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createGreaterThanOrEqualExpression(GreaterThanOrEqualFilter filter, boolean not) {
+        log.info("createGreaterThanOrEqualExpression");
         return null;
     }
 
@@ -126,6 +173,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createLessThanExpression(LessThanFilter filter, boolean not) {
+        log.info("createLessThanExpression");
         return null;
     }
 
@@ -134,6 +182,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createLessThanOrEqualExpression(LessThanOrEqualFilter filter, boolean not) {
+        log.info("createLessThanOrEqualExpression");
         return null;
     }
 }

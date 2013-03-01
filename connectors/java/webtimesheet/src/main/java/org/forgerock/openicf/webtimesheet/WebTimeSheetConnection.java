@@ -32,24 +32,57 @@ package org.forgerock.openicf.webtimesheet;
  */
 public class WebTimeSheetConnection {
 
-    private WebTimeSheetConfiguration configuration;
+    
 
-    public WebTimeSheetConnection(WebTimeSheetConfiguration configuration) {
-        this.configuration = configuration;
+        private final WebTimeSheetConfiguration _configuration;
+    //private RTAPIClient rtapi;
+    private RepliConnectClient rcc;
+    
+    //TODO create a _SESSION_ with RepliConnect API begin/end commands
+    
+
+/*
+    public WebTimeSheetConnection(WebTimeSheetConfiguration cfg) {
+        _configuration = cfg;
+        rtapi = new RTAPIClient(_configuration.getURLProperty(),
+                _configuration.getAppNameProperty(),
+                _configuration.getAppPasswordProperty(),
+                _configuration.getAdminUidProperty(),
+                _configuration.getAdminPasswordProperty());
+
+    }
+ *
+ *
+ */
+
+     public WebTimeSheetConnection(WebTimeSheetConfiguration cfg) {
+        _configuration = cfg;
+        int port = Integer.parseInt(_configuration.getWtsPort());
+        rcc = new RepliConnectClient(_configuration.getWtsHost(),port,_configuration.getWtsURI(),_configuration.getAdminUid(),_configuration.getAdminPassword());
+
+
+
     }
 
     /**
      * Release internal resources
      */
     public void dispose() {
-        //implementation
+       rcc = null;
     }
 
     /**
      * If internal connection is not usable, throw IllegalStateException
      */
     public void test() {
-        //implementation
+       rcc.testConnection();
+    }
+
+    /**
+     * get client
+     */
+    public RepliConnectClient getClient() {
+       return rcc;
     }
 
 }
