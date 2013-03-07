@@ -752,6 +752,29 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     public void setSyncScriptFileName(String value) {
         this.syncScriptFileName = value;
     }
+
+    /**
+     * Schema script FileName
+     */
+    private String schemaScriptFileName = null;
+
+    /**
+     * Return the Schema script FileName
+     *
+     * @return schemaScriptFileName value
+     */
+    public String getSchemaScriptFileName() {
+        return schemaScriptFileName;
+    }
+
+    /**
+     * Set the Schema script FileName
+     *
+     * @param value
+     */
+    public void setSchemaScriptFileName(String value) {
+        this.schemaScriptFileName = value;
+    }
     /**
      * Test script FileName
      */
@@ -824,8 +847,7 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
             }
             try {
                 Class.forName(getJdbcDriver());
-            }
-            catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 throw new IllegalArgumentException(getMessage("MSG_JDBC_DRIVER_NOT_FOUND"));
             }
             log.ok("driver configuration is ok");
@@ -915,17 +937,16 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
 
     private void checkFileIsReadable(String type, String fileName) {
         if (fileName == null) {
-            log.info("{0} Script Filename is null",type);
+            log.info("{0} Script Filename is null", type);
         } else {
             File f = new File(fileName);
             try {
                 if (f.canRead()) {
-                    log.ok("{0} is readable",fileName);
+                    log.ok("{0} is readable", fileName);
                 } else {
                     throw new IllegalArgumentException("Can't read " + fileName);
                 }
-            }
-            catch (SecurityException e) {
+            } catch (SecurityException e) {
                 throw new IllegalArgumentException("Can't read " + fileName);
             }
         }
