@@ -112,11 +112,19 @@ public class SolarisSearch extends AbstractOp {
         Set<NativeAttribute> translatedAttrs = new HashSet<NativeAttribute>(attrsToGet.length);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             for (String accountAttrName : attrsToGet) {
-                translatedAttrs.add(AccountAttribute.forAttributeName(accountAttrName).getNative());
+                if (Uid.NAME.equalsIgnoreCase(accountAttrName)){
+                    translatedAttrs.add(AccountAttribute.NAME.getNative());
+                }else{
+                    translatedAttrs.add(AccountAttribute.forAttributeName(accountAttrName).getNative());
+                }
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             for (String groupAttrName : attrsToGet) {
-                translatedAttrs.add(GroupAttribute.forAttributeName(groupAttrName).getNative());
+                if (Uid.NAME.equalsIgnoreCase(groupAttrName)){
+                    translatedAttrs.add(GroupAttribute.GROUPNAME.getNative());
+                }else{
+                    translatedAttrs.add(GroupAttribute.forAttributeName(groupAttrName).getNative());
+                }
             }
         }
         attrsToGetNative = translatedAttrs;
@@ -252,8 +260,13 @@ public class SolarisSearch extends AbstractOp {
         
         // and rest of the attributes
         for (String attribute : attrsToGet) {
-            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute) : GroupAttribute.forAttributeName(attribute);
+            ConnectorAttribute connAttr = null;
             
+           if (Uid.NAME.equalsIgnoreCase(attribute)){
+                connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.NAME : GroupAttribute.GROUPNAME;
+            } else{
+                connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute) : GroupAttribute.forAttributeName(attribute);
+            }
             final Attribute attrToConvert = indexedEntry.get(connAttr.getNative().getName());
             List<Object> value = (attrToConvert != null) ? attrToConvert.getValue() : null;
             if (value == null) 
