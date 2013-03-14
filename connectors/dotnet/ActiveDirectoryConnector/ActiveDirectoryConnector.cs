@@ -239,17 +239,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     newDe.Dispose();
                 }
             }
-
-            if (!oclass.Equals(ObjectClass.ACCOUNT))
-            {
-                // uid will be the dn for non account objects
-                String dnUid = nameAttribute.GetNameValue();
-                if((dnUid != null) && (dnUid.Length > 0))
-                {
-                    dnUid = ActiveDirectoryUtils.NormalizeLdapString(dnUid);
-                }
-                return new Uid(dnUid);
-            }
             return uid;
         }
 
@@ -1032,6 +1021,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ConnectorObjectBuilder coBuilder = new ConnectorObjectBuilder();
                 coBuilder.SetName(obj.Name);
                 coBuilder.SetUid(obj.Uid);
+                coBuilder.ObjectClass = obj.ObjectClass;
                 coBuilder.AddAttributes(attrs);
                 builder.Object = coBuilder.Build();
 
@@ -1079,14 +1069,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public virtual void Sync(ObjectClass objClass, SyncToken token, 
             SyncResultsHandler handler, OperationOptions options)
         {
-            if (!ObjectClass.ACCOUNT.Equals(objClass))
-            {
-                throw new ConnectorException(_configuration.ConnectorMessages.Format(
-                    "ex_SyncNotAvailable",
-                    "Sync operation is not available for ObjectClass {0}", 
-                    objClass.GetObjectClassValue()));
-            }
-
             String serverName = GetSyncServerName();
 
             ActiveDirectorySyncToken adSyncToken = 

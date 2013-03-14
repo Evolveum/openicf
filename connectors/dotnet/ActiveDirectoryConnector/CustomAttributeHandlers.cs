@@ -989,28 +989,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             ICollection<Object> value = new List<Object>();
 
-            if (ObjectClass.ACCOUNT.Equals(oclass))
-            {
-                // uid is objectGuid
-                ResultPropertyValueCollection pvc =
-                    searchResult.Properties[ActiveDirectoryConnector.ATT_OBJECT_GUID];
+            // uid is objectGuid
+            ResultPropertyValueCollection pvc =
+                searchResult.Properties[ActiveDirectoryConnector.ATT_OBJECT_GUID];
 
-                if ((pvc.Count == 1) && (pvc[0] is Byte[]))
-                {
-                    value.Add(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString((Byte[])pvc[0]));
-                }
-                else if (pvc.Count > 1)
-                {
-                    throw new ConnectorException("There should be only one UID, but multiple values were specified");
-                }
-            }
-            else
+            if ((pvc.Count == 1) && (pvc[0] is Byte[]))
             {
-                ConnectorAttribute name = GetCaFromDe_OpAtt_Name(oclass, attributeName, searchResult);
-                if ((name.Value != null) && (name.Value.Count != 0))
-                {
-                    value.Add(ActiveDirectoryUtils.NormalizeLdapString((String)name.Value[0]));
-                }
+                value.Add(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString((Byte[])pvc[0]));
+            }
+            else if (pvc.Count > 1)
+            {
+                throw new ConnectorException("There should be only one UID, but multiple values were specified");
             }
 
             return ConnectorAttributeBuilder.Build(Uid.NAME, value);

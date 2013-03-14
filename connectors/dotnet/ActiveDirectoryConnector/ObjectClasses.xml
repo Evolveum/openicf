@@ -140,7 +140,11 @@
       <!---->AttributeInfo name="__ENABLE_DATE__" type="long"/-->
       <AttributeInfo name="__LOCK_OUT__" type="Boolean"/>
       <AttributeInfo name="__PASSWORD_EXPIRED__" type="Boolean"/>
-      <AttributeInfo name="__CURRENT_PASSWORD__" type="GuardedString"/>
+      <AttributeInfo name="__CURRENT_PASSWORD__" type="GuardedString">
+      <AttributeInfoFlag value="NOT_CREATABLE"/>
+      <AttributeInfoFlag value="NOT_READABLE"/>
+      <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
       <AttributeInfo name="__PASSWORD__" type="GuardedString">
         <AttributeInfoFlag value="NOT_READABLE"/>
         <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
@@ -186,6 +190,10 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
+      <AttributeInfo name="uSNChanged" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
       <AttributeInfo name="ad_container" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -219,6 +227,10 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
       <AttributeInfo name="__SHORT_NAME__" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="uSNChanged" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
