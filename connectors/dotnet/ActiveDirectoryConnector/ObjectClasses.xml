@@ -51,9 +51,7 @@
       <AttributeInfo name="division" type="String"/>
       <AttributeInfo name="mobile" type="String"/>
       <AttributeInfo name="middleName" type="String"/>
-      <AttributeInfo name="description" type="String">
-        <!--AttributeInfoFlag value="MULTIVALUED"/-->
-      </AttributeInfo>
+      <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="department" type="String"/>
       <AttributeInfo name="manager" type="String"/>
       <AttributeInfo name="title" type="String"/>
@@ -214,6 +212,7 @@
   </ObjectClassInfo>
   <ObjectClassInfo container="true" type="organizationalUnit">
     <AttributeInfos>
+      <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="ou" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>

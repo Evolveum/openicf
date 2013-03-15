@@ -57,7 +57,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                       )]    
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp, 
-        AuthenticateOp, AttributeNormalizer, PoolableConnector
+        AuthenticateOp, PoolableConnector
 	{
         public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
 
@@ -889,14 +889,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             _utils.UpdateADObject(oclass, updateEntry,
                 attributes, type, _configuration);
 
-            if(!ObjectClass.ACCOUNT.Equals(oclass)) {
-                // other objects use dn as guid for idm backward compatibility
-                String dnUid = (string)updateEntry.Properties["distinguishedName"][0];
-                if ((dnUid != null) && (dnUid.Length > 0))
-                {
-                    updatedUid = new Uid(ActiveDirectoryUtils.NormalizeLdapString(dnUid));
-                }
-            }
             updateEntry.Dispose();
             return updatedUid;
         }
@@ -1238,69 +1230,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
             return handler.Authenticate(username, password, returnUidOnly);
-        }
-
-        #endregion
-
-        #region AttributeNormalizer Members
-
-        public virtual ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
-        {
-            // if this gets big, use delegates, but for now, just
-            // handle individual attributes;
-            if (attribute is Uid)
-            {
-                String uidValue = ((Uid)attribute).GetUidValue();
-                // convert to upper case
-                if (uidValue != null)
-                {
-                    StringBuilder normalizedUidValue = new StringBuilder();
-
-                    if (oclass.Equals(ObjectClass.ACCOUNT))
-                    {
-                        // convert to upper case
-                        uidValue = uidValue.ToLower();
-
-                        // now remove spaces
-                        foreach (Char nextChar in uidValue)
-                        {
-                            if (!nextChar.Equals(" "))
-                            {
-                                normalizedUidValue.Append(nextChar);
-                            }
-                        }
-                        String tempGuid = normalizedUidValue.ToString();
-
-                        return new Uid(tempGuid.Replace("guid", "GUID"));
-                    }
-                    else
-                    {
-                        // the uid is a dn
-                        return new Uid(ActiveDirectoryUtils.NormalizeLdapString(uidValue));
-                    }
-                }
-                else
-                {
-                    return attribute;
-                }
-            }
-            else if (attribute is Name)
-            {
-                String nameValue = ((Name)attribute).GetNameValue();
-                return ConnectorAttributeBuilder.Build(attribute.Name,
-                    ActiveDirectoryUtils.NormalizeLdapString(nameValue));
-            }
-            else if (attribute.Name.Equals(PredefinedAttributes.GROUPS_NAME))
-            {
-                IList<object> groupValues = new List<object>();
-                foreach(String groupname in attribute.Value)
-                {
-                    groupValues.Add(ActiveDirectoryUtils.NormalizeLdapString(groupname));
-                }
-                return ConnectorAttributeBuilder.Build(attribute.Name, groupValues);
-            }
-
-            return attribute;
         }
 
         #endregion

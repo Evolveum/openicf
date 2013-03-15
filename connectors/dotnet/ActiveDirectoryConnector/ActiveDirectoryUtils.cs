@@ -544,7 +544,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             String[] parts = ldapString.Split(',');
             for (int i = 0; i < parts.Length; i++)
             {
-                normalPath.Append(parts[i].Trim().ToUpper());
+                normalPath.Append(parts[i].Trim());
                 // append a comma after each part (except the last one)
                 if (i < (parts.Length - 1))
                 {
@@ -598,14 +598,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
             String oldContainer = GetParentDn(directoryEntry.Path);
             String newContainer = GetParentDn(nameAttribute.GetNameValue());
 
-            if (!NormalizeLdapString(oldContainer).Equals(NormalizeLdapString(newContainer)))
+            if (!NormalizeLdapString(oldContainer).Equals(NormalizeLdapString(newContainer), StringComparison.OrdinalIgnoreCase))
             {
                 if (newContainer != null)
                 {
                     try
                     {
                         if (!NormalizeLdapString(oldContainer).Equals(
-                            NormalizeLdapString(newContainer)))
+                            NormalizeLdapString(newContainer), StringComparison.OrdinalIgnoreCase))
                         {
                             String newContainerLdapPath = ActiveDirectoryUtils.GetLDAPPath(
                                 config.LDAPHostName, newContainer);
@@ -636,7 +636,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {
                     String oldName = directoryEntry.Name;
                     String newName = GetRelativeName(nameAttribute);
-                    if (!NormalizeLdapString(oldName).Equals(NormalizeLdapString(newName)))
+                    if (!NormalizeLdapString(oldName).Equals(NormalizeLdapString(newName), StringComparison.OrdinalIgnoreCase))
                     {
                         directoryEntry.Rename(newName);
                     }
