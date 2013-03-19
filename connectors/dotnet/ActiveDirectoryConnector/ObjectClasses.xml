@@ -42,12 +42,18 @@
       <AttributeInfo name="sAMAccountName" type="String">
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
+      <AttributeInfo name="userPrincipalName" type="String">
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
       <AttributeInfo name="givenName" type="String"/>
       <AttributeInfo name="sn" type="String"/>
+      <AttributeInfo name="cn" type="String"/>
       <AttributeInfo name="displayName" type="String"/>
       <AttributeInfo name="mail" type="String"/>
       <AttributeInfo name="telephoneNumber" type="String"/>
       <AttributeInfo name="employeeID" type="String"/>
+      <AttributeInfo name="employeeType" type="String"/>
+      <AttributeInfo name="employeeNumber" type="String"/>
       <AttributeInfo name="division" type="String"/>
       <AttributeInfo name="mobile" type="String"/>
       <AttributeInfo name="middleName" type="String"/>
@@ -56,7 +62,10 @@
       <AttributeInfo name="manager" type="String"/>
       <AttributeInfo name="title" type="String"/>
       <AttributeInfo name="initials" type="String"/>
+      <AttributeInfo name="info" type="String"/>
       <AttributeInfo name="co" type="String"/>
+      <AttributeInfo name="c" type="String"/>
+      <AttributeInfo name="countryCode" type="String"/>
       <AttributeInfo name="company" type="String"/>
       <AttributeInfo name="facsimileTelephoneNumber" type="String"/>
       <AttributeInfo name="homePhone" type="String"/>
@@ -64,6 +73,8 @@
       <AttributeInfo name="l" type="String"/>
       <AttributeInfo name="st" type="String"/>
       <AttributeInfo name="postalCode" type="String"/>
+      <AttributeInfo name="postOfficeBox" type="String"/>
+      <AttributeInfo name="physicalDeliveryOfficeName" type="String"/>
       <AttributeInfo name="TerminalServicesInitialProgram" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -116,6 +127,18 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
+      <AttributeInfo name="uSNCreated" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenChanged" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenCreated" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
       <AttributeInfo name="ad_container" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -135,7 +158,7 @@
       <AttributeInfo name="homeDirectory" type="String"/>
       <AttributeInfo name="PasswordNeverExpires" type="Boolean"/>
       <AttributeInfo name="__ENABLE__" type="Boolean"/>
-      <!---->AttributeInfo name="__ENABLE_DATE__" type="long"/-->
+      <!---AttributeInfo name="__ENABLE_DATE__" type="long"/-->
       <AttributeInfo name="__LOCK_OUT__" type="Boolean"/>
       <AttributeInfo name="__PASSWORD_EXPIRED__" type="Boolean"/>
       <AttributeInfo name="__CURRENT_PASSWORD__" type="GuardedString">
@@ -165,18 +188,16 @@
   </ObjectClassInfo>
   <ObjectClassInfo container="false" type="Group">
     <AttributeInfos>
-      <AttributeInfo name="cn" type="String" >
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-      </AttributeInfo>
+      <AttributeInfo name="cn" type="String"/>
       <AttributeInfo name="samAccountName" type="String"/>
       <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="displayName" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="managedby" type="String"/>
+      <AttributeInfo name="managedBy" type="String"/>
       <AttributeInfo name="mail" type="String"/>
+      <AttributeInfo name="info" type="String"/>
       <AttributeInfo name="groupType" type="int"/>
       <AttributeInfo name="objectClass" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
@@ -184,18 +205,28 @@
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
       <AttributeInfo name="member" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
       <AttributeInfo name="uSNChanged" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
+      <AttributeInfo name="uSNCreated" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenChanged" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenCreated" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
       <AttributeInfo name="ad_container" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-      </AttributeInfo>/>
+      </AttributeInfo>
       <!---AttributeInfo name="__ACCOUNTS__" type="String"/-->
       <AttributeInfo name="__DESCRIPTION__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
@@ -213,9 +244,16 @@
   <ObjectClassInfo container="true" type="organizationalUnit">
     <AttributeInfos>
       <AttributeInfo name="description" type="String"/>
+      <AttributeInfo name="co" type="String"/>
+      <AttributeInfo name="c" type="String"/>
+      <AttributeInfo name="l" type="String"/>
+      <AttributeInfo name="postalCode" type="String"/>
+      <AttributeInfo name="st" type="String"/>
+      <AttributeInfo name="street" type="String"/>
+      <AttributeInfo name="managedBy" type="String"/>
+      <AttributeInfo name="countryCode" type="String"/>
       <AttributeInfo name="ou" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+        <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
       <AttributeInfo name="displayName" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
@@ -230,6 +268,18 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
       <AttributeInfo name="uSNChanged" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="uSNCreated" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenChanged" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="whenCreated" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
