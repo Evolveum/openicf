@@ -19,6 +19,8 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * 
+ * Portions Copyrighted 2012-2013 ForgeRock Inc.
  */
 using System;
 using System.Reflection;
