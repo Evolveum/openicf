@@ -540,10 +540,11 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="oclass">Object class</param>
         /// <param name="attribute">Attribute to be normalized</param>
         /// <returns>Normalized attribute</returns>
-        public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+            //public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
             // normalize the attribute using AD connector first
-            attribute = base.NormalizeAttribute(oclass, attribute);
+            //attribute = base.NormalizeAttribute(oclass, attribute);
 
             // normalize external mail value
             if (attribute.Name == AttExternalMail && attribute.Value != null)
