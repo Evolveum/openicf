@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2011 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2013 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,22 +20,21 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.webtimesheet;
+
+package org.forgerock.openicf.connectors.webtimesheet;
 
 /**
  * Class to represent a WebTimeSheet Connection
  *
- * @author $author$
- * @version $Revision$ $Date$
+ * @author Robert Jackson - <a href='http://www.nulli.com'>Nulli</a>
  */
 public class WebTimeSheetConnection {
 
     
 
-        private final WebTimeSheetConfiguration _configuration;
-    //private RTAPIClient rtapi;
+    private final WebTimeSheetConfiguration _configuration;
+    // private RTAPIClient rtapi;
     private RepliConnectClient rcc;
     
     //TODO create a _SESSION_ with RepliConnect API begin/end commands
@@ -57,8 +56,7 @@ public class WebTimeSheetConnection {
 
      public WebTimeSheetConnection(WebTimeSheetConfiguration cfg) {
         _configuration = cfg;
-        int port = Integer.parseInt(_configuration.getWtsPort());
-        rcc = new RepliConnectClient(_configuration.getWtsHost(),port,_configuration.getWtsURI(),_configuration.getAdminUid(),_configuration.getAdminPassword());
+        rcc = new RepliConnectClient(cfg);
 
 
 

@@ -22,14 +22,16 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * $Id$
  */
-package org.forgerock.openicf.webtimesheet;
+package org.forgerock.openicf.connectors.webtimesheet;
 
 
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
@@ -48,7 +50,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Attempts to test the {@link WebTimeSheetConnector} with the framework.
+ * Attempts to test the {@link org.forgerock.openicf.connectors.webtimesheet.WebTimeSheetConnector} with the framework.
  *
  * @author $author$
  * @version $Revision$ $Date$
@@ -65,10 +67,10 @@ public class WebTimeSheetConnectorTests {
     // Host is a public property read from public configuration file
     private static final String WTS_URI = properties.getStringProperty("configuration.wtsURI");
     private static final String ADMIN_UID = properties.getStringProperty("configuration.adminUid");
-    //private static final GuardedString ADMIN_PASSWORD = properties.getProperty("configuration.adminPassword", GuardedString.class);
-    private static final String ADMIN_PASSWORD = properties.getStringProperty("configuration.adminPassword");
+    private static final GuardedString ADMIN_PASSWORD = properties.getProperty("configuration.adminPassword", GuardedString.class);
+    //private static final GuardedString ADMIN_PASSWORD = properties.getStringProperty("configuration.adminPassword");
     private static final String WTS_HOST = properties.getStringProperty("configuration.wtsHost");
-    private static final String WTS_PORT = properties.getStringProperty("configuration.wtsPort");
+    private static final Integer WTS_PORT = properties.getProperty("configuration.wtsPort", Integer.class);
 
     
     

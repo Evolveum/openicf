@@ -39,12 +39,12 @@ connector.i3.wrong.password=new GuardedString("".toCharArray())
 
 
 configuration{
-    wtsURI ="/iloveclouds/RemoteApi/RemoteApi.ashx/8.29.10"
-    adminUid = "rjackson+iloveclouds@nulli.com"
-    xadminPassword = new GuardedString("iloveclouds".toCharArray())
-    adminPassword = "iloveclouds"
-    wtsHost = "na1.replicon.com"
-    wtsPort = "443"
+    wtsURI ="__configureme__"
+    adminUid = "__configureme__"
+    adminPassword = new GuardedString("__configureme__".toCharArray())
+    xadminPassword = "__configureme__"
+    wtsHost = "__configureme__"
+    wtsPort = 443
 }
 
 testsuite {

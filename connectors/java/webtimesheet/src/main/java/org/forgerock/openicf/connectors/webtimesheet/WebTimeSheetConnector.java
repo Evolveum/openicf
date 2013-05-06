@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2011 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2013 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,9 +20,9 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.webtimesheet;
+
+package org.forgerock.openicf.connectors.webtimesheet;
 
 import java.util.*;
 import org.identityconnectors.common.security.*;
@@ -38,8 +38,7 @@ import org.json.JSONObject;
 /**
  * Main implementation of the WebTimeSheet Connector
  *
- * @author $author$
- * @version $Revision$ $Date$
+ * @author Robert Jackson - <a href='http://www.nulli.com'>Nulli</a>
  */
 @ConnectorClass(
         displayNameKey = "WebTimeSheet",
@@ -64,7 +63,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
     /**
      * Place holder for the Connection created in the init method
      */
-    private WebTimeSheetConnection connection;
+    private RepliConnectClient connection;
     /**
      * Place holder for the {@link Configuration} passed into the init() method
      * {@link WebTimeSheetConnector#init}.
@@ -85,7 +84,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
      */
     public void init(Configuration cfg) {
         this.config = (WebTimeSheetConfiguration) cfg;
-        this.connection = new WebTimeSheetConnection(this.config);
+        this.connection = new RepliConnectClient(this.config);
     }
 
     /**
@@ -102,7 +101,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
     }
 
     public void checkAlive() {
-        connection.test();
+        connection.testConnection();
     }
 
     /**
@@ -117,13 +116,12 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
      * {@inheritDoc}
      */
     public Uid create(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
-        AttributesAccessor a = new AttributesAccessor(attrs);
         if (ObjectClass.ACCOUNT.equals(objClass)) {
             
-            return connection.getClient().createUser(attrs, "1");
+            return connection.createUser(attrs, "1");
 
         } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
-            throw new IllegalArgumentException("Creation of Departments not yet implimented");
+            throw new IllegalArgumentException("Creation of Departments not yet implemented");
         } else {
             throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
         }
@@ -134,9 +132,9 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
      */
     public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
         if (ObjectClass.ACCOUNT.equals(objClass)) {
-                    connection.getClient().deleteUser(uid.getUidValue());
+                    connection.deleteUser(uid.getUidValue());
         } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
-            throw new IllegalArgumentException("Deletions of Departments not yet implimented");
+            throw new IllegalArgumentException("Deletions of Departments not yet implemented");
         } else {
             throw new IllegalArgumentException("Unsupported objectclass '" + objClass + "'");
         }
@@ -146,9 +144,6 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
      * {@inheritDoc}
      */
     public Schema schema() {
-        if (config == null) {
-            throw new IllegalStateException("Configuration object has not been set.");
-        }
         SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
 
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
@@ -188,30 +183,21 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
 
         // Department objects
         //
-        attributes = new HashSet<AttributeInfo>();
-        aib = new AttributeInfoBuilder();
-        aib.setUpdateable(false);
-        aib.setName(Name.NAME);
-        attributes.add(aib.build());
-        aib.setName(ATTR_ID);
-        attributes.add(aib.build());
-
-        aib.setName(ATTR_ID);
-        attributes.add(aib.build());
-
-        aib.setName(ATTR_PARENT_ID);
-        attributes.add(aib.build());
-
         ObjectClassInfoBuilder oib = new ObjectClassInfoBuilder();
-        oib.addAllAttributeInfo(attributes);
         oib.setContainer(true);
         oib.setType(OBCLASS_DEPARTMENT_NAME);
 
+        oib.addAttributeInfo(new AttributeInfoBuilder().setUpdateable(false).setName(Name.NAME).build());
+        oib.addAttributeInfo(new AttributeInfoBuilder().setUpdateable(false).setName(ATTR_ID).build());
+        oib.addAttributeInfo(new AttributeInfoBuilder().setUpdateable(false).setName(ATTR_PARENT_ID).build());
 
+        final ObjectClassInfo department = oib.build();
 
-        // TODO: define supported Op's for Department in schema
-        schemaBuilder.defineObjectClass(oib.build());
-
+        schemaBuilder.defineObjectClass(department);
+        schemaBuilder.removeSupportedObjectClass(CreateOp.class, department);
+        schemaBuilder.removeSupportedObjectClass(DeleteOp.class, department);
+        schemaBuilder.removeSupportedObjectClass(SearchOp.class, department);
+        schemaBuilder.removeSupportedObjectClass(UpdateOp.class, department);
 
 
         return schemaBuilder.build();
@@ -228,9 +214,9 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
         if (ObjectClass.ACCOUNT.equals(objClass)) {
             JSONObject response;
             if (query == null) {
-                response = connection.getClient().listUsers(query);
+                response = connection.listUsers(query);
             } else {
-                response = connection.getClient().getUser(query);
+                response = connection.getUser(query);
             }
             
             try {
@@ -292,7 +278,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
             Set<Attribute> replaceAttributes,
             OperationOptions options) {
          if (ObjectClass.ACCOUNT.equals(objclass)) {
-            return connection.getClient().updateUser(uid.getUidValue(), replaceAttributes);
+            return connection.updateUser(uid.getUidValue(), replaceAttributes);
          } 
          /*else if (objclass.is(OBCLASS_DEPARTMENT_NAME)) {
          throw new IllegalArgumentException("Modifications to Departments not yet implimented");
@@ -307,7 +293,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
      */
     public void test() {
         log.info("test connection");
-        connection.test();
+        connection.testConnection();
     }
 
     protected void buildUser(JSONObject result, ResultsHandler handler) {
@@ -363,19 +349,5 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Updat
         catch (JSONException ex) {
             log.error("Error parsing JSON reult");
         }
-    }
-
-   
-    private String getPlainPassword(GuardedString password) {
-        if (password == null) {
-            return null;
-        }
-        final StringBuffer buf = new StringBuffer();
-        password.access(new GuardedString.Accessor() {
-            public void access(char[] clearChars) {
-                buf.append(clearChars);
-            }
-        });
-        return buf.toString();
     }
 }

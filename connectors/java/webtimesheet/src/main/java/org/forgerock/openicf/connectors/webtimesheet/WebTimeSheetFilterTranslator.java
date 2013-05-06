@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2011 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2013 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,14 +20,24 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.webtimesheet;
 
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.filter.*;
+package org.forgerock.openicf.connectors.webtimesheet;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,11 +49,12 @@ import org.json.JSONObject;
  * that factory method should return null. This level of filtering is present
  * only to allow any native constructs that may be available to help reduce the
  * result set for the framework, which will (strictly) reapply all filters
- * specified after the connector does the initial filtering.<p><p>Note: The
- * generic query type is most commonly a String, but does not have to be.
- *
- * @author $author$
- * @version $Revision$ $Date$
+ * specified after the connector does the initial filtering.
+ * <p>
+ * Note: The generic query type is most commonly a String, but does not have to
+ * be.
+ * 
+ * @author Robert Jackson - <a href='http://www.nulli.com'>Nulli</a>
  */
 public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<String> {
 
@@ -57,11 +68,10 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
      */
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        /* 
-         * Example implementation:
-         * You may define the format of the queries for your connector, but
-         * you must make sure that the executeQuery() (if you implemented Search) 
-         * method handles it appropriately.
+        /*
+         * Example implementation: You may define the format of the queries for
+         * your connector, but you must make sure that the executeQuery() (if
+         * you implemented Search) method handles it appropriately.
          */
         return null;
     }
@@ -96,23 +106,23 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
         if (StringUtil.isBlank(value)) {
             return null;
         } else if (not) {
-            //create an expression that means "not contains" or "doesn't contain" if possible
+            // create an expression that means "not contains" or
+            // "doesn't contain" if possible
             throw new IllegalArgumentException("Unsupported filter: NOT EQUALS");
         } else {
-            if (name.equalsIgnoreCase("__NAME__")) {
+            if (name.equalsIgnoreCase(Name.NAME)) {
                 JSONObject query = new JSONObject();
                 try {
                     query.put("Action", "Query");
                     query.put("DomainType", "Replicon.Domain.User");
                     query.put("QueryType", "UserByLoginName");
                     query.put("Args", new JSONArray().put(value));
-                }
-                catch (JSONException ex) {
+                } catch (JSONException ex) {
                     log.error("Unable to prepare JSON query", ex);
                 }
                 return query.toString();
             }
-            if (name.equalsIgnoreCase("__UID__")) {
+            if (name.equalsIgnoreCase(Uid.NAME)) {
                 JSONObject query = new JSONObject();
                 int uid = Integer.parseInt(value);
                 JSONArray uidArray = new JSONArray().put(uid);
@@ -121,8 +131,7 @@ public class WebTimeSheetFilterTranslator extends AbstractFilterTranslator<Strin
                     query.put("DomainType", "Replicon.Domain.User");
                     query.put("QueryType", "UserById");
                     query.put("Args", new JSONArray().put(uidArray));
-                }
-                catch (JSONException ex) {
+                } catch (JSONException ex) {
                     log.error("Unable to prepare JSON query", ex);
                 }
                 return query.toString();

@@ -3,9 +3,8 @@
  *
  * @author Robert Jackson - nulli.com
  * @version 1.0
- * @since 1.0
  */
-package org.forgerock.openicf.webtimesheet;
+package org.forgerock.openicf.connectors.webtimesheet;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,7 +12,6 @@ import java.io.Reader;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.http.HttpHost;
-import org.apache.http.client.HttpClient.*;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -26,11 +24,10 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.protocol.BasicHttpContext;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,47 +44,39 @@ import org.json.JSONTokener;
  * of Department objects <br/><br/>
  *
  * @author Robert Jackson - <a href='http://www.nulli.com'>Nulli</a>
- * @version 1.0
- * @since 1.0
- *
  */
 public class RepliConnectClient {
 
-    //private DefaultHttpClient _client;
-    private String _uri;
-    private String _adminUID;
-    private String _adminPassword;
-    //private HttpPost _httpPost;
-    private HttpHost _targetHost;
-    private BasicHttpContext _httpContext;
     /**
      * Setup logging for the {@link RepliConnectClient}.
      */
     private static final Log log = Log.getLog(RepliConnectClient.class);
 
+    //private DefaultHttpClient _client;
+    private final String _uri;
+    private final UsernamePasswordCredentials credentials;
+    //private HttpPost _httpPost;
+    private final HttpHost _targetHost;
+    private final BasicHttpContext _httpContext;
+
+
     /**
      * Client Constructor
-     *
-     * @param url URL of WTS service
-     * @param appName Name used when registering/authenticating with WTS
-     * @param appPwd Application Password
-     * @param uid UserID of account used to make modifications
-     * @param pwd Password of user
-     *
+     * 
+     * @param cfg
+     *            the WTS service configuration
+     * 
      * @throws ConnectorIOException
-     *
-     *
      */
-    public RepliConnectClient(String hostname, int port, String uri, String uid, String pwd) throws ConnectorIOException {
+    public RepliConnectClient(WebTimeSheetConfiguration cfg) throws ConnectorIOException {
+        
+        _uri = cfg.getWtsURI();
+        credentials = new UsernamePasswordCredentials(cfg.getAdminUid(), getPlainPassword(cfg.getAdminPassword()));
 
-        _uri = uri;
-        _adminUID = uid;
-        _adminPassword = pwd;
-
-        _targetHost = new HttpHost(hostname, port, "https"); //hard-coded to HTTPS for now.. assume everyone would use it
+        _targetHost = new HttpHost(cfg.getWtsHost(), cfg.getWtsPort(), "https"); //hard-coded to HTTPS for now.. assume everyone would use it
 
         // Create AuthCache instance
-        AuthCache authCache = (AuthCache) new BasicAuthCache();
+        AuthCache authCache = new BasicAuthCache();
 
         // Generate BASIC scheme object and add it to the local auth cache
         BasicScheme basicAuth = new BasicScheme();
@@ -103,6 +92,19 @@ public class RepliConnectClient {
         //Connect();
     }
 
+    private String getPlainPassword(final GuardedString password) {
+        if (password == null) {
+            return null;
+        }
+        final StringBuffer buf = new StringBuffer();
+        password.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                buf.append(clearChars);
+            }
+        });
+        return buf.toString();
+    }
+
     /**
      * Release internal resources
      */
@@ -115,19 +117,19 @@ public class RepliConnectClient {
      */
     public void testConnection() {
         //fetch self
-        
+
         JSONObject query = new JSONObject();
                 try {
                     query.put("Action", "Query");
                     query.put("DomainType", "Replicon.Domain.User");
                     query.put("QueryType", "UserByLoginName");
-                    query.put("Args", new JSONArray().put(_adminUID));
+                    query.put("Args", new JSONArray().put(credentials.getUserName()));
                 }
                 catch (JSONException ex) {
                     log.error("Unable to prepare JSON query", ex);
                 }
-        
-        
+
+
         JSONObject res = this.getUser(query.toString());
 
     }
@@ -147,14 +149,14 @@ public class RepliConnectClient {
             query.put("DomainType", "Replicon.Domain.User");
             query.put("QueryType", "UserAll");
             query.put("Args", new JSONArray());
-           
+
         }
         catch (JSONException ex) {
             log.error("Unable to prepare JSON request", ex);
         }
 
         return this.call(query);
-        
+
 
     }
 
@@ -182,14 +184,12 @@ JSONTokener jt = new JSONTokener(queryString);
         catch (JSONException ex) {
             log.error("Unable to prepare JSON request", ex);
         }
-        
-        
 
         return this.call(query);
 
 
     }
-    
+
      /*
      * Creates a new user record
      *
@@ -200,19 +200,19 @@ JSONTokener jt = new JSONTokener(queryString);
     public Uid createUser(Set<Attribute> attrs, String deptId) {
 
         JSONObject user = new JSONObject();
-        
+
         try {
             user.put("Action", "Create");
             user.put("Type", "Replicon.Domain.User");
             JSONObject op = new JSONObject();
             op.put("__operation", "SetProperties");
-            
+
             JSONObject dept = new JSONObject();
             dept.put("__type", "Replicon.Domain.Department");
             dept.put("Identity", deptId);
-            
+
             op.put("PrimaryDepartment", dept);
-            
+
             Iterator aitr = attrs.iterator();
             while (aitr.hasNext()) {
                 Attribute attr = (Attribute)aitr.next();
@@ -238,15 +238,16 @@ JSONTokener jt = new JSONTokener(queryString);
         try {
                 JSONArray users = newuser.getJSONArray("Value");
                 newuid = users.getJSONObject(0).getString("Identity");
-                
+
             }
             catch (JSONException ex) {
+                /* ignore */
             }
-        
+
         return new Uid(newuid);
 
     }
-    
+
     /*
      * Updates a user record
      *
@@ -257,15 +258,15 @@ JSONTokener jt = new JSONTokener(queryString);
     public Uid updateUser(String uid, Set<Attribute> attrs) {
 
         JSONObject user = new JSONObject();
-        
-        
+
+
         try {
             user.put("Action", "Edit");
             user.put("Type", "Replicon.Domain.User");
             user.put("Identity", uid);
             JSONObject op = new JSONObject();
             op.put("__operation", "SetProperties");
-            
+
             Iterator aitr = attrs.iterator();
             while (aitr.hasNext()) {
                 Attribute attr = (Attribute)aitr.next();
@@ -285,15 +286,16 @@ JSONTokener jt = new JSONTokener(queryString);
         try {
                 JSONArray users = result.getJSONArray("Value");
                 updateduid = users.getJSONObject(0).getString("Identity");
-                
+
             }
             catch (JSONException ex) {
+                /* ignore */
             }
-        
+
         return new Uid(updateduid);
-        
+
     }
-    
+
     /*
      * Deletes a user record
      *
@@ -303,7 +305,7 @@ JSONTokener jt = new JSONTokener(queryString);
     public void deleteUser(String uid) {
 
         JSONObject delete = new JSONObject();
-        
+
         try {
             delete.put("Action", "Delete");
             delete.put("Type", "Replicon.Domain.User");
@@ -315,7 +317,7 @@ JSONTokener jt = new JSONTokener(queryString);
 
         this.call(delete);
         //add some error handling
-        
+
     }
 
     protected JSONObject call(JSONObject command) throws RuntimeException {
@@ -332,7 +334,7 @@ JSONTokener jt = new JSONTokener(queryString);
 
         client.getCredentialsProvider().setCredentials(
                 new AuthScope(_targetHost.getHostName(), _targetHost.getPort()),
-                new UsernamePasswordCredentials(_adminUID, _adminPassword));
+                credentials);
 
 
         postAction = new HttpPost(_targetHost.getSchemeName() + "://" + _targetHost.toHostString() + _uri);
