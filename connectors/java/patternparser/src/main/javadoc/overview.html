@@ -9,12 +9,12 @@
   except in compliance with the License.
 
   You can obtain a copy of the License at
-  http://IdentityConnectors.dev.java.net/legal/license.txt
+  http://opensource.org/licenses/cddl1.php
   See the License for the specific language governing permissions and limitations
   under the License.
 
   When distributing the Covered Code, include this CDDL Header Notice in each file
-  and include the License file at identityconnectors/legal/license.txt.
+  and include the License file at http://opensource.org/licenses/cddl1.php.
   If applicable, add the following below this CDDL Header, with the fields
   enclosed by brackets [] replaced by your own identifying information:
   "Portions Copyrighted [year] [name of copyright owner]"
@@ -25,44 +25,51 @@
 </head>
 <body>
 <p>
+
 <h1>Overview</h1>
 The Pattern Parser is intended to provide a pattern-based method of taking a String, and creating
 a Map containing name-value pairs. Its primary use in the Connectors project is parsing
 command-line output and producing sets of Attributes.
 <p>
-The most important class is the MapTransform class. The MapTransform parses a String into a Map,
-using an array of PatternNodes, which contain regular expressions to break up the input.
+    The most important class is the MapTransform class. The MapTransform parses a String into a Map,
+    using an array of PatternNodes, which contain regular expressions to break up the input.
 
-Each PatternNode specifies a java Pattern to be matched. The output from the PatternNode is the first group
-in the Pattern, thus
+    Each PatternNode specifies a java Pattern to be matched. The output from the PatternNode is the first group
+    in the Pattern, thus
 <pre>
     &lt;PatternNode key='TSO*HOLDCLASS' pattern='HOLDCLASS=\s*(\S)'/&gt;
 </pre>
-will return a <code>Map.Entry</code> with key 'TSO*HOLDCLASS', and a value of single character -- the first non-whitespace character after HOLDCLASS=.
+will return a <code>Map.Entry</code> with key 'TSO*HOLDCLASS', and a value of single character -- the first
+non-whitespace character after HOLDCLASS=.
 The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode.
-These <code>Transform</code>s are applied as a chain -- each <code>Transform</code> takes as input the output of the previous <code>Transform</code>.
+These <code>Transform</code>s are applied as a chain -- each <code>Transform</code> takes as input the output of the
+previous <code>Transform</code>.
 See below for examples.
 <p>
+
 <p>
-The Pattern Parser contains a set of pre-defined <code>Transform</code>s:
+    The Pattern Parser contains a set of pre-defined <code>Transform</code>s:
 <ul>
-<li><code>BooleanTransform</code> -- create a true/false value, if possible</li>
-<li><code>ClassTransform</code> -- instantiate a new Class instance</li>
-<li><code>GroupsTransform</code> -- using a Pattern, create a List, corresponding to the groups in the Pattern</li>
-<li><code>ListTransform</code> -- apply a <code>Transform</code> to each member of a List</li>
-<li><code>MapTransform</code></li>
-<li><code>SplitTransform</code> -- split a String into a List, based on a Pattern</li>
-<li><code>SubstituteTransform</code> -- replace all occurrences of a Pattern in a String with a replacement String</li>
+    <li><code>BooleanTransform</code> -- create a true/false value, if possible</li>
+    <li><code>ClassTransform</code> -- instantiate a new Class instance</li>
+    <li><code>GroupsTransform</code> -- using a Pattern, create a List, corresponding to the groups in the Pattern</li>
+    <li><code>ListTransform</code> -- apply a <code>Transform</code> to each member of a List</li>
+    <li><code>MapTransform</code></li>
+    <li><code>SplitTransform</code> -- split a String into a List, based on a Pattern</li>
+    <li><code>SubstituteTransform</code> -- replace all occurrences of a Pattern in a String with a replacement String
+    </li>
 </ul>
 <h1>Extending the Pattern Parser</h1>
 It is also possible to extend the Pattern Parser with additional <code>Transform</code> subtypes.
 In order to do this, the new <code>Transform</code> class must do the following:
 <ol>
-<li>Extend the <code>Transform</code> class</li>
-<li>Implement the <code>transform(Object)</code>(Object) method</li>
-<li>Have a Constructor taking an Element</li>
-<li>If the <code>Transform</code> has attributes, override the <code>getAttributes()</code> method (the <code>Transform</code> <b>must</b> have an attribute <code>class</code>, which specified the class name of the <code>Transform</code>.</li>
-<li>If the <code>Transform</code> has children, override the <code>getChildren()</code> method</li>
+    <li>Extend the <code>Transform</code> class</li>
+    <li>Implement the <code>transform(Object)</code>(Object) method</li>
+    <li>Have a Constructor taking an Element</li>
+    <li>If the <code>Transform</code> has attributes, override the <code>getAttributes()</code> method (the <code>Transform</code>
+        <b>must</b> have an attribute <code>class</code>, which specified the class name of the <code>Transform</code>.
+    </li>
+    <li>If the <code>Transform</code> has children, override the <code>getChildren()</code> method</li>
 </ol>
 <h1>Example User-Written Transform Class</h1>
 <pre>
@@ -97,18 +104,21 @@ In order to do this, the new <code>Transform</code> class must do the following:
     }
 </pre>
 <h1>Debugging</h1>
+
 <p>
-A ParserDebugger class is provide to assist with debugging your MapTransforms.
+    A ParserDebugger class is provide to assist with debugging your MapTransforms.
+
 <p>
-It can be run with a command line such as:
+    It can be run with a command line such as:
 <pre>
     java -cp PatternParser-1.0.x.jar org.identityconnectors.patternparser.ParserDebugger SampleParser.xml SampleInput.txt
 </pre>
 This will produce a trace of all matching and Transforms performed during a Pattern-based parse.
 
 <h1>Example User-Written Parser</h1>
+
 <p>
-As an example, this Parser parses the output from the
+    As an example, this Parser parses the output from the
 <pre>
     LISTUSER name NORACF TSO
 </pre>
@@ -155,8 +165,9 @@ USERDATA= 0000
 COMMAND= ISPF PANEL(ISR@390)
 </pre>
 <h2>Debugging the Example</h2>
+
 <p>
-Running the ParserDebugger with the preceding Parser and test data produces:
+    Running the ParserDebugger with the preceding Parser and test data produces:
 <pre>
 Matched regex 'ACCTNUM=\s*([^\n]*)\n' to 'ACCTNUM= ACCT#
 ' at character 162

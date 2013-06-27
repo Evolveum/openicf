@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -258,34 +258,34 @@ public class PatternParserTest {
                 PARSER.add(new PatternNode("USERID", "USER=(\\w{1,8})"));
                 PARSER.add(new PatternNode("NAME", "NAME=(.*?)\\s+(?=OWNER=)"));
                 PARSER.add(new PatternNode("OWNER", "OWNER=(\\w{1,8})", false, false,
-                        new Transform[]{new SubstituteTransform("^$", "UNKNOWN"),}));
+                        new Transform[] { new SubstituteTransform("^$", "UNKNOWN"), }));
                 PARSER.add(new PatternNode("DFLTGRP", "DEFAULT-GROUP=(\\w{1,8})"));
                 PARSER.add(new PatternNode("PASSDATE", "PASSDATE=(\\S{0,6})"));
                 PARSER.add(new PatternNode("PASSWORD INTERVAL", "PASS-INTERVAL=(\\S*)"));
                 PARSER.add(new PatternNode("PHRASEDATE", "PHRASEDATE=(.*?)\\s+\\n", true,
 
-                        false, null));
+                false, null));
                 PARSER.add(new PatternNode("ATTRIBUTES", "((ATTRIBUTES=.*\\n\\s*)+)", true,
 
-                        false, new Transform[]{new SubstituteTransform("ATTRIBUTES=(\\S+)\\s+", "$1 "),
-                        new SubstituteTransform("(.*)\\s", "$1"),
-                        new SubstituteTransform("^$", "NONE"), new SplitTransform("\\s"),}));
+                false, new Transform[] { new SubstituteTransform("ATTRIBUTES=(\\S+)\\s+", "$1 "),
+                    new SubstituteTransform("(.*)\\s", "$1"),
+                    new SubstituteTransform("^$", "NONE"), new SplitTransform("\\s"), }));
                 PARSER.add(new PatternNode("CLAUTH",
                         "CLASS AUTHORIZATIONS=([^\\n]*(\\s{23}.+\\n)*)", true, false,
-                        new Transform[]{new SubstituteTransform("(.*)\\s", "$1"),
-                                new SplitTransform("\\s+"),}));
+                        new Transform[] { new SubstituteTransform("(.*)\\s", "$1"),
+                            new SplitTransform("\\s+"), }));
                 PARSER.add(new PatternNode("DATA", "INSTALLATION-DATA=([^\\n]*(\\s{20}.+\\n)*)",
-                        true, false, new Transform[]{
-                        new SubstituteTransform("^(.{50})[^\\n]+", "$1"),
-                        new SubstituteTransform("\\n\\s{20}(.{50})[^\\n]+", "$1"),
-                        new SubstituteTransform("\\n", ""),
-                        new SubstituteTransform("^$", "NO-INSTALLATION-DATA"),}));
+                        true, false, new Transform[] {
+                            new SubstituteTransform("^(.{50})[^\\n]+", "$1"),
+                            new SubstituteTransform("\\n\\s{20}(.{50})[^\\n]+", "$1"),
+                            new SubstituteTransform("\\n", ""),
+                            new SubstituteTransform("^$", "NO-INSTALLATION-DATA"), }));
                 PARSER.add(new PatternNode("RACF.GROUPS",
                         "((\\s+GROUP=\\w+\\s+AUTH=.+?CONNECT-OWNER=([^\\n]+\\n){4})+)", true,
-                        false, new Transform[]{
-                        new SubstituteTransform(
-                                ".*?GROUP=(\\w+)\\s+AUTH=.+?CONNECT-OWNER=\\w+([^\\n]+\\n){4}",
-                                "$1 "), new SplitTransform("\\s+"),}));
+                        false, new Transform[] {
+                            new SubstituteTransform(
+                                    ".*?GROUP=(\\w+)\\s+AUTH=.+?CONNECT-OWNER=\\w+([^\\n]+\\n){4}",
+                                    "$1 "), new SplitTransform("\\s+"), }));
             } catch (Exception e) {
                 e.printStackTrace();
             }
