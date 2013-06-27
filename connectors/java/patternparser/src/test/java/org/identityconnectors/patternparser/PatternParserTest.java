@@ -1,29 +1,29 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.patternparser;
 
-import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
+import static org.testng.Assert.assertEquals;
+
 import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,15 +34,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.identityconnectors.patternparser.MapTransform.PatternNode;
 import org.identityconnectors.patternparser.test.SubstringTransform;
+import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-
-
 public class PatternParserTest {
-	static final String pattern =
+    /* @formatter:off */
+	static final String PATTERN =
 	    "<MapTransform>\n" +
 	    "  <PatternNode key='username' pattern='Username:\\s+(.*?)\\s*(?=Owner)' optional='false' reset='false'/>\n" +
 	    "  <PatternNode key='owner' pattern='Owner:\\s+(.*?)\\s*\\n' optional='false' reset='false'/>\n" +
@@ -104,7 +104,7 @@ public class PatternParserTest {
 	    "  </PatternNode>\n" +
 	    "</MapTransform>\n";
 
-    static final String sampleUser = 
+    static final String SAMPLE_USER =
         "Username: SYSTEM                           Owner:  SYSTEM MANAGER\n" +
         "Account:  SYSTEM                           UIC:    [1,4] ([SYSTEM])\n" +
         "CLI:      DCL                              Tables: DCLTABLES\n" +
@@ -141,67 +141,68 @@ public class PatternParserTest {
         "  NET$MANAGE                       %X91F5AAAA      \n"
         ;
 
-    public PatternParserTest() {
-    }
-    
+    /* @formatter:on */
+
     /**
-     * Parse a string from AUTHORIZE and return a Map containing the
-     * user data
-     * 
-     * @param user -- string output from AUTHORIZE describing a user
+     * Parse a string from AUTHORIZE and return a Map containing the user data
+     *
+     * @param user
+     *            -- string output from AUTHORIZE describing a user
      * @return Map&lt;String, Object&gt; -- map describing user attributes
-     * @throws Exception 
+     * @throws Exception
      */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> parseAuthorizeOutput(String user) throws Exception {
-        Map<String, Object> userMap = (Map<String, Object>)_parser.transform(user);
+        Map<String, Object> userMap = mapTransform.transform(user);
         return userMap;
     }
-    
-    public static MapTransform _parser;
-    
+
+    public static MapTransform mapTransform = null;
+
     @Test
     public void testWithPatterns() throws Exception {
-        _parser = (MapTransform)getTransform(pattern);
-        Map<String, Object> userMap = parseAuthorizeOutput(sampleUser);
+        mapTransform = (MapTransform) getTransform(PATTERN);
+        Map<String, Object> userMap = parseAuthorizeOutput(SAMPLE_USER);
         System.out.println(userMap);
     }
 
     @Test
     public void testBooleanTransform() throws Exception {
-    	Transform transform = new BooleanTransform();
-    	AssertJUnit.assertEquals(Boolean.TRUE, transform.transform("true"));
-    	AssertJUnit.assertEquals(Boolean.TRUE, transform.transform("True"));
-    	AssertJUnit.assertEquals(Boolean.TRUE, transform.transform("TRUE"));
-    	AssertJUnit.assertEquals(Boolean.FALSE, transform.transform("false"));
-    	AssertJUnit.assertEquals(Boolean.FALSE, transform.transform("False"));
-    	AssertJUnit.assertEquals(Boolean.FALSE, transform.transform("FALSE"));
-    	AssertJUnit.assertEquals("Hi", transform.transform("Hi"));
+        Transform transform = new BooleanTransform();
+        assertEquals(transform.transform("true"), Boolean.TRUE);
+        assertEquals(transform.transform("True"), Boolean.TRUE);
+        assertEquals(transform.transform("TRUE"), Boolean.TRUE);
+        assertEquals(transform.transform("false"), Boolean.FALSE);
+        assertEquals(transform.transform("False"), Boolean.FALSE);
+        assertEquals(transform.transform("FALSE"), Boolean.FALSE);
+        assertEquals(transform.transform("Hi"), "Hi");
     }
 
     @Test
     public void testClassTransform() throws Exception {
-    	Transform transform = new ClassTransform(SampleTransform.class);
-    	SampleTransform test = (SampleTransform)transform.transform("Okay");
-    	AssertJUnit.assertEquals(test.getData(), "Okay");
-    	String xml = transform.toXml(0);
-    	transform = (ClassTransform)getTransform(xml);
-        test = (SampleTransform)transform.transform("Okay");
-        AssertJUnit.assertEquals(test.getData(), "Okay");
-        test = (SampleTransform)transform.transform("Okay");
-        AssertJUnit.assertEquals(test.getData(), "Okay");
+        Transform transform = new ClassTransform(SampleTransform.class);
+        SampleTransform test = (SampleTransform) transform.transform("Okay");
+        assertEquals(test.getData(), "Okay");
+        String xml = transform.toXml(0);
+        transform = getTransform(xml);
+        test = (SampleTransform) transform.transform("Okay");
+        assertEquals(test.getData(), "Okay");
+        test = (SampleTransform) transform.transform("Okay");
+        assertEquals(test.getData(), "Okay");
     }
-    
+
     public static class SampleTransform {
-    	private String _data;
-    	public SampleTransform(String data) {
-    		_data = data;
-    	}
-    	public String getData() {
-    		return _data;
-    	}
+        private String data;
+
+        public SampleTransform(String data) {
+            this.data = data;
+        }
+
+        public String getData() {
+            return data;
+        }
     };
-    
+
     @Test
     public void testTransformSubtype() throws Exception {
         Transform transform = new SubstringTransform(1, 3);
@@ -211,23 +212,23 @@ public class PatternParserTest {
         DocumentBuilder parser = factory.newDocumentBuilder();
         Document document = parser.parse(new InputSource(new StringReader(string)));
         NodeList elements = document.getChildNodes();
-        Transform newTransform = Transform.newTransform((Element)elements.item(0));
-        AssertJUnit.assertEquals("bc", newTransform.transform("abcde"));
+        Transform newTransform = Transform.newTransform((Element) elements.item(0));
+        assertEquals(newTransform.transform("abcde"), "bc");
     }
 
     @Test
     public void testPatternFormatting() throws Exception {
-        _parser = (MapTransform)getTransform(pattern);
-        String formatted = _parser.toXml(0);
-        AssertJUnit.assertEquals(formatted, pattern);
-        formatted = _parser.toXml(2);
-        AssertJUnit.assertEquals(formatted.replaceAll("\n  ", "\n").substring(2), pattern);
+        mapTransform = (MapTransform) getTransform(PATTERN);
+        String formatted = mapTransform.toXml(0);
+        assertEquals(formatted, PATTERN);
+        formatted = mapTransform.toXml(2);
+        assertEquals(formatted.replaceAll("\n  ", "\n").substring(2), PATTERN);
     }
 
     @Test
     public void testDumpRacf() throws Exception {
-        Transform transform = new MapTransform(RacfInfo._parser);
-        String xml = new MapTransform(RacfInfo._parser).toXml(0);
+        Transform transform = new MapTransform(RacfInfo.PARSER);
+        String xml = new MapTransform(RacfInfo.PARSER).toXml(0);
         transform = Transform.newTransform(xml);
         System.out.println(xml);
     }
@@ -245,59 +246,49 @@ public class PatternParserTest {
         return null;
     }
 
-    //???
+    // ???
     /**
-     * This class is used to generate several alternate versions of a RACF output
-     * parser.
+     * This class is used to generate several alternate versions of a RACF
+     * output parser.
      */
     public static class RacfInfo {
-        private static final List<PatternNode> _parser = new LinkedList<PatternNode>();
+        private static final List<PatternNode> PARSER = new LinkedList<PatternNode>();
         static {
             try {
-                _parser.add(new PatternNode("USERID",           "USER=(\\w{1,8})"));
-                _parser.add(new PatternNode("NAME",             "NAME=(.*?)\\s+(?=OWNER=)"));       
-                _parser.add(new PatternNode("OWNER",            "OWNER=(\\w{1,8})", false, false,
-                    new Transform[] {
-                        new SubstituteTransform("^$", "UNKNOWN"),
-                    }));
-                _parser.add(new PatternNode("DFLTGRP",          "DEFAULT-GROUP=(\\w{1,8})"));       
-                _parser.add(new PatternNode("PASSDATE",         "PASSDATE=(\\S{0,6})"));
-                _parser.add(new PatternNode("PASSWORD INTERVAL","PASS-INTERVAL=(\\S*)"));       
-                _parser.add(new PatternNode("PHRASEDATE",       "PHRASEDATE=(.*?)\\s+\\n", true, 
+                PARSER.add(new PatternNode("USERID", "USER=(\\w{1,8})"));
+                PARSER.add(new PatternNode("NAME", "NAME=(.*?)\\s+(?=OWNER=)"));
+                PARSER.add(new PatternNode("OWNER", "OWNER=(\\w{1,8})", false, false,
+                        new Transform[]{new SubstituteTransform("^$", "UNKNOWN"),}));
+                PARSER.add(new PatternNode("DFLTGRP", "DEFAULT-GROUP=(\\w{1,8})"));
+                PARSER.add(new PatternNode("PASSDATE", "PASSDATE=(\\S{0,6})"));
+                PARSER.add(new PatternNode("PASSWORD INTERVAL", "PASS-INTERVAL=(\\S*)"));
+                PARSER.add(new PatternNode("PHRASEDATE", "PHRASEDATE=(.*?)\\s+\\n", true,
 
-    false, null));      
-                _parser.add(new PatternNode("ATTRIBUTES",       "((ATTRIBUTES=.*\\n\\s*)+)", true, 
+                        false, null));
+                PARSER.add(new PatternNode("ATTRIBUTES", "((ATTRIBUTES=.*\\n\\s*)+)", true,
 
-    false,
-                        new Transform[] {
-                            new SubstituteTransform("ATTRIBUTES=(\\S+)\\s+", "$1 "),
-                            new SubstituteTransform("(.*)\\s", "$1"),
-                            new SubstituteTransform("^$", "NONE"),
-                            new SplitTransform("\\s"),
-                        }));    
-                _parser.add(new PatternNode("CLAUTH", "CLASS AUTHORIZATIONS=([^\\n]*(\\s{23}.+\\n)*)", true, false,
-                        new Transform[] {
-                            new SubstituteTransform("(.*)\\s", "$1"),
-                            new SplitTransform("\\s+"),
-                    }));            
-                _parser.add(new PatternNode("DATA", "INSTALLATION-DATA=([^\\n]*(\\s{20}.+\\n)*)", true, false,
-                        new Transform[] {
-                            new SubstituteTransform("^(.{50})[^\\n]+", "$1"),
-                            new SubstituteTransform("\\n\\s{20}(.{50})[^\\n]+", "$1"),
-                            new SubstituteTransform("\\n", ""),
-                            new SubstituteTransform("^$", "NO-INSTALLATION-DATA"),
-                    }));            
-                _parser.add(new PatternNode("RACF.GROUPS", "((\\s+GROUP=\\w+\\s+AUTH=.+?CONNECT-OWNER=([^\\n]+\\n){4})+)", true, false,
-                        new Transform[] {
-                            new SubstituteTransform(".*?GROUP=(\\w+)\\s+AUTH=.+?CONNECT-OWNER=\\w+([^\\n]+\\n){4}", "$1 "),
-                            new SplitTransform("\\s+"),
-                        }));
+                        false, new Transform[]{new SubstituteTransform("ATTRIBUTES=(\\S+)\\s+", "$1 "),
+                        new SubstituteTransform("(.*)\\s", "$1"),
+                        new SubstituteTransform("^$", "NONE"), new SplitTransform("\\s"),}));
+                PARSER.add(new PatternNode("CLAUTH",
+                        "CLASS AUTHORIZATIONS=([^\\n]*(\\s{23}.+\\n)*)", true, false,
+                        new Transform[]{new SubstituteTransform("(.*)\\s", "$1"),
+                                new SplitTransform("\\s+"),}));
+                PARSER.add(new PatternNode("DATA", "INSTALLATION-DATA=([^\\n]*(\\s{20}.+\\n)*)",
+                        true, false, new Transform[]{
+                        new SubstituteTransform("^(.{50})[^\\n]+", "$1"),
+                        new SubstituteTransform("\\n\\s{20}(.{50})[^\\n]+", "$1"),
+                        new SubstituteTransform("\\n", ""),
+                        new SubstituteTransform("^$", "NO-INSTALLATION-DATA"),}));
+                PARSER.add(new PatternNode("RACF.GROUPS",
+                        "((\\s+GROUP=\\w+\\s+AUTH=.+?CONNECT-OWNER=([^\\n]+\\n){4})+)", true,
+                        false, new Transform[]{
+                        new SubstituteTransform(
+                                ".*?GROUP=(\\w+)\\s+AUTH=.+?CONNECT-OWNER=\\w+([^\\n]+\\n){4}",
+                                "$1 "), new SplitTransform("\\s+"),}));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
-    //???
 }
-
-

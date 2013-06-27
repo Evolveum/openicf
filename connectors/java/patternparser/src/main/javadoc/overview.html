@@ -1,22 +1,22 @@
 <!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
-  
-  The contents of this file are subject to the terms of the Common Development 
-  and Distribution License("CDDL") (the "License").  You may not use this file 
+
+  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+
+  The contents of this file are subject to the terms of the Common Development
+  and Distribution License("CDDL") (the "License").  You may not use this file
   except in compliance with the License.
-  
-  You can obtain a copy of the License at 
+
+  You can obtain a copy of the License at
   http://IdentityConnectors.dev.java.net/legal/license.txt
-  See the License for the specific language governing permissions and limitations 
-  under the License. 
-  
+  See the License for the specific language governing permissions and limitations
+  under the License.
+
   When distributing the Covered Code, include this CDDL Header Notice in each file
   and include the License file at identityconnectors/legal/license.txt.
-  If applicable, add the following below this CDDL Header, with the fields 
-  enclosed by brackets [] replaced by your own identifying information: 
+  If applicable, add the following below this CDDL Header, with the fields
+  enclosed by brackets [] replaced by your own identifying information:
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
@@ -27,19 +27,19 @@
 <p>
 <h1>Overview</h1>
 The Pattern Parser is intended to provide a pattern-based method of taking a String, and creating
-a Map containing name-value pairs. Its primary use in the Connectors project is parsing 
+a Map containing name-value pairs. Its primary use in the Connectors project is parsing
 command-line output and producing sets of Attributes.
 <p>
-The most important class is the MapTransform class. The MapTransform parses a String into a Map, 
-using an array of PatternNodes, which contain regular expressions to break up the input. 
+The most important class is the MapTransform class. The MapTransform parses a String into a Map,
+using an array of PatternNodes, which contain regular expressions to break up the input.
 
 Each PatternNode specifies a java Pattern to be matched. The output from the PatternNode is the first group
 in the Pattern, thus
 <pre>
     &lt;PatternNode key='TSO*HOLDCLASS' pattern='HOLDCLASS=\s*(\S)'/&gt;
 </pre>
-will return a <code>Map.Entry</code> with key 'TSO*HOLDCLASS', and a value of single character -- the first non-whitespace character after HOLDCLASS=. 
-The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode. 
+will return a <code>Map.Entry</code> with key 'TSO*HOLDCLASS', and a value of single character -- the first non-whitespace character after HOLDCLASS=.
+The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode.
 These <code>Transform</code>s are applied as a chain -- each <code>Transform</code> takes as input the output of the previous <code>Transform</code>.
 See below for examples.
 <p>
@@ -66,13 +66,13 @@ In order to do this, the new <code>Transform</code> class must do the following:
 </ol>
 <h1>Example User-Written Transform Class</h1>
 <pre>
-    public static class SubstringTransform extends Transform {
+    public static class SubstringTransform extends Transform&lt;Object&gt; {
         private static final String START = "start";
         private static final String END = "end";
-        
+
         private int start;
         private int end;
-        
+
         public SubstringTransform(Element element) {
             this(Integer.parseInt(element.getAttribute(START)), Integer.parseInt(element.getAttribute(END)));
         }
@@ -82,18 +82,18 @@ In order to do this, the new <code>Transform</code> class must do the following:
             this.end = length;
         }
 
-        @Override
+        {@literal @}Override
         protected String getAttributes() {
             return super.getAttributes()
             +attributeToString(START, start+"")
             +attributeToString(END, end+"");
         }
 
-        @Override
+        {@literal @}Override
         public Object transform(Object input) throws Exception {
             return ((String)input).substring(start, end);
         }
-        
+
     }
 </pre>
 <h1>Debugging</h1>
@@ -105,7 +105,7 @@ It can be run with a command line such as:
     java -cp PatternParser-1.0.x.jar org.identityconnectors.patternparser.ParserDebugger SampleParser.xml SampleInput.txt
 </pre>
 This will produce a trace of all matching and Transforms performed during a Pattern-based parse.
-</body>
+
 <h1>Example User-Written Parser</h1>
 <p>
 As an example, this Parser parses the output from the
@@ -141,24 +141,24 @@ RACF command, and creates a java.util.Map&lt;String, Object&gt;.
 </pre>
 <h2>Sample Input</h2>
 <pre>
-TSO INFORMATION                                                                 
----------------                                                                 
-ACCTNUM= ACCT#                                                                  
-HOLDCLASS= X                                                                    
-JOBCLASS= A                                                                     
-MSGCLASS= X                                                                     
-PROC= ISPFPROC                                                                  
-SIZE= 00006133                                                                  
-MAXSIZE= 00000000                                                               
-SYSOUTCLASS= X                                                                  
-USERDATA= 0000                                                                  
-COMMAND= ISPF PANEL(ISR@390)                                                    
+TSO INFORMATION
+---------------
+ACCTNUM= ACCT#
+HOLDCLASS= X
+JOBCLASS= A
+MSGCLASS= X
+PROC= ISPFPROC
+SIZE= 00006133
+MAXSIZE= 00000000
+SYSOUTCLASS= X
+USERDATA= 0000
+COMMAND= ISPF PANEL(ISR@390)
 </pre>
 <h2>Debugging the Example</h2>
 <p>
 Running the ParserDebugger with the preceding Parser and test data produces:
 <pre>
-Matched regex 'ACCTNUM=\s*([^\n]*)\n' to 'ACCTNUM= ACCT#                                                                  
+Matched regex 'ACCTNUM=\s*([^\n]*)\n' to 'ACCTNUM= ACCT#
 ' at character 162
     Match value:'ACCT#                                                                  '
     Transform org.identityconnectors.patternparser.SubstituteTransform:'ACCT#                                                                  '->'ACCT#'
@@ -180,7 +180,7 @@ Matched regex 'SYSOUTCLASS=\s*(\S)' to 'SYSOUTCLASS= X' at character 729
     Match value:'X'
 Matched regex 'USERDATA=\s*(\S{1,4})' to 'USERDATA= 0000' at character 810
     Match value:'0000'
-Matched regex 'COMMAND=\s*([^\n]*)\n' to 'COMMAND= ISPF PANEL(ISR@390)                                                    
+Matched regex 'COMMAND=\s*([^\n]*)\n' to 'COMMAND= ISPF PANEL(ISR@390)
 ' at character 891
     Match value:'ISPF PANEL(ISR@390)                                                    '
     Transform org.identityconnectors.patternparser.SubstituteTransform:'ISPF PANEL(ISR@390)                                                    '->'ISPF PANEL(ISR@390)'
@@ -199,3 +199,4 @@ Results:
 </pre>
 This allows you to see what is captured by each pattern, and how the transforms affect the
 output at each stage.
+</body>
