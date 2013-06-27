@@ -3,7 +3,7 @@
 <!--
   ~ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   ~
-  ~ Copyright © 2011-2012. ForgeRock AS. All rights reserved.
+  ~ Copyright (c) 2011-2013. ForgeRock AS. All rights reserved.
   ~
   ~ The contents of this file are subject to the terms
   ~ of the Common Development and Distribution License
@@ -23,7 +23,6 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
-  ~ $Id$
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -31,7 +30,7 @@
     <parent>
         <groupId>org.forgerock</groupId>
         <artifactId>forgerock-parent</artifactId>
-        <version>1.1.0-SNAPSHOT</version>
+        <version>1.1.0</version>
     </parent>
     <groupId>org.forgerock.openicf</groupId>
     <artifactId>connector-archetype</artifactId>
@@ -41,6 +40,14 @@
     <description>OpenICF Connector Development Archetype</description>
     <inceptionYear>2011</inceptionYear>
     <url>http://openicf.forgerock.org/connector-archetype</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10173</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - Connector Archetype</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connector-archetype</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connector-archetype</developerConnection>
@@ -52,6 +59,9 @@
             <url>${siteDistributionURL}/connector-archetype</url>
         </site>
     </distributionManagement>
+    <properties>
+        <siteDistributionURL>scp://openicf.forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>
+    </properties>
     <repositories>
         <repository>
             <id>forgerock-staging-repository</id>
@@ -77,33 +87,12 @@
             <url>http://maven.forgerock.org/repo/repo</url>
         </pluginRepository>
     </pluginRepositories>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10173</url>
-    </issueManagement>
-    <ciManagement>
-        <system>jenkins</system>
-        <url>http://builds.forgerock.org/job/OpenICF - Connector Archetype</url>
-        <notifiers>
-            <notifier>
-                <type>mail</type>
-                <sendOnError>true</sendOnError>
-                <sendOnFailure>true</sendOnFailure>
-                <sendOnSuccess>false</sendOnSuccess>
-                <sendOnWarning>false</sendOnWarning>
-                <!--address>openicf-issues@forgerock.org</address-->
-            </notifier>
-        </notifiers>
-    </ciManagement>
-    <properties>
-        <siteDistributionURL>scp://openicf.forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.forgerock.openicf.connectors</groupId>
             <artifactId>connectors-parent</artifactId>
-            <version>1.1.0.1-SNAPSHOT</version>
+            <version>1.1.1.0</version>
             <type>pom</type>
         </dependency>
     </dependencies>
@@ -165,6 +154,7 @@
                                 <goal>site</goal>
                             </goals>
                             <profiles>
+                                <profile>metrics</profile>
                                 <profile>generate-docbook</profile>
                             </profiles>
                             <pomIncludes>
@@ -173,6 +163,7 @@
                             <projectsDirectory>${project.build.directory}/it/projects</projectsDirectory>
                             <properties>
                                 <maven.test.skip>true</maven.test.skip>
+                                <skip-enforce>true</skip-enforce>
                             </properties>
                         </configuration>
                     </execution>

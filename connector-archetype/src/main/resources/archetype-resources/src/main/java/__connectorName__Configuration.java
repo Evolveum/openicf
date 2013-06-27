@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -61,7 +61,7 @@ public class ${connectorName}Configuration extends AbstractConfiguration {
 
 
     /**
-     * Constructor
+     * Constructor.
      */
     public ${connectorName}Configuration() {
 
@@ -69,7 +69,7 @@ public class ${connectorName}Configuration extends AbstractConfiguration {
 
 
     @ConfigurationProperty(order = 1, displayMessageKey = "host.display",
-            groupMessageKey ="basic.group", helpMessageKey = "host.help",
+            groupMessageKey = "basic.group", helpMessageKey = "host.help",
             required = true, confidential = false)
     public String getHost() {
         return host;
@@ -81,7 +81,7 @@ public class ${connectorName}Configuration extends AbstractConfiguration {
 
 
     @ConfigurationProperty(order = 2, displayMessageKey = "remoteUser.display",
-            groupMessageKey ="basic.group", helpMessageKey = "remoteUser.help",
+            groupMessageKey = "basic.group", helpMessageKey = "remoteUser.help",
             required = true, confidential = false)
     public String getRemoteUser() {
         return remoteUser;
@@ -92,7 +92,7 @@ public class ${connectorName}Configuration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(order = 3, displayMessageKey = "password.display",
-            groupMessageKey ="basic.group", helpMessageKey = "password.help",
+            groupMessageKey = "basic.group", helpMessageKey = "password.help",
             confidential = true)
     public GuardedString getPassword() {
         return password;

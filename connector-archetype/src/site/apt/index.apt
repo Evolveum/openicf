@@ -7,7 +7,7 @@
 ~~
 ~~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 ~~
-~~ Copyright (c) 2011-2012. ForgeRock Inc. All rights reserved.
+~~ Copyright (c) 2011-2013. ForgeRock Inc. All rights reserved.
 ~~
 ~~ The contents of this file are subject to the terms
 ~~ of the Common Development and Distribution License
@@ -97,7 +97,7 @@ mvn archetype:generate \
     [INFO] Using property: attributeNormalizer = n
     [INFO] Using property: compatibility_version = 1.1
     Define value for property 'connectorName': : Sample
-    [INFO] Using property: framework_version = 0.1-SNAPSHOT
+    [INFO] Using property: framework_version = 1.0
     [INFO] Using property: jira_componentId = 10191
     [INFO] Using property: jira_fixVersionIds = 0
     [INFO] Using property: poolableConnector = n
@@ -122,7 +122,7 @@ mvn archetype:generate \
     attributeNormalizer: n
     compatibility_version: 1.1
     connectorName: Sample
-    framework_version: 0.1-SNAPSHOT
+    framework_version: 1.0
     jira_componentId: 10191
     jira_fixVersionIds: 0
     poolableConnector: n
@@ -147,7 +147,7 @@ mvn archetype:generate \
     [INFO] Parameter: attributeNormalizer, Value: n
     [INFO] Parameter: OP_UPDATEATTRIBUTEVALUES, Value: n
     [INFO] Parameter: groupId, Value: org.forgerock.openicf.connectors
-    [INFO] Parameter: framework_version, Value: 0.1-SNAPSHOT
+    [INFO] Parameter: framework_version, Value: 1.0
     [INFO] Parameter: poolableConnector, Value: n
     [INFO] Parameter: jira_componentId, Value: 10191
     [INFO] Parameter: OP_UPDATE, Value: y

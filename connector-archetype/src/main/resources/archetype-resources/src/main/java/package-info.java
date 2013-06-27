@@ -1,10 +1,10 @@
 #set( $symbol_pound = '#' )
-        #set( $symbol_dollar = '$' )
-        #set( $symbol_escape = '\' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License

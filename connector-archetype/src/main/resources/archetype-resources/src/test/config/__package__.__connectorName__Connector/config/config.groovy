@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012. ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013. ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -28,7 +28,7 @@
 
 /* +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
+ *  +---------------------------------------------------+
  */
 
 import org.identityconnectors.contract.data.groovy.Lazy
@@ -59,7 +59,7 @@ testsuite {
 
     // AuthenticationApiOpTests:
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-    Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())  
+    Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())
 } // testsuite
 
 HOST="0.0.0.0"

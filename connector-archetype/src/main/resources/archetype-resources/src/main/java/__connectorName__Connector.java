@@ -1,7 +1,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -108,7 +108,7 @@ import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
- * Main implementation of the ${connectorName} Connector
+ * Main implementation of the ${connectorName} Connector.
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
@@ -124,52 +124,51 @@ public class ${connectorName}Connector implements
         Connector
 #end
 #if ( $attribute_normalizer_safe )
-        ,AttributeNormalizer
+        , AttributeNormalizer
 #end
 #if ( $op_authenticate_safe )
-        ,AuthenticateOp
+        , AuthenticateOp
 #end
 #if ( $op_create_safe )
-        ,CreateOp
+        , CreateOp
 #end
 #if ( $op_delete_safe )
-        ,DeleteOp
+        , DeleteOp
 #end
 #if ( $op_resolveusername_safe )
-        ,ResolveUsernameOp
+        , ResolveUsernameOp
 #end
 #if ( $op_schema_safe )
-        ,SchemaOp
+        , SchemaOp
 #end
 #if ( $op_scriptonconnector_safe )
-        ,ScriptOnConnectorOp
+        , ScriptOnConnectorOp
 #end
 #if ( $op_scriptonresource_safe )
-        ,ScriptOnResourceOp
+        , ScriptOnResourceOp
 #end
 #if ( $op_search_safe )
-        ,SearchOp<String>
+        , SearchOp<String>
 #end
 #if ( $op_sync_safe )
-        ,SyncOp
+        , SyncOp
 #end
 #if ( $op_test_safe )
-        ,TestOp
+        , TestOp
 #end
 #if ( $op_updateattributevalues_safe )
-        ,UpdateAttributeValuesOp
+        , UpdateAttributeValuesOp
 #end
 #if ( $op_update_safe )
-        ,UpdateOp
-#end
-    {
+        , UpdateOp
+#end {
     /**
      * Setup logging for the {@link ${connectorName}Connector}.
      */
     private static final Log logger = Log.getLog(${connectorName}Connector.class);
 
     /**
-     * Place holder for the Connection created in the init method
+     * Place holder for the Connection created in the init method.
      */
     private ${connectorName}Connection connection;
 
@@ -181,6 +180,8 @@ public class ${connectorName}Connector implements
 
     /**
      * Gets the Configuration context for this connector.
+     *
+     * @return The current {@link Configuration}
      */
     public Configuration getConfiguration() {
         return this.configuration;
@@ -189,10 +190,11 @@ public class ${connectorName}Connector implements
     /**
      * Callback method to receive the {@link Configuration}.
      *
+     * @param configuration the new {@link Configuration}
      * @see org.identityconnectors.framework.spi.Connector${symbol_pound}init(org.identityconnectors.framework.spi.Configuration)
      */
-    public void init(Configuration configuration1) {
-        this.configuration = (${connectorName}Configuration) configuration1;
+    public void init(final Configuration configuration) {
+        this.configuration = (${connectorName}Configuration) configuration;
         this.connection = new ${connectorName}Connection(this.configuration);
     }
 

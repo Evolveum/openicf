@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -40,8 +40,9 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 /**
  * This is an implementation of AbstractFilterTranslator that gives a concrete representation
- * of which filters can be applied at the connector level (natively). If the
- * ${connectorName} doesn't support a certain expression type, that factory
+ * of which filters can be applied at the connector level (natively).
+ *
+ * If the ${connectorName} doesn't support a certain expression type, that factory
  * method should return null. This level of filtering is present only to allow any
  * native constructs that may be available to help reduce the result set for the framework,
  * which will (strictly) reapply all filters specified after the connector does the initial
@@ -57,10 +58,10 @@ public class ${connectorName}FilterTranslator extends AbstractFilterTranslator<S
      */
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        /* 
+        /*
          * Example implementation:
          * You may define the format of the queries for your connector, but
-         * you must make sure that the executeQuery() (if you implemented Search) 
+         * you must make sure that the executeQuery() (if you implemented Search)
          * method handles it appropriately.
          */
         String name = filter.getAttribute().getName();

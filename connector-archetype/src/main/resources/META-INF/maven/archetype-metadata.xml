@@ -3,7 +3,7 @@
 <!--
   ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   ~
-  ~ Copyright (c) 2011-2012. ForgeRock Inc. All rights reserved.
+  ~ Copyright (c) 2011-2013. ForgeRock Inc. All rights reserved.
   ~
   ~ The contents of this file are subject to the terms
   ~ of the Common Development and Distribution License
@@ -37,7 +37,7 @@
             <defaultValue>1.1</defaultValue>
         </requiredProperty>
         <requiredProperty key="framework_version">
-            <defaultValue>0.1-SNAPSHOT</defaultValue>
+            <defaultValue>1.0</defaultValue>
         </requiredProperty>
         <requiredProperty key="jira_componentId">
             <defaultValue>10191</defaultValue>

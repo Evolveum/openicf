@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -27,7 +27,7 @@
 package ${package};
 
 /**
- * Class to represent a ${connectorName} Connection
+ * Class to represent a ${connectorName} Connection.
  *
  * @author ${symbol_dollar}author${symbol_dollar}
  * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
@@ -36,19 +36,24 @@ public class ${connectorName}Connection {
 
     private ${connectorName}Configuration configuration;
 
+    /**
+     * Constructor of ${connectorName}Connection class.
+     *
+     * @param configuration the actual {@link ${connectorName}Configuration}
+     */
     public ${connectorName}Connection(${connectorName}Configuration configuration) {
         this.configuration = configuration;
     }
 
     /**
-     * Release internal resources
+     * Release internal resources.
      */
     public void dispose() {
         //implementation
     }
 
     /**
-     * If internal connection is not usable, throw IllegalStateException
+     * If internal connection is not usable, throw IllegalStateException.
      */
     public void test() {
         //implementation

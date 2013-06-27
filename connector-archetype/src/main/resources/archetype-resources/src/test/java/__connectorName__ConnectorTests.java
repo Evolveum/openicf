@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -56,12 +56,12 @@ public class ${connectorName}ConnectorTests {
     * Example test properties.
     * See the Javadoc of the TestHelpers class for the location of the public and private configuration files.
     */
-    private static final PropertyBag properties = TestHelpers.getProperties(${connectorName}Connector.class);
+    private static final PropertyBag PROPERTIES = TestHelpers.getProperties(${connectorName}Connector.class);
     // Host is a public property read from public configuration file
-    private static final String HOST = properties.getStringProperty("configuration.host");
-    // Login and password are private properties read from private configuration file 
-    private static final String REMOTE_USER = properties.getStringProperty("configuration.remoteUser");
-    private static final GuardedString PASSWORD = properties.getProperty("configuration.password", GuardedString.class);
+    private static final String HOST = PROPERTIES.getStringProperty("configuration.host");
+    // Login and password are private properties read from private configuration file
+    private static final String REMOTE_USER = PROPERTIES.getStringProperty("configuration.remoteUser");
+    private static final GuardedString PASSWORD = PROPERTIES.getProperty("configuration.password", GuardedString.class);
 
     //set up logging
     private static final Log LOGGER = Log.getLog(${connectorName}ConnectorTests.class);
@@ -77,7 +77,7 @@ public class ${connectorName}ConnectorTests {
         //
 
         //Configuration config = new ${connectorName}Configuration();
-        //Map<String, ? extends Object> configData = (Map<String, ? extends Object>) properties.getProperty("configuration",Map.class)
+        //Map<String, ? extends Object> configData = (Map<String, ? extends Object>) PROPERTIES.getProperty("configuration",Map.class)
         //TestHelpers.fillConfiguration(
     }
 
