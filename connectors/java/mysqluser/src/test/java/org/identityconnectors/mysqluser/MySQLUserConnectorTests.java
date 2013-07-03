@@ -1,54 +1,51 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.mysqluser;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.AssertJUnit;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
-
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * Attempts to test the Connector with the framework.
  */
+@Test(groups = { "integration" })
 public class MySQLUserConnectorTests extends MySQLTestBase {
-    /**
-     * Setup logging for the {@link DatabaseConnection}.
-     */
-    static final Log log = Log.getLog(DatabaseConnection.class);
+
     static boolean modelUserCreated = false;
-   
+
     /**
      * Create the test suite
-     * @throws Exception a resource exception
+     *
+     * @throws Exception
+     *             a resource exception
      */
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -60,7 +57,8 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
         idmUser = testProps.getStringProperty(USER);
         AssertJUnit.assertNotNull(USER + MSG, idmUser);
 
-        idmPassword = new GuardedString(testProps.getProperty(PASSWD, String.class, "").toCharArray());
+        idmPassword =
+                new GuardedString(testProps.getProperty(PASSWD, String.class, "").toCharArray());
         AssertJUnit.assertNotNull(PASSWD + MSG, idmPassword);
 
         idmPort = testProps.getStringProperty(PORT);
@@ -74,11 +72,12 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
 
         final String passwd = testProps.getStringProperty(TEST_PASSWD);
         AssertJUnit.assertNotNull(TEST_PASSWD + MSG, passwd);
-        testPassword = new GuardedString(passwd.toCharArray());       
+        testPassword = new GuardedString(passwd.toCharArray());
     }
 
     /**
      * Clean up the test suite
+     *
      * @throws Exception
      */
     @AfterClass
@@ -87,17 +86,18 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
     }
 
     /**
-     * Setup  the test
+     * Setup the test
+     *
      * @throws Exception
      */
     @BeforeMethod
-	public void setup() throws Exception {
+    public void setup() throws Exception {
         // attempt to create the database in the directory..
         config = newConfiguration();
         facade = getFacade();
-        //quitellyDeleteUser(idmModelUser);
-        //Create model test user
-        if ( !modelUserCreated ) {
+        // quitellyDeleteUser(idmModelUser);
+        // Create model test user
+        if (!modelUserCreated) {
             createTestModelUser(idmModelUser, testPassword);
             modelUserCreated = true;
         }
@@ -107,11 +107,13 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
      * @throws Exception
      */
     @AfterMethod
-	public void teardown() throws Exception {     
+    public void teardown() throws Exception {
         config = null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     *
      * @see org.identityconnectors.mysqluser.MySQLTestBase#newConfiguration()
      */
     @Override
@@ -125,45 +127,46 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
         config.setUsermodel(idmModelUser);
         config.setConnectorMessages(TestHelpers.createDummyMessages());
         return config;
-    }    
-    
+    }
+
     /**
      * Test the configuration
+     *
      * @throws Exception
      */
     @Test()
     public void testConfiguration() throws Exception {
-    
+
         AssertJUnit.assertNotNull("tstDriver", config.getDriver());
         AssertJUnit.assertNotNull("tstHost", config.getHost());
         AssertJUnit.assertNotNull("tstLogin", config.getUser());
         AssertJUnit.assertNotNull("tstPassword", config.getPassword());
         AssertJUnit.assertNotNull("tstPort", config.getPort());
         AssertJUnit.assertNotNull("usermodel", config.getUsermodel());
-    
+
         AssertJUnit.assertEquals("tstDriver", idmDriver, config.getDriver());
         AssertJUnit.assertEquals("tstHost", idmHost, config.getHost());
         AssertJUnit.assertEquals("tstLogin", idmUser, config.getUser());
         AssertJUnit.assertEquals("tstPassword", idmPassword, config.getPassword());
         AssertJUnit.assertEquals("tstPort", idmPort, config.getPort());
         AssertJUnit.assertEquals("usermodel", idmModelUser, config.getUsermodel());
-    
+
     }
-    
 
     /**
-     * Test method 
+     * Test method.
+     *
      * @throws Exception
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testInvalidConfigurationHost() throws Exception {
         config.setHost("");
         config.validate();
-    }    
-    
+    }
 
     /**
-     * Test method 
+     * Test method.
+     *
      * @throws Exception
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -171,10 +174,10 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
         config.setDriver("");
         config.validate();
     }
-    
 
     /**
-     * Test method 
+     * Test method.
+     *
      * @throws Exception
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -182,10 +185,10 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
         config.setUser("");
         config.validate();
     }
-    
 
     /**
-     * Test method 
+     * Test method.
+     *
      * @throws Exception
      */
     @Test(expectedExceptions = IllegalArgumentException.class)

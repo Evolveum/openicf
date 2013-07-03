@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,32 +27,34 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.1.0</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.db</groupId>
-    <artifactId>openicf-mysqluser-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>mysqluser-connector</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>MySQLUser Connector</name>
     <description>The MySQLUser Connector capabilities are pretty limited. The connector supports just a user creation from "Modeluser" template</description>
-    <url>http://openicf.forgerock.org/connectors/mysqluser</url>
+    <url>https://openicf.forgerock.org/connectors/mysqluser-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10176</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - MySQLUser Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/mysqluser</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/mysqluser</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/mysqluser</url>
     </scm>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10176</url>
-    </issueManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>dbcommon</embedded.dependencies>
         <connectorPackage>org.identityconnectors.mysqluser</connectorPackage>
         <connectorClass>MySQLUserConnector</connectorClass>
         <jira.componentIds>10176</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>0</jira.fixVersionIds>
     </properties>
     <repositories>
         <repository>
@@ -72,35 +74,53 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon,mysql-connector-java</embedded.dependencies>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                    <version>5.1.16</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-    </profiles>
     <dependencies>
         <dependency>
-            <groupId>org.forgerock.openicf.connectors.misc</groupId>
+            <groupId>org.forgerock.openicf.misc</groupId>
             <artifactId>dbcommon</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
-            <scope>provided</scope>
+            <version>1.1.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.25</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.forgerock.openicf.misc</groupId>
+                        <artifactId>dbcommon</artifactId>
+                        <version>1.1.1.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>
