@@ -1,22 +1,22 @@
 <!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
-  
-  The contents of this file are subject to the terms of the Common Development 
-  and Distribution License("CDDL") (the "License").  You may not use this file 
+
+  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+
+  The contents of this file are subject to the terms of the Common Development
+  and Distribution License("CDDL") (the "License").  You may not use this file
   except in compliance with the License.
-  
-  You can obtain a copy of the License at 
-  http://IdentityConnectors.dev.java.net/legal/license.txt
-  See the License for the specific language governing permissions and limitations 
-  under the License. 
-  
+
+  You can obtain a copy of the License at
+  http://opensource.org/licenses/cddl1.php
+  See the License for the specific language governing permissions and limitations
+  under the License.
+
   When distributing the Covered Code, include this CDDL Header Notice in each file
-  and include the License file at identityconnectors/legal/license.txt.
-  If applicable, add the following below this CDDL Header, with the fields 
-  enclosed by brackets [] replaced by your own identifying information: 
+  and include the License file at http://opensource.org/licenses/cddl1.php.
+  If applicable, add the following below this CDDL Header, with the fields
+  enclosed by brackets [] replaced by your own identifying information:
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
@@ -33,7 +33,7 @@ A Connector implementation for an DB2 database. Uses plain JDBC calls to execute
 older type2 CLI driver.
 
     <h3>Bundle Information</h3>
-    <ul>  
+    <ul>
        <li><b>Latest stable release:</b></li>
 	   <li><b>Platform:</b> Java
        <li><b>3rd-party libraries required:</b> <a href="http://www-01.ibm.com/software/data/db2/express/additional-downloads.html?S_TACT=none&S_CMP=none"</a> DB2 JDBC driver</li>
@@ -65,11 +65,11 @@ older type2 CLI driver.
   		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">aliasname properties</a></li>
   		<li>See also <a href="#commonProperties"> common properties</a> for all drivers and <a href="#finalNotes"> final notes</a> for all IBM db2 drivers</li>
   </ol>
-  
-  
+
+
   The above specified order is critical. This means, we will not use any combination, just one of the case in the specified order.
-    
-  
+
+
    <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dataSource</code> property is set</h4>
     We will support these properties when connecting to DB2 using dataSource
     <ul>
@@ -82,8 +82,8 @@ older type2 CLI driver.
     	</li>
     	<li>adminAccount : Administrative account : optional, default we will get connection from DS without user/password parameters</li>
     	<li>adminPassword : Administrative password : optional, default we will get connection from DS without user/password parameters</li></li>
-    </ul>	
-    
+    </ul>
+
   <h4><a name="databaseName"/>Getting connection from DriverManager using Type 4 driver. Used when <code>host,port,databaseName</code> property are set</h4>
   We will support/require these properties when connecting to db2 :
   <ul>
@@ -95,7 +95,7 @@ older type2 CLI driver.
   		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
   		<li> adminPassword : Password for admin account. </li>
   </ul>
-  
+
   <h4><a name="aliasName"/>Getting connection from DriverManager using Type 2 driver.  Used when <code>databaseName - local alias</code> property is set</h4>
   We will require these properties when connecting to db2 using local alias
   <ul>
@@ -105,16 +105,16 @@ older type2 CLI driver.
   		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
   		<li> adminPassword : Password for admin account. </li>
   </ul>
-  
+
  <h4><a name="commonProperties"/>Properties common to all connection options</h4>
   <ul>
       <li>replaceAllGrantsOnUpdate : Kept for backward compatibility instead of removeForeignGrants.
           When set to true(default) , we replace value of passed grants on update. Otherwise we do addition of passed grants
-          to the grants user already has. 
+          to the grants user already has.
           This property can be removed in future version, when IDM will properly call UpdateAttributeValuesOp operations.
       </li>
   </ul>
-     
+
   <h4><a name="finalNotes"/>Note that IBM ships two drivers for DB2. We have tested only these two drivers, no other driver was tested</h4>
   <ul>
        <li> IBM DB2 Driver for JDBC and SQLJ</li>
@@ -124,18 +124,18 @@ older type2 CLI driver.
        This driver is deprecated now, although it is still included in DB2 9x version. DB2 does not develop this driver any more and it seems
        it will be removed in next major version release. However this driver was recommended driver for Websphere.
   </ul>
-  IBM Net Driver was deprecated in version 8, is not included in version 9. This driver is not supported. 
+  IBM Net Driver was deprecated in version 8, is not included in version 9. This driver is not supported.
 </p>
 <h3>Schema and Supported Features</h3>
 <p>
-This Connector supports only ACCOUNT object class. It supports these attributes 
+This Connector supports only ACCOUNT object class. It supports these attributes
 <ul>
 	<li><b>NAME</b></li>
 	<li><b>PASSWORD</b></li>
 	<li><b>GRANTS</b></li>
 </ul>
 <br/>
-The DB2 Connector supports the following operations: 
+The DB2 Connector supports the following operations:
 <br/><br/>
 <ul>
 				<li><b>Authenticate</b></li>

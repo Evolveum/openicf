@@ -21,28 +21,16 @@
  * ====================
  */
 
+/**
+ * Provides implementation of connector to DB2 database resource. DB2 Connector
+ * uses DB2 database resource to manage users. DB2 uses external authentication
+ * provider and internal authorization service. DB2 connector is then pretty
+ * limited and should be used with combination of underlying authorization
+ * service connector, typically OS connector or LDAP. DB2 connector stores users
+ * using passed grants.
+ *
+ * See {@link org.identityconnectors.db2.DB2Configuration} and
+ * {@link org.identityconnectors.db2.DB2Connector} for more information about
+ * DB2 connector.
+ */
 package org.identityconnectors.db2;
-
-import java.lang.reflect.Method;
-
-final class SQLMsgRetriever {
-    String retrieveMsg(Exception e) {
-        try {
-            e.getClass().getClassLoader().loadClass("com.ibm.db2.jcc.DB2Diagnosable");
-            return retrieveDB2DriverMsg(e);
-        } catch (Throwable e1) {
-        }
-        return e.getMessage();
-    }
-
-    /** Here use DB2Driver reflection code to avoid the compilation dependency. */
-    private String retrieveDB2DriverMsg(Exception e) throws Exception {
-        Method getSqlca = e.getClass().getMethod("getSqlca", new Class[0]);
-        Object sqlca = getSqlca.invoke(e);
-        if (sqlca != null) {
-            Method getMessage = sqlca.getClass().getMethod("getMessage", new Class[0]);
-            return (String) getMessage.invoke(sqlca);
-        }
-        return e.getMessage();
-    }
-}
