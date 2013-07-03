@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -48,34 +48,42 @@ import org.openspml.v2.profiles.dsml.LessOrEqual;
 import org.openspml.v2.profiles.dsml.Or;
 import org.openspml.v2.profiles.dsml.Substrings;
 
+public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem> {
 
-public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
-    private ScriptExecutorFactory _factory;
-    private SpmlConnection _connection;
-    private SpmlConfiguration _configuration;
-    private ScriptExecutor _mapQueryNameExecutor;
+    private final ScriptExecutorFactory scriptExecutorFactory;
+    private final SpmlConnection connection;
+    private final SpmlConfiguration configuration;
+    private final ScriptExecutor mapQueryNameExecutor;
 
-    public SpmlFilterTranslator(SpmlConfiguration configuration, SpmlConnection connection) {
-        _connection = connection;
-        _configuration = configuration;
-        _factory = ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
+    public SpmlFilterTranslator(final SpmlConfiguration configuration,
+            final SpmlConnection connection) {
+        this.connection = connection;
+        this.configuration = configuration;
+        scriptExecutorFactory =
+                ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
         try {
-            String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
-            if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
-                _mapQueryNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
+            String mapQueryNameCommand = this.configuration.getMapQueryNameCommand();
+            if (mapQueryNameCommand != null && mapQueryNameCommand.length() > 0) {
+                mapQueryNameExecutor =
+                        scriptExecutorFactory.newScriptExecutor(getClass().getClassLoader(),
+                                mapQueryNameCommand, true);
+            } else {
+                mapQueryNameExecutor = null;
+            }
         } catch (Exception e) {
-            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+            throw new ConnectorException(this.configuration
+                    .getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
         }
     }
 
     @Override
     protected FilterItem createAndExpression(FilterItem leftExpression, FilterItem rightExpression) {
-        if (leftExpression!=null && rightExpression!=null) {
-            And and = new And(new FilterItem[] {leftExpression, rightExpression});
+        if (leftExpression != null && rightExpression != null) {
+            And and = new And(new FilterItem[] { leftExpression, rightExpression });
             return and;
-        } else if (leftExpression!=null) {
+        } else if (leftExpression != null) {
             return leftExpression;
-        } else if (rightExpression!=null) {
+        } else if (rightExpression != null) {
             return rightExpression;
         } else {
             return super.createAndExpression(leftExpression, rightExpression);
@@ -84,8 +92,8 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
 
     @Override
     protected FilterItem createOrExpression(FilterItem leftExpression, FilterItem rightExpression) {
-        if (leftExpression!=null && rightExpression!=null) {
-            Or or = new Or(new FilterItem[] {leftExpression, rightExpression});
+        if (leftExpression != null && rightExpression != null) {
+            Or or = new Or(new FilterItem[] { leftExpression, rightExpression });
             return or;
         } else {
             return super.createOrExpression(leftExpression, rightExpression);
@@ -98,7 +106,8 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
         List<Object> value = attribute.getValue();
         try {
             if (!not && isSingleString(value)) {
-                return new Substrings(mapQueryName(attribute.getName()), new DSMLValue((String)value.get(0)), new DSMLValue[0], null);
+                return new Substrings(mapQueryName(attribute.getName()), new DSMLValue(
+                        (String) value.get(0)), new DSMLValue[0], null);
             } else {
                 return super.createStartsWithExpression(filter, not);
             }
@@ -113,7 +122,8 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
         List<Object> value = attribute.getValue();
         try {
             if (!not && isSingleString(value)) {
-                return new Substrings(mapQueryName(attribute.getName()), null, new DSMLValue[] {new DSMLValue((String)value.get(0))}, null);
+                return new Substrings(mapQueryName(attribute.getName()), null,
+                        new DSMLValue[] { new DSMLValue((String) value.get(0)) }, null);
             } else {
                 return super.createContainsExpression(filter, not);
             }
@@ -128,7 +138,8 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
         List<Object> value = attribute.getValue();
         try {
             if (!not && isSingleString(value)) {
-                return new Substrings(mapQueryName(attribute.getName()), null, new DSMLValue[0], new DSMLValue((String)value.get(0)));
+                return new Substrings(mapQueryName(attribute.getName()), null, new DSMLValue[0],
+                        new DSMLValue((String) value.get(0)));
             } else {
                 return super.createEndsWithExpression(filter, not);
             }
@@ -143,7 +154,8 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
         List<Object> value = attribute.getValue();
         try {
             if (!not && isSingleString(value)) {
-                return new EqualityMatch(mapQueryName(attribute.getName()), new DSMLValue((String)value.get(0)));
+                return new EqualityMatch(mapQueryName(attribute.getName()), new DSMLValue(
+                        (String) value.get(0)));
             } else {
                 return super.createEqualsExpression(filter, not);
             }
@@ -153,14 +165,15 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
     }
 
     @Override
-    protected FilterItem createGreaterThanOrEqualExpression(GreaterThanOrEqualFilter filter, boolean not) {
+    protected FilterItem createGreaterThanOrEqualExpression(GreaterThanOrEqualFilter filter,
+            boolean not) {
         Attribute attribute = filter.getAttribute();
         List<Object> value = attribute.getValue();
         try {
             if (!not && isSingleString(value)) {
                 GreaterOrEqual goe = new GreaterOrEqual();
                 goe.setName(mapQueryName(attribute.getName()));
-                goe.setValue(new DSMLValue((String)value.get(0)));
+                goe.setValue(new DSMLValue((String) value.get(0)));
                 return goe;
             } else {
                 return super.createGreaterThanOrEqualExpression(filter, not);
@@ -178,7 +191,7 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
             if (!not && isSingleString(value)) {
                 LessOrEqual loe = new LessOrEqual();
                 loe.setName(mapQueryName(attribute.getName()));
-                loe.setValue(new DSMLValue((String)value.get(0)));
+                loe.setValue(new DSMLValue((String) value.get(0)));
                 return loe;
             } else {
                 return super.createLessThanOrEqualExpression(filter, not);
@@ -189,24 +202,26 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
     }
 
     private String mapQueryName(String name) {
-        if (Uid.NAME.equals(name))
+        if (Uid.NAME.equals(name)) {
             return SpmlConnector.PSOID;
+        }
 
         try {
-            if (_mapQueryNameExecutor!=null) {
+            if (mapQueryNameExecutor != null) {
                 Map<String, Object> arguments = new HashMap<String, Object>();
                 arguments.put("name", name);
-                arguments.put("configuration", _configuration);
-                arguments.put("memory", _connection.getMemory());
-                return (String)_mapQueryNameExecutor.execute(arguments);
+                arguments.put("configuration", configuration);
+                arguments.put("memory", connection.getMemory());
+                return (String) mapQueryNameExecutor.execute(arguments);
             }
         } catch (Exception e) {
-            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+            throw new ConnectorException(configuration
+                    .getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
         }
         return name;
     }
 
     private boolean isSingleString(List<Object> value) {
-        return value!=null && value.size()==1 && value.get(0) instanceof String;
+        return value != null && value.size() == 1 && value.get(0) instanceof String;
     }
 }

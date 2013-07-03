@@ -1,31 +1,27 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.spml;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
-import org.testng.AssertJUnit;
-import org.testng.Assert;
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -66,27 +62,30 @@ import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
-
+import org.testng.Assert;
+import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class SpmlConnectorTests {
 
     // Connector Configuration information
     //
-    private static final String URL                   = "http://idmvm2026.central.sun.com:8080/idm/servlet/openspml2";
-    private static final String SPML_OBJ_CLASS        = "spml2Person";
-    private static final String CONNECTOR_OBJ_CLASS   = ObjectClass.ACCOUNT_NAME;
-    private static final String PSO_TARGET_CLASS      = "spml2-DSML-Target";
-    private static final String ACCOUNT_ID            = "accountId";
+    private static final String URL = "http://idmvm2026.central.sun.com:8080/idm/servlet/openspml2";
+    private static final String SPML_OBJ_CLASS = "spml2Person";
+    private static final String CONNECTOR_OBJ_CLASS = ObjectClass.ACCOUNT_NAME;
+    private static final String PSO_TARGET_CLASS = "spml2-DSML-Target";
+    private static final String ACCOUNT_ID = "accountId";
 
-    private static final String ATTR_FIRSTNAME        = "firstname";
-    private static final String ATTR_LASTNAME         = "lastname";
-    private static final String ATTR_FULLNAME         = "fullname";
+    private static final String ATTR_FIRSTNAME = "firstname";
+    private static final String ATTR_LASTNAME = "lastname";
+    private static final String ATTR_FULLNAME = "fullname";
 
-    private static String HOST_NAME;
-    private static String SYSTEM_PASSWORD;
-    private static String SYSTEM_USER;
-    private static String TEST_USER;
-    
+    private static String hostName;
+    private static String systemPassword;
+    private static String systemUser;
+    private static String testUser;
+
     public SpmlConnectorTests() {
     }
 
@@ -172,7 +171,7 @@ public class SpmlConnectorTests {
             config.setPostReceiveCommand(null);
             config.getPostReceiveCommand();
         }
-        //Ensure that validation catches nul fields
+        // Ensure that validation catches nul fields
         {
             try {
                 SpmlConfiguration config = createConfiguration();
@@ -228,16 +227,16 @@ public class SpmlConnectorTests {
     @BeforeClass
     public static void before() {
         PropertyBag testProps = TestHelpers.getProperties(SpmlConnector.class);
-        HOST_NAME         = testProps.getStringProperty("HOST_NAME");
-        SYSTEM_PASSWORD   = testProps.getStringProperty("SYSTEM_PASSWORD");
-        SYSTEM_USER       = testProps.getStringProperty("SYSTEM_USER");
-        TEST_USER         = "SPML101";
-        AssertJUnit.assertNotNull("HOST_NAME must be specified", HOST_NAME);
-        AssertJUnit.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
-        AssertJUnit.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
+        hostName = testProps.getStringProperty("HOST_NAME");
+        systemPassword = testProps.getStringProperty("SYSTEM_PASSWORD");
+        systemUser = testProps.getStringProperty("SYSTEM_USER");
+        testUser = "SPML101";
+        AssertJUnit.assertNotNull("HOST_NAME must be specified", hostName);
+        AssertJUnit.assertNotNull("SYSTEM_PASSWORD must be specified", systemPassword);
+        AssertJUnit.assertNotNull("SYSTEM_USER must be specified", systemUser);
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testListSchema() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -247,10 +246,10 @@ public class SpmlConnectorTests {
             boolean firstnameFound = false;
             for (ObjectClassInfo ocInfo : schema.getObjectClassInfo()) {
                 if (ocInfo.is(ObjectClass.ACCOUNT_NAME)) {
-                    System.out.println("Schema for "+ocInfo.getType());
+                    System.out.println("Schema for " + ocInfo.getType());
                     personFound = true;
                     for (AttributeInfo attr : ocInfo.getAttributeInfo()) {
-                        System.out.println("    "+attr);
+                        System.out.println("    " + attr);
                         if (attr.getName().equals("firstname")) {
                             firstnameFound = true;
                         }
@@ -264,45 +263,47 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testListAllUsers() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, null, handler, null);
             for (ConnectorObject user : handler) {
-                System.out.println("Read User:"+user.getUid().getValue());
+                System.out.println("Read User:" + user.getUid().getValue());
             }
         } finally {
             info.dispose();
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testGetSpecifiedUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
-    
-            deleteUser(TEST_USER, info);
-    
+            Set<Attribute> attrs = fillInSampleUser(testUser);
+
+            deleteUser(testUser, info);
+
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
-            ConnectorObject user = getUser(TEST_USER);
+
+            ConnectorObject user = getUser(testUser);
             AssertJUnit.assertNotNull(user);
-            
+
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Uid.NAME, "asdhjfdaslfh alsk fhasldk ")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    Uid.NAME, "asdhjfdaslfh alsk fhasldk ")), handler, null);
             AssertJUnit.assertFalse(handler.iterator().hasNext());
 
             handler = new TestHandler();
             String[] attributesToGet = { "firstname" };
             Map<String, Object> optionsMap = new HashMap<String, Object>();
-            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet); 
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
             OperationOptions options = new OperationOptions(optionsMap);
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Uid.NAME, TEST_USER)), handler, options);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    Uid.NAME, testUser)), handler, options);
             AssertJUnit.assertTrue(handler.iterator().hasNext());
             ConnectorObject object = handler.iterator().next();
             AssertJUnit.assertNotNull(object.getAttributeByName("firstname"));
@@ -312,7 +313,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testTest() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -323,103 +324,117 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testSearchSpecifiedUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
-    
-            deleteUser(TEST_USER, info);
+            Set<Attribute> attrs = fillInSampleUser(testUser);
+
+            deleteUser(testUser, info);
             Uid createdUserUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            
+
             // Simple test of EqualsFilter
             //
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    ATTR_LASTNAME, "User")), handler, null);
             boolean found = false;
             int count = 0;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
+                }
                 count++;
             }
-            AssertJUnit.assertTrue(count==1);
+            AssertJUnit.assertTrue(count == 1);
             AssertJUnit.assertTrue(found);
-                        
+
             // Simple test of StartsWithFilter
             //
             handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder
+                    .build(ATTR_LASTNAME, "User")), handler, null);
             found = false;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
-                AssertJUnit.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).startsWith("User"));
+                }
+                AssertJUnit.assertTrue(AttributeUtil.getStringValue(
+                        user.getAttributeByName(ATTR_LASTNAME)).startsWith("User"));
             }
             AssertJUnit.assertTrue(found);
-                        
+
             // Simple test of EndsWithFilter
             //
             handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder
+                    .build(ATTR_LASTNAME, "User")), handler, null);
             found = false;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
-                AssertJUnit.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).endsWith("User"));
+                }
+                AssertJUnit.assertTrue(AttributeUtil.getStringValue(
+                        user.getAttributeByName(ATTR_LASTNAME)).endsWith("User"));
             }
             AssertJUnit.assertTrue(found);
-                        
+
             // Simple test of ContainsFilter
             //
             handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder
+                    .build(ATTR_LASTNAME, "User")), handler, null);
             found = false;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
-                AssertJUnit.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).contains("User"));
+                }
+                AssertJUnit.assertTrue(AttributeUtil.getStringValue(
+                        user.getAttributeByName(ATTR_LASTNAME)).contains("User"));
             }
             AssertJUnit.assertTrue(found);
-                        
+
             // Simple test of EqualsFilter
             //
             {
-	            handler = new TestHandler();
-	            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(createdUserUid), handler, null);
-	            found = false;
-	            count = 0;
-	            for (ConnectorObject user : handler) {
-	                if (TEST_USER.equals(user.getName().getNameValue()))
-	                    found = true;
-	                count++;
-	            }
-	            AssertJUnit.assertTrue(count==1);
-	            AssertJUnit.assertTrue(found);
+                handler = new TestHandler();
+                TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(createdUserUid),
+                        handler, null);
+                found = false;
+                count = 0;
+                for (ConnectorObject user : handler) {
+                    if (testUser.equals(user.getName().getNameValue())) {
+                        found = true;
+                    }
+                    count++;
+                }
+                AssertJUnit.assertTrue(count == 1);
+                AssertJUnit.assertTrue(found);
             }
-            
+
             // Test of And
             //
             handler = new TestHandler();
-            Filter filter = new AndFilter(
-                    new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
-                    new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
-            TestHelpers.search(info,ObjectClass.ACCOUNT, filter, handler, null);
+            Filter filter =
+                    new AndFilter(new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
+                            new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
+            TestHelpers.search(info, ObjectClass.ACCOUNT, filter, handler, null);
             found = false;
             count = 0;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
+                }
                 count++;
             }
-            
-            AssertJUnit.assertTrue(count==1);
+
+            AssertJUnit.assertTrue(count == 1);
             AssertJUnit.assertTrue(found);
-            
+
             // Change the first name
             //
-            ConnectorObject updateUser = getUser(TEST_USER);
+            ConnectorObject updateUser = getUser(testUser);
             Set<Attribute> changed = new HashSet<Attribute>();
             changed.add(AttributeBuilder.build(ATTR_FIRSTNAME, "abel"));
             changed.add(updateUser.getUid());
@@ -428,35 +443,37 @@ public class SpmlConnectorTests {
             // Test of And, which should fail, since firstname has changed
             //
             handler = new TestHandler();
-            filter = new AndFilter(
-                    new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
-                    new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
-            TestHelpers.search(info,ObjectClass.ACCOUNT, filter, handler, null);
+            filter =
+                    new AndFilter(new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
+                            new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
+            TestHelpers.search(info, ObjectClass.ACCOUNT, filter, handler, null);
             found = false;
             count = 0;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
+                }
                 count++;
             }
-            AssertJUnit.assertTrue(count==0);
+            AssertJUnit.assertTrue(count == 0);
             AssertJUnit.assertTrue(!found);
 
             // Test of Or, which should succeed, since lastname has not changed
             //
             handler = new TestHandler();
-            filter = new OrFilter(
-                    new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
-                    new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
-            TestHelpers.search(info,ObjectClass.ACCOUNT, filter, handler, null);
+            filter =
+                    new OrFilter(new EqualsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")),
+                            new EqualsFilter(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML")));
+            TestHelpers.search(info, ObjectClass.ACCOUNT, filter, handler, null);
             found = false;
             count = 0;
             for (ConnectorObject user : handler) {
-                if (TEST_USER.equals(user.getName().getNameValue()))
+                if (testUser.equals(user.getName().getNameValue())) {
                     found = true;
+                }
                 count++;
             }
-            AssertJUnit.assertTrue(count>0);
+            AssertJUnit.assertTrue(count > 0);
             AssertJUnit.assertTrue(found);
 
         } finally {
@@ -464,7 +481,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testModifyUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -472,22 +489,23 @@ public class SpmlConnectorTests {
         try {
             // Delete the user
             //
-            deleteUser(TEST_USER, info);
-    
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+            deleteUser(testUser, info);
+
+            Set<Attribute> attrs = fillInSampleUser(testUser);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
-            ConnectorObject user = getUser(TEST_USER);
+
+            ConnectorObject user = getUser(testUser);
             Set<Attribute> changed = new HashSet<Attribute>();
             changed.add(AttributeBuilder.build(ATTR_FIRSTNAME, "abel"));
             changed.add(user.getUid());
             info.update(ObjectClass.ACCOUNT, changed, null);
-    
-            ConnectorObject changedUser = getUser(TEST_USER);
+
+            ConnectorObject changedUser = getUser(testUser);
             Attribute firstname = changedUser.getAttributeByName(ATTR_FIRSTNAME);
             displayUser(changedUser);
             AssertJUnit.assertNotNull(firstname);
-            AssertJUnit.assertTrue(AttributeUtil.getStringValue(firstname).equalsIgnoreCase("abel"));
+            AssertJUnit
+                    .assertTrue(AttributeUtil.getStringValue(firstname).equalsIgnoreCase("abel"));
         } finally {
             info.dispose();
         }
@@ -499,24 +517,26 @@ public class SpmlConnectorTests {
             System.out.println(attribute.getName());
             List<Object> values = attribute.getValue();
             for (Object value : values) {
-                System.out.println("    "+value.getClass().getName()+":"+value);
+                System.out.println("    " + value.getClass().getName() + ":" + value);
             }
         }
     }
 
-    private ConnectorObject getUser(String accountId) throws Exception  {
+    private ConnectorObject getUser(String accountId) throws Exception {
         return getUser(accountId, null);
     }
 
-    private ConnectorObject getUser(String accountId, OperationOptions options) throws Exception  {
+    private ConnectorObject getUser(String accountId, OperationOptions options) throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
 
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, options);
-            if (!handler.iterator().hasNext())
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    Name.NAME, accountId)), handler, options);
+            if (!handler.iterator().hasNext()) {
                 return null;
+            }
             return handler.iterator().next();
         } catch (UnknownUidException e) {
             return null;
@@ -525,7 +545,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testNegative() throws Exception {
         SpmlConfiguration config = createConfiguration();
         config.setPassword(new GuardedString("bogus".toCharArray()));
@@ -539,20 +559,20 @@ public class SpmlConnectorTests {
         config.setPostConnectCommand(null);
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+            Set<Attribute> attrs = fillInSampleUser(testUser);
             info.create(ObjectClass.ACCOUNT, attrs, null);
             AssertJUnit.fail("expected exception");
         } catch (RuntimeException e) {
             // expected
         }
         try {
-            info.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
+            info.delete(ObjectClass.ACCOUNT, new Uid(testUser), null);
             AssertJUnit.fail("expected exception");
         } catch (RuntimeException e) {
             // expected
         }
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+            Set<Attribute> attrs = fillInSampleUser(testUser);
             info.update(ObjectClass.ACCOUNT, attrs, null);
             AssertJUnit.fail("expected exception");
         } catch (RuntimeException e) {
@@ -560,7 +580,8 @@ public class SpmlConnectorTests {
         }
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Uid.NAME, "asdhjfdaslfh alsk fhasldk ")), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    Uid.NAME, "asdhjfdaslfh alsk fhasldk ")), handler, null);
             AssertJUnit.fail("expected exception");
         } catch (RuntimeException e) {
             // expected
@@ -568,21 +589,21 @@ public class SpmlConnectorTests {
 
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testCreate() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
-        Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+        Set<Attribute> attrs = fillInSampleUser(testUser);
 
         try {
             // Delete the account if it already exists
             //
-            deleteUser(TEST_USER, info);
-    
+            deleteUser(testUser, info);
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
+            System.out.println(newUid.getValue() + " created");
             try {
                 info.create(ObjectClass.ACCOUNT, attrs, null);
                 AssertJUnit.fail("should have thrown exception");
@@ -594,27 +615,29 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testChangePassword() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
-    
+            Set<Attribute> attrs = fillInSampleUser(testUser);
+
             // Delete the account if it already exists
             //
-            deleteUser(TEST_USER, info);
-    
+            deleteUser(testUser, info);
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
-    
+            System.out.println(newUid.getValue() + " created");
+
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
             builder.setUid(newUid);
-            Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
+            Attribute password =
+                    AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(
+                            "xyzzy123".toCharArray()));
             builder.addAttribute(password);
-            builder.addAttribute(new Name(TEST_USER));
+            builder.addAttribute(new Name(testUser));
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
         } finally {
@@ -622,52 +645,55 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testEnableDisable() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
-    
+            Set<Attribute> attrs = fillInSampleUser(testUser);
+
             // Delete the account if it already exists
             //
-            deleteUser(TEST_USER, info);
-    
+            deleteUser(testUser, info);
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
-            
+            System.out.println(newUid.getValue() + " created");
+
             // Test disabling the user
-            { 
+            {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(newUid);
-                Attribute password = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
+                Attribute password =
+                        AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
                 builder.addAttribute(password);
-                builder.addAttribute(new Name(TEST_USER));
+                builder.addAttribute(new Name(testUser));
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-                
-                Map map = new HashMap<String, Object>();
-                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {OperationalAttributes.ENABLE_NAME});
+
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET,
+                        new String[] { OperationalAttributes.ENABLE_NAME });
                 OperationOptions options = new OperationOptions(map);
-                
-                ConnectorObject user = getUser(TEST_USER, options);
+
+                ConnectorObject user = getUser(testUser, options);
                 Attribute enabled = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 AssertJUnit.assertNotNull(enabled);
                 Assert.assertFalse(AttributeUtil.getBooleanValue(enabled));
             }
-            
+
             // Test enabling the user
-            { 
+            {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(newUid);
-                Attribute password = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
+                Attribute password =
+                        AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
                 builder.addAttribute(password);
-                builder.addAttribute(new Name(TEST_USER));
+                builder.addAttribute(new Name(testUser));
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-                
+
                 Attribute enabled = newUser.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 AssertJUnit.assertNotNull(enabled);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(enabled));
@@ -679,39 +705,39 @@ public class SpmlConnectorTests {
 
     private void deleteUser(final String testUser, SpmlConnector connector) {
         try {
-            connector.delete(ObjectClass.ACCOUNT, new Uid("person:"+testUser), null);
+            connector.delete(ObjectClass.ACCOUNT, new Uid("person:" + testUser), null);
         } catch (UnknownUidException rte) {
             // Ignore
         }
     }
 
-    @Test//@Ignore
+    @Test(groups = { "integration" })
     public void testDelete() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
-        Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+        Set<Attribute> attrs = fillInSampleUser(testUser);
 
         try {
             // Create the account if it doesn't already exist
             //
-            ConnectorObject user = getUser(TEST_USER);
-            Uid newUid= null;
-            if (user==null) {
+            ConnectorObject user = getUser(testUser);
+            Uid newUid = null;
+            if (user == null) {
                 try {
                     newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-                    System.out.println(newUid.getValue()+" created");
+                    System.out.println(newUid.getValue() + " created");
                 } catch (AlreadyExistsException rte) {
                     // ignore
                 }
             } else {
                 newUid = user.getUid();
             }
-    
+
             // Delete the account
             //
             info.delete(ObjectClass.ACCOUNT, newUid, null);
-            System.out.println(newUid.getValue()+" deleted");
-            
+            System.out.println(newUid.getValue() + " deleted");
+
             try {
                 info.delete(ObjectClass.ACCOUNT, newUid, null);
                 AssertJUnit.fail("Should have seen exception");
@@ -722,28 +748,32 @@ public class SpmlConnectorTests {
             info.dispose();
         }
     }
-    @Test//@Ignore
+
+    @Test(groups = { "integration" })
     public void testResolve() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
-    
+            Set<Attribute> attrs = fillInSampleUser(testUser);
+
             // Delete the account if it already exists
             //
-            deleteUser(TEST_USER, info);
+            deleteUser(testUser, info);
             try {
-                info.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+                info.resolveUsername(ObjectClass.ACCOUNT, testUser, new OperationOptions(
+                        new HashMap<String, Object>()));
                 AssertJUnit.fail("exception expected");
             } catch (UnknownUidException ue) {
                 // expected
             }
-    
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
-            Uid retrievedUid = info.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+            System.out.println(newUid.getValue() + " created");
+            Uid retrievedUid =
+                    info.resolveUsername(ObjectClass.ACCOUNT, testUser, new OperationOptions(
+                            new HashMap<String, Object>()));
             AssertJUnit.assertEquals(newUid, retrievedUid);
         } finally {
             info.dispose();
@@ -752,23 +782,27 @@ public class SpmlConnectorTests {
 
     private Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
-        attrs.add(new Name(TEST_USER));
+        attrs.add(new Name(SpmlConnectorTests.testUser));
         attrs.add(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML"));
         attrs.add(AttributeBuilder.build(ATTR_LASTNAME, "User"));
         attrs.add(AttributeBuilder.build(ATTR_FULLNAME, "SMPL User"));
-        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy".toCharArray())));
+        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(
+                "xyzzy".toCharArray())));
         return attrs;
     }
 
-    private SpmlConnector createConnector(SpmlConfiguration config)
-    throws Exception {
+    private SpmlConnector createConnector(SpmlConfiguration config) throws Exception {
         SpmlConnector rv = new SpmlConnector();
         rv.init(config);
         return rv;
     }
 
     private SpmlConfiguration createConfiguration() {
-        SpmlConfiguration config = new SpmlConfiguration(URL, new String[] {CONNECTOR_OBJ_CLASS}, new String[] {SPML_OBJ_CLASS}, new String[] {PSO_TARGET_CLASS}, new String[] {ACCOUNT_ID}, SYSTEM_USER, new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        SpmlConfiguration config =
+                new SpmlConfiguration(URL, new String[] { CONNECTOR_OBJ_CLASS },
+                        new String[] { SPML_OBJ_CLASS }, new String[] { PSO_TARGET_CLASS },
+                        new String[] { ACCOUNT_ID }, systemUser, new GuardedString(systemPassword
+                                .toCharArray()));
         config.setPreSendCommand(getPreSendCommand());
         config.setPostReceiveCommand(getPostReceiveCommand());
         config.setPostConnectCommand(getPostConnectCommand());
@@ -780,9 +814,10 @@ public class SpmlConnectorTests {
         config.setScriptingLanguage("GROOVY");
 
         OurConnectorMessages messages = new OurConnectorMessages();
-        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String, String>>();
         Map<String, String> foo = new HashMap<String, String>();
-        ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.spml.Messages");
+        ResourceBundle messagesBundle =
+                ResourceBundle.getBundle("org.identityconnectors.spml.Messages");
         Enumeration<String> enumeration = messagesBundle.getKeys();
         while (enumeration.hasMoreElements()) {
             String key = enumeration.nextElement();
@@ -791,7 +826,7 @@ public class SpmlConnectorTests {
         catalogs.put(Locale.getDefault(), foo);
         messages.setCatalogs(catalogs);
         config.setConnectorMessages(messages);
-        
+
         return config;
     }
 
@@ -843,7 +878,7 @@ public class SpmlConnectorTests {
         buffer.append("}\n");
         return buffer.toString();
     }
-    
+
     private String getMapAttributeCommand() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("if (attribute.getName().equalsIgnoreCase(\"credentials\"))\n");
@@ -921,7 +956,7 @@ public class SpmlConnectorTests {
         buffer.append("}\n");
         return buffer.toString();
     }
-    
+
     private void addGuardedStringAccessor(StringBuffer buffer) {
         buffer.append("class GuardedStringAccessor implements org.identityconnectors.common.security.GuardedString.Accessor {\n");
         buffer.append("    private char[] _array;\n");
@@ -943,21 +978,22 @@ public class SpmlConnectorTests {
     }
 
     public class OurConnectorMessages implements ConnectorMessages {
-        private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
+        private Map<Locale, Map<String, String>> catalogs =
+                new HashMap<Locale, Map<String, String>>();
 
         public String format(String key, String defaultValue, Object... args) {
-        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
-            Map<String,String> catalog = _catalogs.get(locale);
+            Locale locale = CurrentLocale.isSet() ? CurrentLocale.get() : Locale.getDefault();
+            Map<String, String> catalog = catalogs.get(locale);
             String message = catalog.get(key);
-            MessageFormat formatter = new MessageFormat(message,locale);
+            MessageFormat formatter = new MessageFormat(message, locale);
             return formatter.format(args, new StringBuffer(), null).toString();
         }
 
-        public void setCatalogs(Map<Locale,Map<String,String>> catalogs) {
-            _catalogs = catalogs;
+        public void setCatalogs(Map<Locale, Map<String, String>> catalogs) {
+            this.catalogs = catalogs;
         }
     }
-    
+
     public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
         private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
 
