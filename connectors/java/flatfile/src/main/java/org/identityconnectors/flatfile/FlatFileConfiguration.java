@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -32,7 +32,6 @@ import java.nio.charset.Charset;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
-
 
 /**
  * Configuration information required for the Connector to attach to a file.
@@ -64,7 +63,6 @@ public class FlatFileConfiguration extends AbstractConfiguration {
      * Particular attribute the represent the unique value of each account.
      */
     private String uniqueAttribute;
-    
 
     // =======================================================================
     // File Property
@@ -72,7 +70,7 @@ public class FlatFileConfiguration extends AbstractConfiguration {
     /**
      * File to parse from the file system. An exception will throw in the
      * {@link #validate()} method if the file does not exist.
-     * 
+     *
      * @param value
      *            Valid CSV file that exists.
      */
@@ -82,7 +80,7 @@ public class FlatFileConfiguration extends AbstractConfiguration {
 
     /**
      * Get the currently set file.
-     * 
+     *
      * @return the reference object to the CSV file.
      */
     public File getFile() {
@@ -95,7 +93,7 @@ public class FlatFileConfiguration extends AbstractConfiguration {
     /**
      * Set the encoding to use when reading the CSV file. The default value is
      * the character set of the OS.
-     * 
+     *
      * @param value
      *            encoding to reading the file in (recommended to set to UTF-8).
      */
@@ -142,7 +140,7 @@ public class FlatFileConfiguration extends AbstractConfiguration {
 
     /**
      * Determine if all the values are valid.
-     * 
+     *
      * @throws IllegalArgumentException
      *             iff the unique identifier attribute is blank or encoding is
      *             set to null
@@ -150,9 +148,9 @@ public class FlatFileConfiguration extends AbstractConfiguration {
      *             iff the text qualifier and field delimiter are the same.
      * @throws RuntimeException
      *             iff the file is not found.
-     * @throws IllegalCharsetNameException
+     * @throws java.nio.charset.IllegalCharsetNameException
      *             iff the character set name is invalid
-     * @see org.identityconnectors.framework.Configuration#validate()
+     * @see org.identityconnectors.framework.spi.Configuration#validate()
      */
     public void validate() {
         // make sure the encoding is set..
@@ -160,7 +158,7 @@ public class FlatFileConfiguration extends AbstractConfiguration {
             final String msg = "File encoding must not be null!";
             throw new IllegalArgumentException(msg);
         }
-        //make sure it's a valid charset
+        // make sure it's a valid charset
         Charset.forName(this.encoding);
         // make sure the delimiter and the text qualifier are not the same..
         if (this.textQualifier == this.fieldDelimeter) {
@@ -190,11 +188,9 @@ public class FlatFileConfiguration extends AbstractConfiguration {
      * config.
      */
     BufferedReader newFileReader() throws IOException {
-        BufferedReader rdr = null;
         FileInputStream fis = new FileInputStream(getFile());
         InputStreamReader ins = new InputStreamReader(fis, encoding);
-        rdr = new BufferedReader(ins);
-        return rdr;
+        return new BufferedReader(ins);
     }
 
 }

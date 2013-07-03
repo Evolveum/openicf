@@ -1,36 +1,34 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.flatfile;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.AssertJUnit;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +47,9 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.test.common.TestHelpers;
-
+import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 public class FlatFileConnectorTests {
 
@@ -72,10 +72,10 @@ public class FlatFileConnectorTests {
 
     private static final char TEXT_QUALIFIER = '"';
 
-    private static TestAccount HEADER = new TestAccount(ACCOUNTID, FIRSTNAME,
-            LASTNAME, EMAIL, CHANGE_NUMBER);
+    private static final TestAccount HEADER = new TestAccount(ACCOUNTID, FIRSTNAME, LASTNAME, EMAIL,
+            CHANGE_NUMBER);
 
-    private static Set<TestAccount> TEST_ACCOUNTS = new HashSet<TestAccount>();
+    private static final Set<TestAccount> TEST_ACCOUNTS = new HashSet<TestAccount>();
     static {
         TEST_ACCOUNTS.add(new TestAccount("jpc4323435", "jPenelope", "jCruz",
                 "jxPenelope.Cruz@mail.com", "0"));
@@ -91,8 +91,8 @@ public class FlatFileConnectorTests {
                 "jzKevin.Bacon@mail.com", "5"));
         TEST_ACCOUNTS.add(new TestAccount("billy@bob.com", "jBilly", "jBob",
                 "jaBilly.Bob@mail.com", "6"));
-        TEST_ACCOUNTS.add(new TestAccount("bil@bob@bob.com", "jBillyBob",
-                "jBobby", "jaBillyBob.Bobby@mail.com", "7"));
+        TEST_ACCOUNTS.add(new TestAccount("bil@bob@bob.com", "jBillyBob", "jBobby",
+                "jaBillyBob.Bobby@mail.com", "7"));
 
     };
 
@@ -100,13 +100,11 @@ public class FlatFileConnectorTests {
     // Setup/Tear down..
     // =======================================================================
     @BeforeMethod
-	public void createData() throws Exception {
+    public void createData() throws Exception {
         // create a csv data file..
-        File f = new File(FILENAME);
-        // make sure to delete..
-        // f.deleteOnExit();
+        File f = getTestCSVFile();
         // write out file data..
-        OutputStream fout = new FileOutputStream(f);
+        OutputStream fout = new FileOutputStream(getTestCSVFile());
         Writer w = new OutputStreamWriter(fout, getUTF8Charset());
         PrintWriter wrt = new PrintWriter(w);
         // write out each user..
@@ -126,10 +124,10 @@ public class FlatFileConnectorTests {
     // Tests
     // =======================================================================
     @Test
-    public void search() {
+    public void search() throws Exception {
         // create the connector configuration..
         FlatFileConfiguration config = new FlatFileConfiguration();
-        config.setFile(new File(FILENAME));
+        config.setFile(getTestCSVFile());
         config.setUniqueAttributeName(ACCOUNTID);
         config.validate();
         // create a new connector..
@@ -137,8 +135,8 @@ public class FlatFileConnectorTests {
         cnt.init(config);
         // don't bother filtering the framework can do it..
         Set<TestAccount> actual = new HashSet<TestAccount>();
-        List<ConnectorObject> 
-            results = TestHelpers.searchToList(cnt,ObjectClass.ACCOUNT,new NoFilter());
+        List<ConnectorObject> results =
+                TestHelpers.searchToList(cnt, ObjectClass.ACCOUNT, new NoFilter());
         for (ConnectorObject obj : results) {
             actual.add(new TestAccount(obj));
         }
@@ -160,21 +158,21 @@ public class FlatFileConnectorTests {
     public void functional() throws Exception {
         // create the connector configuration..
         FlatFileConfiguration config = new FlatFileConfiguration();
-        config.setFile(new File(FILENAME));
+        config.setFile(getTestCSVFile());
         config.setUniqueAttributeName(ACCOUNTID);
         config.validate();
         final Set<TestAccount> actual = new HashSet<TestAccount>();
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         // **test only**
-        APIConfiguration impl = TestHelpers.createTestConfiguration(
-                FlatFileConnector.class, config);
+        APIConfiguration impl =
+                TestHelpers.createTestConfiguration(FlatFileConnector.class, config);
         ConnectorFacade facade = factory.newInstance(impl);
-        facade.search(ObjectClass.ACCOUNT,new NoFilter(), new ResultsHandler() {
+        facade.search(ObjectClass.ACCOUNT, new NoFilter(), new ResultsHandler() {
             public boolean handle(ConnectorObject obj) {
                 actual.add(new TestAccount(obj));
                 return true;
             }
-        },null);
+        }, null);
         // print out the actual..
         // System.out.println("Actual: " + actual);
         // System.out.println("Expected: " + TEST_ACCOUNTS);
@@ -186,60 +184,67 @@ public class FlatFileConnectorTests {
     // Helper Methods..
     // =======================================================================
 
+    private File getTestCSVFile() throws Exception {
+        File testDir =
+                new File(URLDecoder.decode(FlatFileConnectorTests.class.getResource("/").getFile(),
+                        "UTF-8"));
+        return new File(testDir, FILENAME);
+    }
+
     private static class TestAccount {
-        private String _changeNumber;
+        private String changeNumber;
 
-        private String _accountId;
+        private String accountId;
 
-        private String _firstName;
+        private String firstName;
 
-        private String _lastName;
+        private String lastName;
 
-        private String _email;
+        private String email;
 
-        public TestAccount(String accountId, String firstName, String lastName,
-                String email, String changeNumber) {
-            _accountId = accountId;
-            _firstName = firstName;
-            _lastName = lastName;
-            _email = email;
-            _changeNumber = changeNumber;
+        public TestAccount(String accountId, String firstName, String lastName, String email,
+                String changeNumber) {
+            this.accountId = accountId;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = email;
+            this.changeNumber = changeNumber;
         }
 
         public TestAccount(ConnectorObject obj) {
-            _accountId = obj.getUid().getUidValue();
+            accountId = obj.getUid().getUidValue();
             // go through each of the other variables..
             for (Attribute attr : obj.getAttributes()) {
                 if (CHANGE_NUMBER.equals(attr.getName())) {
-                    _changeNumber = AttributeUtil.getStringValue(attr);
+                    changeNumber = AttributeUtil.getStringValue(attr);
                 } else if (FIRSTNAME.equals(attr.getName())) {
-                    _firstName = AttributeUtil.getStringValue(attr);
+                    firstName = AttributeUtil.getStringValue(attr);
                 } else if (LASTNAME.equals(attr.getName())) {
-                    _lastName = AttributeUtil.getStringValue(attr);
+                    lastName = AttributeUtil.getStringValue(attr);
                 } else if (EMAIL.equals(attr.getName())) {
-                    _email = AttributeUtil.getStringValue(attr);
+                    email = AttributeUtil.getStringValue(attr);
                 }
             }
         }
 
         public String getAccountId() {
-            return _accountId;
+            return accountId;
         }
 
         public String getFirstName() {
-            return _firstName;
+            return firstName;
         }
 
         public String getLastName() {
-            return _lastName;
+            return lastName;
         }
 
         public String getEmail() {
-            return _email;
+            return email;
         }
 
         public String getChangeNumber() {
-            return _changeNumber;
+            return changeNumber;
         }
 
         EqualsHashCodeBuilder getEqHash() {
@@ -270,18 +275,18 @@ public class FlatFileConnectorTests {
         public String toString() {
             // poor man's to string..
             Map<String, String> map = new HashMap<String, String>();
-            map.put("id", _accountId);
-            map.put("changeNumber", _changeNumber);
-            map.put("email", _email);
-            map.put("firstName", _firstName);
-            map.put("lastName", _lastName);
+            map.put("id", accountId);
+            map.put("changeNumber", changeNumber);
+            map.put("email", email);
+            map.put("firstName", firstName);
+            map.put("lastName", lastName);
             return map.toString();
         }
 
         /**
          * Create a string representation of a field, using the textQualifier if
          * the fieldDelimiter is contained in the field's value.
-         * 
+         *
          * @param field
          *            String value of field to convert/externalize.
          * @param fieldDelimiter

@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -49,18 +49,20 @@ import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
-
 /**
  * Only implements search since this connector is only used to do sync.
  */
-@ConnectorClass(configurationClass=FlatFileConfiguration.class,
-                  displayNameKey="FlatFile") //TODO: l10n
+@ConnectorClass(configurationClass = FlatFileConfiguration.class, displayNameKey = "FlatFile")
+// TODO: l10n
 public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp {
     /**
      * Setup {@link Connector} based logging.
      */
-    private static Log log = Log.getLog(FlatFileConnector.class);
+    private static final Log LOG = Log.getLog(FlatFileConnector.class);
 
+    private static final FilterTranslator<String> FILTER_TRANSLATOR =
+            new AbstractFilterTranslator<String>() {
+            };
     // ===================================================================
     // Constants
     // ===================================================================
@@ -70,19 +72,19 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
     // Fields
     // =======================================================================
     /**
-     * Configuration information passed back to the {@link Connector} by the method
-     * {@link Connector#init(Configuration)}.
+     * Configuration information passed back to the {@link Connector} by the
+     * method {@link Connector#init(Configuration)}.
      */
     private FlatFileConfiguration cfg;
-    
+
     public Configuration getConfiguration() {
         return this.cfg;
     }
 
     /**
      * Saves the configuration for use in later calls.
-     * 
-     * @see org.identityconnectors.framework.Connector#init(org.identityconnectors.framework.Configuration)
+     *
+     * @see org.identityconnectors.framework.spi.Connector#init(org.identityconnectors.framework.spi.Configuration)
      */
     public void init(Configuration cfg) {
         this.cfg = (FlatFileConfiguration) cfg;
@@ -90,8 +92,8 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
 
     /**
      * Nothing to do since there's not resources used.
-     * 
-     * @see org.identityconnectors.framework.Connector#dispose()
+     *
+     * @see org.identityconnectors.framework.spi.Connector#dispose()
      */
     public void dispose() {
         // in this matter do nothing..
@@ -100,8 +102,6 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
     /**
      * Read the header from the file and determine the attributes for the
      * account object this resource supports.
-     * 
-     * @see org.identityconnectors.framework.Connector#getSupportedObjectTypes()
      */
     public Schema schema() {
         // read the header to construct an ConnectionObjectInfo..
@@ -112,10 +112,10 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
             rdr = this.cfg.newFileReader();
             // build the connector info object..
             // read the header..
-            Set<AttributeInfo> attrInfos = new HashSet<AttributeInfo>(); 
-            List<String> fieldNames = readHeader(rdr, this.cfg
-                    .getFieldDelimiter(), this.cfg.getTextQualifier(), this.cfg
-                    .getUniqueAttributeName());
+            Set<AttributeInfo> attrInfos = new HashSet<AttributeInfo>();
+            List<String> fieldNames =
+                    readHeader(rdr, this.cfg.getFieldDelimiter(), this.cfg.getTextQualifier(),
+                            this.cfg.getUniqueAttributeName());
             for (String fieldName : fieldNames) {
                 AttributeInfoBuilder abld = new AttributeInfoBuilder();
                 abld.setName(fieldName);
@@ -133,22 +133,23 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
         // return the new schema object..
         return bld.build();
     }
-    
-    public FilterTranslator<String> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        //flat files are not queryable - don't translate anything
-        return new AbstractFilterTranslator<String>(){};
+
+    public FilterTranslator<String> createFilterTranslator(ObjectClass oclass,
+            OperationOptions options) {
+        // flat files are not queryable - don't translate anything
+        return FILTER_TRANSLATOR;
     }
 
     /**
      * Searches for objects to return based on the filter provided with offset
      * and limit features.
      */
-    public void executeQuery(ObjectClass oclass, String query, ResultsHandler handler, OperationOptions options) {
+    public void executeQuery(ObjectClass oclass, String query, ResultsHandler handler,
+            OperationOptions options) {
         /**
          * Track the number of lines processed.
          */
         long lines = 0;
-
 
         /**
          * Text qualifier character.
@@ -169,27 +170,27 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
          * Internal reader initialized in the constructor.
          */
         BufferedReader rdr = null;
-        
+
         try {
-	        rdr = cfg.newFileReader();
-	        /**
-	         * Fields names read from the header.
-	         */
-	        List<String> fieldNames = FlatFileConnector.readHeader(rdr, fieldSeparator, textQualifier,
-	                uniqueIdField);
-	        
+            rdr = cfg.newFileReader();
+            /**
+             * Fields names read from the header.
+             */
+            List<String> fieldNames =
+                    FlatFileConnector.readHeader(rdr, fieldSeparator, textQualifier, uniqueIdField);
+
             String line;
             while ((line = rdr.readLine()) != null) {
                 ++lines;
                 if (line.trim().length() == 0) {
-                    log.info(MSG_SKIPPING);
+                    LOG.info(MSG_SKIPPING);
                     continue;
                 }
-                log.ok("Processing Data Line: {0}", line);
-                List<String> fieldValues = 
-                	StringUtil.parseLine(line, fieldSeparator, textQualifier);
+                LOG.ok("Processing Data Line: {0}", line);
+                List<String> fieldValues =
+                        StringUtil.parseLine(line, fieldSeparator, textQualifier);
                 if (fieldValues == null) {
-                    log.error("Error: {0}", line);
+                    LOG.error("Error: {0}", line);
                     break;
                 } else {
                     ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -206,16 +207,14 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
                     // create the connector object..
                     ConnectorObject ret = bld.build();
                     if (!handler.handle(ret)) {
-	                    break;
+                        break;
                     }
                 }
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ConnectorIOException(e);
-        }
-        finally {
-        	IOUtil.quietClose(rdr);
+        } finally {
+            IOUtil.quietClose(rdr);
         }
     }
 
@@ -223,23 +222,21 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
     // Helper Classes
     // =======================================================================
 
-
     /**
      * Common code needed to determine the headers names for AttributeInfo and
      * ConnectorObjectInfo. Reads the header to determine the field names that
      * are supported.
      */
-    static List<String> readHeader(final BufferedReader rdr,
-            final char fieldSeparator, final char textQualifier,
-            final String uniqueAttribute) throws IOException {
+    static List<String> readHeader(final BufferedReader rdr, final char fieldSeparator,
+            final char textQualifier, final String uniqueAttribute) throws IOException {
         String line;
         List<String> ret = null;
         while ((line = rdr.readLine()) != null) {
             if (line.trim().length() == 0) {
-                log.info(MSG_SKIPPING);
+                LOG.info(MSG_SKIPPING);
                 continue;
             }
-            log.ok("Processing Header Line: {0}", line);
+            LOG.ok("Processing Header Line: {0}", line);
             ret = StringUtil.parseLine(line, fieldSeparator, textQualifier);
             if (ret == null) {
                 final String msg = "Error Parsing field names: Line ";
@@ -250,7 +247,7 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
                 throw new IllegalStateException(msg + line);
             }
 
-            log.info("Found Field Names: {0}", ret);
+            LOG.info("Found Field Names: {0}", ret);
             break;
         }
         return ret;
