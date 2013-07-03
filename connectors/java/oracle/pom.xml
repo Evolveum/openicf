@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,32 +27,34 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.1.0</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.db</groupId>
-    <artifactId>openicf-oracle-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>oracle-connector</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Oracle Connector</name>
     <description>Connector for Oracle</description>
-    <url>http://openicf.forgerock.org/connectors/oracle</url>
+    <url>https://openicf.forgerock.org/connectors/oracle-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10177</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - Oracle Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/oracle</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/oracle</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/oracle</url>
     </scm>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10177</url>
-    </issueManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>dbcommon</embedded.dependencies>
         <connectorPackage>org.identityconnectors.oracle</connectorPackage>
         <connectorClass>OracleConnector</connectorClass>
         <jira.componentIds>10177</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>0</jira.fixVersionIds>
     </properties>
     <repositories>
         <repository>
@@ -72,27 +74,15 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-    </profiles>
     <dependencies>
         <dependency>
-            <groupId>org.forgerock.openicf.connectors.misc</groupId>
+            <groupId>org.forgerock.openicf.misc</groupId>
             <artifactId>dbcommon</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
+            <version>1.1.1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Test Dependencies -->
         <dependency>
             <groupId>org.easytesting</groupId>
             <artifactId>fest-assert</artifactId>
@@ -100,5 +90,38 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.forgerock.openicf.misc</groupId>
+                        <artifactId>dbcommon</artifactId>
+                        <version>1.1.1.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>

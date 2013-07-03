@@ -2,7 +2,7 @@ package org.identityconnectors.oracle;
 
 import org.identityconnectors.common.security.GuardedString;
 
-/** Helper immutable holder of oracle jdbc connection information */
+/** Helper immutable holder of oracle jdbc connection information. */
 final class OracleDriverConnectionInfo {
     private final String host;
     private final String port;
@@ -12,31 +12,40 @@ final class OracleDriverConnectionInfo {
     private final GuardedString password;
     private final String url;
     private final String protocol;
+
     String getHost() {
         return host;
     }
+
     String getPort() {
         return port;
     }
+
     String getDriver() {
         return driver;
     }
+
     String getDatabase() {
         return database;
     }
+
     String getUser() {
         return user;
     }
+
     GuardedString getPassword() {
         return password;
     }
-    String getUrl(){
+
+    String getUrl() {
         return url;
     }
-    String getProtocol(){
+
+    String getProtocol() {
         return protocol;
     }
-    private OracleDriverConnectionInfo(Builder builder){
+
+    private OracleDriverConnectionInfo(Builder builder) {
         this.database = builder.getDatabase();
         this.driver = builder.getDriver();
         this.host = builder.getHost();
@@ -46,8 +55,8 @@ final class OracleDriverConnectionInfo {
         this.url = builder.getUrl();
         this.protocol = builder.getProtocol();
     }
-    
-    static final class Builder{
+
+    static final class Builder {
         private String host;
         private String port;
         private String driver;
@@ -56,63 +65,80 @@ final class OracleDriverConnectionInfo {
         private GuardedString password;
         private String url;
         private String protocol;
+
         String getHost() {
             return host;
         }
+
         String getProtocol() {
             return protocol;
         }
+
         Builder setHost(String host) {
             this.host = host;
             return this;
         }
+
         String getPort() {
             return port;
         }
+
         Builder setPort(String port) {
             this.port = port;
             return this;
         }
+
         String getDriver() {
             return driver;
         }
+
         Builder setDriver(String driver) {
             this.driver = driver;
             return this;
         }
+
         String getDatabase() {
             return database;
         }
+
         Builder setDatabase(String database) {
             this.database = database;
             return this;
         }
+
         String getUser() {
             return user;
         }
+
         Builder setUser(String user) {
             this.user = user;
             return this;
         }
+
         GuardedString getPassword() {
             return password;
         }
+
         Builder setPassword(GuardedString password) {
             this.password = password;
             return this;
         }
-        String getUrl(){
+
+        String getUrl() {
             return url;
         }
-        Builder setUrl(String url){
+
+        Builder setUrl(String url) {
             this.url = url;
             return this;
         }
-        Builder setProtocol(String protocol){
+
+        Builder setProtocol(String protocol) {
             this.protocol = protocol;
             return this;
         }
-        Builder setvalues(OracleDriverConnectionInfo info){
+
+        Builder setvalues(OracleDriverConnectionInfo info) {
             this.database = info.database;
             this.driver = info.driver;
             this.host = info.driver;
@@ -123,11 +149,13 @@ final class OracleDriverConnectionInfo {
             this.protocol = info.protocol;
             return this;
         }
-        Builder(){
+
+        Builder() {
         }
-        OracleDriverConnectionInfo build(){
-        	return new OracleDriverConnectionInfo(this);
+
+        OracleDriverConnectionInfo build() {
+            return new OracleDriverConnectionInfo(this);
         }
     }
-    
+
 }

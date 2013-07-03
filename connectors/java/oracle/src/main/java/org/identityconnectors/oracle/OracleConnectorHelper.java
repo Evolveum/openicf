@@ -1,5 +1,9 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleMessages.MSG_ATTRIBUTE_IS_EMPTY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_ATTRIBUTE_IS_MISSING;
+import static org.identityconnectors.oracle.OracleMessages.MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,107 +17,106 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 
-import static org.identityconnectors.oracle.OracleMessages.*;
-
-/** Helper static methods related to Oracle connector */
+/** Helper static methods related to Oracle connector. */
 final class OracleConnectorHelper {
-	private OracleConnectorHelper(){}
-	
-    static String getRequiredStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
+    private OracleConnectorHelper() {
+    }
+
+    static String getRequiredStringValue(Map<String, Attribute> attrs, String name,
+            ConnectorMessages cm) {
         Attribute attr = attrs.get(name);
-        if(attr == null){
+        if (attr == null) {
             throw new IllegalArgumentException(cm.format(MSG_ATTRIBUTE_IS_MISSING, null, name));
         }
         return AttributeUtil.getStringValue(attr);
     }
 
-    static String getNotEmptyStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
+    static String getNotEmptyStringValue(Map<String, Attribute> attrs, String name,
+            ConnectorMessages cm) {
         String value = getRequiredStringValue(attrs, name, cm);
-        if(StringUtil.isEmpty(value)){
+        if (StringUtil.isEmpty(value)) {
             throw new IllegalArgumentException(cm.format(MSG_ATTRIBUTE_IS_EMPTY, null, name));
         }
         return value;
-         
+
     }
 
-    static String getStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
+    static String getStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm) {
         Attribute attr = attrs.get(name);
         return attr != null ? AttributeUtil.getStringValue(attr) : null;
     }
-    
-    
-    static String getNotNullAttributeNotEmptyStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
-    	Attribute attr = attrs.get(name);
-    	if(attr == null){
-    		return null;
-    	}
-    	return getNotEmptyStringValue(attrs, name, cm);
+
+    static String getNotNullAttributeNotEmptyStringValue(Map<String, Attribute> attrs, String name,
+            ConnectorMessages cm) {
+        Attribute attr = attrs.get(name);
+        if (attr == null) {
+            return null;
+        }
+        return getNotEmptyStringValue(attrs, name, cm);
     }
 
-    
-    static <O,T> List<T> castList(List<O> source,Class<T> resultType){
-        if(source == null){
+    static <O, T> List<T> castList(List<O> source, Class<T> resultType) {
+        if (source == null) {
             return Collections.emptyList();
         }
         List<T> result = new ArrayList<T>(source.size());
-        for(Object o : source){
+        for (Object o : source) {
             result.add(resultType.cast(o));
         }
         return result;
     }
-    
-    static <O,T> List<T> castList(Attribute attr,Class<T> resultType){
-        if(attr == null){
+
+    static <O, T> List<T> castList(Attribute attr, Class<T> resultType) {
+        if (attr == null) {
             return Collections.emptyList();
         }
-        return castList(attr.getValue(),resultType);
+        return castList(attr.getValue(), resultType);
     }
 
-    
-    static Boolean getNotNullAttributeBooleanValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
+    static Boolean getNotNullAttributeBooleanValue(Map<String, Attribute> attrs, String name,
+            ConnectorMessages cm) {
         Attribute attr = attrs.get(name);
-        if(attr == null){
+        if (attr == null) {
             return null;
         }
         Object value = AttributeUtil.getSingleValue(attr);
-        if(value instanceof Boolean){
+        if (value instanceof Boolean) {
             return (Boolean) value;
         }
-        throw new IllegalArgumentException(cm.format(MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE, null, name, value));
+        throw new IllegalArgumentException(cm.format(MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE, null,
+                name, value));
     }
-    
-    static <T> T assertNotNull(T t,String argument){
-        if(t == null){
+
+    static <T> T assertNotNull(T t, String argument) {
+        if (t == null) {
             throw new IllegalArgumentException("Passed argument [" + argument + "] is null");
         }
         return t;
     }
-    
-    static Attribute buildSingleAttribute(String name,Object value){
-    	if(value != null){
-    		return AttributeBuilder.build(name, value);
-    	}
-    	else{
-    		return AttributeBuilder.build(name);
-    	}
-    }
-    
-    /** Later switch to framework implementation */ 
-    static class AttributeComparator implements Comparator<String>{
-		public int compare(String o1, String o2) {
-			return o1.compareToIgnoreCase(o2);
-		}
-    }
-    
-    static Comparator<String> getAttributeNamesComparator(){
-    	return new AttributeComparator();
+
+    static Attribute buildSingleAttribute(String name, Object value) {
+        if (value != null) {
+            return AttributeBuilder.build(name, value);
+        } else {
+            return AttributeBuilder.build(name);
+        }
     }
 
-	static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
-	    if(!ObjectClass.ACCOUNT.equals(objectClass)){
-	        throw new IllegalArgumentException("Invalid object class");
-	    }
-	}
-    
+    /** Later switch to framework implementation. */
+    static class AttributeComparator implements Comparator<String> {
+        public int compare(String o1, String o2) {
+            return o1.compareToIgnoreCase(o2);
+        }
+    }
+
+    static Comparator<String> getAttributeNamesComparator() {
+        return new AttributeComparator();
+    }
+
+    static void checkObjectClass(ObjectClass objectClass, ConnectorMessages messages) {
+        if (!ObjectClass.ACCOUNT.equals(objectClass)) {
+            throw new IllegalArgumentException("Invalid object class");
+        }
+    }
 
 }

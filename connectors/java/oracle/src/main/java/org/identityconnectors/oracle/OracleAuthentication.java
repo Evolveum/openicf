@@ -1,8 +1,6 @@
 package org.identityconnectors.oracle;
 
-/** Type of Oracle authentication */
+/** Type of Oracle authentication. */
 enum OracleAuthentication {
-    LOCAL,
-    EXTERNAL,
-    GLOBAL;
+    LOCAL, EXTERNAL, GLOBAL;
 }

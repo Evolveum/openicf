@@ -1,18 +1,20 @@
 /**
- * 
+ *
  */
 package org.identityconnectors.oracle;
 
-import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.*;
+import org.junit.Assert;
 import org.junit.matchers.JUnitMatchers;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Tests for OracleRolesAndPrivsBuilder
+ *
  * @author kitko
  *
  */
@@ -23,9 +25,11 @@ public class OracleRolesAndPrivsBuilderTest {
      */
     @Test
     public void testBuildGrants() {
-        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build());
-        List<String> roles = Arrays.asList("myRole1","myRole2");
-        List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
+        OracleRolesAndPrivsBuilder builder =
+                new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers
+                        .createDummyMessages()).build());
+        List<String> roles = Arrays.asList("myRole1", "myRole2");
+        List<String> privileges = Arrays.asList("CREATE SESSION", "SELECT ON MYTABLE");
         List<String> sql = builder.buildGrantRoles("testUser", roles);
         AssertJUnit.assertNotNull(sql);
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"myRole1\" to \"testUser\""));
@@ -40,9 +44,11 @@ public class OracleRolesAndPrivsBuilderTest {
      */
     @Test
     public void testBuildRevokes() {
-        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build());
-        List<String> roles = Arrays.asList("myRole1","myRole2");
-        List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
+        OracleRolesAndPrivsBuilder builder =
+                new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers
+                        .createDummyMessages()).build());
+        List<String> roles = Arrays.asList("myRole1", "myRole2");
+        List<String> privileges = Arrays.asList("CREATE SESSION", "SELECT ON MYTABLE");
         List<String> sql = builder.buildRevokeRoles("testUser", roles);
         AssertJUnit.assertNotNull(sql);
         Assert.assertThat(sql, JUnitMatchers.hasItem("revoke \"myRole1\" from \"testUser\""));
@@ -51,8 +57,7 @@ public class OracleRolesAndPrivsBuilderTest {
         AssertJUnit.assertNotNull(sql);
         Assert.assertThat(sql, JUnitMatchers.hasItem("revoke CREATE SESSION from \"testUser\""));
         Assert.assertThat(sql, JUnitMatchers.hasItem("revoke SELECT ON MYTABLE from \"testUser\""));
-        
-        
+
     }
 
 }
