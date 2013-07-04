@@ -1,55 +1,47 @@
 /*
- * 
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
- * 
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ * Copyright (c) 2010-2013 ForgeRock AS. All Rights Reserved
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
- * http://www.opensource.org/licenses/cddl1.php or
- * OpenIDM/legal/CDDLv1.0.txt
+ * http://forgerock.org/license/CDDLv1.0.html
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
- * at OpenIDM/legal/CDDLv1.0.txt.
+ * at http://forgerock.org/license/CDDLv1.0.html
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted 2010 [name of copyright owner]"
- * 
- * $Id$
+ * "Portions Copyrighted [year] [name of copyright owner]"
  */
-package org.forgerock.openicf.tam;
+
+package org.forgerock.openicf.connectors.tam;
 
 import java.util.Arrays;
+
 import org.identityconnectors.common.security.GuardedString;
 
-/**
- * Sample Class Doc
- *
- * @author $author$
- * @version $Revision$ $Date$
- * @since 1.0
- */
 public class GuardedStringAccessor implements GuardedString.Accessor {
 
-    public static final String code_id = "$Id$";
-    private char[] _array;
+    private char[] array;
 
     public void access(char[] clearChars) {
-        _array = new char[clearChars.length];
-        System.arraycopy(clearChars, 0, _array, 0, _array.length);
+        array = new char[clearChars.length];
+        System.arraycopy(clearChars, 0, array, 0, array.length);
     }
 
     public char[] getArray() {
-        return _array;
+        return array;
     }
 
     public void clear() {
-        Arrays.fill(_array, 0, _array.length, ' ');
+        Arrays.fill(array, 0, array.length, ' ');
     }
 }

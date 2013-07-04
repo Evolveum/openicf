@@ -1,6 +1,7 @@
 /*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -8,47 +9,39 @@
  * compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://www.opensource.org/licenses/cddl1.php or
- * OpenIDM/legal/CDDLv1.0.txt
+ * http://forgerock.org/license/CDDLv1.0.html
  * See the License for the specific language governing
  * permission and limitations under the License.
  *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
- * at OpenIDM/legal/CDDLv1.0.txt.
+ * at http://forgerock.org/license/CDDLv1.0.html
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted 2010 [name of copyright owner]"
- *
- * $Id$
+ * "Portions Copyrighted [year] [name of copyright owner]"
  */
-package org.forgerock.openicf.tam;
 
-import java.net.URL;
+package org.forgerock.openicf.connectors.tam;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import org.identityconnectors.framework.spi.AbstractConfiguration;
-import org.identityconnectors.framework.spi.ConfigurationProperty;
+import java.net.URL;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
 
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the TAM Connector.
  *
- * @author $author$
- * @version $Revision$ $Date$
- * @since 1.0
+ * @since 1.1
  */
 public class TAMConfiguration extends AbstractConfiguration {
 
-    /**
-     * Setup logging for the {@link TAMConfiguration}.
-     */
-    //private static final Log log = Log.getLog(TAMConfiguration.class);
-    // TAM Admin API properties
     /**
      * An Tivoli Access Manager user ID with the appropriate administrative
      * authority, such as sec_master.
@@ -63,8 +56,8 @@ public class TAMConfiguration extends AbstractConfiguration {
      * the Java SvrSslCfg class. The URL must use the file:/// format.
      *
      * Note: Do not use the svrsslcfg command-line interface to create a
-     * configuration file that is to be used by a Java application.
-     * Example: file:///C:\dev\jdk\PolicyDirector\tam.conf
+     * configuration file that is to be used by a Java application. Example:
+     * file:///C:\dev\jdk\PolicyDirector\tam.conf
      *
      */
     private String configurationFileURL = "file:///";
@@ -75,7 +68,7 @@ public class TAMConfiguration extends AbstractConfiguration {
     public static final String CONNECTOR_NAME = "AccessManagerConnector";
 
     /**
-     * Constructor
+     * Constructor.
      */
     public TAMConfiguration() {
         StringBuilder cfile = new StringBuilder("file:///");
@@ -85,25 +78,28 @@ public class TAMConfiguration extends AbstractConfiguration {
         configurationFileURL = cfile.toString();
     }
 
-    @ConfigurationProperty(order = 1, displayMessageKey = "TAM_CERT_AUTH_DISPLAY", helpMessageKey = "TAM_CERT_AUTH_HELP")
+    @ConfigurationProperty(order = 1, displayMessageKey = "TAM_CERT_AUTH_DISPLAY",
+            helpMessageKey = "TAM_CERT_AUTH_HELP")
     public boolean isCertificateBased() {
         return certificateBased;
     }
 
-    public void setCertificateBased(boolean _certificateBased) {
-        this.certificateBased = _certificateBased;
+    public void setCertificateBased(boolean certificateBased) {
+        this.certificateBased = certificateBased;
     }
 
-    @ConfigurationProperty(order = 2, displayMessageKey = "TAM_ADMIN_USER_DISPLAY", helpMessageKey = "TAM_ADMIN_USER_HELP", required = true)
+    @ConfigurationProperty(order = 2, displayMessageKey = "TAM_ADMIN_USER_DISPLAY",
+            helpMessageKey = "TAM_ADMIN_USER_HELP", required = true)
     public String getAdminUserID() {
         return adminUserID;
     }
 
-    public void setAdminUserID(String _adminUser) {
-        this.adminUserID = _adminUser;
+    public void setAdminUserID(String adminUser) {
+        this.adminUserID = adminUser;
     }
 
-    @ConfigurationProperty(order = 3, displayMessageKey = "TAM_ADMIN_PASSWORD_DISPLAY", helpMessageKey = "TAM_ADMIN_PASSWORD_HELP", confidential = true, required = true)
+    @ConfigurationProperty(order = 3, displayMessageKey = "TAM_ADMIN_PASSWORD_DISPLAY",
+            helpMessageKey = "TAM_ADMIN_PASSWORD_HELP", confidential = true, required = true)
     public GuardedString getAdminPassword() {
         return adminPassword;
     }
@@ -112,31 +108,34 @@ public class TAMConfiguration extends AbstractConfiguration {
         this.adminPassword = adminPassword;
     }
 
-    @ConfigurationProperty(order = 4, displayMessageKey = "TAM_CONFIG_URL_DISPLAY", helpMessageKey = "TAM_CONFIG_URL_DISPLAY", required = true)
+    @ConfigurationProperty(order = 4, displayMessageKey = "TAM_CONFIG_URL_DISPLAY",
+            helpMessageKey = "TAM_CONFIG_URL_HELP", required = true)
     public String getConfigurationFileURL() {
         return configurationFileURL;
     }
 
-    public void setConfigurationFileURL(String _configUrl) {
-        this.configurationFileURL = _configUrl;
+    public void setConfigurationFileURL(String configUrl) {
+        this.configurationFileURL = configUrl;
     }
 
-    @ConfigurationProperty(order = 5, displayMessageKey = "TAM_DELETE_FROM_RGY_DISPLAY", helpMessageKey = "TAM_DELETE_FROM_RGY_HELP", required = true)
+    @ConfigurationProperty(order = 5, displayMessageKey = "TAM_DELETE_FROM_RGY_DISPLAY",
+            helpMessageKey = "TAM_DELETE_FROM_RGY_HELP", required = true)
     public boolean isDeleteFromRegistry() {
         return deleteFromRegistry;
     }
 
-    public void setDeleteFromRegistry(boolean _deleteFromRegistry) {
-        this.deleteFromRegistry = _deleteFromRegistry;
+    public void setDeleteFromRegistry(boolean deleteFromRegistry) {
+        this.deleteFromRegistry = deleteFromRegistry;
     }
 
-    @ConfigurationProperty(order = 6, displayMessageKey = "TAM_SYNC_GSO_CREDS_DISPLAY", helpMessageKey = "TAM_SYNC_GSO_CREDS_HELP", required = true)
+    @ConfigurationProperty(order = 6, displayMessageKey = "TAM_SYNC_GSO_CREDS_DISPLAY",
+            helpMessageKey = "TAM_SYNC_GSO_CREDS_HELP", required = true)
     public boolean isSyncGSOCredentials() {
         return syncGSOCredentials;
     }
 
-    public void setSyncGSOCredentials(boolean _syncGSOCredentials) {
-        this.syncGSOCredentials = _syncGSOCredentials;
+    public void setSyncGSOCredentials(boolean syncGSOCredentials) {
+        this.syncGSOCredentials = syncGSOCredentials;
     }
 
     /**
@@ -177,16 +176,19 @@ public class TAMConfiguration extends AbstractConfiguration {
             return false;
         }
         final TAMConfiguration other = (TAMConfiguration) obj;
-        if ((this.adminUserID == null) ? (other.adminUserID != null) : !this.adminUserID.equals(other.adminUserID)) {
+        if ((this.adminUserID == null) ? (other.adminUserID != null) : !this.adminUserID
+                .equals(other.adminUserID)) {
             return false;
         }
-        if (this.adminPassword != other.adminPassword && (this.adminPassword == null || !this.adminPassword.equals(other.adminPassword))) {
+        if (this.adminPassword != other.adminPassword
+                && (this.adminPassword == null || !this.adminPassword.equals(other.adminPassword))) {
             return false;
         }
         if (this.certificateBased != other.certificateBased) {
             return false;
         }
-        if ((this.configurationFileURL == null) ? (other.configurationFileURL != null) : !this.configurationFileURL.equals(other.configurationFileURL)) {
+        if ((this.configurationFileURL == null) ? (other.configurationFileURL != null)
+                : !this.configurationFileURL.equals(other.configurationFileURL)) {
             return false;
         }
         if (this.syncGSOCredentials != other.syncGSOCredentials) {

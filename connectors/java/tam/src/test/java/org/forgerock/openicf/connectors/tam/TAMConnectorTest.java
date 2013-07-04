@@ -1,35 +1,34 @@
 /*
- * 
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
- * 
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ * Copyright (c) 2010-2013 ForgeRock AS. All Rights Reserved
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
- * http://www.opensource.org/licenses/cddl1.php or
- * OpenIDM/legal/CDDLv1.0.txt
+ * http://forgerock.org/license/CDDLv1.0.html
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
- * at OpenIDM/legal/CDDLv1.0.txt.
+ * at http://forgerock.org/license/CDDLv1.0.html
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted 2010 [name of copyright owner]"
- * 
- * $Id$
+ * "Portions Copyrighted [year] [name of copyright owner]"
  */
-package org.forgerock.openicf.tam;
+
+package org.forgerock.openicf.connectors.tam;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.identityconnectors.common.logging.Log;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -52,14 +51,12 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.forgerock.openicf.tam.TAMConnector.*;
 
 /**
  * Attempts to test the {@link TAMConnector} with the framework.
  *
- * @author $author$
- * @version $Revision$ $Date$
  */
+@Test(groups = { "integration" })
 public class TAMConnectorTest {
 
     private TAMConfiguration config;
@@ -82,33 +79,38 @@ public class TAMConnectorTest {
     protected static final String USER_REGISTRY_TEMPLATE = "userRegistryTemplate";
     protected static final String GROUP_REGISTRY_TEMPLATE = "groupRegistryTemplate";
     /*
-     * Example test properties.
-     * See the Javadoc of the TestHelpers class for the location of the public and private configuration files.
+     * Example test properties. See the Javadoc of the TestHelpers class for the
+     * location of the public and private configuration files.
      */
     private PropertyBag properties = null;
     private String userRegistryTemplate = null;
     private String groupRegistryTemplate = null;
-    //set up logging
-    private static final Log log = Log.getLog(TAMConnectorTest.class);
 
     /**
      * Create the test suite
-     * @throws Exception a resource exception
+     *
+     * @throws Exception
+     *             a resource exception
      */
     @BeforeClass
     public void setUpClass() throws Exception {
         properties = TestHelpers.getProperties(TAMConnector.class);
         config = new TAMConfiguration();
 
-        Boolean certificateBased = properties.getProperty(CFG_CERTIFICATEBASED, Boolean.class, Boolean.FALSE);
+        Boolean certificateBased =
+                properties.getProperty(CFG_CERTIFICATEBASED, Boolean.class, Boolean.FALSE);
 
         if (!certificateBased) {
-            // adminUserID and adminPassword are private properties read from private configuration file
+            // adminUserID and adminPassword are private properties read from
+            // private configuration file
             String adminUserID = properties.getStringProperty(CFG_ADMIN_USERID);
             Assert.assertNotNull(adminUserID, CFG_ADMIN_USERID + MSG);
             config.setAdminUserID(adminUserID);
-            // adminUserID and adminPassword are private properties read from private configuration file
-            GuardedString adminPassword = new GuardedString(properties.getProperty(CFG_ADMIN_PASSWORD, String.class, "").toCharArray());
+            // adminUserID and adminPassword are private properties read from
+            // private configuration file
+            GuardedString adminPassword =
+                    new GuardedString(properties.getProperty(CFG_ADMIN_PASSWORD, String.class, "")
+                            .toCharArray());
             Assert.assertNotNull(adminPassword, CFG_ADMIN_PASSWORD + MSG);
             config.setAdminPassword(adminPassword);
         } else {
@@ -127,29 +129,35 @@ public class TAMConnectorTest {
         if (null != syncGSOCredentials) {
             config.setSyncGSOCredentials(syncGSOCredentials);
         }
-        userRegistryTemplate = properties.getProperty(USER_REGISTRY_TEMPLATE, String.class, "uid=%s,cn=users,__configureme__");
+        userRegistryTemplate =
+                properties.getProperty(USER_REGISTRY_TEMPLATE, String.class,
+                        "uid=%s,cn=users,__configureme__");
         Assert.assertNotNull(userRegistryTemplate, USER_REGISTRY_TEMPLATE + MSG);
-        groupRegistryTemplate = properties.getProperty(GROUP_REGISTRY_TEMPLATE, String.class, "cn=%s,cn=groups,__configureme__");
+        groupRegistryTemplate =
+                properties.getProperty(GROUP_REGISTRY_TEMPLATE, String.class,
+                        "cn=%s,cn=groups,__configureme__");
         Assert.assertNotNull(groupRegistryTemplate, GROUP_REGISTRY_TEMPLATE + MSG);
     }
 
     /**
      * Clean up the test suite
+     *
      * @throws Exception
      */
     @AfterClass
     public static void tearDownClass() throws Exception {
-        //Dispose of all connector pools, resources, etc.
-        //ConnectorFacadeFactory.getInstance().dispose();
+        // Dispose of all connector pools, resources, etc.
+        // ConnectorFacadeFactory.getInstance().dispose();
     }
 
     /**
-     * Setup  the test
+     * Setup the test
+     *
      * @throws Exception
      */
     @BeforeMethod
     public void setup() throws Exception {
-        //config = newConfiguration();
+        // config = newConfiguration();
         facade = getFacade();
     }
 
@@ -158,7 +166,7 @@ public class TAMConnectorTest {
      */
     @AfterMethod
     public void teardown() throws Exception {
-        //config = null;
+        // config = null;
         facade = null;
     }
 
@@ -188,9 +196,13 @@ public class TAMConnectorTest {
         Uid uid = new Uid("AAB0001");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(new Name(uid.getUidValue()));
-        attributes.add(AttributeBuilder.build(PredefinedAttributes.DESCRIPTION, "Test Group for TAM Connector test"));
-        //attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME, "cn=" + uid.getUidValue() + ",cn=SecurityGroups,secAuthority=Default"));
-        attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME, String.format(groupRegistryTemplate, uid.getUidValue())));
+        attributes.add(AttributeBuilder.build(PredefinedAttributes.DESCRIPTION,
+                "Test Group for TAM Connector test"));
+        // attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME,
+        // "cn=" + uid.getUidValue() +
+        // ",cn=SecurityGroups,secAuthority=Default"));
+        attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME, String.format(
+                groupRegistryTemplate, uid.getUidValue())));
         OperationOptions oo = null;
         Uid result = facade.create(ObjectClass.GROUP, attributes, oo);
         Assert.assertEquals(uid, result);
@@ -199,7 +211,7 @@ public class TAMConnectorTest {
     /**
      * Test of create method, of class TAMConnector.
      */
-    @Test(enabled = true, dependsOnMethods = {"testCreateGroup"})
+    @Test(enabled = true, dependsOnMethods = { "testCreateGroup" })
     public void testCreateUser() {
         Uid expResult = new Uid("AAA0001");
         Set<Attribute> attributes = sampleUser(expResult.getUidValue());
@@ -208,7 +220,7 @@ public class TAMConnectorTest {
         Assert.assertEquals(expResult, result);
     }
 
-    @Test(enabled = true, dependsOnMethods = {"testCreateUser"})
+    @Test(enabled = true, dependsOnMethods = { "testCreateUser" })
     public void testUpdateUser() {
         Uid uid = new Uid("AAA0001");
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
@@ -221,7 +233,7 @@ public class TAMConnectorTest {
     /**
      * Test of delete method, of class TAMConnector.
      */
-    @Test(enabled = true, dependsOnMethods = {"testCreateUser", "testUpdateUser"})
+    @Test(enabled = true, dependsOnMethods = { "testCreateUser", "testUpdateUser" })
     public void testDeleteUser() {
         Uid uid = new Uid("AAA0001");
         OperationOptions oo = null;
@@ -231,7 +243,7 @@ public class TAMConnectorTest {
     /**
      * Test of delete method, of class TAMConnector.
      */
-    @Test(enabled = true, dependsOnMethods = {"testDeleteUser"})
+    @Test(enabled = true, dependsOnMethods = { "testDeleteUser" })
     public void testDeleteGroup() {
         Uid uid = new Uid("AAB0001");
         OperationOptions oo = null;
@@ -245,10 +257,14 @@ public class TAMConnectorTest {
         attributes.add(AttributeBuilder.build(TAMConnector.ATTR_FIRST_NAME, "TAM Connector Test"));
         attributes.add(AttributeBuilder.build(TAMConnector.ATTR_IMPORT_FROM_REGISTRY, false));
         attributes.add(AttributeBuilder.build(TAMConnector.ATTR_LAST_NAME, testUser));
-        attributes.add(AttributeBuilder.build(PredefinedAttributes.DESCRIPTION, "Test User for TAM Connector test"));
-        attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME, String.format(userRegistryTemplate, testUser)));
-        attributes.add(AttributeBuilder.build(PredefinedAttributes.GROUPS_NAME, Arrays.asList(new String[]{"AAB0001"})));
-        attributes.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("Passw0rd".toCharArray())));
+        attributes.add(AttributeBuilder.build(PredefinedAttributes.DESCRIPTION,
+                "Test User for TAM Connector test"));
+        attributes.add(AttributeBuilder.build(TAMConnector.ATTR_REGISTRY_NAME, String.format(
+                userRegistryTemplate, testUser)));
+        attributes.add(AttributeBuilder.build(PredefinedAttributes.GROUPS_NAME, Arrays
+                .asList(new String[] { "AAB0001" })));
+        attributes.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME,
+                new GuardedString("Passw0rd".toCharArray())));
         return attributes;
     }
 
@@ -259,7 +275,8 @@ public class TAMConnectorTest {
     public void testExecuteQuery() {
         EqualsFilter filter = new EqualsFilter(AttributeBuilder.build(Name.NAME, "AAB0001"));
         OperationOptions oo = null;
-        List<ConnectorObject> results = TestHelpers.searchToList(facade, ObjectClass.GROUP, filter, oo);
+        List<ConnectorObject> results =
+                TestHelpers.searchToList(facade, ObjectClass.GROUP, filter, oo);
         Assert.assertFalse(results.isEmpty(), "result is empty");
     }
 

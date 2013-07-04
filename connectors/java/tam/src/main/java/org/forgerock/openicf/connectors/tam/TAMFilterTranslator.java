@@ -1,6 +1,7 @@
 /*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -8,42 +9,51 @@
  * compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://www.opensource.org/licenses/cddl1.php or
- * OpenIDM/legal/CDDLv1.0.txt
+ * http://forgerock.org/license/CDDLv1.0.html
  * See the License for the specific language governing
  * permission and limitations under the License.
  *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
- * at OpenIDM/legal/CDDLv1.0.txt.
+ * at http://forgerock.org/license/CDDLv1.0.html
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
- * "Portions Copyrighted 2010 [name of copyright owner]"
- *
- * $Id$
+ * "Portions Copyrighted [year] [name of copyright owner]"
  */
-package org.forgerock.openicf.tam;
 
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.filter.*;
+package org.forgerock.openicf.connectors.tam;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 /**
- * This is an implementation of AbstractFilterTranslator that gives a concrete representation
- * of which filters can be applied at the connector level (natively). If the 
- * BPC doesn't support a certain expression type, that factory
- * method should return null. This level of filtering is present only to allow any
- * native contructs that may be available to help reduce the result set for the framework,
- * which will (strictly) reapply all filters specified after the connector does the initial
- * filtering.<p><p>Note: The generic query type is most commonly a String, but does not have to be.
- * 
- * @author $author$
- * @version $Revision$ $Date$
- * @since 1.0
+ * This is an implementation of AbstractFilterTranslator that gives a concrete
+ * representation of which filters can be applied at the connector level
+ * (natively).
+ *
+ * If the BPC doesn't support a certain expression type, that factory method
+ * should return null. This level of filtering is present only to allow any
+ * native contructs that may be available to help reduce the result set for the
+ * framework, which will (strictly) reapply all filters specified after the
+ * connector does the initial filtering.
+ * <p>
+ * <p>
+ * Note: The generic query type is most commonly a String, but does not have to
+ * be.
+ *
  */
 public class TAMFilterTranslator extends AbstractFilterTranslator<String> {
 
@@ -52,18 +62,18 @@ public class TAMFilterTranslator extends AbstractFilterTranslator<String> {
      */
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        /* 
-         * Example implementation:
-         * You may define the format of the queries for your connector, but
-         * you must make sure that the executeQuery() (if you implemented Search) 
-         * method handles it appropriately.
+        /*
+         * Example implementation: You may define the format of the queries for
+         * your connector, but you must make sure that the executeQuery() (if
+         * you implemented Search) method handles it appropriately.
          */
         String name = filter.getAttribute().getName();
         String value = AttributeUtil.getAsStringValue(filter.getAttribute());
         if (StringUtil.isBlank(value)) {
             return null;
         } else if (not) {
-            //create an expression that means "not contains" or "doesn't contain" if possible
+            // create an expression that means "not contains" or
+            // "doesn't contain" if possible
             return name + "!=*" + value + "*";
         } else {
             return name + "=*" + value + "*";

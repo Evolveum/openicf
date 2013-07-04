@@ -7,7 +7,7 @@
     <body>
         <section name="Using the TAM Java Admin API – Setup">
             <p>First you need to install the appropriate TAM components. Really you only need the TAM Java Runtime (PDJrte) but I like to install the TAM Runtime (PDRTE, IBMldapc, gsk7bas) as well for testing and diagnostic purposes.</p>
-            <p>Next assuming you have a Java runtime already installed (in the case of this example Java 1.4 on a Solaris 8 box) you run pdjrtecfg passing it a bunch o parameters, like so:</p>
+            <p>Next assuming you have a Java runtime already installed (in the case of this example Java 1.4) you run pdjrtecfg passing it a bunch o parameters, like so:</p>
             <p>
                 <code>/opt/PolicyDirector/sbin/pdjrtecfg -action config -host polserver.myco.com -port 7135 -java_home /usr/j2se/jre -domain Default -config_type full</code>
             </p>

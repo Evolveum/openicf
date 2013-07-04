@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011 ForgeRock AS. All rights reserved.
+ Copyright (c) 2010-2013 ForgeRock AS. All Rights Reserved
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,32 +27,34 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.1.0</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.sso</groupId>
-    <artifactId>openicf-tam-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>tam-connector</artifactId>
     <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Tivoli Access Manager 6.1 Connector</name>
     <description>Connector for Tivoli Access Manager 6.1</description>
-    <url>http://openicf.forgerock.org/connectors/tam</url>
+    <url>http://openicf.forgerock.org/connectors/tam-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10185</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - TAM Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/tam</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/tam</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/tam</url>
     </scm>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10185</url>
-    </issueManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
-        <connectorPackage>org.forgerock.openicf.tam</connectorPackage>
+        <connectorPackage>org.forgerock.openicf.connectors.tam</connectorPackage>
         <connectorClass>TAMConnector</connectorClass>
         <jira.componentIds>10185</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>0</jira.fixVersionIds>
     </properties>
     <repositories>
         <repository>
@@ -72,32 +74,50 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>admin-api</embedded.dependencies>
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-            </properties>
-        </profile>
-    </profiles>
     <dependencies>
         <!--
         Extract the PD.jar from the Administration API Application Development Kit and install it.
-        mvn install:install-file -Dfile=PD.jar -DgroupId=com.tivoli.am -DartifactId=admin-api -Dversion=6.1 -Dpackaging=jar -DgeneratePom=true
+        mvn install:install-file -Dfile=PD.jar -DgroupId=com.tivoli.am -DartifactId=admin-api -Dversion=6.1 -Dpackaging=jar -DgeneratePom=true  -DcreateChecksum=true
         -->
         <dependency>
             <groupId>com.tivoli.am</groupId>
             <artifactId>admin-api</artifactId>
             <version>6.1</version>
             <scope>provided</scope>
-            <!--scope>system</scope>
-            <systemPath>${basedir}/lib/PD.jar</systemPath-->
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.tivoli.am</groupId>
+                        <artifactId>admin-api</artifactId>
+                        <version>6.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>
