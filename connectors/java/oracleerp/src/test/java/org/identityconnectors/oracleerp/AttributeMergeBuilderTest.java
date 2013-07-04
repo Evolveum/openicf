@@ -1,38 +1,39 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.oracleerp;
 
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
-import org.testng.annotations.Test;
+
 import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.testng.annotations.Test;
 
 /**
  * @author Petr Jung
@@ -45,7 +46,7 @@ public class AttributeMergeBuilderTest {
     private static final String TEST_NAME2 = "name2";
     private static final String TEST_NAME3 = "name3";
     private static final String[] TO_GET_NAMES = { TEST_NAME1, TEST_NAME2, TEST_NAME3 };
-    private static final String[] TO_GET_NAMES2 = { TEST_NAME2};
+    private static final String[] TO_GET_NAMES2 = { TEST_NAME2 };
     private static final Set<String> TO_GET_SET = CollectionUtil.newSet(TO_GET_NAMES);
     private static final Set<String> TO_GET_SET2 = CollectionUtil.newSet(TO_GET_NAMES2);
     private static final String[] TEST_VALUE1 = null;
@@ -56,7 +57,9 @@ public class AttributeMergeBuilderTest {
     private static final String[] TEST_RESULT4 = { "value2", "value3", "value1" };
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#AttributeMergeBuilder()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#AttributeMergeBuilder()}
+     * .
      */
     @Test
     public void testEmptyBuild() {
@@ -64,7 +67,7 @@ public class AttributeMergeBuilderTest {
         assertNotNull("null builder", bld.build());
         assertTrue("null builder", bld.build().size() == 0);
     }
-    
+
     /**
      * Test method for
      * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#addAttribute(java.lang.String, java.util.Collection)}
@@ -77,7 +80,7 @@ public class AttributeMergeBuilderTest {
         final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
         bld.setAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE3));
         bld.setAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE2));
-        //Last win
+        // Last win
         bld.setAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE2));
         bld.setAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE3));
         final List<Attribute> actualList = bld.build();
@@ -85,7 +88,7 @@ public class AttributeMergeBuilderTest {
         assertEquals("size", 2, actualList.size());
         assertTrue(TEST_NAME2, actualList.contains(attrR2));
         assertTrue(TEST_NAME3, actualList.contains(attrR3));
-    }    
+    }
 
     /**
      * Test method for
@@ -99,7 +102,7 @@ public class AttributeMergeBuilderTest {
         final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
         bld.addAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE2));
         bld.addAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE3));
-        //add attribute values
+        // add attribute values
         bld.addAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE3));
         bld.addAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE2));
         final List<Attribute> actualList = bld.build();
@@ -108,7 +111,7 @@ public class AttributeMergeBuilderTest {
         assertTrue(TEST_NAME2, actualList.contains(attrR2));
         assertTrue(TEST_NAME3, actualList.contains(attrR3));
     }
-    
+
     /**
      * Test method for
      * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#addAttribute(java.lang.String, java.lang.Object[])}
@@ -121,7 +124,7 @@ public class AttributeMergeBuilderTest {
         final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
         bld.setAttribute(TEST_NAME2, (Object[]) TEST_VALUE3);
         bld.setAttribute(TEST_NAME3, (Object[]) TEST_VALUE2);
-        //last win
+        // last win
         bld.setAttribute(TEST_NAME2, (Object[]) TEST_VALUE2);
         bld.setAttribute(TEST_NAME3, (Object[]) TEST_VALUE3);
         final List<Attribute> actualList = bld.build();
@@ -129,7 +132,7 @@ public class AttributeMergeBuilderTest {
         assertEquals("size", 2, actualList.size());
         assertTrue(TEST_NAME2, actualList.contains(attrR2));
         assertTrue(TEST_NAME3, actualList.contains(attrR3));
-    }    
+    }
 
     /**
      * Test method for
@@ -153,7 +156,8 @@ public class AttributeMergeBuilderTest {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
      */
     @Test
     public void testMergeBuild() {
@@ -170,7 +174,8 @@ public class AttributeMergeBuilderTest {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
      */
     @Test
     public void testMergeNullBuild() {
@@ -189,7 +194,8 @@ public class AttributeMergeBuilderTest {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
      */
     @Test
     public void testMergeNullFirstBuild() {
@@ -208,7 +214,8 @@ public class AttributeMergeBuilderTest {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
      */
     @Test
     public void testMergeNullAttribBuild() {
@@ -227,7 +234,8 @@ public class AttributeMergeBuilderTest {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#build()}.
      */
     @Test
     public void testMergeToGetNames() {
@@ -239,6 +247,5 @@ public class AttributeMergeBuilderTest {
         assertNotNull("null builder", actualList);
         assertEquals("size", 1, actualList.size());
     }
-    
-    
+
 }

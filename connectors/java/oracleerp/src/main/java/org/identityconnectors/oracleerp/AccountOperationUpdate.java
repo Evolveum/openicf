@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,14 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.DIRECT_RESPS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_ACCOUNT_NOT_UPDATE;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_DISABLE_USER;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_ENABLE_USER;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_RENAME_USER;
+import static org.identityconnectors.oracleerp.OracleERPUtil.OWNER;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.SEC_ATTRS;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -43,29 +50,16 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 
-
 /**
  * The Account CreateOp implementation of the SPI
  *
  * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPS.", {1} .. "UpdateUser"
- * {2} ...  is an array of
- * x_user_name => ?,
- * x_owner => ?,
- * x_unencrypted_password => ?,
- * x_session_number => ?,
- * x_start_date => ?,
- * x_end_date => ?,
- * x_last_logon_date => ?,
- * x_description => ?,
- * x_password_date => ?,
- * x_password_accesses_left => ?,
- * x_password_lifespan_accesses => ?,
- * x_password_lifespan_days => ?,
- * x_employee_id => ?,
- * x_email_address => ?,
- * x_fax => ?,
- * x_customer_id => ?,
- * x_supplier_id => ? ) };
+ * {2} ... is an array of x_user_name => ?, x_owner => ?, x_unencrypted_password
+ * => ?, x_session_number => ?, x_start_date => ?, x_end_date => ?,
+ * x_last_logon_date => ?, x_description => ?, x_password_date => ?,
+ * x_password_accesses_left => ?, x_password_lifespan_accesses => ?,
+ * x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?,
+ * x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) };
  *
  *
  * @author Petr Jung
@@ -74,13 +68,12 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
  */
 final class AccountOperationUpdate extends Operation implements UpdateOp {
 
-    private static final Log log = Log.getLog(AccountOperationUpdate.class);
+    private static final Log LOG = Log.getLog(AccountOperationUpdate.class);
 
     /**
-     * Resp Operations
+     * Resp Operations.
      */
     private ResponsibilitiesOperations respOps;
-
 
     /**
      * @param conn
@@ -91,20 +84,24 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         respOps = new ResponsibilitiesOperations(conn, cfg);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.
+     * identityconnectors.framework.common.objects.ObjectClass,
+     * org.identityconnectors.framework.common.objects.Uid, java.util.Set,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         final String id = uid.getUidValue().toUpperCase();
-        log.ok("update user ''{0}''", id );
-
+        LOG.ok("update user ''{0}''", id);
 
         // Enable/dissable user
         final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
-        if ( enableAttr != null ) {
-            boolean enable =AttributeUtil.getBooleanValue(enableAttr);
-            if ( enable ) {
-                //delete user is the same as dissable
+        if (enableAttr != null) {
+            boolean enable = AttributeUtil.getBooleanValue(enableAttr);
+            if (enable) {
+                // delete user is the same as dissable
                 enable(objclass, id, options);
             } else {
                 disable(objclass, id, options);
@@ -113,7 +110,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
         if (nameAttr != null) {
-            //Cannot rename user
+            // Cannot rename user
             if (nameAttr.getNameValue() != null) {
                 final String newName = nameAttr.getNameValue();
                 if (!id.equalsIgnoreCase(newName)) {
@@ -127,26 +124,27 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg(), false);
         // add the id
         asb.setAttribute(objclass, AttributeBuilder.build(Uid.NAME, id), options);
-        //Add default owner
-        asb.setAttribute(objclass, AttributeBuilder.build(OWNER, getCfg().getDefaultOwner()), options);
-        
+        // Add default owner
+        asb.setAttribute(objclass, AttributeBuilder.build(OWNER, getCfg().getDefaultOwner()),
+                options);
+
         for (Attribute attr : attrs) {
             asb.setAttribute(objclass, attr, options);
         }
 
-        if ( !asb.isEmpty() ) {
+        if (!asb.isEmpty()) {
             // Run the create call, new style is using the defaults
             CallableStatement cs = null;
             final AccountSQLCall aSql = asb.build();
             final String msg = "Update user account {0}";
-            log.ok(msg, id);
+            LOG.ok(msg, id);
             try {
                 // Create the user
                 cs = getConn().prepareCall(aSql.getCallSql(), aSql.getSqlParams());
                 cs.execute();
             } catch (Exception e) {
                 String message = getCfg().getMessage(MSG_ACCOUNT_NOT_UPDATE, id);
-                log.error(e, message);
+                LOG.error(e, message);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(message, e);
             } finally {
@@ -157,20 +155,21 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         // Update responsibilities
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
-        if ( directResp != null ) {
-            respOps.updateUserResponsibilities( directResp, id);
-        } else if ( resp != null ) {
-            respOps.updateUserResponsibilities( resp, id);
+        if (directResp != null) {
+            respOps.updateUserResponsibilities(directResp, id);
+        } else if (resp != null) {
+            respOps.updateUserResponsibilities(resp, id);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
-        if ( secAttr != null ) {
-            new SecuringAttributesOperations(getConn(), getCfg()).updateUserSecuringAttrs(secAttr, id);
+        if (secAttr != null) {
+            new SecuringAttributesOperations(getConn(), getCfg()).updateUserSecuringAttrs(secAttr,
+                    id);
         }
 
         getConn().commit();
-        //Return new UID
-        log.ok( "update user ''{0}'' done", id );
+        // Return new UID
+        LOG.ok("update user ''{0}'' done", id);
         return new Uid(id);
     }
 
@@ -181,8 +180,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      */
     private void enable(ObjectClass objclass, String userName, OperationOptions options) {
         final String method = "enable";
-        log.ok( method);
-        //Map attrs = _actionUtil.getAccountAttributes(user, JActionUtil.OP_ENABLE_USER);
+        LOG.ok(method);
+        // Map attrs = _actionUtil.getAccountAttributes(user,
+        // JActionUtil.OP_ENABLE_USER);
 
         // no enable user stored procedure that I could find, null out
         // end_date will do nicely
@@ -201,14 +201,14 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             st.execute();
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.ok( method);
+        LOG.ok(method);
     }
 
     /**
@@ -217,9 +217,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @param options
      */
     private void disable(ObjectClass objclass, String userName, OperationOptions options) {
-        final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
+        final String sql = "{ call " + getCfg().app() + "fnd_user_pkg.disableuser(?) }";
         final String method = "disable";
-        log.ok( method);
+        LOG.ok(method);
         CallableStatement cs = null;
         try {
             cs = getConn().prepareCall(sql);
@@ -229,11 +229,11 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_DISABLE_USER, userName);
             SQLUtil.rollbackQuietly(getConn());
-            throw new ConnectorException(MessageFormat.format(msg, userName),e);
+            throw new ConnectorException(MessageFormat.format(msg, userName), e);
         } finally {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.ok( method);
+        LOG.ok(method);
     }
 }

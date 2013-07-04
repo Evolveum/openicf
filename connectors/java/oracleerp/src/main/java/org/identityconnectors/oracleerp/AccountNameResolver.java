@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,10 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FULL_NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.PERSON_FULLNAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_NAME;
 
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -32,18 +35,18 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 
 /**
- * The Account Name Resolver tries to convert Account column names to attribute names.
- * Also is can normalize the valuse
- * This class is strategy class , thread safe, with nodata
+ * The Account Name Resolver tries to convert Account column names to attribute
+ * names. Also is can normalize the valuse This class is strategy class , thread
+ * safe, with nodata.
  *
  * @author Petr Jung
- * @version $Revision 1.0$
  * @since 1.0
  */
 final class AccountNameResolver extends BasicNameResolver {
 
     /**
-     * Map column name to attribute name, special attributes are handed separated
+     * Map column name to attribute name, special attributes are handed
+     * separated.
      *
      * @param columnName
      * @return the columnName
@@ -57,7 +60,7 @@ final class AccountNameResolver extends BasicNameResolver {
     }
 
     /**
-     * Map the attribute name to column name, including the special attributes
+     * Map the attribute name to column name, including the special attributes.
      *
      * @param attributeName
      * @return the columnName
@@ -74,8 +77,13 @@ final class AccountNameResolver extends BasicNameResolver {
         return super.getColumnName(attributeName);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.AttributeNormalizer#normalizeAttribute(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Attribute)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.identityconnectors.framework.spi.AttributeNormalizer#normalizeAttribute
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * org.identityconnectors.framework.common.objects.Attribute)
      */
     @Override
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
@@ -84,9 +92,11 @@ final class AccountNameResolver extends BasicNameResolver {
         } else if (attribute instanceof Uid) {
             return new Uid(((Uid) attribute).getUidValue().toUpperCase());
         } else if (USER_NAME.equalsIgnoreCase(attribute.getName())) {
-            return AttributeBuilder.build(USER_NAME, AttributeUtil.getAsStringValue(attribute).toUpperCase());
+            return AttributeBuilder.build(USER_NAME, AttributeUtil.getAsStringValue(attribute)
+                    .toUpperCase());
         } else if (NAME.equalsIgnoreCase(attribute.getName())) {
-            return AttributeBuilder.build(NAME, AttributeUtil.getAsStringValue(attribute).toUpperCase());
+            return AttributeBuilder.build(NAME, AttributeUtil.getAsStringValue(attribute)
+                    .toUpperCase());
         }
         return super.normalizeAttribute(oclass, attribute);
     }

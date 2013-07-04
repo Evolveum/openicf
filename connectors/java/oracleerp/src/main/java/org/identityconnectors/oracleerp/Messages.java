@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -23,22 +23,28 @@
 package org.identityconnectors.oracleerp;
 
 /**
- * The interface for translate messages
+ * The interface for translate messages.
+ *
  * @author petr
  */
 interface Messages {
 
     /**
-     * Format the connector message
-     * @param key key of the message
+     * Format the connector message.
+     *
+     * @param key
+     *            key of the message
      * @return return the formated message
      */
     public String getMessage(String key);
 
     /**
-     * Format message with arguments
-     * @param key key of the message
-     * @param objects arguments
+     * Format message with arguments.
+     *
+     * @param key
+     *            key of the message
+     * @param objects
+     *            arguments
      * @return the localized message string
      */
     public String getMessage(String key, Object... objects);

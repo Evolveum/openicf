@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_PASSWORD_BLANK;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_USER_BLANK;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -47,23 +48,23 @@ import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
 
 /**
- * Class to represent a OracleErp Connection 
- *  
+ * Class to represent a OracleErp Connection.
+ *
  * @author petr
  * @version 1.0
  * @since 1.0
  */
 final class OracleERPConnection extends DatabaseConnection {
     /**
-     * The default row prefetch used in Oracle statements
+     * The default row prefetch used in Oracle statements.
      */
     private static final int DEFAULT_ROW_PREFETCH = 10;
 
-    static final Log log = Log.getLog(OracleERPConnector.class);
+    static final Log LOG = Log.getLog(OracleERPConnector.class);
 
     /**
-     * Create connection the instance creation method
-     * 
+     * Create connection the instance creation method.
+     *
      * @param config
      * @return a new {@link OracleERPConnection} connection wrapper
      */
@@ -82,10 +83,11 @@ final class OracleERPConnection extends DatabaseConnection {
         final GuardedString password = config.getPassword();
         final String datasource = config.getDataSource();
         if (StringUtil.isNotBlank(datasource)) {
-            log.ok("Create datasource connection {0}", datasource);
+            LOG.ok("Create datasource connection {0}", datasource);
             final String[] jndiProperties = config.getJndiProperties();
             final ConnectorMessages connectorMessages = config.getConnectorMessages();
-            final Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);
+            final Hashtable<String, String> prop =
+                    JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);
             if (StringUtil.isNotBlank(user) && password != null) {
                 connection = SQLUtil.getDatasourceConnection(datasource, user, password, prop);
             } else {
@@ -99,48 +101,49 @@ final class OracleERPConnection extends DatabaseConnection {
             /* On Oracle enable the synonyms */
             try {
                 if (!oracleConn.getIncludeSynonyms()) {
-                    log.ok("setIncludeSynonyms on ORACLE");
+                    LOG.ok("setIncludeSynonyms on ORACLE");
                     oracleConn.setIncludeSynonyms(true);
-                    log.ok("setIncludeSynonyms success");
+                    LOG.ok("setIncludeSynonyms success");
                 }
             } catch (Exception e) {
-                log.error(e, "setIncludeSynonyms on ORACLE exception");
+                LOG.error(e, "setIncludeSynonyms on ORACLE exception");
             }
-            //Set default row Prefetch
+            // Set default row Prefetch
             try {
                 if (oracleConn.getDefaultRowPrefetch() != DEFAULT_ROW_PREFETCH) {
-                    log.ok("setDefaultRowPrefetch on ORACLE");
+                    LOG.ok("setDefaultRowPrefetch on ORACLE");
                     oracleConn.setDefaultRowPrefetch(DEFAULT_ROW_PREFETCH);
-                    log.ok("setDefaultRowPrefetch success");
+                    LOG.ok("setDefaultRowPrefetch success");
                 }
             } catch (SQLException expected) {
-                //expected
-                log.error(expected, "setDefaultRowPrefetch exception");
+                // expected
+                LOG.error(expected, "setDefaultRowPrefetch exception");
             }
         }
-        //Disable auto-commit mode
+        // Disable auto-commit mode
         try {
             if (connection.getAutoCommit()) {
-                log.ok("setAutoCommit(false)");
+                LOG.ok("setAutoCommit(false)");
                 connection.setAutoCommit(false);
             }
         } catch (SQLException expected) {
-            //expected
-            log.error(expected, "setAutoCommit(false) exception");
+            // expected
+            LOG.error(expected, "setAutoCommit(false) exception");
         }
         return connection;
     }
 
-
     private OracleERPConfiguration config = null;
 
     /**
-     * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
-     * {@link RuntimeException} will be thrown.
-     * 
+     * Use the {@link Configuration} passed in to immediately connect to a
+     * database. If the {@link Connection} fails a {@link RuntimeException} will
+     * be thrown.
+     *
      * @param conn
      *            Real connection.
-     * @param config the Oracle ERP configuration
+     * @param config
+     *            the Oracle ERP configuration
      * @throws RuntimeException
      *             if there is a problem creating a {@link java.sql.Connection}.
      */
@@ -150,59 +153,72 @@ final class OracleERPConnection extends DatabaseConnection {
     }
 
     /**
-     * Close connection if pooled
+     * Close connection if pooled.
      */
     public void closeConnection() {
-        if (getConnection() != null && StringUtil.isNotBlank(config.getDataSource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
-            log.ok("Close the pooled connection");
+        if (getConnection() != null && StringUtil.isNotBlank(config.getDataSource())
+        /*&& this.conn.getConnection() instanceof PooledConnection */) {
+            LOG.ok("Close the pooled connection");
             dispose();
         }
     }
 
     /**
-     * Create new connection if pooled and taken from the datasource
+     * Create new connection if pooled and taken from the datasource.
+     *
      * @throws SQLException
      */
     public void openConnection() throws SQLException {
         if (getConnection() == null || getConnection().isClosed()) {
-            log.ok("Get new connection, it is closed");
+            LOG.ok("Get new connection, it is closed");
             setConnection(getNativeConnection(config));
         }
     }
 
     /**
-     * OracleERP prepareCall statement with mapped callable statement parameters
-     * @param sql a <CODE>String</CODE> sql statement definition
+     * OracleERP prepareCall statement with mapped callable statement parameters.
+     *
+     * @param sql
+     *            a <CODE>String</CODE> sql statement definition
      * @return return a callable statement
-     * @throws SQLException an exception in statement
+     * @throws SQLException
+     *             an exception in statement
      */
     public CallableStatement prepareCall(final String sql) throws SQLException {
-        log.ok("prepareCall sql: {0}", sql);
+        LOG.ok("prepareCall sql: {0}", sql);
         final CallableStatement cs = getConnection().prepareCall(sql);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
     }
 
     /**
-     * OracleERP prepareCall statement with mapped callable statement parameters
-     * @param sql a <CODE>String</CODE> sql statement definition
-     * @param params the bind parameter values
+     * OracleERP prepareCall statement with mapped callable statement parameters.
+     *
+     * @param sql
+     *            a <CODE>String</CODE> sql statement definition
+     * @param params
+     *            the bind parameter values
      * @return return a callable statement
-     * @throws SQLException an exception in statement
+     * @throws SQLException
+     *             an exception in statement
      */
     @Override
-    public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
-        log.ok("prepareCall sql: {0}", sql);
+    public CallableStatement prepareCall(final String sql, final List<SQLParam> params)
+            throws SQLException {
+        LOG.ok("prepareCall sql: {0}", sql);
         final CallableStatement cs = super.prepareCall(sql, params);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
     }
 
     /**
-     * OracleERP prepare statement using the query builder object
-     * @param query DatabaseQueryBuilder query
+     * OracleERP prepare statement using the query builder object.
+     *
+     * @param query
+     *            DatabaseQueryBuilder query
      * @return return a prepared statement
-     * @throws SQLException an exception in statement
+     * @throws SQLException
+     *             an exception in statement
      */
     @Override
     public PreparedStatement prepareStatement(DatabaseQueryBuilder query) throws SQLException {
@@ -212,41 +228,49 @@ final class OracleERPConnection extends DatabaseConnection {
     }
 
     /**
-     * OracleERP prepare statement
+     * OracleERP prepare statement.
+     *
      * @param sql
      * @return the prepared statement
-     * @throws SQLException 
+     * @throws SQLException
      */
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        log.ok("prepareStatement sql: {0}", sql);
+        LOG.ok("prepareStatement sql: {0}", sql);
         PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
     }
 
     /**
-     * OracleERP prepare statement with mapped prepare statement parameters
-     * @param sql a <CODE>String</CODE> sql statement definition
-     * @param params the bind parameter values
+     * OracleERP prepare statement with mapped prepare statement parameters.
+     *
+     * @param sql
+     *            a <CODE>String</CODE> sql statement definition
+     * @param params
+     *            the bind parameter values
      * @return return a prepared statement
-     * @throws SQLException an exception in statement
+     * @throws SQLException
+     *             an exception in statement
      */
     @Override
-    public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
-        log.ok("prepareStatement sql: {0}", sql);
+    public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params)
+            throws SQLException {
+        LOG.ok("prepareStatement sql: {0}", sql);
         final PreparedStatement ps = super.prepareStatement(sql, params);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
     }
-    
+
     /**
-     * Return the driver manager connection
-     * @param config parameters
+     * Return the driver manager connection.
+     *
+     * @param config
+     *            parameters
      * @return
      */
     private static Connection getDriverMangerConnection(final OracleERPConfiguration config) {
         final String connectionUrl = config.getConnectionUrl();
-        log.ok("getDriverMangerConnection connectionUrl {0}", connectionUrl);
+        LOG.ok("getDriverMangerConnection connectionUrl {0}", connectionUrl);
 
         // create the connection base on the configuration..
         final Connection[] ret = new Connection[1];
@@ -268,18 +292,23 @@ final class OracleERPConnection extends DatabaseConnection {
                         java.util.Properties info = new java.util.Properties();
                         info.put("user", config.getUser());
                         info.put("password", new String(clearChars));
-                        if( StringUtil.isNotBlank(config.getClientEncryptionType())){
-                            log.ok("getDriverMangerConnection set oracle.net.encryption_types_client {0}", config.getClientEncryptionType());
-                            info.put("oracle.net.encryption_types_client", config.getClientEncryptionType());
+                        if (StringUtil.isNotBlank(config.getClientEncryptionType())) {
+                            LOG.ok("getDriverMangerConnection set oracle.net.encryption_types_client {0}",
+                                    config.getClientEncryptionType());
+                            info.put("oracle.net.encryption_types_client", config
+                                    .getClientEncryptionType());
                         }
-                        if( StringUtil.isNotBlank(config.getClientEncryptionLevel())){
-                            log.ok("getDriverMangerConnection set oracle.net.encryption_client {0}", config.getClientEncryptionLevel());
-                            info.put("oracle.net.encryption_client", config.getClientEncryptionLevel());
+                        if (StringUtil.isNotBlank(config.getClientEncryptionLevel())) {
+                            LOG.ok("getDriverMangerConnection set oracle.net.encryption_client {0}",
+                                    config.getClientEncryptionLevel());
+                            info.put("oracle.net.encryption_client", config
+                                    .getClientEncryptionLevel());
                         }
 
                         ret[0] = DriverManager.getConnection(connectionUrl, info);
                     } catch (SQLException e) {
-                        // checked exception are not allowed in the access method 
+                        // checked exception are not allowed in the access
+                        // method
                         // Lets use the exception softening pattern
                         throw new RuntimeException(e);
                     }

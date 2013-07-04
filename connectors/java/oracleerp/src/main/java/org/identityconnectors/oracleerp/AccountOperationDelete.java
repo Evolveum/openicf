@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_ACCOUNT_NOT_DELETE;
+
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -36,9 +37,8 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 
-
 /**
- * The Account CreateOp implementation of the SPI
+ * The Account CreateOp implementation of the SPI.
  *
  * { call "+cfg.app()+"fnd_user_pkg.disableuser(?) }
  *
@@ -48,7 +48,7 @@ import org.identityconnectors.framework.spi.operations.DeleteOp;
  */
 final class AccountOperationDelete extends Operation implements DeleteOp {
 
-    private static final Log log = Log.getLog(AccountOperationDelete.class);
+    private static final Log LOG = Log.getLog(AccountOperationDelete.class);
 
     /**
      * @param conn
@@ -58,12 +58,17 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
         super(conn, cfg);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.
+     * identityconnectors.framework.common.objects.ObjectClass,
+     * org.identityconnectors.framework.common.objects.Uid,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
-        log.ok("delete user ''{0}''", uid.getUidValue());
+        final String sql = "{ call " + getCfg().app() + "fnd_user_pkg.disableuser(?) }";
+        LOG.ok("delete user ''{0}''", uid.getUidValue());
         CallableStatement cs = null;
         try {
             cs = getConn().prepareCall(sql);
@@ -76,18 +81,19 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             final String msg = MessageFormat.format(MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
                 SQLUtil.rollbackQuietly(getConn());
-                log.error(e, msg);
-                // There should be just a could not delete - informational message instead of throwing an exception
+                LOG.error(e, msg);
+                // There should be just a could not delete - informational
+                // message instead of throwing an exception
                 throw new UnknownUidException(uid, objClass);
-            } 
+            }
             SQLUtil.rollbackQuietly(getConn());
-            log.error(e, msg);
-            throw new UnknownUidException(uid, objClass);            
+            LOG.error(e, msg);
+            throw new UnknownUidException(uid, objClass);
         } finally {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.ok("delete user ''{0}'' done", uid.getUidValue());
+        LOG.ok("delete user ''{0}'' done", uid.getUidValue());
         getConn().commit();
     }
 }

@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright © 2011 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -27,32 +27,34 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.1.0.0-SNAPSHOT</version>
+        <version>1.1.1.0</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors.db</groupId>
-    <artifactId>openicf-oracleerp-connector</artifactId>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>oracleerp-connector</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>OracleERP Connector</name>
     <description>Connector for OracleERP</description>
-    <url>http://openicf.forgerock.org/connectors/oracleerp</url>
+    <url>http://openicf.forgerock.org/connectors/oracleerp-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10187</url>
+    </issueManagement>
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://builds.forgerock.org/job/OpenICF - OracleERP Connector</url>
+    </ciManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/oracleerp</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/oracleerp</developerConnection>
         <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/oracleerp</url>
     </scm>
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10187</url>
-    </issueManagement>
     <properties>
-        <skipTests>true</skipTests>
-        <contracts.skip>true</contracts.skip>
-        <privateConfigPath>${user.home}/.connectors/${project.artifactId}/config</privateConfigPath>
-        <embedded.dependencies>dbcommon</embedded.dependencies>
         <connectorPackage>org.identityconnectors.oracleerp</connectorPackage>
         <connectorClass>OracleERPConnector</connectorClass>
         <jira.componentIds>10187</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>0</jira.fixVersionIds>
     </properties>
     <repositories>
         <repository>
@@ -72,35 +74,59 @@
             </releases>
         </repository>
     </repositories>
-    <profiles>
-        <profile>
-            <id>with-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon,ojdbc14</embedded.dependencies>
-            </properties>
-        </profile>
-        <profile>
-            <id>active-embedded-dependencies</id>
-            <properties>
-                <embedded.dependencies>dbcommon</embedded.dependencies>
-            </properties>
-        </profile>
-    </profiles>
     <dependencies>
         <dependency>
-            <groupId>org.forgerock.openicf.connectors.misc</groupId>
+            <groupId>org.forgerock.openicf.misc</groupId>
             <artifactId>dbcommon</artifactId>
-            <version>1.1.0.0-SNAPSHOT</version>
+            <version>1.1.1.0-SNAPSHOT</version>
         </dependency>
         <!--
-        Download from http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-10201-088211.html
-        mvn install:install-file -Dfile=ojdbc14.jar -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=10.2.0.5 -Dpackaging=jar -DgeneratePom=true
+        Download from http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-112010-090769.html
+		mvn install:install-file -Dfile=ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3.0 -Dpackaging=jar -DgeneratePom=true
         -->
         <dependency>
             <groupId>com.oracle</groupId>
-            <artifactId>ojdbc14</artifactId>
-            <version>10.2.0.5</version>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.3.0</version>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.forgerock.openicf.misc</groupId>
+                        <artifactId>dbcommon</artifactId>
+                        <version>1.1.1.0-SNAPSHOT</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.oracle</groupId>
+                        <artifactId>ojdbc6</artifactId>
+                        <version>11.2.0.3.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
 </project>

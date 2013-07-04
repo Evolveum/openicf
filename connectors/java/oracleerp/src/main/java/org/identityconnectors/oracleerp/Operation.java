@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -25,21 +25,21 @@ package org.identityconnectors.oracleerp;
 import org.identityconnectors.common.Assertions;
 
 /**
- * Main implementation of the Operation
+ * Main implementation of the Operation.
  *
  * @author petr
- * @version 1.0
  * @since 1.0
  */
 abstract class Operation {
 
     /**
-     * The instance or the parent object
+     * The instance or the parent object.
      */
     final private OracleERPConnection conn;
 
     /**
-     * get method
+     * get method.
+     *
      * @return the connection
      */
     OracleERPConnection getConn() {
@@ -47,22 +47,22 @@ abstract class Operation {
     }
 
     /**
-     * get method
+     * get method.
+     *
      * @return the configuration
      */
     OracleERPConfiguration getCfg() {
         return cfg;
     }
 
-
     /**
-     * The instance or the parent object
+     * The instance or the parent object.
      */
     final private OracleERPConfiguration cfg;
 
-
     /**
-     * The base of all operation
+     * The base of all operation.
+     *
      * @param conn
      * @param cfg
      */

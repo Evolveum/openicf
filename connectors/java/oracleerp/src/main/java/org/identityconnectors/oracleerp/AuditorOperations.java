@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,33 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.AUDITOR_RESPS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FUNCTION_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MENU_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_READ;
+import static org.identityconnectors.oracleerp.OracleERPUtil.OU_ID;
+import static org.identityconnectors.oracleerp.OracleERPUtil.OU_NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FUNCTIONS_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FUNCTION_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_ONLY_FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.SOB_ID;
+import static org.identityconnectors.oracleerp.OracleERPUtil.SOB_NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_MENU_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
+import static org.identityconnectors.oracleerp.OracleERPUtil.listToCommaDelimitedString;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,9 +65,8 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
-
 /**
- * The Account User Responsibilities Update
+ * The Account User Responsibilities Update.
  *
  * @author Petr Jung
  * @version $Revision 1.0$
@@ -49,7 +74,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
  */
 final class AuditorOperations extends Operation {
 
-    private static final Log log = Log.getLog(AuditorOperations.class);
+    private static final Log LOG = Log.getLog(AuditorOperations.class);
 
     /**
      * @param conn
@@ -61,34 +86,26 @@ final class AuditorOperations extends Operation {
 
     /**
      *
-     * Return Object of Auditor Data
+     * Return Object of Auditor Data.
      *
-     * List auditorResps (GO)
-     * userMenuNames
-     * menuIds
-     * userFunctionNames
-     * functionIds formIds
-     * formNames
-     * userFormNames
-     * readOnlyFormIds
-     * readWriteOnlyFormIds
-     * readOnlyFunctionIds
-     * readWriteOnlyFunctionIds
-     * readOnlyFormNames
-     * readOnlyUserFormNames
-     * readWriteOnlyFormNames
+     * List auditorResps (GO) userMenuNames menuIds userFunctionNames
+     * functionIds formIds formNames userFormNames readOnlyFormIds
+     * readWriteOnlyFormIds readOnlyFunctionIds readWriteOnlyFunctionIds
+     * readOnlyFormNames readOnlyUserFormNames readWriteOnlyFormNames
      * readWriteOnlyUserFormNames
      *
-     * @param amb AttributeMergeBuilder
-     * @param respName String
+     * @param amb
+     *            AttributeMergeBuilder
+     * @param respName
+     *            String
      *
      */
-     public void updateAuditorData(AttributeMergeBuilder amb, String respName) {
-         final String method = "updateAuditorData";
-         log.ok(method);
-         // Profile Options used w/SOB and Organization
-         String sobOption = "GL Set of Books ID";
-         String ouOption = "MO: Operating Unit";
+    public void updateAuditorData(AttributeMergeBuilder amb, String respName) {
+        final String method = "updateAuditorData";
+        LOG.ok(method);
+        // Profile Options used w/SOB and Organization
+        String sobOption = "GL Set of Books ID";
+        String ouOption = "MO: Operating Unit";
 
         String curResp = respName;
         String resp = null;
@@ -102,7 +119,7 @@ final class AuditorOperations extends Operation {
         }
         StringBuilder b = new StringBuilder();
 
-        //one query
+        // one query
         b.append("SELECT DISTINCT 'N/A' userMenuName, 0 menuID, fffv.function_id,");
         b.append("fffv.user_function_name , ffv.form_id, ffv.form_name, ffv.user_form_name, ");
         b.append("fffv.function_name, ");
@@ -138,7 +155,7 @@ final class AuditorOperations extends Operation {
         b.append("AND fa.application_name=?) ");
         b.append("CONNECT BY prior sub_menu_id=menu_id) ORDER BY 2,4");
         // one query
-        log.ok(method + ": Resp = " + curResp);
+        LOG.ok(method + ": Resp = " + curResp);
 
         PreparedStatement st = null;
         ResultSet res = null;
@@ -196,10 +213,11 @@ final class AuditorOperations extends Operation {
                 if (funName != null && !funName.equals("N/A")) {
                     userFunctionNames.add(funName);
                 }
-                String param = getColumn(res, 9);// column added for parameters
+                String param = getColumn(res, 9); // column added for parameters
                 boolean qo = false;
                 if (param != null) {
-                    // pattern can be QUERY_ONLY=YES, QUERY_ONLY = YES, QUERY_ONLY="YES",
+                    // pattern can be QUERY_ONLY=YES, QUERY_ONLY = YES,
+                    // QUERY_ONLY="YES",
                     // QUERY_ONLY=Y, etc..
                     Pattern pattern = Pattern.compile("\\s*QUERY_ONLY\\s*=\\s*\"*Y");
                     Matcher matcher = pattern.matcher(param.toUpperCase());
@@ -208,66 +226,66 @@ final class AuditorOperations extends Operation {
                     }
                 }
                 if (qo) {
-                    String ROfunId = getColumn(res, 3);
-                    if (ROfunId != null && !ROfunId.equals("0")) {
-                        roFunctionIds.add(ROfunId);
+                    String roFunId = getColumn(res, 3);
+                    if (roFunId != null && !roFunId.equals("0")) {
+                        roFunctionIds.add(roFunId);
                     }
-                    String ROfunctionName = getColumn(res, 8);
-                    if (ROfunctionName != null && !ROfunctionName.equals("N/A")) {
-                        roFunctionNames.add(ROfunctionName);
+                    String roFunctionName = getColumn(res, 8);
+                    if (roFunctionName != null && !roFunctionName.equals("N/A")) {
+                        roFunctionNames.add(roFunctionName);
                     }
-                    String ROformId = getColumn(res, 5);
-                    if (ROformId != null && !ROformId.equals("0")) {
-                        roFormIds.add(ROformId);
+                    String roFormId = getColumn(res, 5);
+                    if (roFormId != null && !roFormId.equals("0")) {
+                        roFormIds.add(roFormId);
                     }
-                    String ROformName = getColumn(res, 6);
-                    if (ROformName != null && !ROformName.equals("N/A")) {
-                        roFormNames.add(ROformName);
+                    String roFormName = getColumn(res, 6);
+                    if (roFormName != null && !roFormName.equals("N/A")) {
+                        roFormNames.add(roFormName);
                     }
-                    String ROuserFormName = getColumn(res, 7);
-                    if (ROuserFormName != null && !ROuserFormName.equals("N/A")) {
-                        roUserFormNames.add(ROuserFormName);
+                    String roUserFormName = getColumn(res, 7);
+                    if (roUserFormName != null && !roUserFormName.equals("N/A")) {
+                        roUserFormNames.add(roUserFormName);
                     }
                 } else {
-                    String RWfunId = getColumn(res, 3);
-                    if (RWfunId != null && !RWfunId.equals("0")) {
-                        rwFunctionIds.add(RWfunId);
+                    String rwFunId = getColumn(res, 3);
+                    if (rwFunId != null && !rwFunId.equals("0")) {
+                        rwFunctionIds.add(rwFunId);
                     }
-                    String RWfunctionName = getColumn(res, 8);
-                    if (RWfunctionName != null && !RWfunctionName.equals("N/A")) {
-                        rwFunctionNames.add(RWfunctionName);
-                        attrMap.put("rwFunctionName", RWfunctionName);
+                    String rwFunctionName = getColumn(res, 8);
+                    if (rwFunctionName != null && !rwFunctionName.equals("N/A")) {
+                        rwFunctionNames.add(rwFunctionName);
+                        attrMap.put("rwFunctionName", rwFunctionName);
                     }
-                    String RWformId = getColumn(res, 5);
-                    if (RWformId != null && !RWformId.equals("0")) {
-                        rwFormIds.add(RWformId);
-                        attrMap.put("rwFormId", RWformId);
+                    String rwFormId = getColumn(res, 5);
+                    if (rwFormId != null && !rwFormId.equals("0")) {
+                        rwFormIds.add(rwFormId);
+                        attrMap.put("rwFormId", rwFormId);
                     }
-                    String RWformName = getColumn(res, 6);
-                    if (RWformName != null && !RWformName.equals("N/A")) {
-                        rwFormNames.add(RWformName);
-                        attrMap.put("rwFormName", RWformName);
+                    String rwFormName = getColumn(res, 6);
+                    if (rwFormName != null && !rwFormName.equals("N/A")) {
+                        rwFormNames.add(rwFormName);
+                        attrMap.put("rwFormName", rwFormName);
                     }
-                    String RWuserFormName = getColumn(res, 7);
-                    if (RWuserFormName != null && !RWuserFormName.equals("N/A")) {
-                        rwUserFormNames.add(RWuserFormName);
-                        attrMap.put("rwUserFormName", RWuserFormName);
+                    String rwUserFormName = getColumn(res, 7);
+                    if (rwUserFormName != null && !rwUserFormName.equals("N/A")) {
+                        rwUserFormNames.add(rwUserFormName);
+                        attrMap.put("rwUserFormName", rwUserFormName);
                     }
                     if (!attrMap.isEmpty()) {
-                        functionIdMap.put(RWfunId, new HashMap<String, Object>(attrMap));
+                        functionIdMap.put(rwFunId, new HashMap<String, Object>(attrMap));
                         attrMap.clear();
                     }
-                }// end-if (qo)
-            }// end-while
-            // no catch, just use finally to ensure closes happen
+                } // end-if (qo)
+            } // end-while
+             // no catch, just use finally to ensure closes happen
         } catch (ConnectorException e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
@@ -277,9 +295,11 @@ final class AuditorOperations extends Operation {
             st = null;
         }
 
-        // Post Process Results looking for false-positive (misidentified rw objects) only if
+        // Post Process Results looking for false-positive (misidentified rw
+        // objects) only if
         // there are any read only functions (roFunctionIds != null)
-        // The results of this query are additional roFunctionIds by following logic
+        // The results of this query are additional roFunctionIds by following
+        // logic
         // in bug#13405.
         if (roFunctionIds != null && roFunctionIds.size() > 0) {
             b = new StringBuilder();
@@ -296,7 +316,8 @@ final class AuditorOperations extends Operation {
                 st = getConn().prepareStatement(b.toString());
                 res = st.executeQuery();
                 while (res != null && res.next()) {
-                    // get each functionId and use as key to find associated rw objects
+                    // get each functionId and use as key to find associated rw
+                    // objects
                     // remove from rw bucket and place in ro bucket
                     String functionId = getColumn(res, 1);
                     if (functionId != null) {
@@ -326,19 +347,19 @@ final class AuditorOperations extends Operation {
                                 rwUserFormNames.remove(rwUserFormName);
                                 roUserFormNames.add(rwUserFormName);
                             }
-                        }// if idObj ! null
-                    }// if functionId != null
-                }// end while
+                        } // if idObj ! null
+                    } // if functionId != null
+                } // end while
 
                 // no catch, just use finally to ensure closes happen
             } catch (ConnectorException e) {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
                 throw e;
             } catch (Exception e) {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg, e);
             } finally {
@@ -389,23 +410,23 @@ final class AuditorOperations extends Operation {
             // query for SOB / Organization
             b.append("Select distinct ");
             b.append("decode(fpo1.user_profile_option_name, '");
-            b.append(sobOption + "', fpo1.user_profile_option_name||'||'||gsob.name||'||'||gsob.set_of_books_id, '");
-            b.append(ouOption + "', fpo1.user_profile_option_name||'||'||hou1.name||'||'||hou1.organization_id)");
-            b.append(" from " + getCfg().app() + "fnd_responsibility_vl fr, " + getCfg().app() + "fnd_profile_option_values fpov, "
-                    + getCfg().app() + "fnd_profile_options fpo");
-            b.append(" , " + getCfg().app() + "fnd_profile_options_vl fpo1, " + getCfg().app() + "hr_organization_units hou1, "
-                    + getCfg().app() + "gl_sets_of_books gsob");
-            b
-                    .append(" where fr.responsibility_id = fpov.level_value and gsob.set_of_books_id = fpov.profile_option_value");
-            b
-                    .append(" and  fpo.profile_option_name = fpo1.profile_option_name and fpo.profile_option_id = fpov.profile_option_id");
-            b
-                    .append(" and  fpo.application_id = fpov.application_id and   fpov.profile_option_value = to_char(hou1.organization_id(+))");
+            b.append(sobOption
+                    + "', fpo1.user_profile_option_name||'||'||gsob.name||'||'||gsob.set_of_books_id, '");
+            b.append(ouOption
+                    + "', fpo1.user_profile_option_name||'||'||hou1.name||'||'||hou1.organization_id)");
+            b.append(" from " + getCfg().app() + "fnd_responsibility_vl fr, " + getCfg().app()
+                    + "fnd_profile_option_values fpov, " + getCfg().app()
+                    + "fnd_profile_options fpo");
+            b.append(" , " + getCfg().app() + "fnd_profile_options_vl fpo1, " + getCfg().app()
+                    + "hr_organization_units hou1, " + getCfg().app() + "gl_sets_of_books gsob");
+            b.append(" where fr.responsibility_id = fpov.level_value and gsob.set_of_books_id = fpov.profile_option_value");
+            b.append(" and  fpo.profile_option_name = fpo1.profile_option_name and fpo.profile_option_id = fpov.profile_option_id");
+            b.append(" and  fpo.application_id = fpov.application_id and   fpov.profile_option_value = to_char(hou1.organization_id(+))");
             b.append(" and  fpov.profile_option_value = to_char(gsob.set_of_books_id(+)) and   fpov.level_id = 10003");
             b.append(" and  fr.responsibility_name = ?");
             b.append(" order by 1");
 
-            log.ok(method + ": Resp = " + curResp);
+            LOG.ok(method + ": Resp = " + curResp);
 
             try {
                 st = getConn().prepareStatement(b.toString());
@@ -430,7 +451,7 @@ final class AuditorOperations extends Operation {
                 }
             } catch (Exception e) {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
             } finally {
                 SQLUtil.closeQuietly(res);
@@ -440,6 +461,6 @@ final class AuditorOperations extends Operation {
             }
         }
 
-        log.ok(method + " done");
-     }
+        LOG.ok(method + " done");
+    }
 }

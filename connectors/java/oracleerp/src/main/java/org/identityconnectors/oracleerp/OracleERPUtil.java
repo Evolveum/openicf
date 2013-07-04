@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -37,8 +37,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
@@ -60,9 +60,9 @@ import org.identityconnectors.framework.common.objects.Uid;
  * @version $Revision 1.0$
  * @since 1.0
  */
-class OracleERPUtil {
+final class OracleERPUtil {
 
-    private static final Log log = Log.getLog(OracleERPUtil.class);
+    private static final Log LOG = Log.getLog(OracleERPUtil.class);
 
     static final String MSG = "Oracle ERP: ";
 
@@ -101,12 +101,12 @@ class OracleERPUtil {
     static final String NPW_NUM = "npw_number";
     static final String PERSON_ID = "person_id";
 
-    //Special attributes
+    // Special attributes
 
     static final String PERSON_PARTY_ID = "person_party_id";
     static final String EXP_PWD = "expirePassword";
 
-    // The container attributes 
+    // The container attributes
 
     static final String RESPKEYS = "responsibilityKeys";
 
@@ -136,30 +136,30 @@ class OracleERPUtil {
     static final String RW_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
     static final String RW_FUNCTION_IDS = "readWriteOnlyFunctionIds";
 
-    /** The search pattern operation options key */
+    /** The search pattern operation options key. */
     static final String PATTERN = "searchPattern";
 
-    /** Default OracleRP driver */
+    /** Default OracleRP driver. */
     static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
 
-    /** Default OracleRP admin user */
-    static final String DEFAULT_USER_NAME = "APPS"; // Default user name           
+    /** Default OracleRP admin user. */
+    static final String DEFAULT_USER_NAME = "APPS"; // Default user name
 
-    /** Default OracleRP apps name */
-    static final String DEFAULT_APPS_NAME = "APPS."; // Default user name           
+    /** Default OracleRP apps name. */
+    static final String DEFAULT_APPS_NAME = "APPS."; // Default user name
 
     /**
-     * Name attribute, old name attribute
+     * Name attribute, old name attribute.
      */
     static final String NAME = "name";
 
     /**
-     * Timeout
+     * Timeout.
      */
     static final int ORACLE_TIMEOUT = 1800;
 
     /**
-     * Default customer
+     * Default customer.
      */
     static final String CUST = "CUST";
 
@@ -169,44 +169,44 @@ class OracleERPUtil {
     static final String AUDITOR_OBJECT = "auditorObject";
 
     /**
-     * object class name definitions
-     * responsibilities, responsibilityNames, applications, securityGroups, auditorResps
+     * object class name definitions responsibilities, responsibilityNames,
+     * applications, securityGroups, auditorResps.
      */
 
     static final String RESPS = "responsibilities";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass RESP_OC = new ObjectClass(RESPS);
 
     static final String DIRECT_RESPS = "directResponsibilities";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass DIRECT_RESP_OC = new ObjectClass(DIRECT_RESPS);
 
     static final String INDIRECT_RESPS = "indirectResponsibilities";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass INDIRECT_RESP_OC = new ObjectClass(INDIRECT_RESPS);
 
     static final String RESP_NAMES = "responsibilityNames";
     static final String RESP_NAME = "responsibility";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass RESP_NAMES_OC = new ObjectClass(RESP_NAMES);
 
     static final String APPS = "applications";
     static final String APP = "application";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass APPS_OC = new ObjectClass(APPS);
 
     static final String SEC_GROUPS = "securityGroups";
-    //static final String SEC_GROUP = "securityGroup";
-    /** Object Class name */
+    // static final String SEC_GROUP = "securityGroup";
+    /** Object Class name. */
     public static final ObjectClass SEC_GROUPS_OC = new ObjectClass(SEC_GROUPS);
 
     static final String SEC_ATTRS = "securingAttrs";
-    /** Object Class name */
+    /** Object Class name. */
     public static final ObjectClass SEC_ATTRS_OC = new ObjectClass(SEC_ATTRS);
 
     /**
-     * Auditor responsibilities has menus, forms, functions, 
-     * Auditor attributes: activeRespsOnly
+     * Auditor responsibilities has menus, forms, functions, Auditor attributes:
+     * activeRespsOnly.
      */
     public static final ObjectClass AUDITOR_RESPS_OC = new ObjectClass(AUDITOR_RESPS);
 
@@ -216,24 +216,26 @@ class OracleERPUtil {
     static final String OU_NAME = "organizationalUnitName";
     static final String OU_ID = "organizationalUnitId";
 
-    // new version 11.5.10 does not use responsibility table, it uses 2 new views
+    // new version 11.5.10 does not use responsibility table, it uses 2 new
+    // views
     static final String RESPS_TABLE = "fnd_user_resp_groups";
     static final String RESPS_DIRECT_VIEW = "fnd_user_resp_groups_direct";
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";
-    
+
     /**
-     * Only accounts where clause
+     * Only accounts where clause.
      */
-    static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
-    static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE = "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
-    
+    static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE =
+            "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
+    static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE =
+            "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
+
     /**
-     * Scripting support
-     * The default shell language
+     * Scripting support The default shell language.
      */
-    static final String GROOVY="GROOVY";
-    
+    static final String GROOVY = "GROOVY";
+
     static final String CONN = "conn";
     static final String ID = "id";
     static final String ATTRIBUTES = "attributes";
@@ -241,15 +243,19 @@ class OracleERPUtil {
     static final String ACTION = "action";
     static final String OP_GET_USER = "getUser";
     static final String PASSWORD = "password";
-    
+
     static final String ACTION_CONTEXT = "actionContext";
     static final String ERRORS = "errors";
     static final String TRACE = "trace";
-    
 
-    // format flags for processing responsibilities strings, used by getResp() and getResps() methods
-    static final int RESP_FMT_KEYS = 0; // return responsibilities with keys only.
-    static final int RESP_FMT_NORMALIZE_DATES = 1; // return whole responsibilities with time data removed from date columns.
+    // format flags for processing responsibilities strings, used by getResp()
+    // and getResps() methods
+    static final int RESP_FMT_KEYS = 0; // return responsibilities with keys
+                                        // only.
+    static final int RESP_FMT_NORMALIZE_DATES = 1; // return whole
+                                                   // responsibilities with time
+                                                   // data removed from date
+                                                   // columns.
     static final int ORA_01403 = 1403;
 
     // Validate messages constants
@@ -285,13 +291,15 @@ class OracleERPUtil {
     static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
     static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
     static final String MSG_UNSUPPORTED_ATTRIBUTE = "msg.unsupported.attribute";
-    static final String MSG_INVALID_ACCOUNT_INCLUDED = "msg.invalid.account.included";    
+    static final String MSG_INVALID_ACCOUNT_INCLUDED = "msg.invalid.account.included";
     static final String MSG_INVALID_PASSWORD_ATTRIBUTE = "msg.invalid.password.attribute";
-    
+
     /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
+     * Get default attributes to get from schema.
+     *
+     * @param ais
+     *            attribute info set
+     * @return set of the
      */
     private static Set<String> getDefaultAttributesToGet(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -317,9 +325,11 @@ class OracleERPUtil {
     }
 
     /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
+     * Get default attributes to get from schema.
+     *
+     * @param ais
+     *            attribute info set
+     * @return set of the
      */
     static Set<String> getCreatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -332,9 +342,11 @@ class OracleERPUtil {
     }
 
     /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
+     * Get default attributes to get from schema.
+     *
+     * @param ais
+     *            attribute info set
+     * @return set of the
      */
     static Set<String> getUpdatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -347,9 +359,11 @@ class OracleERPUtil {
     }
 
     /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
+     * Get default attributes to get from schema.
+     *
+     * @param ais
+     *            attribute info set
+     * @return set of the
      */
     static Set<String> getReadableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -362,9 +376,11 @@ class OracleERPUtil {
     }
 
     /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
+     * Get default attributes to get from schema.
+     *
+     * @param ais
+     *            attribute info set
+     * @return set of the
      */
     private static Set<String> getAllAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -375,34 +391,38 @@ class OracleERPUtil {
     }
 
     /**
-     * Get attributes to get list
+     * Get attributes to get list.
+     *
      * @param options
-     * @param ais Attribute info set 
-     * @param cfg the messsage
+     * @param ais
+     *            Attribute info set
+     * @param cfg
+     *            the messsage
      * @return set of attribute names to get or empty set, when not defined
      */
-    static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais, Messages cfg) {
+    static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais,
+            Messages cfg) {
         final String msg = "getAttributesToGet";
         Set<String> allAttributes = getAllAttributes(ais);
-        Set<String> _attrToGet;
+        Set<String> attrToGet;
         if (options != null && options.getAttributesToGet() != null) {
-            _attrToGet = CollectionUtil.newCaseInsensitiveSet();
+            attrToGet = CollectionUtil.newCaseInsensitiveSet();
             for (String toGet : options.getAttributesToGet()) {
                 if (allAttributes.contains(toGet)) {
-                    _attrToGet.add(toGet);
+                    attrToGet.add(toGet);
                 } else {
-                    final String errmsg = cfg.getMessage(MSG_UNSUPPORTED_ATTRIBUTE, toGet);  
+                    final String errmsg = cfg.getMessage(MSG_UNSUPPORTED_ATTRIBUTE, toGet);
                     throw new IllegalArgumentException(errmsg);
                 }
             }
         } else {
-            _attrToGet = getDefaultAttributesToGet(ais);
+            attrToGet = getDefaultAttributesToGet(ais);
         }
-        //Make sure, that the name and uid are always present
-        _attrToGet.add(Name.NAME);
-        _attrToGet.add(Uid.NAME);
-        log.ok(msg);
-        return _attrToGet;
+        // Make sure, that the name and uid are always present
+        attrToGet.add(Name.NAME);
+        attrToGet.add(Uid.NAME);
+        LOG.ok(msg);
+        return attrToGet;
     }
 
     /**
@@ -449,38 +469,43 @@ class OracleERPUtil {
     }
 
     /**
-     * @param sqlSelect 
+     * @param sqlSelect
      * @param whereAnd
      * @return and string
      */
     static String whereAnd(String sqlSelect, String whereAnd) {
-        if( sqlSelect == null ) {
+        if (sqlSelect == null) {
             throw new IllegalArgumentException("sqlSelect can not be null");
         }
         String add = trimWhere(whereAnd).trim();
-        if ( add.length() == 0 ) {
+        if (add.length() == 0) {
             return sqlSelect;
-        }       
+        }
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
-        return (iofw == -1) ? sqlSelect + " WHERE " + add : sqlSelect.substring(0, iofw).trim() + " WHERE ( "
-                + sqlSelect.substring(iofw + 5).trim() + " ) AND ( " + add + " )";
+        return (iofw == -1) ? sqlSelect + " WHERE " + add : sqlSelect.substring(0, iofw).trim()
+                + " WHERE ( " + sqlSelect.substring(iofw + 5).trim() + " ) AND ( " + add + " )";
     }
-    
+
     /**
      * @param where
      * @return and string
      */
     private static String trimWhere(String where) {
-        if( where == null ) return "";
+        if (where == null) {
+            return "";
+        }
         int iofw = where.toUpperCase().indexOf("WHERE");
         return (iofw == -1) ? where : where.substring(0, iofw) + where.substring(iofw + 5);
-    }    
-    
+    }
+
     /**
-     * Read one row from database result set and convert a columns to attribute set.  
-     * @param resultSet database data
+     * Read one row from database result set and convert a columns to attribute
+     * set.
+     *
+     * @param resultSet
+     *            database data
      * @return The transformed attribute set
-     * @throws SQLException 
+     * @throws SQLException
      */
     static Map<String, SQLParam> getColumnValues(ResultSet resultSet) throws SQLException {
         Assertions.nullCheck(resultSet, "resultSet");
@@ -492,7 +517,7 @@ class OracleERPUtil {
             SQLParam param = null;
             int sqlType = meta.getColumnType(i);
             if (name.toLowerCase().endsWith("date")) {
-                //All dates needs to be fetched as a dates
+                // All dates needs to be fetched as a dates
                 param = SQLUtil.getSQLParam(resultSet, i, name, Types.TIMESTAMP);
             } else {
                 param = SQLUtil.getSQLParam(resultSet, i, name, sqlType);
@@ -505,7 +530,7 @@ class OracleERPUtil {
 
     /**
      * Get a string from a result set, trimming trailing blanks.
-     * 
+     *
      * @param result
      * @param col
      * @return the resulted string
@@ -513,18 +538,19 @@ class OracleERPUtil {
      */
     static String getColumn(ResultSet result, int col) throws java.sql.SQLException {
         String s = result.getString(col);
-        if (s != null)
+        if (s != null) {
             s = s.trim();
+        }
         return s;
     }
 
     /**
      * @param name
      * @param columnValues
-     * @return long  value
+     * @return long value
      */
     static Long extractLong(String name, Map<String, SQLParam> columnValues) {
-        //enable date
+        // enable date
         final SQLParam param = columnValues.get(name);
         if (param == null) {
             return null;
@@ -556,7 +582,7 @@ class OracleERPUtil {
      * @return date value
      */
     static Date extractDate(String name, Map<String, SQLParam> columnValues) {
-        //enable date
+        // enable date
         final SQLParam param = columnValues.get(name);
         if (param == null) {
             return null;
@@ -575,9 +601,11 @@ class OracleERPUtil {
     }
 
     /**
-     * Takes a date in string format and returns a normalized version of the date i.e., removing time data. null dates
-     * are returned as string "null".
-     * @param strDate string date
+     * Takes a date in string format and returns a normalized version of the
+     * date i.e., removing time data. null dates are returned as string "null".
+     *
+     * @param strDate
+     *            string date
      * @return normalized date
      */
     static String normalizeStrDate(String strDate) {
@@ -588,33 +616,35 @@ class OracleERPUtil {
         } else if (strDate.length() == 10) {
             retDate = strDate;
         } else if (strDate.length() > 10) {
-            retDate = strDate.substring(0, 10); // truncate to only date i.e.,yyyy-mm-dd 
+            retDate = strDate.substring(0, 10); // truncate to only date
+                                                // i.e.,yyyy-mm-dd
         }
-        log.ok(method, strDate, retDate);
+        LOG.ok(method, strDate, retDate);
         return retDate;
     } // normalizeStrDate()
 
     /**
      * @return sql date type
-     * 
+     *
      */
     static java.sql.Date getCurrentDate() {
         final String method = "getCurrentDate ''{0}''";
         Calendar rightNow = Calendar.getInstance();
         java.util.Date utilDate = rightNow.getTime();
-        log.ok(method, utilDate);
+        LOG.ok(method, utilDate);
         return new java.sql.Date(utilDate.getTime());
     }
 
     /**
-     * Convert to strings
-     * @param from 
+     * Convert to strings.
+     *
+     * @param from
      * @return list of strings
      */
     static List<String> convertToListString(List<Object> from) {
         final String method = "convertToListString";
-        log.ok(method);
-        //Convert to list of Strings
+        LOG.ok(method);
+        // Convert to list of Strings
         final List<String> ret = new ArrayList<String>();
         for (Object obj : from) {
             ret.add(obj.toString());
@@ -628,12 +658,13 @@ class OracleERPUtil {
      */
     static String listToCommaDelimitedString(List<String> list) {
         final String method = "listToCommaDelimitedString";
-        log.ok(method);
+        LOG.ok(method);
         StringBuilder ret = new StringBuilder();
         boolean first = true;
         for (String val : list) {
-            if (!first)
+            if (!first) {
                 ret.append(",");
+            }
             ret.append(val);
             first = false;
         }
@@ -642,7 +673,7 @@ class OracleERPUtil {
 
     /**
      * @param where
-     * @return the id from the current statement 
+     * @return the id from the current statement
      */
     static String getFilterId(FilterWhereBuilder where) {
         String filterId = null;
@@ -657,30 +688,31 @@ class OracleERPUtil {
     }
 
     /**
-     * The conversion map of the attribute to the map of the attribute values
+     * The conversion map of the attribute to the map of the attribute values.
+     *
      * @param object
      * @return the map of the values
      */
     @SuppressWarnings("unchecked")
     static Map<String, Object> getScriptAttributes(Object object) {
         Map<String, Object> ret = new HashMap<String, Object>();
-        if ( object == null) {
+        if (object == null) {
             return ret;
         }
         // expected type is a map of the Attribute names and the attributes
-        if ( object instanceof Map<?, ?>) {
+        if (object instanceof Map<?, ?>) {
             /* for every attribute store in the map the value */
             Map<String, Object> attributes = (Map<String, Object>) object;
             for (Entry<String, Object> attr : attributes.entrySet()) {
                 Object attribute = attr.getValue();
-                if ( attribute instanceof Attribute) {
-                    List<Object> values = ((Attribute) attribute).getValue();                    
-                    if ( values != null && values.size() == 1 ) {
+                if (attribute instanceof Attribute) {
+                    List<Object> values = ((Attribute) attribute).getValue();
+                    if (values != null && values.size() == 1) {
                         /* Replace Attribute by a single value */
                         attribute = values.get(0);
-                    } else if (values != null && values.size() > 1 ) {
+                    } else if (values != null && values.size() > 1) {
                         /* Replace attribute by List of values */
-                        attribute =  values;
+                        attribute = values;
                     }
                 }
                 ret.put(attr.getKey(), attribute);

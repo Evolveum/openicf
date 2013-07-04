@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,11 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.DIRECT_RESP_OC;
+import static org.identityconnectors.oracleerp.OracleERPUtil.INDIRECT_RESP_OC;
+import static org.identityconnectors.oracleerp.OracleERPUtil.NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_DIRECT_VIEW;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_INDIRECT_VIEW;
 
 import java.util.List;
 
@@ -39,14 +43,14 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 
 /**
  * @author Petr Jung
- * @version $Revision 1.0$
  * @since 1.0
  */
-final class ResponsibilitiesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class ResponsibilitiesOperationSearch extends Operation implements
+        SearchOp<FilterWhereBuilder> {
 
-    private static final Log log = Log.getLog(ResponsibilitiesOperationSearch.class);
+    private static final Log LOG = Log.getLog(ResponsibilitiesOperationSearch.class);
 
-    /** Resp operations*/
+    /** Resp operations. */
     private ResponsibilitiesOperations respOps;
 
     /**
@@ -58,29 +62,42 @@ final class ResponsibilitiesOperationSearch extends Operation implements SearchO
         respOps = new ResponsibilitiesOperations(conn, cfg);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.identityconnectors.framework.spi.operations.SearchOp#
+     * createFilterTranslator
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass,
+            OperationOptions options) {
         return new OracleERPFilterTranslator(oclass, options, CollectionUtil
                 .newSet(new String[] { OracleERPUtil.NAME }), new BasicNameResolver());
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SearchOp#executeQuery(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.Object, org.identityconnectors.framework.common.objects.ResultsHandler, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.identityconnectors.framework.spi.operations.SearchOp#executeQuery
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * java.lang.Object,
+     * org.identityconnectors.framework.common.objects.ResultsHandler,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        log.ok(method);
+        LOG.ok(method);
 
         final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
         final String id = respOps.getOptionId(options);
 
         String respLocation = null;
-        if (oclass.equals(DIRECT_RESP_OC)) { //OK
+        if (oclass.equals(DIRECT_RESP_OC)) { // OK
             respLocation = RESPS_DIRECT_VIEW;
-        } else if (oclass.equals(INDIRECT_RESP_OC)) { //OK
+        } else if (oclass.equals(INDIRECT_RESP_OC)) { // OK
             respLocation = RESPS_INDIRECT_VIEW;
         } else {
             respLocation = respOps.getRespLocation();
@@ -99,7 +116,7 @@ final class ResponsibilitiesOperationSearch extends Operation implements SearchO
             }
         }
         getConn().commit();
-        log.ok(method + " done");
+        LOG.ok(method + " done");
     }
 
 }

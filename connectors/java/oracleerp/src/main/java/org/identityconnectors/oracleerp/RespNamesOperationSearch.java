@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,13 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_READ;
+import static org.identityconnectors.oracleerp.OracleERPUtil.NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES_OC;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributeInfos;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributesToGet;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,14 +49,13 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 
 /**
  * @author Petr Jung
- * @version $Revision 1.0$
  * @since 1.0
  */
 final class RespNamesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
 
-    private static final Log log = Log.getLog(RespNamesOperationSearch.class);
+    private static final Log LOG = Log.getLog(RespNamesOperationSearch.class);
 
-    /** Audit Operations */
+    /** Audit Operations. */
     private AuditorOperations auditOps;
 
     /**
@@ -62,21 +67,34 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
         auditOps = new AuditorOperations(conn, cfg);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.identityconnectors.framework.spi.operations.SearchOp#
+     * createFilterTranslator
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass,
+            OperationOptions options) {
         return new OracleERPFilterTranslator(oclass, options, CollectionUtil
                 .newSet(new String[] { OracleERPUtil.NAME }), new BasicNameResolver());
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SearchOp#executeQuery(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.Object, org.identityconnectors.framework.common.objects.ResultsHandler, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.identityconnectors.framework.spi.operations.SearchOp#executeQuery
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * java.lang.Object,
+     * org.identityconnectors.framework.common.objects.ResultsHandler,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        log.ok(method);
+        LOG.ok(method);
 
         final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), RESP_NAMES);
         final Set<String> atg = getAttributesToGet(options, ais, getCfg());
@@ -91,7 +109,7 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
 
         // Query support
-        FilterWhereBuilder  whereFilter = where;        
+        FilterWhereBuilder whereFilter = where;
         if (whereFilter != null && whereFilter.getParams().size() == 1) {
             b.append("and fndrespvl.responsibility_name = ?");
         } else {
@@ -122,12 +140,12 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
             }
         } catch (ConnectorException e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
@@ -137,6 +155,6 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
             st = null;
         }
         getConn().commit();
-        log.ok(method + " ok");
+        LOG.ok(method + " ok");
     }
 }

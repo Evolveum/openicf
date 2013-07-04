@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,43 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.ACTIVE_RESPS_ONLY;
+import static org.identityconnectors.oracleerp.OracleERPUtil.AUDITOR_RESPS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FUNCTION_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MENU_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_EXECUTE;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_COULD_NOT_READ;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_FAILED_ADD_RESP;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_FAILED_DELETE_RESP;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_FAILED_UPDATE_RESP;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_INVALID_RESPONSIBILITY;
+import static org.identityconnectors.oracleerp.OracleERPUtil.ORA_01403;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_ALL_VIEW;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_DIRECT_VIEW;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_TABLE;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_FMT_KEYS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_FMT_NORMALIZE_DATES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FUNCTIONS_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RO_USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FUNCTION_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_ONLY_FORM_IDS;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RW_USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.SYSDATE;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_FORM_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_FUNCTION_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_MENU_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getCurrentDate;
+import static org.identityconnectors.oracleerp.OracleERPUtil.normalizeStrDate;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -41,21 +77,21 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 
 /**
- * The Account User Responsibilities Update
+ * The Account User Responsibilities Update.
  *
  * @author Petr Jung
- * @version $Revision 1.0$
  * @since 1.0
  */
 final class ResponsibilitiesOperations extends Operation {
 
     /**
-     * The column names to get
+     * The column names to get.
      */
-    public static final Set<String> AUDITOR_ATTRIBUTE_NAMES = CollectionUtil.newCaseInsensitiveSet();
+    public static final Set<String> AUDITOR_ATTRIBUTE_NAMES = CollectionUtil
+            .newCaseInsensitiveSet();
 
     /**
-     * Initialization of the map
+     * Initialization of the map.
      */
     static {
         AUDITOR_ATTRIBUTE_NAMES.add(USER_MENU_NAMES);
@@ -80,7 +116,7 @@ final class ResponsibilitiesOperations extends Operation {
         AUDITOR_ATTRIBUTE_NAMES.add(AUDITOR_RESPS);
     }
 
-    private static final Log log = Log.getLog(ResponsibilitiesOperations.class);
+    private static final Log LOG = Log.getLog(ResponsibilitiesOperations.class);
 
     /**
      * @param conn
@@ -91,7 +127,7 @@ final class ResponsibilitiesOperations extends Operation {
     }
 
     /**
-     * @return the resp table location
+     * @return the resp table location.
      */
     String getRespLocation() {
         String respLocation = RESPS_TABLE;
@@ -109,7 +145,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     public void updateUserResponsibilities(final Attribute attr, final String userName) {
         final String method = "updateUserResponsibilities";
-        log.ok(method);
+        LOG.ok(method);
 
         final List<String> errors = new ArrayList<String>();
         final List<String> respList = new ArrayList<String>();
@@ -126,20 +162,24 @@ final class ResponsibilitiesOperations extends Operation {
         if (!getCfg().isNewResponsibilityViews()) {
             oldResp = getResponsibilities(userName, RESPS_TABLE, false);
         } else {
-            // can only update directly assigned resps; indirect resps are readonly
+            // can only update directly assigned resps; indirect resps are
+            // readonly
             // thru ui
             oldResp = getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
         }
-        //preserve the previous behavior where oldResp is never null.
+        // preserve the previous behavior where oldResp is never null.
         if (oldResp == null) {
             oldResp = new ArrayList<String>();
         }
         List<String> oldRespKeys = getResps(oldResp, RESP_FMT_KEYS);
         List<String> newRespKeys = getResps(respList, RESP_FMT_KEYS);
         // bug#13889
-        // create responsibilities list with dates normalized i.e., with no time data.
-        // We ignore the time data due to potential time differences between the Oracle DB environment and the IDM client.
-        // start and end dates are specified as date only from the Oracle Application GUI.
+        // create responsibilities list with dates normalized i.e., with no time
+        // data.
+        // We ignore the time data due to potential time differences between the
+        // Oracle DB environment and the IDM client.
+        // start and end dates are specified as date only from the Oracle
+        // Application GUI.
         List<String> oldRespsWithNormalizedDates = getResps(oldResp, RESP_FMT_NORMALIZE_DATES);
         // if old key is not in new list, delete it
         if (oldRespKeys != null) {
@@ -162,7 +202,7 @@ final class ResponsibilitiesOperations extends Operation {
                         if (endDateStr != null && !endDateStr.equalsIgnoreCase("null")) {
                             // format date input
                             int i = endDateStr.indexOf(" ");
-                            if( i > -1 ) {
+                            if (i > -1) {
                                 endDate = java.sql.Date.valueOf(endDateStr.substring(0, i));
                             } else {
                                 endDate = java.sql.Date.valueOf(endDateStr);
@@ -174,7 +214,8 @@ final class ResponsibilitiesOperations extends Operation {
                     }
                     if (delResp) {
                         deleteUserResponsibility(userName, resp, errors);
-                        log.ok("deleted, (end_dated), responsibility: '" + resp + "' for " + userName);
+                        LOG.ok("deleted, (end_dated), responsibility: '" + resp + "' for "
+                                + userName);
                     }
                 }
                 index++;
@@ -192,7 +233,7 @@ final class ResponsibilitiesOperations extends Operation {
                 if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
                     addUserResponsibility(userName, resp, errors);
                     respList.remove(resp);
-                    log.ok("added responsibility: '" + resp + "' for " + userName);
+                    LOG.ok("added responsibility: '" + resp + "' for " + userName);
                 }
             }
         }
@@ -200,36 +241,39 @@ final class ResponsibilitiesOperations extends Operation {
         // if new key is both lists, update it
         String respWithNormalizedDates = null;
         for (String resp : respList) {
-            // bug#13889 -  do not update all responsibilities
-            //              only update the ones that changed.
-            //              Updating all responsibilities every time masks the audit records.
-            //              Added check to see if oldResp list
-            //              contains the current entire responsibility
-            //              string.
+            // bug#13889 - do not update all responsibilities
+            // only update the ones that changed.
+            // Updating all responsibilities every time masks the audit records.
+            // Added check to see if oldResp list
+            // contains the current entire responsibility
+            // string.
             if (resp != null) {
-                log.ok("checking if update required for responsibility: '" + resp + "' for " + userName);
+                LOG.ok("checking if update required for responsibility: '" + resp + "' for "
+                        + userName);
             } else {
-                log.ok(" resp=NULL while processing updates");
+                LOG.ok(" resp=NULL while processing updates");
             }
             // Add/Update resp to user
             if (resp != null && !resp.equalsIgnoreCase("")) {
-                // normalize the date string to only contain the date, no time information.
+                // normalize the date string to only contain the date, no time
+                // information.
                 respWithNormalizedDates = getResp(resp, RESP_FMT_NORMALIZE_DATES);
 
                 if (respWithNormalizedDates != null) {
-                    log.ok("respWithNormalizedDates='" + respWithNormalizedDates + "'");
+                    LOG.ok("respWithNormalizedDates='" + respWithNormalizedDates + "'");
                 } else {
-                    log.ok("respWithNormalizedDates=null while processing updates");
+                    LOG.ok("respWithNormalizedDates=null while processing updates");
                 }
 
-                // Add/update resp to user if the date normalized responsibility string is not in the old date normalized list.
+                // Add/update resp to user if the date normalized responsibility
+                // string is not in the old date normalized list.
                 if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
                         && !respWithNormalizedDates.equalsIgnoreCase("")
                         && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
                     updateUserResponsibility(userName, resp, errors);
 
                     String msg = "updated responsibility: '" + resp + "' for " + userName;
-                    log.ok(msg);
+                    LOG.ok(msg);
                 }
             }
         }
@@ -242,14 +286,14 @@ final class ResponsibilitiesOperations extends Operation {
                 iaexceptions.append(txt);
                 iaexceptions.append(";");
             }
-            log.error(msg);
+            LOG.error(msg);
             throw new ConnectorException(iaexceptions.toString());
         }
-        log.ok(method + "done");
+        LOG.ok(method + "done");
     }
 
     /**
-     * getResponsibilities
+     * getResponsibilities.
      *
      * @param userName
      *            user id
@@ -262,15 +306,19 @@ final class ResponsibilitiesOperations extends Operation {
     List<String> getResponsibilities(String userName, String respLocation, boolean activeOnly) {
 
         final String method = "getResponsibilities";
-        log.ok(method);
+        LOG.ok(method);
 
         StringBuilder b = new StringBuilder();
 
         b.append("SELECT fndrespvl.responsibility_name, fndappvl.application_name, fndsecgvl.Security_group_name ");
-        // descr may not be available in view or in native ui with new resp views
-        // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
-        final boolean isDescription = !getCfg().isNewResponsibilityViews()
-                || (getCfg().isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW));
+        // descr may not be available in view or in native ui with new resp
+        // views
+        // bug#15492 - do not include user tables in query if id not specified,
+        // does not return allr responsibilities
+        final boolean isDescription =
+                !getCfg().isNewResponsibilityViews()
+                        || (getCfg().isDescrExists() && respLocation
+                                .equalsIgnoreCase(RESPS_DIRECT_VIEW));
         if (userName != null) {
             if (isDescription) {
                 b.append(", fnduserg.DESCRIPTION");
@@ -347,12 +395,12 @@ final class ResponsibilitiesOperations extends Operation {
             }
         } catch (ConnectorException e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
-            log.error(e, msg);
+            LOG.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
@@ -362,14 +410,15 @@ final class ResponsibilitiesOperations extends Operation {
             st = null;
         }
 
-        log.ok(method + " done");
+        LOG.ok(method + " done");
         return arrayList;
     }
 
     /**
-     * bug#13889 : Added method to create a responsibilities list with dates normalized. RESP_FMT_KEYS: get
-     * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility keys
-     * (resp_name, app_name, sec_group, description, start_date, end_date)
+     * bug#13889 : Added method to create a responsibilities list with dates
+     * normalized. RESP_FMT_KEYS: get responsibility keys (resp_name, app_name,
+     * sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility keys (resp_name,
+     * app_name, sec_group, description, start_date, end_date).
      *
      * @param resps
      * @param respFmt
@@ -377,7 +426,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     List<String> getResps(List<String> resps, int respFmt) {
         final String method = "getResps";
-        log.ok(method + " respFmt=" + respFmt);
+        LOG.ok(method + " respFmt=" + respFmt);
         List<String> respKeys = new ArrayList<String>();
         if (resps != null) {
             for (String strResp : resps) {
@@ -385,15 +434,16 @@ final class ResponsibilitiesOperations extends Operation {
                 respKeys.add(strRespReformatted);
             }
         }
-        log.ok(method + " done");
+        LOG.ok(method + " done");
         return respKeys;
     } // getResps()
 
     /**
-     * bug#13889 : Added method to create a responsibility string with dates normalized. respFmt: RESP_FMT_KEYS: get
-     * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility string
-     * (resp_name, app_name, sec_group, description, start_date, end_date) start_date, end_date (no time data, allow
-     * nulls)
+     * bug#13889 : Added method to create a responsibility string with dates
+     * normalized. respFmt: RESP_FMT_KEYS: get responsibility keys (resp_name,
+     * app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility string
+     * (resp_name, app_name, sec_group, description, start_date, end_date)
+     * start_date, end_date (no time data, allow nulls).
      *
      * @param strResp
      * @param respFmt
@@ -401,7 +451,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     private String getResp(String strResp, int respFmt) {
         final String method = "getResp(String, int)";
-        log.ok(method + "respFmt=" + respFmt);
+        LOG.ok(method + "respFmt=" + respFmt);
         String strRespRet = null;
         StringTokenizer tok = new StringTokenizer(strResp, "||", false);
 
@@ -426,13 +476,13 @@ final class ResponsibilitiesOperations extends Operation {
             }
             strRespRet = key.toString();
         }
-        log.ok(method + " done");
+        LOG.ok(method + " done");
         return strRespRet;
     } // getRespWithNormalizeDates()
 
     private void addUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "addUserResponsibility";
-        log.ok(method);
+        LOG.ok(method);
         PreparedStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -456,7 +506,7 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = tok.nextToken();
         } else {
             final String msg = getCfg().getMessage(MSG_INVALID_RESPONSIBILITY, resp);
-            log.error(msg);
+            LOG.error(msg);
             throw new ConnectorException(msg);
         }
 
@@ -473,7 +523,9 @@ final class ResponsibilitiesOperations extends Operation {
             fromDate = "to_date('" + fromDate + "', 'yyyy-mm-dd')";
         } else if (fromDate.length() > 10) {
             // try YYYY-MM-DD HH:MM:SS.n
-            fromDate = "to_date('" + fromDate.substring(0, fromDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+            fromDate =
+                    "to_date('" + fromDate.substring(0, fromDate.length() - 2)
+                            + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
         if ((toDate == null) || toDate.equalsIgnoreCase("null")) {
@@ -482,11 +534,18 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = "to_date('" + toDate + "', 'yyyy-mm-dd')";
         } else if (toDate.length() > 10) {
             // try YYYY-MM-DD HH:MM:SS.n
-            toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+            toDate =
+                    "to_date('" + toDate.substring(0, toDate.length() - 2)
+                            + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
-        StringBuilder b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                respAppName, fromDate, toDate, description, true /* doing an insert */);
+        StringBuilder b =
+                buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(),
+                        respName, respAppName, fromDate, toDate, description, true /*
+                                                                                    * doing
+                                                                                    * an
+                                                                                    * insert
+                                                                                    */);
 
         boolean doRetryWithoutAppname = false;
         String sql = b.toString();
@@ -497,20 +556,20 @@ final class ResponsibilitiesOperations extends Operation {
             //
             // 19057: check whether this is a "no data found" error;
             // if so, then perhaps the responsibility we seek doesn't
-            // have a valid app name.  We'll retry the query without
+            // have a valid app name. We'll retry the query without
             // specifying the app name.
             //
             if (e.getErrorCode() == ORA_01403) {
                 doRetryWithoutAppname = true;
             } else {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg, e);
             }
         } catch (Exception ex) {
             final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
-            log.error(ex, msg1);
+            LOG.error(ex, msg1);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, ex);
         } finally {
@@ -524,8 +583,10 @@ final class ResponsibilitiesOperations extends Operation {
             // fall back to using just the responsibility name to identify
             // the desired responsibility
             //
-            b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                    null /* respAppName is not valid */, fromDate, toDate, description, true);
+            b =
+                    buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(),
+                            respName, null /* respAppName is not valid */, fromDate, toDate,
+                            description, true);
 
             sql = b.toString();
             try {
@@ -534,18 +595,20 @@ final class ResponsibilitiesOperations extends Operation {
 
             } catch (SQLException e) {
                 if (e.getErrorCode() == ORA_01403) {
-                    // bug#16656: delay error handling for missing responsibilities
-                    final String msg = getCfg().getMessage(MSG_FAILED_ADD_RESP, resp, e.getMessage());
+                    // bug#16656: delay error handling for missing
+                    // responsibilities
+                    final String msg =
+                            getCfg().getMessage(MSG_FAILED_ADD_RESP, resp, e.getMessage());
                     errors.add(msg);
                 } else {
                     final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
-                    log.error(e, msg1);
+                    LOG.error(e, msg1);
                     SQLUtil.rollbackQuietly(getConn());
                     throw new ConnectorException(msg1, e);
                 }
             } catch (Exception ex) {
                 final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
-                log.error(ex, msg1);
+                LOG.error(ex, msg1);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg1, ex);
             } finally {
@@ -554,14 +617,15 @@ final class ResponsibilitiesOperations extends Operation {
             }
         }
         getConn().commit();
-        log.ok(method + " done");
+        LOG.ok(method + " done");
     }
 
     /**
-     * This method is shared by addUserResponsibility and updateUserResponsibility to build their PL/SQL statements.
+     * This method is shared by addUserResponsibility and
+     * updateUserResponsibility to build their PL/SQL statements.
      */
-    private StringBuilder buildUserRespStatement(String user, String secGroup, String respName, String respAppName,
-            String fromDate, String toDate, String description, boolean doInsert) {
+    private StringBuilder buildUserRespStatement(String user, String secGroup, String respName,
+            String respAppName, String fromDate, String toDate, String description, boolean doInsert) {
 
         StringBuilder b = new StringBuilder();
         b.append("DECLARE user varchar2(300); security_group varchar2(300); ");
@@ -616,7 +680,7 @@ final class ResponsibilitiesOperations extends Operation {
 
     private void deleteUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "deleteUserResponsibility";
-        log.ok(method);
+        LOG.ok(method);
         CallableStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -630,7 +694,7 @@ final class ResponsibilitiesOperations extends Operation {
             securityGroup = tok.nextToken();
         } else {
             final String msg = getCfg().getMessage(MSG_INVALID_RESPONSIBILITY, resp);
-            log.error(msg);
+            LOG.error(msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg);
         }
@@ -658,15 +722,17 @@ final class ResponsibilitiesOperations extends Operation {
         b.append("SELECT fndapp.application_short_name, fndresp.responsibility_key, ");
         b.append("fndrespvl.description INTO resp_app, resp_key, description ");
         b.append("FROM " + getCfg().app() + "fnd_responsibility_vl fndrespvl, " + getCfg().app()
-                        + "fnd_responsibility fndresp, ");
-        b.append(getCfg().app() + "fnd_application_vl fndappvl, " + getCfg().app() + "fnd_application fndapp ");
+                + "fnd_responsibility fndresp, ");
+        b.append(getCfg().app() + "fnd_application_vl fndappvl, " + getCfg().app()
+                + "fnd_application fndapp ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndappvl.APPLICATION_ID = fndapp.APPLICATION_ID ");
         b.append("AND fndappvl.APPLICATION_NAME = responsibility_app_name ");
         b.append("AND fndrespvl.RESPONSIBILITY_NAME = responsibility_long_name ");
         b.append("AND fndrespvl.RESPONSIBILITY_ID = fndresp.RESPONSIBILITY_ID ");
         b.append("AND fndrespvl.APPLICATION_ID = fndresp.APPLICATION_ID; ");
-        b.append(getCfg().app() + "fnd_user_pkg.DelResp (user_id, resp_app, resp_key, resp_sec_g_key); ");
+        b.append(getCfg().app()
+                + "fnd_user_pkg.DelResp (user_id, resp_app, resp_key, resp_sec_g_key); ");
         b.append(" END;");
 
         final String sql = b.toString();
@@ -676,29 +742,30 @@ final class ResponsibilitiesOperations extends Operation {
         } catch (SQLException e) {
             if (e.getErrorCode() == ORA_01403) {
                 // bug#16656: delay error handling for missing responsibilities
-                final String msg = getCfg().getMessage(MSG_FAILED_DELETE_RESP, resp, e.getMessage());
+                final String msg =
+                        getCfg().getMessage(MSG_FAILED_DELETE_RESP, resp, e.getMessage());
                 errors.add(msg);
             } else {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg, e);
             }
         } catch (Exception ex) {
             final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
-            log.error(ex, msg1);
+            LOG.error(ex, msg1);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, ex);
         } finally {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.ok(method + " done");
+        LOG.ok(method + " done");
     }
 
     private void updateUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "updateUserResponsibility";
-        log.ok(method);
+        LOG.ok(method);
         PreparedStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -722,7 +789,7 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = tok.nextToken();
         } else {
             final String msg = getCfg().getMessage(MSG_INVALID_RESPONSIBILITY, resp);
-            log.error(msg);
+            LOG.error(msg);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg);
         }
@@ -740,7 +807,9 @@ final class ResponsibilitiesOperations extends Operation {
             fromDate = "to_date('" + fromDate + "', 'yyyy-mm-dd')";
         } else if (fromDate.length() > 10) {
             // try YYYY-MM-DD HH:MM:SS.n
-            fromDate = "to_date('" + fromDate.substring(0, fromDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+            fromDate =
+                    "to_date('" + fromDate.substring(0, fromDate.length() - 2)
+                            + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
         if ((toDate == null) || toDate.equalsIgnoreCase("null")) {
@@ -751,11 +820,15 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = "to_date('" + toDate + "', 'yyyy-mm-dd')";
         } else if (toDate.length() > 10) {
             // try YYYY-MM-DD HH:MM:SS.n
-            toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+            toDate =
+                    "to_date('" + toDate.substring(0, toDate.length() - 2)
+                            + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
-        StringBuilder b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                respAppName, fromDate, toDate, description, false /* not doing an insert, doing an update */);
+        StringBuilder b =
+                buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(),
+                        respName, respAppName, fromDate, toDate, description, false
+                /* not doing an insert, doing an update */);
 
         boolean doRetryWithoutAppname = false;
         String sql = b.toString();
@@ -766,20 +839,20 @@ final class ResponsibilitiesOperations extends Operation {
             //
             // 19057: check whether this is a "no data found" error;
             // if so, then perhaps the responsibility we seek doesn't
-            // have a valid app name.  We'll retry the query without
+            // have a valid app name. We'll retry the query without
             // specifying the app name.
             //
             if (e.getErrorCode() == ORA_01403) {
                 doRetryWithoutAppname = true;
             } else {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
-                log.error(e, msg);
+                LOG.error(e, msg);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg, e);
             }
         } catch (Exception ex) {
             final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
-            log.error(ex, msg1);
+            LOG.error(ex, msg1);
             SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, ex);
         } finally {
@@ -793,8 +866,10 @@ final class ResponsibilitiesOperations extends Operation {
             // fall back to using just the responsibility name to identify
             // the desired responsibility
             //
-            b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                    null /* respAppName is not valid */, fromDate, toDate, description, false);
+            b =
+                    buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(),
+                            respName, null /* respAppName is not valid */, fromDate, toDate,
+                            description, false);
 
             sql = b.toString();
             try {
@@ -802,18 +877,20 @@ final class ResponsibilitiesOperations extends Operation {
                 st.execute();
             } catch (SQLException e) {
                 if (e.getErrorCode() == ORA_01403) {
-                    // bug#16656: delay error handling for missing responsibilities
-                    final String msg = getCfg().getMessage(MSG_FAILED_UPDATE_RESP, resp, e.getMessage());
+                    // bug#16656: delay error handling for missing
+                    // responsibilities
+                    final String msg =
+                            getCfg().getMessage(MSG_FAILED_UPDATE_RESP, resp, e.getMessage());
                     errors.add(msg);
                 } else {
                     final String msg = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
-                    log.error(e, msg);
+                    LOG.error(e, msg);
                     SQLUtil.rollbackQuietly(getConn());
                     throw new ConnectorException(msg, e);
                 }
             } catch (Exception ex) {
                 final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
-                log.error(ex, msg1);
+                LOG.error(ex, msg1);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg1, ex);
             } finally {
@@ -821,9 +898,10 @@ final class ResponsibilitiesOperations extends Operation {
                 st = null;
             }
         }
-        log.ok(method + " done");
+        LOG.ok(method + " done");
     }
 
+    /* @formatter:off */
     /**
      * @param oclass
      * @param where
@@ -857,6 +935,7 @@ final class ResponsibilitiesOperations extends Operation {
             }
         }
     }*/
+    /* @formatter:on */
 
     /**
      * @param options
@@ -865,7 +944,8 @@ final class ResponsibilitiesOperations extends Operation {
     boolean isActiveRespOnly(OperationOptions options) {
         boolean activeRespsOnly = false;
         if (options != null && options.getOptions() != null) {
-            activeRespsOnly = Boolean.TRUE.equals(options.getOptions().get(ACTIVE_RESPS_ONLY)) ? true : false;
+            activeRespsOnly =
+                    Boolean.TRUE.equals(options.getOptions().get(ACTIVE_RESPS_ONLY)) ? true : false;
         }
         return activeRespsOnly;
     }
@@ -881,28 +961,32 @@ final class ResponsibilitiesOperations extends Operation {
         }
         return id;
     }
-    
 
     /**
-     * Add a quoted string to a SQL statement we're building in a buffer. If the attribute might be an integer, then
-     * call addAttributeValue() instead, which factors in the syntax of the attribute when determining whether or not to
-     * quote the value.
-     * @param b buffer
-     * @param s string to be quoted
+     * Add a quoted string to a SQL statement we're building in a buffer. If the
+     * attribute might be an integer, then call addAttributeValue() instead,
+     * which factors in the syntax of the attribute when determining whether or
+     * not to quote the value.
+     *
+     * @param b
+     *            buffer
+     * @param s
+     *            string to be quoted
      */
     private void addQuoted(StringBuilder b, String s) {
         final String method = "addQuoted ''{0}''";
-        log.ok(method, s);
+        LOG.ok(method, s);
         b.append("'");
         if (s != null) {
             for (int i = 0; i < s.length(); i++) {
                 char ch = s.charAt(i);
-                if (ch == '\'')
+                if (ch == '\'') {
                     b.append("''");
-                else
+                } else {
                     b.append(ch);
+                }
             }
         }
         b.append("'");
-    }    
+    }
 }

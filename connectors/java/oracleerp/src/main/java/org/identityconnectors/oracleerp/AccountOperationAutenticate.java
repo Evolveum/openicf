@@ -9,12 +9,12 @@
  * except in compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * http://opensource.org/licenses/cddl1.php
  * See the License for the specific language governing permissions and limitations
  * under the License.
  *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
  * If applicable, add the following below this CDDL Header, with the fields
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
@@ -22,7 +22,11 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_ACCOUNT_DISABLED;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_AUTH_FAILED;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_PASSWORD_EXPIRED;
+import static org.identityconnectors.oracleerp.OracleERPUtil.USER_NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getColumnValues;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -36,7 +40,10 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.*;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
+import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
+import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -44,14 +51,14 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 
-
 /**
- * The AuthenticateOp implementation of the SPI
+ * The AuthenticateOp implementation of the SPI.
+ *
  * @author Petr Jung
- * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountOperationAutenticate extends Operation implements AuthenticateOp, ResolveUsernameOp {
+final class AccountOperationAutenticate extends Operation implements AuthenticateOp,
+        ResolveUsernameOp {
 
     /**
      * @param conn
@@ -61,13 +68,20 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         super(conn, cfg);
     }
 
-    private static final Log log = Log.getLog(AccountOperationAutenticate.class);
+    private static final Log LOG = Log.getLog(AccountOperationAutenticate.class);
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate
+     * (org.identityconnectors.framework.common.objects.ObjectClass,
+     * java.lang.String, org.identityconnectors.common.security.GuardedString,
+     * org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        log.ok("authenticate user ''{0}''", username);
+    public Uid authenticate(ObjectClass objectClass, String username, GuardedString password,
+            OperationOptions options) {
+        LOG.ok("authenticate user ''{0}''", username);
 
         Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(username, "username");
@@ -75,13 +89,13 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
 
         createCheckValidateFunction();
 
-        //call the validation function
+        // call the validation function
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-
-        final String sqlAccount = "select user_name, start_date, end_date, password_date, last_logon_date from "
-                    + getCfg().app() + "fnd_user where upper(user_name) = ?";
+        final String sqlAccount =
+                "select user_name, start_date, end_date, password_date, last_logon_date from "
+                        + getCfg().app() + "fnd_user where upper(user_name) = ?";
 
         List<SQLParam> par1 = new ArrayList<SQLParam>();
         par1.add(new SQLParam(USER_NAME, username.toUpperCase()));
@@ -92,25 +106,28 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             ps = getConn().prepareCall(sqlAccount, par1);
             rs = ps.executeQuery();
             if (rs == null || !rs.next()) {
-                //account not found
+                // account not found
                 throw new InvalidCredentialException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
             final Map<String, SQLParam> columnValues = getColumnValues(rs);
-            //build special attributes
-            new AccountOperationSearch(getConn(), getCfg()).buildSpecialAttributes(amb, columnValues);
+            // build special attributes
+            new AccountOperationSearch(getConn(), getCfg()).buildSpecialAttributes(amb,
+                    columnValues);
 
-            //The password is expired
+            // The password is expired
             if (amb.hasExpectedValue(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
-                throw new PasswordExpiredException(getCfg().getMessage(MSG_PASSWORD_EXPIRED, username)).initUid(uid);
+                throw new PasswordExpiredException(getCfg().getMessage(MSG_PASSWORD_EXPIRED,
+                        username)).initUid(uid);
             }
 
-            //The account is disabled
+            // The account is disabled
             if (amb.hasExpectedValue(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
-                throw new InvalidPasswordException(getCfg().getMessage(MSG_ACCOUNT_DISABLED, username));
+                throw new InvalidPasswordException(getCfg().getMessage(MSG_ACCOUNT_DISABLED,
+                        username));
             }
 
         } catch (Exception ex) {
-            log.error(ex, "autenticate exception");
+            LOG.error(ex, "autenticate exception");
             SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(ex);
         } finally {
@@ -140,7 +157,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
                 throw new InvalidPasswordException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
         } catch (Exception ex) {
-            log.error(ex, "autenticate exception");
+            LOG.error(ex, "autenticate exception");
             SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(ex);
         } finally {
@@ -151,7 +168,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         }
 
         getConn().commit();
-        log.ok("authenticate user ''{0}'' done", username);
+        LOG.ok("authenticate user ''{0}'' done", username);
         return uid;
     }
 
@@ -159,23 +176,24 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
      *
      */
     private void createCheckValidateFunction() {
-        log.ok("createCheckValidateFunction");
+        LOG.ok("createCheckValidateFunction");
         StringBuilder b = new StringBuilder();
         b.append("create or replace function wavesetValidateFunc1 (username IN varchar2, password IN varchar2) ");
         b.append("RETURN NUMBER is ");
         b.append("BEGIN ");
-        b.append("IF (" +getCfg().app() + "FND_USER_PKG.ValidateLogin(username, password) = TRUE ) THEN RETURN 1; ");
+        b.append("IF (" + getCfg().app()
+                + "FND_USER_PKG.ValidateLogin(username, password) = TRUE ) THEN RETURN 1; ");
         b.append("ELSE RETURN 0; ");
         b.append("END IF; ");
         b.append("END;");
 
-        //make sure the function exist
+        // make sure the function exist
         CallableStatement st = null;
         try {
             st = getConn().prepareCall(b.toString());
             st.execute();
         } catch (Exception ex) {
-            log.error(ex, b.toString());
+            LOG.error(ex, b.toString());
             throw ConnectorException.wrap(ex);
         } finally {
             SQLUtil.closeQuietly(st);
@@ -187,19 +205,17 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
      * {@inheritDoc}
      */
     public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {
-        log.ok("resolveUsername ''{0}''", username);
+        LOG.ok("resolveUsername ''{0}''", username);
 
         Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(username, "username");
 
-
-        //call the validation function
+        // call the validation function
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-
-        final String sqlAccount = "select user_name from "
-                    + getCfg().app() + "fnd_user where upper(user_name) = ?";
+        final String sqlAccount =
+                "select user_name from " + getCfg().app() + "fnd_user where upper(user_name) = ?";
 
         List<SQLParam> par1 = new ArrayList<SQLParam>();
         par1.add(new SQLParam(USER_NAME, username.toUpperCase()));
@@ -208,11 +224,11 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             ps = getConn().prepareCall(sqlAccount, par1);
             rs = ps.executeQuery();
             if (rs == null || !rs.next()) {
-                //account not found
+                // account not found
                 throw new InvalidCredentialException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
         } catch (Exception ex) {
-            log.error(ex, "autenticate exception");
+            LOG.error(ex, "autenticate exception");
             SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(ex);
         } finally {
@@ -223,7 +239,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         }
 
         getConn().commit();
-        log.ok("authenticate user ''{0}'' done", username);
+        LOG.ok("authenticate user ''{0}'' done", username);
         return uid;
     }
 }
