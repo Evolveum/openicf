@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -40,67 +40,72 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 
-public class VmsAttributeValidator {
+public final class VmsAttributeValidator {
+
+    private VmsAttributeValidator() {
+    }
+
     private static class ValidatorInfo {
         enum ValidatorType {
-            NUMERIC,
-            PATTERN,
-            METHOD
+            NUMERIC, PATTERN, METHOD
         };
-        private ValidatorType       _validatorType;
-        private Object              _value;
-        private int                 _multiplicity;
+
+        private ValidatorType validatorType;
+        private Object value;
+        private int multiplicity;
 
         public ValidatorInfo(int multiplicity) {
-            _validatorType = ValidatorType.NUMERIC;
-            _multiplicity = multiplicity;
+            validatorType = ValidatorType.NUMERIC;
+            this.multiplicity = multiplicity;
         }
 
         public ValidatorInfo(Pattern pattern, int multiplicity) {
-            _validatorType = ValidatorType.PATTERN;
-            _value = pattern;
-            _multiplicity = multiplicity;
+            validatorType = ValidatorType.PATTERN;
+            value = pattern;
+            this.multiplicity = multiplicity;
         }
 
         public ValidatorInfo(Validity clazz) {
-            _validatorType = ValidatorType.METHOD;
-            _value = clazz;
+            validatorType = ValidatorType.METHOD;
+            value = clazz;
             // Multiplicity will be checked by the Method,
             // so we set it to be unchecked.
             //
-            _multiplicity = -1; 
+            multiplicity = -1;
         }
 
         public ValidatorType getValidatorType() {
-            return _validatorType;
+            return validatorType;
         }
 
         public Pattern getPattern() {
-            return (Pattern)_value;
+            return (Pattern) value;
         }
 
         public Validity getValidity() {
-            return (Validity)_value;
+            return (Validity) value;
         }
 
         public int getMultiplicity() {
-            return _multiplicity;
+            return multiplicity;
         }
     }
 
     // Pattern to validate values
     //
-    private static final Pattern _accountPattern            = Pattern.compile(".{1,8}"); 
-    private static final Pattern _algorithmPattern          = Pattern.compile("(\\w+)=(\\w+)(=\\d+)?"); 
-    private static final Pattern _cliPattern                = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
-    private static final Pattern _cliTablesPattern          = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
-    private static final Pattern _devicePattern             = Pattern.compile(".{1,31}"); 
-    private static final Pattern _directoryPattern          = Pattern.compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}"); 
-    private static final Pattern _fileSpecPattern           = Pattern.compile("[a-zA-Z0-9$_:]+"); 
-    private static final Pattern _passwordPattern           = Pattern.compile("[a-zA-Z0-9$_]{1,31}"); 
-    private static final Pattern _uicPattern                = Pattern.compile("\\[[0-7]+,([0-7]+|\\*)\\]"); 
+    private static final Pattern ACCOUNT_PATTERN = Pattern.compile(".{1,8}");
+    private static final Pattern ALGORITHM_PATTERN = Pattern.compile("(\\w+)=(\\w+)(=\\d+)?");
+    private static final Pattern CLI_PATTERN = Pattern.compile("[a-zA-Z0-9$_:]{1,31}");
+    private static final Pattern CLI_TABLES_PATTERN = Pattern.compile("[a-zA-Z0-9$_:]{1,31}");
+    private static final Pattern DEVICE_PATTERN = Pattern.compile(".{1,31}");
+    private static final Pattern DIRECTORY_PATTERN = Pattern
+            .compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}");
+    private static final Pattern FILE_SPEC_PATTERN = Pattern.compile("[a-zA-Z0-9$_:]+");
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile("[a-zA-Z0-9$_]{1,31}");
+    private static final Pattern UIC_PATTERN = Pattern.compile("\\[[0-7]+,([0-7]+|\\*)\\]");
 
-    private static Map<String, ValidatorInfo> VALIDATOR_INFO = new HashMap<String, ValidatorInfo>();
+    private static final Map<String, ValidatorInfo> VALIDATOR_INFO =
+            new HashMap<String, ValidatorInfo>();
 
     public interface Validity {
         public boolean isValid(List<Object> dateList);
@@ -108,44 +113,47 @@ public class VmsAttributeValidator {
 
     public static class ValidBoolean implements Validity {
         /**
-         * Determine if the string represents a valid Boolean
+         * Determine if the string represents a valid Boolean.
          *
          * @param booleanList
          * @return
          */
         public boolean isValid(List<Object> booleanList) {
-            if (booleanList.size()!=1)
+            if (booleanList.size() != 1) {
                 return false;
+            }
             return (booleanList.get(0) instanceof Boolean);
         }
     }
 
     public static class ValidOwner implements Validity {
         /**
-         * Determine if the string represents a valid VMS owner
+         * Determine if the string represents a valid VMS owner.
          *
          * @param ownerList
          * @return
          */
         public boolean isValid(List<Object> ownerList) {
-            if (ownerList.size()!=1)
+            if (ownerList.size() != 1) {
                 return false;
-            String owner = (String)ownerList.get(0).toString();
-            return (owner==null || owner.length()<32);
+            }
+            String owner = (String) ownerList.get(0).toString();
+            return (owner == null || owner.length() < 32);
         }
     }
 
     public static class ValidDate implements Validity {
         /**
-         * Determine if the string represents a valid VMS date stamp
+         * Determine if the string represents a valid VMS date stamp.
          *
          * @param dateList
          * @return
          */
         public boolean isValid(List<Object> dateList) {
-            if (dateList.size()!=1)
+            if (dateList.size() != 1) {
                 return false;
-            String date = (String)dateList.get(0).toString();
+            }
+            String date = (String) dateList.get(0).toString();
             DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.US);
             try {
                 dateFormat.parse(date.trim());
@@ -158,14 +166,15 @@ public class VmsAttributeValidator {
 
     public static class ValidDateOrNone extends ValidDate {
         /**
-         * Determine if the string represents a valid VMS date stamp, or "none"
+         * Determine if the string represents a valid VMS date stamp, or "none".
          *
          * @param dateList
          * @return
          */
         public boolean isValid(List<Object> dateList) {
-            if (dateList.size()!=1)
+            if (dateList.size() != 1) {
                 return false;
+            }
             String date = dateList.get(0).toString().trim().toUpperCase();
             return "NONE".equals(date) || super.isValid(dateList);
         }
@@ -173,17 +182,19 @@ public class VmsAttributeValidator {
 
     public static class ValidNumberOrNone implements Validity {
         /**
-         * Determine if the string represents a number, or "none"
+         * Determine if the string represents a number, or "none".
          *
          * @param numberList
          * @return
          */
         public boolean isValid(List<Object> numberList) {
-            if (numberList.size()!=1)
+            if (numberList.size() != 1) {
                 return false;
+            }
             Object object = numberList.get(0);
-            if (object instanceof Number)
+            if (object instanceof Number) {
                 return true;
+            }
             try {
                 Integer.parseInt(object.toString());
                 return true;
@@ -196,36 +207,42 @@ public class VmsAttributeValidator {
     /**
      * Determine if the value for ACCESS is valid.
      *
-     * Only a pair of Strings representing hours is valid
-     * The hour list is a comma-separated list of hours, and ranges.
-     * Hours are 0-origin, for example
-     *      0-8, 9
+     * Only a pair of Strings representing hours is valid The hour list is a
+     * comma-separated list of hours, and ranges. Hours are 0-origin, for
+     * example 0-8, 9
      */
     public static class ValidAccessList implements Validity {
         public boolean isValid(List<Object> accessList) {
             try {
-                if (accessList==null || accessList.size()!=2)
+                if (accessList == null || accessList.size() != 2) {
                     return false;
+                }
                 for (Object access : accessList) {
-                    if (!(access instanceof String))
+                    if (!(access instanceof String)) {
                         return false;
-                    if (((String)access).length()==0)
+                    }
+                    if (((String) access).length() == 0) {
                         return true;
-                    for (String pair : ((String)access).split(",")) {
+                    }
+                    for (String pair : ((String) access).split(",")) {
                         String[] split = pair.split("-");
-                        if (split.length==1) {
+                        if (split.length == 1) {
                             int lower = Integer.parseInt(split[0]);
-                            if (lower>23 || lower<0)
+                            if (lower > 23 || lower < 0) {
                                 return false;
+                            }
                         } else {
                             int lower = Integer.parseInt(split[0]);
                             int upper = Integer.parseInt(split[1]);
-                            if (lower>23 || lower<0)
+                            if (lower > 23 || lower < 0) {
                                 return false;
-                            if (upper>23 || upper<0)
+                            }
+                            if (upper > 23 || upper < 0) {
                                 return false;
-                            if (lower>upper)
+                            }
+                            if (lower > upper) {
                                 return false;
+                            }
                         }
                     }
                 }
@@ -238,7 +255,8 @@ public class VmsAttributeValidator {
 
     public static class ValidAlgorithm implements Validity {
         /**
-         *  Determine if the value for ALGORITHM is valid.
+         * Determine if the value for ALGORITHM is valid.
+         *
          * <pre>
          *          /ALGORITHM=keyword=type [=value]
          *
@@ -291,26 +309,30 @@ public class VmsAttributeValidator {
          * @return
          */
         public boolean isValid(List<Object> algorithmList) {
-            if (algorithmList.size()!=1)
+            if (algorithmList.size() != 1) {
                 return false;
+            }
             String algorithm = algorithmList.get(0).toString().trim();
-            Matcher matcher = _algorithmPattern.matcher(algorithm);
+            Matcher matcher = ALGORITHM_PATTERN.matcher(algorithm);
             if (matcher.matches()) {
                 String keyword = matcher.group(1).trim().toUpperCase();
-                String type    = matcher.group(2).trim().toUpperCase();
+                String type = matcher.group(2).trim().toUpperCase();
                 String userval = null;
-                if (matcher.group(3)!=null)
+                if (matcher.group(3) != null) {
                     userval = matcher.group(3).trim();
-                else
+                } else {
                     userval = "";
+                }
                 if (ALGO_KEYS_LIST.contains(keyword)) {
                     if (ALGO_TYPE_VMS.equals(type)) {
-                        if (userval.length()==0)
+                        if (userval.length() == 0) {
                             return true;
-                    } else if (ALGO_TYPE_CUSTOMER.equals(type) && userval.length()>0) {
+                        }
+                    } else if (ALGO_TYPE_CUSTOMER.equals(type) && userval.length() > 0) {
                         int value = Integer.parseInt(userval.substring(1));
-                        if (value>=128 && value<=255)
+                        if (value >= 128 && value <= 255) {
                             return true;
+                        }
                     }
                 }
 
@@ -318,11 +340,14 @@ public class VmsAttributeValidator {
             return false;
         }
     }
-    private static final Collection<String> ALGO_KEYS_LIST = makeList(new String[] {ALGO_KEY_BOTH, ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
+
+    private static final Collection<String> ALGO_KEYS_LIST = makeList(new String[] { ALGO_KEY_BOTH,
+        ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
 
     public static class ValidFlagList implements Validity {
         /**
-         *  Determine if the value for FLAG(s) is valid.
+         * Determine if the value for FLAG(s) is valid.
+         *
          * <pre>
          *          /FLAGS=([NO]option[,...])
          *
@@ -494,6 +519,7 @@ public class VmsAttributeValidator {
          *                    standard VMS authentication for a user account that
          *                    normally uses external authentication.
          * </pre>
+         *
          * @param flagList
          * @return
          */
@@ -501,15 +527,13 @@ public class VmsAttributeValidator {
             return isValidList(flagList, FLAGS_LIST);
         }
     }
-    //TODO: FLAG_PWDMIX, not available in older VMS systems
-    private static final String[] FLAGS_ARRAY = {
-        FLAG_AUDIT, FLAG_AUTOLOGIN, FLAG_CAPTIVE, FLAG_DEFCLI, FLAG_DISCTLY,
-        FLAG_DISFORCE_PWD_CHANGE, FLAG_DISIMAGE, FLAG_DISMAIL, FLAG_DISNEWMAIL,
-        FLAG_DISPWDDIC, FLAG_DISPWDHIS, FLAG_DISPWDSYNCH, FLAG_DISRECONNECT,
-        FLAG_DISREPORT, FLAG_DISWELCOME, FLAG_EXTAUTH, FLAG_GENPWD,
-        FLAG_LOCKPWD, FLAG_PWD2_EXPIRED, FLAG_PWD_EXPIRED, 
-        FLAG_RESTRICTED, FLAG_VMSAUTH, FLAG_DISUSER,
-    };
+
+    // TODO: FLAG_PWDMIX, not available in older VMS systems
+    private static final String[] FLAGS_ARRAY = { FLAG_AUDIT, FLAG_AUTOLOGIN, FLAG_CAPTIVE,
+        FLAG_DEFCLI, FLAG_DISCTLY, FLAG_DISFORCE_PWD_CHANGE, FLAG_DISIMAGE, FLAG_DISMAIL,
+        FLAG_DISNEWMAIL, FLAG_DISPWDDIC, FLAG_DISPWDHIS, FLAG_DISPWDSYNCH, FLAG_DISRECONNECT,
+        FLAG_DISREPORT, FLAG_DISWELCOME, FLAG_EXTAUTH, FLAG_GENPWD, FLAG_LOCKPWD,
+        FLAG_PWD2_EXPIRED, FLAG_PWD_EXPIRED, FLAG_RESTRICTED, FLAG_VMSAUTH, FLAG_DISUSER, };
     public static final Collection<String> FLAGS_LIST = makeList(FLAGS_ARRAY);
 
     public static class ValidGeneratePassword implements Validity {
@@ -540,19 +564,21 @@ public class VmsAttributeValidator {
          *       Note that the /GENERATE_PASSWORD and /PASSWORD qualifiers are
          *       mutually exclusive.
          * </pre>
+         *
          * @param passwordTypeList
          * @return
          */
         public boolean isValid(List<Object> passwordTypeList) {
-            if (passwordTypeList.size()!=1)
+            if (passwordTypeList.size() != 1) {
                 return false;
+            }
             String passwordType = passwordTypeList.get(0).toString().trim().toUpperCase();
             return PWD_TYPE_LIST.contains(passwordType);
         }
     }
-    private static final String[] PWD_TYPE_ARRAY = {
-        PWD_TYPE_BOTH, PWD_TYPE_CURRENT, PWD_TYPE_PRIMARY, PWD_TYPE_SECONDARY, 
-    };
+
+    private static final String[] PWD_TYPE_ARRAY = { PWD_TYPE_BOTH, PWD_TYPE_CURRENT,
+        PWD_TYPE_PRIMARY, PWD_TYPE_SECONDARY, };
     private static final Collection<String> PWD_TYPE_LIST = makeList(PWD_TYPE_ARRAY);
 
     public static class ValidPrivList implements Validity {
@@ -566,8 +592,9 @@ public class VmsAttributeValidator {
         }
     }
 
+    /* @formatter:off */
     private static final String[] PRIVS_ARRAY = {
-        PRIV_ACNT, PRIV_ALLSPOOL, PRIV_ALTPRI, PRIV_AUDIT, PRIV_BUGCHK, 
+        PRIV_ACNT, PRIV_ALLSPOOL, PRIV_ALTPRI, PRIV_AUDIT, PRIV_BUGCHK,
         PRIV_BYPASS, PRIV_CMEXEC, PRIV_CMKRNL, PRIV_DIAGNOSE, PRIV_DOWNGRADE,
         PRIV_EXQUOTA, PRIV_GROUP, PRIV_GRPNAM, PRIV_GRPPRV, PRIV_IMPERSONATE,
         PRIV_IMPORT, PRIV_LOG_IO, PRIV_MOUNT, PRIV_NETMBX, PRIV_OPER, PRIV_PFNMAP,
@@ -576,32 +603,38 @@ public class VmsAttributeValidator {
         PRIV_SYSGBL, PRIV_SYSLCK, PRIV_SYSNAM, PRIV_SYSPRV, PRIV_TMPMBX,
         PRIV_UPGRADE, PRIV_VOLPRO, PRIV_WORLD, PRIV_WORLD
     };
+    /* @formatter:on */
     public static final Collection<String> PRIVS_LIST = makeList(PRIVS_ARRAY);
 
     public static class ValidIntegerRange implements Validity {
-        private int _min;
-        private int _max;
+        private int minValue;
+        private int maxValue;
 
         public ValidIntegerRange(int min, int max) {
-            _min = min;
-            _max = max;
+            minValue = min;
+            maxValue = max;
         }
+
         public boolean isValid(List<Object> integers) {
-            if (integers.size()!=1)
+            if (integers.size() != 1) {
                 return false;
-            if (!(integers.get(0) instanceof Integer))
+            }
+            if (!(integers.get(0) instanceof Integer)) {
                 return false;
-            int value = ((Integer)integers.get(0)).intValue();
-            if (value<_min)
+            }
+            int value = ((Integer) integers.get(0)).intValue();
+            if (value < minValue) {
                 return false;
-            if (value>_max)
+            }
+            if (value > maxValue) {
                 return false;
+            }
             return true;
         }
     }
 
     public static class ValidPrimeDaysList implements Validity {
-         /**
+        /**
          *
          * @param primeDaysList
          * @return
@@ -610,43 +643,46 @@ public class VmsAttributeValidator {
             return isValidList(primeDaysList, PRIMEDAYS_LIST);
         }
     }
-    private static final String[] PRIMEDAYS_ARRAY = {
-        DAYS_SUN, DAYS_MON, DAYS_TUE, DAYS_WED, DAYS_THU, DAYS_FRI, DAYS_SAT
-    };
+
+    private static final String[] PRIMEDAYS_ARRAY = { DAYS_SUN, DAYS_MON, DAYS_TUE, DAYS_WED,
+        DAYS_THU, DAYS_FRI, DAYS_SAT };
     public static final Collection<String> PRIMEDAYS_LIST = makeList(PRIMEDAYS_ARRAY);
 
     public static boolean isValidList(List<Object> valueList, Collection<String> validList) {
         for (Object value : valueList) {
             String valueString = value.toString().trim();
-            if (!validList.contains(valueString))
-                if (!valueString.startsWith("NO") || !validList.contains(valueString.substring(2)))
-                    return false;
+            if (!validList.contains(valueString)
+                    && (!valueString.startsWith("NO") || !validList.contains(valueString
+                            .substring(2)))) {
+                return false;
+            }
         }
         return true;
     }
 
     private static Collection<String> makeList(String[] strings) {
         Collection<String> list = CollectionUtil.newCaseInsensitiveSet();
-        for (String string : strings) 
+        for (String string : strings) {
             list.add(string);
+        }
         return list;
     }
 
     static {
         VALIDATOR_INFO.put(ATTR_ALGORITHM, new ValidatorInfo(new ValidAlgorithm()));
-        VALIDATOR_INFO.put(ATTR_ACCOUNT, new ValidatorInfo(_accountPattern, 1));
+        VALIDATOR_INFO.put(ATTR_ACCOUNT, new ValidatorInfo(ACCOUNT_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_ASTLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_BATCH, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_BIOLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_BYTLM, new ValidatorInfo(1));
-        VALIDATOR_INFO.put(ATTR_CLI, new ValidatorInfo(_cliPattern, 1));
-        VALIDATOR_INFO.put(ATTR_CLITABLES, new ValidatorInfo(_cliTablesPattern, 1));
+        VALIDATOR_INFO.put(ATTR_CLI, new ValidatorInfo(CLI_PATTERN, 1));
+        VALIDATOR_INFO.put(ATTR_CLITABLES, new ValidatorInfo(CLI_TABLES_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_CPUTIME, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_DEFPRIVILEGES, new ValidatorInfo(new ValidPrivList()));
-        VALIDATOR_INFO.put(ATTR_DEVICE, new ValidatorInfo(_devicePattern, 1));
+        VALIDATOR_INFO.put(ATTR_DEVICE, new ValidatorInfo(DEVICE_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_DIALUP, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_DIOLM, new ValidatorInfo(1));
-        VALIDATOR_INFO.put(ATTR_DIRECTORY, new ValidatorInfo(_directoryPattern, 1));
+        VALIDATOR_INFO.put(ATTR_DIRECTORY, new ValidatorInfo(DIRECTORY_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_EXPIRATION, new ValidatorInfo(new ValidDateOrNone()));
         VALIDATOR_INFO.put(ATTR_ENQLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_FILLM, new ValidatorInfo(1));
@@ -654,7 +690,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_GENERATE_PASSWORD, new ValidatorInfo(new ValidGeneratePassword()));
         VALIDATOR_INFO.put(ATTR_INTERACTIVE, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_JTQUOTA, new ValidatorInfo(1));
-        VALIDATOR_INFO.put(ATTR_LGICMD, new ValidatorInfo(_fileSpecPattern, 1));
+        VALIDATOR_INFO.put(ATTR_LGICMD, new ValidatorInfo(FILE_SPEC_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_LOCAL, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_MAXACCTJOBS, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_MAXDETACH, new ValidatorInfo(new ValidNumberOrNone()));
@@ -673,21 +709,26 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_REMOTE, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_SHRFILLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_TQELM, new ValidatorInfo(1));
-        VALIDATOR_INFO.put(ATTR_UIC, new ValidatorInfo(_uicPattern, 1));
+        VALIDATOR_INFO.put(ATTR_UIC, new ValidatorInfo(UIC_PATTERN, 1));
         VALIDATOR_INFO.put(ATTR_WSDEFAULT, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_WSEXTENT, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_WSQUOTA, new ValidatorInfo(1));
 
-        VALIDATOR_INFO.put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(1));
+        VALIDATOR_INFO
+                .put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(1));
         VALIDATOR_INFO.put(OperationalAttributes.DISABLE_DATE_NAME, new ValidatorInfo(1));
-        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, new ValidatorInfo(new ValidBoolean()));
-        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_NAME, new ValidatorInfo(_passwordPattern, 1));
+        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, new ValidatorInfo(
+                new ValidBoolean()));
+        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_NAME, new ValidatorInfo(PASSWORD_PATTERN,
+                1));
     }
 
     /**
      * Determine whether the Attribute has a valid value.
-     * 
-     * @param attribute
+     *
+     * @param name
+     * @param values
+     * @param vmsConfiguration
      */
     public static void validate(String name, List<Object> values, VmsConfiguration vmsConfiguration) {
         name = name.trim().toUpperCase();
@@ -696,63 +737,77 @@ public class VmsAttributeValidator {
 
         // If the attribute is negated, it does not need a value
         //
-        if (validatorInfo==null) {
-            if (name.startsWith("NO")) {
-                name = name.substring(2);
-                validatorInfo = VALIDATOR_INFO.get(name);
-                if (validatorInfo!=null)
-                    if (values.size()==0)
-                        return;
+        if (validatorInfo == null && name.startsWith("NO")) {
+            name = name.substring(2);
+            validatorInfo = VALIDATOR_INFO.get(name);
+            if (validatorInfo != null && values.size() == 0) {
+                return;
             }
         }
 
         // Ensure we have an attribute of this name
         //
-        if (validatorInfo==null)
-            throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.UNKNOWN_ATTR_NAME, name));
+        if (validatorInfo == null) {
+            throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                    VmsMessages.UNKNOWN_ATTR_NAME, name));
+        }
 
         // Ensure the multiplicity is correct
         //
         int multiplicity = validatorInfo.getMultiplicity();
-        if (multiplicity>=0)
-            if (values.size()!=multiplicity)
-                throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_MULTIPLICITY, name));
+        if ((multiplicity >= 0) && (values.size() != multiplicity)) {
+            throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                    VmsMessages.INVALID_ATTR_MULTIPLICITY, name));
+        }
 
         // Ensure the values are valid
         //
         switch (validatorInfo.getValidatorType()) {
         case NUMERIC:
-            for (Object value : values)
-                if (!(value instanceof Number))
-                    throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
+            for (Object value : values) {
+                if (!(value instanceof Number)) {
+                    throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                            VmsMessages.INVALID_ATTR_VALUE, value, name));
+                }
+            }
             break;
         case PATTERN:
-            for (Object value : values)
-                if (validatorInfo.getPattern()!=null) {
+            for (Object value : values) {
+                if (validatorInfo.getPattern() != null) {
                     if (value instanceof String) {
-                        Matcher matcher = validatorInfo.getPattern().matcher((String)value);
-                        if (!matcher.matches())
-                            throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
+                        Matcher matcher = validatorInfo.getPattern().matcher((String) value);
+                        if (!matcher.matches()) {
+                            throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                                    VmsMessages.INVALID_ATTR_VALUE, value, name));
+                        }
                     } else if (value instanceof GuardedString) {
                         GuardedStringAccessor accessor = new GuardedStringAccessor();
-                        ((GuardedString)value).access(accessor);
-                        Matcher matcher = validatorInfo.getPattern().matcher(new String(accessor.getArray()));
-                        if (!matcher.matches())
-                            throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, "****", name));
+                        ((GuardedString) value).access(accessor);
+                        Matcher matcher =
+                                validatorInfo.getPattern().matcher(new String(accessor.getArray()));
+                        if (!matcher.matches()) {
+                            throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                                    VmsMessages.INVALID_ATTR_VALUE, "****", name));
+                        }
                     } else {
-                        throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
+                        throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                                VmsMessages.INVALID_ATTR_VALUE, value, name));
                     }
                 }
+            }
             break;
         case METHOD:
             try {
                 Validity validity = validatorInfo.getValidity();
-                if (!validity.isValid(values))
-                    throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, values, name));
+                if (!validity.isValid(values)) {
+                    throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                            VmsMessages.INVALID_ATTR_VALUE, values, name));
+                }
             } catch (IllegalArgumentException e) {
                 throw e;
             } catch (Exception e) {
-                throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.EXCEPTION_IN_ATTR, name), e);
+                throw new IllegalArgumentException(vmsConfiguration.getMessage(
+                        VmsMessages.EXCEPTION_IN_ATTR, name), e);
             }
             break;
         }

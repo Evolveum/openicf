@@ -30,7 +30,7 @@
  xmlns:xinclude='http://www.w3.org/2001/XInclude'>
 <!--
  What follows here is an example for the Vms Connector.
- 
+
  This section assumes the following names:
  * connector-display-name: Vms Connector
  * connector-name: vms-connector
@@ -59,5 +59,5 @@
  <!-- The rest of the sections in this chapter are generated from source. -->
 
  <xinclude:include href="sec-config-vmsconnector.xml" />
- <!--xinclude:include href="sec-schema-vmsconnector.xml" /-->
+ <xinclude:include href="sec-schema-vmsconnector.xml" />
 </chapter>

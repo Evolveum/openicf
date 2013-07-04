@@ -1,32 +1,60 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.vms;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
-import org.testng.AssertJUnit;
-import org.testng.Assert;
-import static org.identityconnectors.vms.VmsConstants.*;
+import static org.identityconnectors.vms.VmsConstants.ATTR_ALGORITHM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_ASTLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_BIOLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_BYTLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_DEFPRIVILEGES;
+import static org.identityconnectors.vms.VmsConstants.ATTR_DIOLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_FILLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_FLAGS;
+import static org.identityconnectors.vms.VmsConstants.ATTR_GRANT_IDS;
+import static org.identityconnectors.vms.VmsConstants.ATTR_JTQUOTA;
+import static org.identityconnectors.vms.VmsConstants.ATTR_MAXACCTJOBS;
+import static org.identityconnectors.vms.VmsConstants.ATTR_MAXDETACH;
+import static org.identityconnectors.vms.VmsConstants.ATTR_OWNER;
+import static org.identityconnectors.vms.VmsConstants.ATTR_PBYTLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_PRCLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_PRIMEDAYS;
+import static org.identityconnectors.vms.VmsConstants.ATTR_PRIORITY;
+import static org.identityconnectors.vms.VmsConstants.ATTR_PRIVILEGES;
+import static org.identityconnectors.vms.VmsConstants.ATTR_QUEPRIO;
+import static org.identityconnectors.vms.VmsConstants.ATTR_SHRFILLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_TQELM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_WSDEFAULT;
+import static org.identityconnectors.vms.VmsConstants.ATTR_WSEXTENT;
+import static org.identityconnectors.vms.VmsConstants.ATTR_WSQUOTA;
+import static org.identityconnectors.vms.VmsConstants.DAYS_FRI;
+import static org.identityconnectors.vms.VmsConstants.DAYS_MON;
+import static org.identityconnectors.vms.VmsConstants.DAYS_SAT;
+import static org.identityconnectors.vms.VmsConstants.DAYS_SUN;
+import static org.identityconnectors.vms.VmsConstants.DAYS_THU;
+import static org.identityconnectors.vms.VmsConstants.DAYS_TUE;
+import static org.identityconnectors.vms.VmsConstants.DAYS_WED;
+import static org.identityconnectors.vms.VmsConstants.PRIV_NETMBX;
+import static org.identityconnectors.vms.VmsConstants.PRIV_TMPMBX;
 
 import java.text.MessageFormat;
 import java.util.Date;
@@ -72,21 +100,22 @@ import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.Ignore;
-
+import org.testng.Assert;
+import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class VmsConnectorTests {
 
-    // Connector Configuration information
+    // Connector Configuration information@Test(groups = { "integration" })
     //
-    private static final String LINE_TERMINATOR     = "\\r\\n";
-    private static final String SHELL_PROMPT        = "[$]";
-    private static String TEST_USER_START           = "TEST";
-    private static String TEST_USER_MIDDLE          = "ST";
-    private static String HOST_NAME;
-    private static String SYSTEM_PASSWORD;
-    private static String SYSTEM_USER;
-
+    private static final String LINE_TERMINATOR = "\\r\\n";
+    private static final String SHELL_PROMPT = "[$]";
+    private static final String TEST_USER_START = "TEST";
+    private static final String TEST_USER_MIDDLE = "ST";
+    private static String hostName;
+    private static String systemPassword;
+    private static String systemUser;
 
     public static void main(String[] args) {
         VmsConnectorTests tests = new VmsConnectorTests();
@@ -100,18 +129,18 @@ public class VmsConnectorTests {
     @BeforeClass
     public static void before() {
         PropertyBag testProps = TestHelpers.getProperties(VmsConnector.class);
-        HOST_NAME         = testProps.getStringProperty("HOST_NAME");
-        SYSTEM_PASSWORD   = testProps.getStringProperty("SYSTEM_PASSWORD");
-        SYSTEM_USER       = testProps.getStringProperty("SYSTEM_USER");
-        AssertJUnit.assertNotNull("HOST_NAME must be specified", HOST_NAME);
-        AssertJUnit.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
-        AssertJUnit.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
+        hostName = testProps.getStringProperty("HOST_NAME");
+        systemPassword = testProps.getStringProperty("SYSTEM_PASSWORD");
+        systemUser = testProps.getStringProperty("SYSTEM_USER");
+        AssertJUnit.assertNotNull("HOST_NAME must be specified", hostName);
+        AssertJUnit.assertNotNull("SYSTEM_PASSWORD must be specified", systemPassword);
+        AssertJUnit.assertNotNull("SYSTEM_USER must be specified", systemUser);
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testScriptOnResource() throws Exception {
         String localUserName = "TEST105";
-        
+
         String script = "WRITE SYS$OUTPUT \"Hello ''NAME'\"\nSHOW USERS";
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("NAME", "World");
@@ -138,15 +167,15 @@ public class VmsConnectorTests {
         testScriptOnResource(context, config);
     }
 
-    @Test(enabled = false)
-	private void testScriptOnResource(ScriptContext context,
-            VmsConfiguration config) throws Exception {
+    private void testScriptOnResource(ScriptContext context, VmsConfiguration config)
+            throws Exception {
         VmsConnector info = createConnector(config);
         try {
             HashMap<String, Object> optionsMap = new HashMap<String, Object>();
             OperationOptions options = new OperationOptions(optionsMap);
-            String[] results = (String[])info.runScriptOnResource(context, options);
-            AssertJUnit.assertTrue(results[1], results[1].contains(config.getUserName().toUpperCase()));
+            String[] results = (String[]) info.runScriptOnResource(context, options);
+            AssertJUnit.assertTrue(results[1], results[1].contains(config.getUserName()
+                    .toUpperCase()));
             AssertJUnit.assertTrue(results[1], results[1].contains("Hello World"));
         } finally {
             info.dispose();
@@ -177,7 +206,7 @@ public class VmsConnectorTests {
             config.setHostLineTerminator(null);
             config.getHostLineTerminator();
         }
-        
+
         // Ensure that validation catches nul fields
         //
         try {
@@ -238,33 +267,34 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test
     public void testQuote() throws Exception {
-        VmsConfiguration config = createConfiguration();
-        VmsConnector info = createConnector(config);
-        
-        for (String string : new String[] { "12", "foo", "foo123" })
+        VmsConnector info = createConnector(null);
+
+        for (String string : new String[] { "12", "foo", "foo123" }) {
             AssertJUnit.assertEquals(string, info.quoteForAuthorizeWhenNeeded(string));
-        for (String string : new String[] { "1 2", "foo ", "foo!123", "foo\"bar\"" , "foo(bar)" })
+        }
+        for (String string : new String[] { "1 2", "foo ", "foo!123", "foo\"bar\"", "foo(bar)" }) {
             AssertJUnit.assertFalse(string.equals(info.quoteForAuthorizeWhenNeeded(string)));
+        }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testListAllUsers() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, null, handler, null);
             for (ConnectorObject user : handler) {
-                System.out.println("Read User:"+user.getUid().getValue());
+                System.out.println("Read User:" + user.getUid().getValue());
             }
         } finally {
             info.dispose();
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testTest() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -275,13 +305,13 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testGetSpecifiedUser() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Create the account if it doesn't already exist
             //
             try {
@@ -295,7 +325,8 @@ public class VmsConnectorTests {
                 TestHandler handler = new TestHandler();
                 boolean found = false;
                 int count = 0;
-                TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())), handler, null);
+                TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder
+                        .build(Name.NAME, getTestUser())), handler, null);
                 for (ConnectorObject user : handler) {
                     if (getTestUser().equals(user.getUid().getUidValue())) {
                         found = true;
@@ -303,7 +334,7 @@ public class VmsConnectorTests {
                     }
                     count++;
                 }
-                AssertJUnit.assertTrue(count==1);
+                AssertJUnit.assertTrue(count == 1);
                 AssertJUnit.assertTrue(found);
             }
             // Filter on Uid
@@ -312,7 +343,8 @@ public class VmsConnectorTests {
                 TestHandler handler = new TestHandler();
                 boolean found = false;
                 int count = 0;
-                TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Uid.NAME, getTestUser())), handler, null);
+                TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder
+                        .build(Uid.NAME, getTestUser())), handler, null);
                 for (ConnectorObject user : handler) {
                     if (getTestUser().equals(user.getUid().getUidValue())) {
                         found = true;
@@ -320,10 +352,10 @@ public class VmsConnectorTests {
                     }
                     count++;
                 }
-                AssertJUnit.assertTrue(count==1);
+                AssertJUnit.assertTrue(count == 1);
                 AssertJUnit.assertTrue(found);
             }
-            
+
             // retry, but specify only 2 attributes
             //
             {
@@ -332,9 +364,10 @@ public class VmsConnectorTests {
                 int count = 0;
                 String[] attributesToGet = { ATTR_BYTLM, ATTR_PRIVILEGES };
                 Map<String, Object> optionsMap = new HashMap<String, Object>();
-                optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet); 
+                optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
                 OperationOptions options = new OperationOptions(optionsMap);
-                TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())), handler, options);
+                TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder
+                        .build(Name.NAME, getTestUser())), handler, options);
                 for (ConnectorObject user : handler) {
                     if (getTestUser().equals(user.getUid().getUidValue())) {
                         found = true;
@@ -345,7 +378,7 @@ public class VmsConnectorTests {
                     }
                     count++;
                 }
-                AssertJUnit.assertTrue(count==1);
+                AssertJUnit.assertTrue(count == 1);
                 AssertJUnit.assertTrue(found);
             }
         } finally {
@@ -353,14 +386,14 @@ public class VmsConnectorTests {
         }
 
     }
-    
-    @Test
+
+    @Test(groups = { "integration" })
     public void testFilters() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Create the account if it doesn't already exist
             //
             try {
@@ -368,36 +401,44 @@ public class VmsConnectorTests {
             } catch (AlreadyExistsException rte) {
                 // Ignore
             }
-            Filter filter= null;
-            
+            Filter filter = null;
+
             filter = new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser()));
             getUserViaFilter(info, filter, true, true, getTestUser());
             filter = new EndsWithFilter(AttributeBuilder.build(Name.NAME, getTestUserEnd()));
-            getUserViaFilter(info, filter, false, true, ".*"+getTestUserEnd());
+            getUserViaFilter(info, filter, false, true, ".*" + getTestUserEnd());
             filter = new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER_START));
-            getUserViaFilter(info, filter, false, true, TEST_USER_START+".*");
+            getUserViaFilter(info, filter, false, true, TEST_USER_START + ".*");
             filter = new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER_MIDDLE));
-            getUserViaFilter(info, filter, false, true, ".*"+TEST_USER_MIDDLE+".*");
-            filter = new AndFilter(
-                    new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER_START)),
-                    new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER_MIDDLE))
-                    );
-            getUserViaFilter(info, filter, false, true, TEST_USER_START+".*");
-            filter = new OrFilter(
-                    new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())),
-                    new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYSTEM"))
-                    );
+            getUserViaFilter(info, filter, false, true, ".*" + TEST_USER_MIDDLE + ".*");
+            filter =
+                    new AndFilter(new StartsWithFilter(AttributeBuilder.build(Name.NAME,
+                            TEST_USER_START)), new ContainsFilter(AttributeBuilder.build(Name.NAME,
+                            TEST_USER_MIDDLE)));
+            getUserViaFilter(info, filter, false, true, TEST_USER_START + ".*");
+            filter =
+                    new OrFilter(
+                            new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())),
+                            new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYSTEM")));
             getUserViaFilter(info, filter, false, true, getTestUser());
             getUserViaFilter(info, filter, false, true, "SYSTEM");
             // Since we should be doing no filtering, will always be found
             //
-            filter = new NotFilter(new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())));
+            filter =
+                    new NotFilter(
+                            new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())));
             getUserViaFilter(info, filter, false, true, null);
-            filter = new NotFilter(new EndsWithFilter(AttributeBuilder.build(Name.NAME, getTestUserEnd())));
+            filter =
+                    new NotFilter(new EndsWithFilter(AttributeBuilder.build(Name.NAME,
+                            getTestUserEnd())));
             getUserViaFilter(info, filter, false, true, null);
-            filter = new NotFilter(new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER_START)));
+            filter =
+                    new NotFilter(new StartsWithFilter(AttributeBuilder.build(Name.NAME,
+                            TEST_USER_START)));
             getUserViaFilter(info, filter, false, true, null);
-            filter = new NotFilter(new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER_MIDDLE)));
+            filter =
+                    new NotFilter(new ContainsFilter(AttributeBuilder.build(Name.NAME,
+                            TEST_USER_MIDDLE)));
             getUserViaFilter(info, filter, false, true, null);
         } finally {
             info.dispose();
@@ -405,14 +446,15 @@ public class VmsConnectorTests {
 
     }
 
-    private void getUserViaFilter(VmsConnector connector, Filter filter, boolean exactlyOne, boolean shouldFind, String patternString) {
+    private void getUserViaFilter(VmsConnector connector, Filter filter, boolean exactlyOne,
+            boolean shouldFind, String patternString) {
         TestHandler handler = new TestHandler();
-        TestHelpers.search(connector,ObjectClass.ACCOUNT, filter, handler, null);
+        TestHelpers.search(connector, ObjectClass.ACCOUNT, filter, handler, null);
         boolean found = false;
         int count = 0;
         for (ConnectorObject user : handler) {
             String userId = user.getUid().getUidValue();
-            if (patternString!=null) {
+            if (patternString != null) {
                 if (!Pattern.matches(patternString, userId)) {
                     System.out.println(userId);
                 }
@@ -423,17 +465,17 @@ public class VmsConnectorTests {
             }
             count++;
         }
-        AssertJUnit.assertTrue(!exactlyOne || count==1);
-        AssertJUnit.assertTrue(shouldFind==found);
+        AssertJUnit.assertTrue(!exactlyOne || count == 1);
+        AssertJUnit.assertTrue(shouldFind == found);
     }
-    
+
     // We have an issue that VMS disables a terminal (remote or local)
     // as a security issue if there are multiple login failures, so
     // this test should not be normally run
     //
-    @Test@Ignore
+    @Test(groups = { "integration" }, enabled = false)
     public void testAuthenticate() throws Exception {
-        testAuthenticate(SYSTEM_USER, SYSTEM_PASSWORD);
+        testAuthenticate(systemUser, systemPassword);
         // Ensure we have the test user
         {
             VmsConfiguration config = createConfiguration();
@@ -441,15 +483,15 @@ public class VmsConnectorTests {
 
             try {
                 Set<Attribute> attrs = fillInSampleUser(getTestUser());
-        
+
                 // Delete the account if it already exists
                 //
                 deleteUser(getTestUser(), info);
-        
+
                 // Create the account
                 //
                 Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-                System.out.println(newUid.getValue()+" created");
+                System.out.println(newUid.getValue() + " created");
                 // Create the account
                 //
                 try {
@@ -472,9 +514,8 @@ public class VmsConnectorTests {
             AssertJUnit.assertTrue(e.toString().contains("User authorization failure"));
         }
     }
-    
-    @Test(enabled = false)
-	private void testAuthenticate(String userName, String passwordString) throws Exception {
+
+    private void testAuthenticate(String userName, String passwordString) throws Exception {
         VmsConfiguration config = createConfiguration();
         config.setUserName(userName);
         GuardedString password = new GuardedString(passwordString.toCharArray());
@@ -483,7 +524,7 @@ public class VmsConnectorTests {
         info.dispose();
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testGetNonexistentUser() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -491,7 +532,8 @@ public class VmsConnectorTests {
         try {
             deleteUser(getTestUser(), info);
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())), handler, null);
+            TestHelpers.search(info, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                    Name.NAME, getTestUser())), handler, null);
             boolean found = false;
             int count = 0;
             for (ConnectorObject user : handler) {
@@ -501,26 +543,26 @@ public class VmsConnectorTests {
                 }
                 count++;
             }
-            AssertJUnit.assertTrue(count==0);
+            AssertJUnit.assertTrue(count == 0);
             AssertJUnit.assertTrue(!found);
         } finally {
             info.dispose();
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testModifyUser() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account (so that PRIMEDAYS is as expected)
             //
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
+
             ConnectorObject user = getUser(getTestUser());
             Attribute primedays = user.getAttributeByName(ATTR_PRIMEDAYS);
             List<Object> oldList = primedays.getValue();
@@ -528,14 +570,14 @@ public class VmsConnectorTests {
             List<Object> newList = new LinkedList<Object>();
             newList.addAll(oldList);
             newList.add(DAYS_WED);
-    
+
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
             builder.setUid(getTestUser());
             builder.setName(getTestUser());
             builder.addAttribute(ATTR_PRIMEDAYS, newList);
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-        
+
             user = getUser(getTestUser());
             primedays = user.getAttributeByName(ATTR_PRIMEDAYS);
             oldList = primedays.getValue();
@@ -544,85 +586,91 @@ public class VmsConnectorTests {
             info.dispose();
         }
     }
-    @Test
+
+    @Test(groups = { "integration" })
     public void testModifyGrants() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
-            Set<Attribute> attrs = fillInSampleUser(getTestUser()+"Z");
-    
+            Set<Attribute> attrs = fillInSampleUser(getTestUser() + "Z");
+
             // Recreate the account (so that PRIMEDAYS is as expected)
             //
-            deleteUser(getTestUser()+"Z", info);
+            deleteUser(getTestUser() + "Z", info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-            
+
             {
-                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                 builder.setUid(getTestUser()+"Z");
-                 builder.setName(getTestUser()+"Z");
-                 List<Object> newGrants = new LinkedList<Object>();
-                 newGrants.add("GOO124");
-                 builder.addAttribute(ATTR_GRANT_IDS, newGrants);
-                 ConnectorObject newUser = builder.build();
-                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-         
-                 String[] attributesToGet = { ATTR_GRANT_IDS };
-                 ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
-     
-                 Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
-                 AssertJUnit.assertTrue(grants.getValue().size()==1);
-                 AssertJUnit.assertTrue(grants.getValue().contains("GOO124"));
-             }
-            
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.setUid(getTestUser() + "Z");
+                builder.setName(getTestUser() + "Z");
+                List<Object> newGrants = new LinkedList<Object>();
+                newGrants.add("GOO124");
+                builder.addAttribute(ATTR_GRANT_IDS, newGrants);
+                ConnectorObject newUser = builder.build();
+                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+
+                String[] attributesToGet = { ATTR_GRANT_IDS };
+                ConnectorObject user = getUser(getTestUser() + "Z", attributesToGet);
+
+                Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
+                AssertJUnit.assertTrue(grants.getValue().size() == 1);
+                AssertJUnit.assertTrue(grants.getValue().contains("GOO124"));
+            }
+
             // Verify we can delete an existing grant, and add a new one
             //
             {
-                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                 builder.setUid(getTestUser()+"Z");
-                 builder.setName(getTestUser()+"Z");
-                 List<Object> newGrants = new LinkedList<Object>();
-                 newGrants.add("NET$MANAGE");
-                 builder.addAttribute(ATTR_GRANT_IDS, newGrants);
-                 ConnectorObject newUser = builder.build();
-                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-         
-                 String[] attributesToGet = { ATTR_GRANT_IDS };
-                 ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
-     
-                 Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
-                 AssertJUnit.assertTrue(grants.getValue().size()==1);
-                 AssertJUnit.assertTrue(grants.getValue().contains("NET$MANAGE"));
-             }
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.setUid(getTestUser() + "Z");
+                builder.setName(getTestUser() + "Z");
+                List<Object> newGrants = new LinkedList<Object>();
+                newGrants.add("NET$MANAGE");
+                builder.addAttribute(ATTR_GRANT_IDS, newGrants);
+                ConnectorObject newUser = builder.build();
+                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+
+                String[] attributesToGet = { ATTR_GRANT_IDS };
+                ConnectorObject user = getUser(getTestUser() + "Z", attributesToGet);
+
+                Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
+                AssertJUnit.assertTrue(grants.getValue().size() == 1);
+                AssertJUnit.assertTrue(grants.getValue().contains("NET$MANAGE"));
+            }
         } finally {
             info.dispose();
         }
     }
-    
-    @Test
+
+    @Test(groups = { "integration" })
     public void testModifyAttributes() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
+
             // Test the write-only attributes
             //
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_ALGORITHM, "BOTH=VMS"), false);
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_ALGORITHM, "CURRENT=CUSTOMER=200"), false);
-            
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_ALGORITHM,
+                    "CURRENT=CUSTOMER=200"), false);
+
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, "SUPERMAN"));
-            // Conversions are inexact : testModifyUserAttribute(info.connector, AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date().getTime()));
+            // Conversions are inexact : testModifyUserAttribute(info.connector,
+            // AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+            // new Date().getTime()));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_FILLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_BYTLM, Integer.valueOf(12)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXACCTJOBS, Integer.valueOf(12)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_SHRFILLM, Integer.valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXACCTJOBS, Integer
+                    .valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder
+                    .build(ATTR_SHRFILLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PBYTLM, Integer.valueOf(2)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, "12"));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, "none"));
@@ -630,51 +678,56 @@ public class VmsConnectorTests {
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_JTQUOTA, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PRCLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_DIOLM, Integer.valueOf(12)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_WSDEFAULT, Integer.valueOf(12)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PRIORITY, Integer.valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_WSDEFAULT, Integer
+                    .valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder
+                    .build(ATTR_PRIORITY, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_ASTLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_WSQUOTA, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_QUEPRIO, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_TQELM, Integer.valueOf(12)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_WSEXTENT, Integer.valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder
+                    .build(ATTR_WSEXTENT, Integer.valueOf(12)));
         } finally {
             info.dispose();
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testNullOwner() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
+
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, new Object[0]), true);
         } finally {
             info.dispose();
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testBadPassword() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
             try {
-                testModifyUserAttribute(info, AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("Foo!Bar".toCharArray())), true);
+                testModifyUserAttribute(info, AttributeBuilder.build(
+                        OperationalAttributes.PASSWORD_NAME, new GuardedString("Foo!Bar"
+                                .toCharArray())), true);
                 AssertJUnit.fail("no exception thrown");
             } catch (IllegalArgumentException iae) {
                 // expected
@@ -684,14 +737,14 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testEnableDisable() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
@@ -703,11 +756,12 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
+                Attribute enable =
+                        AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
                 builder.addAttribute(enable);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 enable = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(enable));
@@ -718,11 +772,12 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
+                Attribute enable =
+                        AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
                 builder.addAttribute(enable);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 enable = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 Assert.assertFalse(AttributeUtil.getBooleanValue(enable));
@@ -733,11 +788,12 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
+                Attribute enable =
+                        AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
                 builder.addAttribute(enable);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 enable = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(enable));
@@ -746,15 +802,15 @@ public class VmsConnectorTests {
             info.dispose();
         }
     }
-    
-    @Test
+
+    @Test(groups = { "integration" })
     public void testExpiration() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
@@ -766,11 +822,13 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                Attribute expire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.FALSE);
+                Attribute expire =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,
+                                Boolean.FALSE);
                 builder.addAttribute(expire);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 expire = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 Assert.assertFalse(AttributeUtil.getBooleanValue(expire));
@@ -781,11 +839,13 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                Attribute expire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.TRUE);
+                Attribute expire =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,
+                                Boolean.TRUE);
                 builder.addAttribute(expire);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 expire = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(expire));
@@ -794,15 +854,15 @@ public class VmsConnectorTests {
             info.dispose();
         }
     }
-    
-    @Test@Ignore
+
+    @Test(groups = { "integration" }, enabled = false)
     public void testExpirationDates() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Recreate the account
             //
             deleteUser(getTestUser(), info);
@@ -814,66 +874,77 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                long future = new Date().getTime()+100000;
-                Attribute expire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, future);
+                long future = new Date().getTime() + 100000;
+                Attribute expire =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+                                future);
                 builder.addAttribute(expire);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
-                expire = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
+                expire =
+                        user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
                 Object expireValue = AttributeUtil.getSingleValue(expire);
-                long expireLong = ((Number)expireValue).longValue();
+                long expireLong = ((Number) expireValue).longValue();
                 AssertJUnit.assertTrue(expireLong > new Date().getTime());
             }
             // Show that we can expire (this should also for expired to be true)
             //
-            //  This test is dummied out because the VMS machine is out of synch with respect
-            //  to time.
+            // This test is dummied out because the VMS machine is out of synch
+            // with respect
+            // to time.
             //
-            if (false)
-            {
+            if (false) {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
-                long now = new Date().getTime()+5000;
-                Attribute expire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, now);
+                long now = new Date().getTime() + 5000;
+                Attribute expire =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+                                now);
                 builder.addAttribute(expire);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
                 // Must delay to let password expire
                 //
-                Thread.sleep(60*1000);
+                Thread.sleep(60 * 1000);
                 ConnectorObject user = getUser(getTestUser());
                 expire = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(expire));
-                Attribute expireDate = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
-                AssertJUnit.assertTrue(AttributeUtil.getLongValue(expireDate) > (now-120000));
-                AssertJUnit.assertTrue(AttributeUtil.getLongValue(expireDate) < new Date().getTime());
+                Attribute expireDate =
+                        user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
+                AssertJUnit.assertTrue(AttributeUtil.getLongValue(expireDate) > (now - 120000));
+                AssertJUnit.assertTrue(AttributeUtil.getLongValue(expireDate) < new Date()
+                        .getTime());
             }
-            // Show that we can expire never (this should also for expired to be false)
+            // Show that we can expire never (this should also for expired to be
+            // false)
             //
             {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(getTestUser());
                 builder.setName(getTestUser());
                 long never = 0;
-                Attribute expire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, never);
+                Attribute expire =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+                                never);
                 builder.addAttribute(expire);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+
                 ConnectorObject user = getUser(getTestUser());
                 expire = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 Assert.assertFalse(AttributeUtil.getBooleanValue(expire));
-                Attribute expireDate = user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
+                Attribute expireDate =
+                        user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
                 AssertJUnit.assertTrue(AttributeUtil.getIntegerValue(expireDate) == never);
             }
         } finally {
             info.dispose();
         }
     }
-    
+
     @Test
     public void testBadAttributes() throws Exception {
         // Negative tests
@@ -889,8 +960,7 @@ public class VmsConnectorTests {
         testBadValue(AttributeBuilder.build(ATTR_PRIVILEGES, badFlags));
     }
 
-    @Test(enabled = false)
-	private void testBadValue(Attribute attribute) throws Exception {
+    private void testBadValue(Attribute attribute) throws Exception {
         VmsConfiguration config = createConfiguration();
         try {
             VmsAttributeValidator.validate(attribute.getName(), attribute.getValue(), config);
@@ -899,13 +969,14 @@ public class VmsConnectorTests {
             // expected failure
         }
     }
-    @Test(enabled = false)
-	private void testModifyUserAttribute(VmsConnector connector, Attribute attribute) throws Exception {
+
+    private void testModifyUserAttribute(VmsConnector connector, Attribute attribute)
+            throws Exception {
         testModifyUserAttribute(connector, attribute, true);
     }
 
-    @Test(enabled = false)
-	private void testModifyUserAttribute(VmsConnector connector, Attribute attribute, boolean check) throws Exception {
+    private void testModifyUserAttribute(VmsConnector connector, Attribute attribute, boolean check)
+            throws Exception {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
         builder.setUid(getTestUser());
         builder.setName(getTestUser());
@@ -922,11 +993,11 @@ public class VmsConnectorTests {
         }
     }
 
-    private ConnectorObject getUser(String accountId) throws Exception  {
+    private ConnectorObject getUser(String accountId) throws Exception {
         return getUser(accountId, null);
     }
 
-    private ConnectorObject getUser(String accountId, String[] attrsToGet) throws Exception  {
+    private ConnectorObject getUser(String accountId, String[] attrsToGet) throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         try {
@@ -937,34 +1008,38 @@ public class VmsConnectorTests {
         }
     }
 
-    private ConnectorObject getUser(VmsConnector connector, String accountId, String[] attrsToGet) throws Exception  {
+    private ConnectorObject getUser(VmsConnector connector, String accountId, String[] attrsToGet)
+            throws Exception {
         TestHandler handler = new TestHandler();
         Map<String, Object> map = new HashMap<String, Object>();
-        if (attrsToGet!=null)
+        if (attrsToGet != null) {
             map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attrsToGet);
-        TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, new OperationOptions(map));
-        if (handler.iterator().hasNext())
+        }
+        TestHelpers.search(connector, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(
+                Name.NAME, accountId)), handler, new OperationOptions(map));
+        if (handler.iterator().hasNext()) {
             return handler.iterator().next();
-        else
+        } else {
             return null;
+        }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testCreate() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Delete the account if it already exists
             //
             deleteUser(getTestUser(), info);
-    
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
+            System.out.println(newUid.getValue() + " created");
             // Create the account
             //
             try {
@@ -979,27 +1054,29 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testChangePasswordAsAdmin() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Delete the account if it already exists
             //
             deleteUser(getTestUser(), info);
-    
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
-    
+            System.out.println(newUid.getValue() + " created");
+
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
             builder.setUid(getTestUser());
             builder.setName(getTestUser());
-            Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
+            Attribute password =
+                    AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(
+                            "xyzzy123".toCharArray()));
             builder.addAttribute(password);
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
@@ -1009,28 +1086,28 @@ public class VmsConnectorTests {
         }
     }
 
-    //@Test
-    @Test
-	public void testChangeOwnPassword() throws Exception {
-        String localUserName = getTestUser()+"X";
+    @Test(groups = { "integration" })
+    public void testChangeOwnPassword() throws Exception {
+        String localUserName = getTestUser() + "X";
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         String oldPassword = "password";
-        String newPassword ="xyzzy123";
+        String newPassword = "xyzzy123";
 
         try {
-            // Since we will actually log in, make sure all days are primary days
+            // Since we will actually log in, make sure all days are primary
+            // days
             //
             Set<Attribute> attrs = fillInSampleUser(localUserName, true);
-    
+
             // Delete the account if it already exists
             //
             deleteUser(localUserName, info);
-    
+
             // Create the account
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
+            System.out.println(newUid.getValue() + " created");
             testAuthenticate(localUserName, "password");
 
             // Now, change the password
@@ -1039,9 +1116,13 @@ public class VmsConnectorTests {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(localUserName);
                 builder.setName(localUserName);
-                Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(newPassword.toCharArray()));
-                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString(oldPassword.toCharArray()));
-                builder.addAttribute(current_password);
+                Attribute password =
+                        AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME,
+                                new GuardedString(newPassword.toCharArray()));
+                Attribute currentPassword =
+                        AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME,
+                                new GuardedString(oldPassword.toCharArray()));
+                builder.addAttribute(currentPassword);
                 builder.addAttribute(password);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
@@ -1049,7 +1130,7 @@ public class VmsConnectorTests {
                 // This sometimes fails on the Hudson after the contract tests
                 // (which force authentication failures), so add a sleep
                 //
-                //Thread.sleep(5*60*1000);
+                // Thread.sleep(5*60*1000);
                 testAuthenticate(localUserName, newPassword);
             }
             // try changing to an invalid password, and ensure it is caught
@@ -1057,20 +1138,25 @@ public class VmsConnectorTests {
             // This can cause VMS to enter password evasion mode, so
             // should only be run rarely
             //
-            if (false)
-            try {
-                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                builder.setUid(localUserName);
-                builder.setName(localUserName);
-                Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("x".toCharArray()));
-                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
-                builder.addAttribute(current_password);
-                builder.addAttribute(password);
-                ConnectorObject newUser = builder.build();
-                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-                AssertJUnit.fail("should have thrown exception");
-            } catch (ConnectorException ce) {
-                ce.printStackTrace();
+            if (false) {
+                try {
+                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                    builder.setUid(localUserName);
+                    builder.setName(localUserName);
+                    Attribute password =
+                            AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME,
+                                    new GuardedString("x".toCharArray()));
+                    Attribute currentPassword =
+                            AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME,
+                                    new GuardedString("xyzzy123".toCharArray()));
+                    builder.addAttribute(currentPassword);
+                    builder.addAttribute(password);
+                    ConnectorObject newUser = builder.build();
+                    info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+                    AssertJUnit.fail("should have thrown exception");
+                } catch (ConnectorException ce) {
+                    ce.printStackTrace();
+                }
             }
         } finally {
             info.dispose();
@@ -1088,7 +1174,7 @@ public class VmsConnectorTests {
     @Test
     public void testSchema() throws Exception {
         VmsConfiguration config = createConfiguration();
-        VmsConnector info = createConnector(config);
+        VmsConnector info = createConnector(null);
         Schema schema = info.schema();
         boolean accountSeen = false;
         Set<ObjectClassInfo> ocInfos = schema.getObjectClassInfo();
@@ -1103,14 +1189,14 @@ public class VmsConnectorTests {
     @Test
     public void testDelta() throws Exception {
         testDelta(500, "0-0:0:0.50");
-        testDelta(500+11*1000, "0-0:0:11.50");
-        testDelta(500+12*1000+6*1000*60, "0-0:6:12.50");
-        testDelta(500+12*1000+6*1000*60+60*60*1000, "0-1:6:12.50");
-        testDelta(500+12*1000+6*1000*60+60*60*1000+3*24*60*60*1000, "3-1:6:12.50");
+        testDelta(500 + 11 * 1000, "0-0:0:11.50");
+        testDelta(500 + 12 * 1000 + 6 * 1000 * 60, "0-0:6:12.50");
+        testDelta(500 + 12 * 1000 + 6 * 1000 * 60 + 60 * 60 * 1000, "0-1:6:12.50");
+        testDelta(500 + 12 * 1000 + 6 * 1000 * 60 + 60 * 60 * 1000 + 3 * 24 * 60 * 60 * 1000,
+                "3-1:6:12.50");
     }
-    
-    @Test(enabled = false)
-	private void testDelta(long delta, String expectedValue) {
+
+    private void testDelta(long delta, String expectedValue) {
         List<Object> values = new LinkedList<Object>();
         values.add(delta);
         VmsConnector.remapToDelta(values);
@@ -1150,33 +1236,33 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testDelete() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Create the account if it doesn't already exist
             //
-            if (getUser(getTestUser())==null) {
+            if (getUser(getTestUser()) == null) {
                 try {
                     Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-                    System.out.println(newUid.getValue()+" created");
+                    System.out.println(newUid.getValue() + " created");
                 } catch (RuntimeException rte) {
                     if (!(rte.getCause() instanceof AlreadyExistsException)) {
                         throw rte;
-                    } 
+                    }
                 }
             }
-    
+
             // Delete the account
             //
             Uid deleteUid = new Uid(getTestUser());
             info.delete(ObjectClass.ACCOUNT, deleteUid, null);
-            System.out.println(deleteUid.getValue()+" deleted");
-    
+            System.out.println(deleteUid.getValue() + " deleted");
+
             // Now delete it a second time
             //
             try {
@@ -1190,44 +1276,46 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test(groups = { "integration" })
     public void testBadAttribute() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
 
         try {
             Set<Attribute> attrs = fillInSampleUser(getTestUser());
-    
+
             // Create the account if it doesn't already exist
             //
-            if (getUser(getTestUser())==null) {
+            if (getUser(getTestUser()) == null) {
                 try {
                     Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
-                    System.out.println(newUid.getValue()+" created");
+                    System.out.println(newUid.getValue() + " created");
                 } catch (RuntimeException rte) {
                     if (!(rte.getCause() instanceof AlreadyExistsException)) {
                         throw rte;
-                    } 
+                    }
                 }
             }
             {
                 // Do a get with Valid OP_ATTRIBUTES_TO_GET
                 //
                 Map<String, Object> map = new HashMap<String, Object>();
-                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { VmsConstants.ATTR_ASTLM });
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET,
+                        new String[] { VmsConstants.ATTR_ASTLM });
                 OperationOptions options = new OperationOptions(map);
                 TestHandler handler = new TestHandler();
-                TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, options);
+                TestHelpers.search(info, ObjectClass.ACCOUNT, null, handler, options);
             }
             {
                 // Do a get with Invalid OP_ATTRIBUTES_TO_GET
                 //
                 Map<String, Object> map = new HashMap<String, Object>();
-                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { VmsConstants.ATTR_ASTLM, "Bogus" });
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {
+                    VmsConstants.ATTR_ASTLM, "Bogus" });
                 OperationOptions options = new OperationOptions(map);
                 TestHandler handler = new TestHandler();
                 try {
-                    TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, options);
+                    TestHelpers.search(info, ObjectClass.ACCOUNT, null, handler, options);
                     AssertJUnit.fail("No execption thrown");
                 } catch (IllegalArgumentException iae) {
                     // Exception expected
@@ -1237,35 +1325,39 @@ public class VmsConnectorTests {
             //
             Uid deleteUid = new Uid(getTestUser());
             info.delete(ObjectClass.ACCOUNT, deleteUid, null);
-            System.out.println(deleteUid.getValue()+" deleted");
+            System.out.println(deleteUid.getValue() + " deleted");
 
         } finally {
             info.dispose();
         }
     }
-    @Test//@Ignore
+
+    @Test(groups = { "integration" })
     public void testResolve() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector connector = createConnector(config);
         String userName = "TEST106";
         try {
             Set<Attribute> attrs = fillInSampleUser(userName);
-    
+
             // Delete the account if it already exists
             //
             deleteUser(userName, connector);
             try {
-                connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(new HashMap()));
+                connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(
+                        new HashMap()));
                 AssertJUnit.fail("exception expected");
             } catch (UnknownUidException ue) {
                 // expected
             }
-    
+
             // Create the account
             //
             Uid newUid = connector.create(ObjectClass.ACCOUNT, attrs, null);
-            System.out.println(newUid.getValue()+" created");
-            Uid retrievedUid = connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(new HashMap()));
+            System.out.println(newUid.getValue() + " created");
+            Uid retrievedUid =
+                    connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(
+                            new HashMap()));
             AssertJUnit.assertEquals(newUid, retrievedUid);
         } finally {
             connector.dispose();
@@ -1279,23 +1371,23 @@ public class VmsConnectorTests {
     private Set<Attribute> fillInSampleUser(final String testUser, boolean runningScripts) {
         Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, testUser));
-        List<String> primary_days = new LinkedList<String>();
-        primary_days.add(DAYS_MON);
-        primary_days.add(DAYS_TUE);
-        primary_days.add(DAYS_THU);
-        primary_days.add(DAYS_FRI);
+        List<String> primaryDays = new LinkedList<String>();
+        primaryDays.add(DAYS_MON);
+        primaryDays.add(DAYS_TUE);
+        primaryDays.add(DAYS_THU);
+        primaryDays.add(DAYS_FRI);
         if (runningScripts) {
-            primary_days.add(DAYS_WED);
-            primary_days.add(DAYS_SAT);
-            primary_days.add(DAYS_SUN);
+            primaryDays.add(DAYS_WED);
+            primaryDays.add(DAYS_SAT);
+            primaryDays.add(DAYS_SUN);
 
             attrs.add(AttributeBuilder.build(VmsConstants.ATTR_UIC, "[200,200]"));
             attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "[USER]"));
         } else {
-            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "["+testUser+"]"));
+            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "[" + testUser + "]"));
             attrs.add(AttributeBuilder.build(VmsConstants.ATTR_UIC, "[200,*]"));
         }
-        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_PRIMEDAYS, primary_days));
+        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_PRIMEDAYS, primaryDays));
 
         List<String> flags = new LinkedList<String>();
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flags));
@@ -1320,16 +1412,18 @@ public class VmsConnectorTests {
 
         Name name = new Name(testUser);
         attrs.add(name);
-        
-        //attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date(108, 12, 31).getTime()));
+
+        // attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+        // new Date(108, 12, 31).getTime()));
 
         return attrs;
     }
 
-    private VmsConnector createConnector(VmsConfiguration config)
-    throws Exception {
+    private VmsConnector createConnector(VmsConfiguration config) throws Exception {
         VmsConnector rv = new VmsConnector();
-        rv.init(config);
+        if (null != config) {
+            rv.init(config);
+        }
         return rv;
     }
 
@@ -1340,7 +1434,7 @@ public class VmsConnectorTests {
     protected Boolean isSSH() {
         return Boolean.FALSE;
     }
-    
+
     protected String getTestUser() {
         return "TEST105";
     }
@@ -1356,11 +1450,11 @@ public class VmsConnectorTests {
     private VmsConfiguration createConfiguration() {
         VmsConfiguration config = new VmsConfiguration();
         config.setHostLineTerminator(getLineTerminator());
-        config.setHostNameOrIpAddr(HOST_NAME);
+        config.setHostNameOrIpAddr(hostName);
         config.setHostPortNumber(getHostPort());
         config.setHostShellPrompt(SHELL_PROMPT);
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setUserName(SYSTEM_USER);
+        config.setPassword(new GuardedString(systemPassword.toCharArray()));
+        config.setUserName(systemUser);
         config.setLongCommands(true);
         config.setSSH(isSSH());
         config.setVmsLocale("en_US");
@@ -1368,11 +1462,12 @@ public class VmsConnectorTests {
         config.setVmsDateFormatWithSecs("dd-MMM-yyyy HH:mm:ss");
         config.setVmsTimeZone("GMT-06:00");
         config.setDisableUserLogins(false);
-        
+
         OurConnectorMessages messages = new OurConnectorMessages();
-        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String, String>>();
         Map<String, String> foo = new HashMap<String, String>();
-        ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.vms.Messages");
+        ResourceBundle messagesBundle =
+                ResourceBundle.getBundle("org.identityconnectors.vms.Messages");
         Enumeration<String> enumeration = messagesBundle.getKeys();
         while (enumeration.hasMoreElements()) {
             String key = enumeration.nextElement();
@@ -1381,7 +1476,7 @@ public class VmsConnectorTests {
         catalogs.put(Locale.getDefault(), foo);
         messages.setCatalogs(catalogs);
         config.setConnectorMessages(messages);
-        
+
         return config;
     }
 
@@ -1399,18 +1494,19 @@ public class VmsConnectorTests {
     }
 
     public static class OurConnectorMessages implements ConnectorMessages {
-        private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
+        private Map<Locale, Map<String, String>> catalogs =
+                new HashMap<Locale, Map<String, String>>();
 
         public String format(String key, String defaultValue, Object... args) {
-            Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
-            Map<String,String> catalog = _catalogs.get(locale);
+            Locale locale = CurrentLocale.isSet() ? CurrentLocale.get() : Locale.getDefault();
+            Map<String, String> catalog = catalogs.get(locale);
             String message = catalog.get(key);
-            MessageFormat formatter = new MessageFormat(message,locale);
+            MessageFormat formatter = new MessageFormat(message, locale);
             return formatter.format(args, new StringBuffer(), null).toString();
         }
 
-        public void setCatalogs(Map<Locale,Map<String,String>> catalogs) {
-            _catalogs = catalogs;
+        public void setCatalogs(Map<Locale, Map<String, String>> catalogs) {
+            this.catalogs = catalogs;
         }
     }
 

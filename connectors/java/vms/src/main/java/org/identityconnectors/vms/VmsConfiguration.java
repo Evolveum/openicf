@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -29,90 +29,104 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
-
 public class VmsConfiguration extends AbstractConfiguration {
-    private String         _userName;
-    private GuardedString  _password;
+    private String userName;
+    private GuardedString password;
 
-    private String         _hostNameOrIpAddr;
-    private String         _hostLineTerminator;
-    private String         _hostShellPrompt;
-    private Integer        _hostPortNumber;
-    private String         _vmsLocale;
-    private String         _vmsDateFormatWithSecs;
-    private String         _vmsDateFormatWithoutSecs;
-    private String         _vmsTimeZone;
-    private Boolean        _isSSH;
-    private Boolean        _supportsLongCommands;
-    private Boolean        _disableUserLogins;
+    private String hostNameOrIpAddr;
+    private String hostLineTerminator;
+    private String hostShellPrompt;
+    private Integer hostPortNumber;
+    private String vmsLocale;
+    private String vmsDateFormatWithSecs;
+    private String vmsDateFormatWithoutSecs;
+    private String vmsTimeZone;
+    private Boolean isSSH;
+    private Boolean supportsLongCommands;
+    private Boolean disableUserLogins;
 
-    private String         _localHostShellPrompt = "BOOMBOOM";
+    private String localHostShellPrompt = "BOOMBOOM";
 
     public VmsConfiguration() {
-        _vmsLocale = Locale.getDefault().toString();
-        _vmsTimeZone = TimeZone.getDefault().getID();
-        _vmsDateFormatWithoutSecs = "dd-MMM-yyyy HH:mm";
-        _vmsDateFormatWithSecs = "dd-MMM-yyyy HH:mm:ss";
-        _hostShellPrompt = "[$] ";
-        _disableUserLogins = Boolean.TRUE;
+        vmsLocale = Locale.getDefault().toString();
+        vmsTimeZone = TimeZone.getDefault().getID();
+        vmsDateFormatWithoutSecs = "dd-MMM-yyyy HH:mm";
+        vmsDateFormatWithSecs = "dd-MMM-yyyy HH:mm:ss";
+        hostShellPrompt = "[$] ";
+        disableUserLogins = Boolean.TRUE;
     }
 
     public VmsConfiguration(VmsConfiguration other) {
-        _userName = other._userName;
-        _password = other._password;
+        userName = other.userName;
+        password = other.password;
 
-        _hostNameOrIpAddr = other._hostNameOrIpAddr;
-        _hostLineTerminator = other._hostLineTerminator;
-        _hostShellPrompt = other._hostShellPrompt;
-        _hostPortNumber = other._hostPortNumber;
-        _vmsLocale = other._vmsLocale;
-        _vmsDateFormatWithoutSecs = other._vmsDateFormatWithoutSecs;
-        _vmsDateFormatWithSecs = other._vmsDateFormatWithSecs;
-        _vmsTimeZone = other._vmsTimeZone;
-        _isSSH = other._isSSH;
-        _supportsLongCommands = other._supportsLongCommands;
-        _disableUserLogins = other._disableUserLogins;
-        
+        hostNameOrIpAddr = other.hostNameOrIpAddr;
+        hostLineTerminator = other.hostLineTerminator;
+        hostShellPrompt = other.hostShellPrompt;
+        hostPortNumber = other.hostPortNumber;
+        vmsLocale = other.vmsLocale;
+        vmsDateFormatWithoutSecs = other.vmsDateFormatWithoutSecs;
+        vmsDateFormatWithSecs = other.vmsDateFormatWithSecs;
+        vmsTimeZone = other.vmsTimeZone;
+        isSSH = other.isSSH;
+        supportsLongCommands = other.supportsLongCommands;
+        disableUserLogins = other.disableUserLogins;
+
         setConnectorMessages(other.getConnectorMessages());
     }
 
     public void validate() {
-        if (isNull(_vmsLocale))
+        if (isNull(vmsLocale)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.LOCALE_NULL));
-        if (isNull(_vmsDateFormatWithSecs))
+        }
+        if (isNull(vmsDateFormatWithSecs)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT1_NULL));
-        if (isNull(_vmsTimeZone))
+        }
+        if (isNull(vmsTimeZone)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.TIMEZONE_NULL));
-        if (isNull(_vmsDateFormatWithoutSecs))
+        }
+        if (isNull(vmsDateFormatWithoutSecs)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT2_NULL));
-        if (isNull(_hostLineTerminator))
+        }
+        if (isNull(hostLineTerminator)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
-        if (_isSSH==null)
+        }
+        if (isSSH == null) {
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
-        if (_supportsLongCommands==null)
+        }
+        if (supportsLongCommands == null) {
             throw new IllegalArgumentException(getMessage(VmsMessages.LONG_COMMANDS_NULL));
-        if (isNull(_hostShellPrompt))
+        }
+        if (isNull(hostShellPrompt)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.SHELL_PROMPT_NULL));
-        if (isNull(_hostNameOrIpAddr))
+        }
+        if (isNull(hostNameOrIpAddr)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.HOST_NULL));
-        if (_hostPortNumber==null)
+        }
+        if (hostPortNumber == null) {
             throw new IllegalArgumentException(getMessage(VmsMessages.PORT_NULL));
-        if (_hostPortNumber<1 || _hostPortNumber>65535)
-            throw new IllegalArgumentException(getMessage(VmsMessages.PORT_RANGE_ERROR, _hostPortNumber));
-        if (isNull(_userName))
+        }
+        if (hostPortNumber < 1 || hostPortNumber > 65535) {
+            throw new IllegalArgumentException(getMessage(VmsMessages.PORT_RANGE_ERROR,
+                    hostPortNumber));
+        }
+        if (isNull(userName)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.USERNAME_NULL));
-        if (isNull(_password))
+        }
+        if (isNull(password)) {
             throw new IllegalArgumentException(getMessage(VmsMessages.PASSWORD_NULL));
-        
+        }
+
     }
 
     private boolean isNull(String string) {
-        return string==null || string.length()==0;
+        return string == null || string.length() == 0;
     }
 
-    private static GuardedString _nullGuardedString = new GuardedString(new char[0]);
+    private static GuardedString nullGuardedString = new GuardedString(new char[0]);
+
     private boolean isNull(GuardedString string) {
-        return string==null || string.equals(_nullGuardedString);
+        return string == null || string.equals(nullGuardedString);
     }
 
     public String getMessage(String key) {
@@ -123,135 +137,142 @@ public class VmsConfiguration extends AbstractConfiguration {
         return getConnectorMessages().format(key, key, objects);
     }
 
-    @ConfigurationProperty(order=1, required=true)
+    @ConfigurationProperty(order = 1, required = true)
     public String getUserName() {
-        return _userName;
+        return userName;
     }
 
     public void setUserName(String userName) {
-        _userName = userName;
+        this.userName = userName;
     }
 
-    @ConfigurationProperty(confidential=true, order=2, required=true)
+    @ConfigurationProperty(confidential = true, order = 2, required = true)
     public GuardedString getPassword() {
-        return _password;
+        return password;
     }
 
     public void setPassword(GuardedString password) {
-        _password = password;
+        this.password = password;
     }
 
-    @ConfigurationProperty(order=3, required=true)
+    @ConfigurationProperty(order = 3, required = true)
     public String getHostNameOrIpAddr() {
-        return _hostNameOrIpAddr;
+        return hostNameOrIpAddr;
     }
 
     public void setHostNameOrIpAddr(String hostNameOrIpAddr) {
-        _hostNameOrIpAddr = hostNameOrIpAddr;
+        this.hostNameOrIpAddr = hostNameOrIpAddr;
     }
 
-    @ConfigurationProperty(order=4, required=true)
+    @ConfigurationProperty(order = 4, required = true)
     public Integer getHostPortNumber() {
-        return _hostPortNumber;
+        return hostPortNumber;
     }
 
     public void setHostPortNumber(Integer hostPortNumber) {
-        _hostPortNumber = hostPortNumber;
+        this.hostPortNumber = hostPortNumber;
     }
 
-    @ConfigurationProperty(displayMessageKey="SSH.display", helpMessageKey="SSH.help", order=5, required=true)
+    @ConfigurationProperty(displayMessageKey = "SSH.display", helpMessageKey = "SSH.help",
+            order = 5, required = true)
     public Boolean getSSH() {
-        return _isSSH;
+        return isSSH;
     }
 
     public void setSSH(Boolean isSSH) {
-        _isSSH = isSSH;
+        this.isSSH = isSSH;
     }
-    @ConfigurationProperty(order=6, required=true)
+
+    @ConfigurationProperty(order = 6, required = true)
     public String getHostLineTerminator() {
-        if (_hostLineTerminator!=null)
-            return _hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
-        else
+        if (hostLineTerminator != null) {
+            return hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
+        } else {
             return null;
+        }
     }
 
     public String getRealHostLineTerminator() {
-        return _hostLineTerminator;
+        return hostLineTerminator;
     }
 
     public void setHostLineTerminator(String hostLineTerminator) {
-        if (hostLineTerminator!=null)
-            _hostLineTerminator = hostLineTerminator.replaceAll("\\\\n", "\n").replaceAll("\\\\r", "\r");
-        else
-            _hostLineTerminator = null;
+        if (hostLineTerminator != null) {
+            this.hostLineTerminator =
+                    hostLineTerminator.replaceAll("\\\\n", "\n").replaceAll("\\\\r", "\r");
+        } else {
+            this.hostLineTerminator = null;
+        }
     }
 
-    @ConfigurationProperty(order=7, required=true)
+    @ConfigurationProperty(order = 7, required = true)
     public String getHostShellPrompt() {
-        return _hostShellPrompt;
+        return hostShellPrompt;
     }
 
     String getLocalHostShellPrompt() {
-        return _localHostShellPrompt;
+        return localHostShellPrompt;
     }
 
     public void setHostShellPrompt(String hostShellPrompt) {
-        _hostShellPrompt = hostShellPrompt;
+        this.hostShellPrompt = hostShellPrompt;
     }
 
-    @ConfigurationProperty(order=10, required=true)
+    @ConfigurationProperty(order = 10, required = true)
     public String getVmsLocale() {
-        return _vmsLocale;
+        return vmsLocale;
     }
 
     public void setVmsLocale(String vmsLocale) {
-        _vmsLocale = vmsLocale;
+        this.vmsLocale = vmsLocale;
     }
 
-    @ConfigurationProperty(order=11, required=true)
+    @ConfigurationProperty(order = 11, required = true)
     public String getVmsTimeZone() {
-        return _vmsTimeZone;
+        return vmsTimeZone;
     }
 
     public void setVmsTimeZone(String vmsTimeZone) {
-        _vmsTimeZone = vmsTimeZone;
+        this.vmsTimeZone = vmsTimeZone;
     }
 
-    @ConfigurationProperty(order=12, required=true)
+    @ConfigurationProperty(order = 12, required = true)
     public String getVmsDateFormatWithSecs() {
-        return _vmsDateFormatWithSecs;
+        return vmsDateFormatWithSecs;
     }
 
     public void setVmsDateFormatWithSecs(String vmsDateFormatWithSecs) {
-        _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
+        this.vmsDateFormatWithSecs = vmsDateFormatWithSecs;
     }
 
-    @ConfigurationProperty(order=13, required=true)
+    @ConfigurationProperty(order = 13, required = true)
     public String getVmsDateFormatWithoutSecs() {
-        return _vmsDateFormatWithoutSecs;
+        return vmsDateFormatWithoutSecs;
     }
 
     public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
-        _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
+        this.vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
     }
-    
-    @ConfigurationProperty(order=14)
+
+    @ConfigurationProperty(order = 14)
     public Boolean getDisableUserLogins() {
-        if (_disableUserLogins==null)
+        if (disableUserLogins == null) {
             return Boolean.TRUE;
-        return _disableUserLogins;
+        }
+        return disableUserLogins;
     }
 
     public void setDisableUserLogins(Boolean disableUserLogins) {
-        _disableUserLogins = disableUserLogins;
+        this.disableUserLogins = disableUserLogins;
     }
-    
-    @ConfigurationProperty(displayMessageKey="longCommands.display", helpMessageKey="longCommands.help", order=15, required=true)
+
+    @ConfigurationProperty(displayMessageKey = "longCommands.display",
+            helpMessageKey = "longCommands.help", order = 15, required = true)
     public Boolean getLongCommands() {
-        return _supportsLongCommands;
+        return supportsLongCommands;
     }
 
     public void setLongCommands(Boolean supportsLongCommands) {
-        _supportsLongCommands = supportsLongCommands;
+        this.supportsLongCommands = supportsLongCommands;
     }
 }

@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class VmsUtilities {
+public final class VmsUtilities {
+
+    private VmsUtilities() {
+    }
 
     public static String readFileFromClassPath(String fileName) throws IOException {
         ClassLoader cl = null;
@@ -32,16 +35,19 @@ public class VmsUtilities {
                 try {
                     br.close();
                 } catch (Exception e) {
+                    /* ignore */
                 }
             } else if (isr != null) {
                 try {
                     isr.close();
                 } catch (Exception e) {
+                    /* ignore */
                 }
             } else if (is != null) {
                 try {
                     is.close();
                 } catch (Exception e) {
+                    /* ignore */
                 }
             }
         }
