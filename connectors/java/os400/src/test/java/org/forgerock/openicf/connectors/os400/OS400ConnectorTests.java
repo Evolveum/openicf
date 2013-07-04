@@ -1,7 +1,7 @@
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2012 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012-2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,23 +20,17 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.os400;
 
-import java.util.*;
-
+package org.forgerock.openicf.connectors.os400;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
-import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.filter.*;
-import org.identityconnectors.test.common.TestHelpers;
 import org.identityconnectors.test.common.PropertyBag;
+import org.identityconnectors.test.common.TestHelpers;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -45,24 +39,25 @@ import org.testng.annotations.Test;
 /**
  * Attempts to test the {@link OS400Connector} with the framework.
  *
- * @author $author$
- * @version $Revision$ $Date$
  */
 public class OS400ConnectorTests {
 
     /*
-    * Example test properties.
-    * See the Javadoc of the TestHelpers class for the location of the public and private configuration files.
-    */
-    private static final PropertyBag properties = TestHelpers.getProperties(OS400Connector.class);
+     * Example test properties. See the Javadoc of the TestHelpers class for the
+     * location of the public and private configuration files.
+     */
+    private static final PropertyBag PROPERTIES = TestHelpers.getProperties(OS400Connector.class);
     // Host is a public property read from public configuration file
-    private static final String HOST = properties.getStringProperty("configuration.host");
-    // Login and password are private properties read from private configuration file 
-    private static final String REMOTE_USER = properties.getStringProperty("configuration.remoteUser");
-    private static final GuardedString PASSWORD = properties.getProperty("configuration.password", GuardedString.class);
+    private static final String HOST = PROPERTIES.getStringProperty("configuration.host");
+    // Login and password are private properties read from private configuration
+    // file
+    private static final String REMOTE_USER = PROPERTIES
+            .getStringProperty("configuration.remoteUser");
+    private static final GuardedString PASSWORD = PROPERTIES.getProperty("configuration.password",
+            GuardedString.class);
 
-    //set up logging
-    private static final Log log = Log.getLog(OS400ConnectorTests.class);
+    // set up logging
+    private static final Log LOG = Log.getLog(OS400ConnectorTests.class);
 
     @BeforeClass
     public static void setUp() {
@@ -71,33 +66,37 @@ public class OS400ConnectorTests {
         Assert.assertNotNull(PASSWORD);
 
         //
-        //other setup work to do before running tests
+        // other setup work to do before running tests
         //
 
-        //Configuration config = new OS400Configuration();
-        //Map<String, ? extends Object> configData = (Map<String, ? extends Object>) properties.getProperty("configuration",Map.class)
-        //TestHelpers.fillConfiguration(
+        // Configuration config = new OS400Configuration();
+        // Map<String, ? extends Object> configData = (Map<String, ? extends
+        // Object>) PROPERTIES.getProperty("configuration",Map.class)
+        // TestHelpers.fillConfiguration(
     }
 
     @AfterClass
     public static void tearDown() {
         //
-        //clean up resources
+        // clean up resources
         //
     }
 
     @Test
     public void exampleTest1() {
-        log.info("Running Test 1...");
-        //You can use TestHelpers to do some of the boilerplate work in running a search
-        //TestHelpers.search(theConnector, ObjectClass.ACCOUNT, filter, handler, null);
+        LOG.info("Running Test 1...");
+        // You can use TestHelpers to do some of the boilerplate work in running
+        // a search
+        // TestHelpers.search(theConnector, ObjectClass.ACCOUNT, filter,
+        // handler, null);
     }
 
     @Test
     public void exampleTest2() {
-        log.info("Running Test 2...");
-        //Another example using TestHelpers
-        //List<ConnectorObject> results = TestHelpers.searchToList(theConnector, ObjectClass.GROUP, filter);
+        LOG.info("Running Test 2...");
+        // Another example using TestHelpers
+        // List<ConnectorObject> results =
+        // TestHelpers.searchToList(theConnector, ObjectClass.GROUP, filter);
     }
 
     protected ConnectorFacade getFacade(OS400Configuration config) {

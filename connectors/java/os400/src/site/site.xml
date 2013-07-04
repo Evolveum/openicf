@@ -19,17 +19,17 @@
  !
  ! CCPL HEADER END
  !
- !      Copyright 2012 ForgeRock AS
+ !      Copyright 2012-2013 ForgeRock Inc.
  !
 -->
 
-<project xmlns="http://maven.apache.org/DECORATION/1.1.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.1.0 http://maven.apache.org/xsd/decoration-1.1.0.xsd">
+<project xmlns="http://maven.apache.org/DECORATION/1.3.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.3.0 http://maven.apache.org/xsd/decoration-1.3.0.xsd">
     <skin>
         <groupId>org.forgerock.commons</groupId>
         <artifactId>forgerock-community-skin</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </skin>
     <publishDate position="right" format="yyyy.MM.dd"/>
     <version position="right"/>
@@ -37,20 +37,21 @@
     <body>
         <breadcrumbs>
             <item name="Developer Community" href="http://www.forgerock.org" />
-            <item name="OpenICF" href="http://openicf.forgerock.org"/>
-            <item name="Connectors" href="http://openicf.forgerock.org/connectors/index.html" />
-            <item name="OS400 Connector" href="http://openicf.forgerock.org/connectors/os400/index.html" />
+            <item name="OpenICF" href="../../index.html"/>
+            <item name="Connectors" href="../index.html" />
+            <item name="OS400 Connector" href="./index.html" />
         </breadcrumbs>
         <menu name="Overview" img="images/arrow_right.png">
-            <item name="Introduction" href="index.html"/>
-            <item name="Compatibility" href="compatibility.html"/>
-            <item name="Installation" href="installation.html"/>
-            <item name="Configuration" href="configuration.html"/>
-            <item name="About" href="aboutpage.html"/>
-            <item name="Changes" href="changelog.html"/>
+            <item name="Introduction" href="openicf-report.html"/>
             <item name="FAQ" href="faq.html"/>
-            <item name="Embedded" href="embedded.html"/>
         </menu>
+
+        <menu name="OS400 Core Docs">
+            <!--<item name="All Formats" href="docs.html" />-->
+            <!--item name="Release Notes" href="./doc/release-notes/index.html" /-->
+            <item name="Developer Guide" href="./doc/os400-connector-1.1.0.0-SNAPSHOT/index.html" />
+        </menu>
+
         <menu ref="reports"/>
     </body>
     <custom>
@@ -60,5 +61,6 @@
             <src>images/openicf-tagline-195x65.png</src>
             <alt>OpenICF</alt>
         </openproject>
+        <siteSearchFQDN>forgerock.org</siteSearchFQDN>
     </custom>
 </project>

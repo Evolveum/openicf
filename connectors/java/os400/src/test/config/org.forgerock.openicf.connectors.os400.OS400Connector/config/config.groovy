@@ -1,7 +1,7 @@
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2011. ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012-2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,13 +20,11 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- *
- * $Id$
  */
 
 /* +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
+ *  +---------------------------------------------------+
  */
 
 import org.identityconnectors.contract.data.groovy.Lazy
@@ -50,14 +48,14 @@ testsuite {
     bundleJar=System.getProperty("bundleJar")
     bundleName=System.getProperty("bundleName")
     bundleVersion=System.getProperty("bundleVersion")
-    connectorName=""    
+    connectorName=""
 
     // ValidateApiOpTests:
     Validate.iterations="3"
 
     // AuthenticationApiOpTests:
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-    Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())  
+    Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())
 } // testsuite
 
 HOST="0.0.0.0"

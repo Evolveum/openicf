@@ -1,7 +1,7 @@
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2012 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012-2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,25 +20,35 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.os400;
 
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.filter.*;
+package org.forgerock.openicf.connectors.os400;
+
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanFilter;
+import org.identityconnectors.framework.common.objects.filter.GreaterThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanFilter;
+import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 /**
- * This is an implementation of AbstractFilterTranslator that gives a concrete representation
- * of which filters can be applied at the connector level (natively). If the
- * OS400 doesn't support a certain expression type, that factory
- * method should return null. This level of filtering is present only to allow any
- * native constructs that may be available to help reduce the result set for the framework,
- * which will (strictly) reapply all filters specified after the connector does the initial
- * filtering.<p><p>Note: The generic query type is most commonly a String, but does not have to be.
+ * This is an implementation of AbstractFilterTranslator that gives a concrete
+ * representation of which filters can be applied at the connector level
+ * (natively). If the OS400 doesn't support a certain expression type, that
+ * factory method should return null. This level of filtering is present only to
+ * allow any native constructs that may be available to help reduce the result
+ * set for the framework, which will (strictly) reapply all filters specified
+ * after the connector does the initial filtering.
+ * <p>
+ * <p>
+ * Note: The generic query type is most commonly a String, but does not have to
+ * be.
  *
- * @author $author$
- * @version $Revision$ $Date$
  */
 public class OS400FilterTranslator extends AbstractFilterTranslator<String> {
 
@@ -47,18 +57,18 @@ public class OS400FilterTranslator extends AbstractFilterTranslator<String> {
      */
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        /* 
-         * Example implementation:
-         * You may define the format of the queries for your connector, but
-         * you must make sure that the executeQuery() (if you implemented Search) 
-         * method handles it appropriately.
+        /*
+         * Example implementation: You may define the format of the queries for
+         * your connector, but you must make sure that the executeQuery() (if
+         * you implemented Search) method handles it appropriately.
          */
         String name = filter.getAttribute().getName();
         String value = AttributeUtil.getAsStringValue(filter.getAttribute());
         if (StringUtil.isBlank(value)) {
             return null;
         } else if (not) {
-            //create an expression that means "not contains" or "doesn't contain" if possible
+            // create an expression that means "not contains" or
+            // "doesn't contain" if possible
             return name + "!=*" + value + "*";
         } else {
             return name + "=*" + value + "*";

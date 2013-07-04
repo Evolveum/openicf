@@ -1,7 +1,7 @@
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2012 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012-2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,25 +20,21 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.os400;
+
+package org.forgerock.openicf.connectors.os400;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
-
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the OS400 Connector.
  *
- * @author $author$
- * @version $Revision$ $Date$
  */
 public class OS400Configuration extends AbstractConfiguration {
-
 
     // Exposed configuration properties.
 
@@ -62,17 +58,15 @@ public class OS400Configuration extends AbstractConfiguration {
      */
     private boolean ssl = false;
 
-
     /**
-     * Constructor
+     * Constructor.
      */
     public OS400Configuration() {
 
     }
 
-
-    @ConfigurationProperty(order = 1, displayMessageKey = "HOST_PROPERTY_DISPLAY", helpMessageKey = "HOST_PROPERTY_HELP",
-            required = true, confidential = false)
+    @ConfigurationProperty(order = 1, displayMessageKey = "HOST_PROPERTY_DISPLAY",
+            helpMessageKey = "HOST_PROPERTY_HELP", required = true, confidential = false)
     public String getHost() {
         return host;
     }
@@ -80,7 +74,6 @@ public class OS400Configuration extends AbstractConfiguration {
     public void setHost(String host) {
         this.host = host;
     }
-
 
     @ConfigurationProperty(order = 2, displayMessageKey = "REMOTE_USER_PROPERTY_DISPLAY",
             helpMessageKey = "REMOTE_USER_PROPERTY_HELP", required = true, confidential = false)

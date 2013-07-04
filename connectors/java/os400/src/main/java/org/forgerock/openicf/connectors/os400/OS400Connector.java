@@ -1,7 +1,7 @@
 /*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright © 2012 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2012-2013 ForgeRock Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -20,16 +20,54 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * $Id$
  */
-package org.forgerock.openicf.os400;
+
+package org.forgerock.openicf.connectors.os400;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
-import java.util.*;
+import java.util.Set;
+
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.FrameworkUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
+import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.common.objects.ScriptContext;
+import org.identityconnectors.framework.common.objects.SyncResultsHandler;
+import org.identityconnectors.framework.common.objects.SyncToken;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.Configuration;
+import org.identityconnectors.framework.spi.Connector;
+import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
+import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
+import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.SyncOp;
+import org.identityconnectors.framework.spi.operations.TestOp;
+import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 
 import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.AS400Message;
@@ -39,31 +77,19 @@ import com.ibm.as400.access.RequestNotSupportedException;
 import com.ibm.as400.access.SecureAS400;
 import com.ibm.as400.access.SystemValue;
 import com.ibm.as400.access.User;
-import org.identityconnectors.common.security.*;
-import org.identityconnectors.framework.common.FrameworkUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
-import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
-import org.identityconnectors.framework.spi.*;
-import org.identityconnectors.framework.spi.operations.*;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.common.logging.Log;
 
 /**
- * Main implementation of the OS400 Connector
+ * Main implementation of the OS400 Connector.
  *
- * @author $author$
- * @version $Revision$ $Date$
  */
-@ConnectorClass(
-        displayNameKey = "OS400",
-        configurationClass = OS400Configuration.class)
-public class OS400Connector implements PoolableConnector, AuthenticateOp, ResolveUsernameOp, CreateOp, DeleteOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp, SearchOp<String>, SyncOp, TestOp, UpdateAttributeValuesOp {
+@ConnectorClass(displayNameKey = "OS400", configurationClass = OS400Configuration.class)
+public class OS400Connector implements PoolableConnector, AuthenticateOp, ResolveUsernameOp,
+        CreateOp, DeleteOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp, SearchOp<String>,
+        SyncOp, TestOp, UpdateAttributeValuesOp {
     /**
      * Setup logging for the {@link OS400Connector}.
      */
-    private static final Log log = Log.getLog(OS400Connector.class);
+    private static final Log LOG = Log.getLog(OS400Connector.class);
 
     /**
      * Place holder for the {@link Schema} create in the schema() method
@@ -73,12 +99,13 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
 
     /**
      * Place holder for the {@link Configuration} passed into the init() method
-     * {@link OS400Connector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * {@link OS400Connector#init(org.identityconnectors.framework.spi.Configuration)}
+     * .
      */
     private OS400Configuration configuration;
 
     /**
-     * Place holder for the Connection created in the init method
+     * Place holder for the Connection created in the init method.
      */
     private AS400 as400 = null;
     private int passwordLevel = QPWDLVL_UNFETCHED;
@@ -111,9 +138,13 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
                 configuration.getPassword().access(accessor);
 
                 if (configuration.isSsl()) {
-                    as400 = new SecureAS400(configuration.getHost(), configuration.getRemoteUser(), clear.toString());
+                    as400 =
+                            new SecureAS400(configuration.getHost(), configuration.getRemoteUser(),
+                                    clear.toString());
                 } else {
-                    as400 = new AS400(configuration.getHost(), configuration.getRemoteUser(), clear.toString());
+                    as400 =
+                            new AS400(configuration.getHost(), configuration.getRemoteUser(), clear
+                                    .toString());
                 }
                 clear.setLength(0);
 
@@ -161,33 +192,33 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
     /******************
      * SPI Operations
      *
-     * Implement the following operations using the contract and
-     * description found in the Javadoc for these methods.
+     * Implement the following operations using the contract and description
+     * found in the Javadoc for these methods.
      ******************/
 
     /**
      * {@inheritDoc}
      */
-    public Uid authenticate(final ObjectClass objectClass, final String userName, final GuardedString password, final OperationOptions options) {
+    public Uid authenticate(final ObjectClass objectClass, final String userName,
+            final GuardedString password, final OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
      */
-    public Uid resolveUsername(final ObjectClass objectClass, final String userName, final OperationOptions options) {
+    public Uid resolveUsername(final ObjectClass objectClass, final String userName,
+            final OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
      */
-    public Uid create(final ObjectClass objectClass, final Set<Attribute> createAttributes, final OperationOptions options) {
+    public Uid create(final ObjectClass objectClass, final Set<Attribute> createAttributes,
+            final OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
@@ -195,7 +226,6 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
     public void delete(final ObjectClass objectClass, final Uid uid, final OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
@@ -208,17 +238,22 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
             ObjectClassInfoBuilder ocBuilder = new ObjectClassInfoBuilder();
 
             ocBuilder.setType(ObjectClass.ACCOUNT_NAME);
-            //The name of the object
+            // The name of the object
             ocBuilder.addAttributeInfo(Name.INFO);
-            //ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED, AttributeInfo.Flags.NOT_UPDATEABLE)));
-            //User registry name
-            //ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(ATTR_FIRST_NAME, String.class, EnumSet.of(AttributeInfo.Flags.NOT_UPDATEABLE)));
+            // ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME,
+            // String.class, EnumSet.of(AttributeInfo.Flags.REQUIRED,
+            // AttributeInfo.Flags.NOT_UPDATEABLE)));
+            // User registry name
+            // ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(ATTR_FIRST_NAME,
+            // String.class, EnumSet.of(AttributeInfo.Flags.NOT_UPDATEABLE)));
 
             try {
                 BeanInfo info = Introspector.getBeanInfo(User.class);
                 for (PropertyDescriptor propertyDescriptor : info.getPropertyDescriptors()) {
-                    if (FrameworkUtil.isSupportedAttributeType(propertyDescriptor.getPropertyType())) {
-                        ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(propertyDescriptor.getName(), propertyDescriptor.getPropertyType()));
+                    if (FrameworkUtil
+                            .isSupportedAttributeType(propertyDescriptor.getPropertyType())) {
+                        ocBuilder.addAttributeInfo(AttributeInfoBuilder.build(propertyDescriptor
+                                .getName(), propertyDescriptor.getPropertyType()));
                     }
                 }
             } catch (IntrospectionException e) {
@@ -236,14 +271,12 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
         return schema;
     }
 
-
     /**
      * {@inheritDoc}
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
@@ -252,26 +285,27 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
         throw new UnsupportedOperationException();
     }
 
-
     /**
      * {@inheritDoc}
      */
-    public FilterTranslator<String> createFilterTranslator(ObjectClass objectClass, OperationOptions options) {
+    public FilterTranslator<String> createFilterTranslator(ObjectClass objectClass,
+            OperationOptions options) {
         throw new UnsupportedOperationException();
     }
 
     /**
      * {@inheritDoc}
      */
-    public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
+    public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler,
+            OperationOptions options) {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * {@inheritDoc}
      */
-    public void sync(ObjectClass objectClass, SyncToken token, SyncResultsHandler handler, final OperationOptions options) {
+    public void sync(ObjectClass objectClass, SyncToken token, SyncResultsHandler handler,
+            final OperationOptions options) {
         throw new UnsupportedOperationException();
     }
 
@@ -282,7 +316,6 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
         throw new UnsupportedOperationException();
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -290,35 +323,27 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
         throw new UnsupportedOperationException();
     }
 
-
     /**
      * {@inheritDoc}
      */
-    public Uid update(ObjectClass objectClass,
-                      Uid uid,
-                      Set<Attribute> replaceAttributes,
-                      OperationOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public Uid addAttributeValues(ObjectClass objectClass,
-                                  Uid uid,
-                                  Set<Attribute> valuesToAdd,
-                                  OperationOptions options) {
+    public Uid update(ObjectClass objectClass, Uid uid, Set<Attribute> replaceAttributes,
+            OperationOptions options) {
         throw new UnsupportedOperationException();
     }
 
     /**
      * {@inheritDoc}
      */
-    public Uid removeAttributeValues(ObjectClass objectClass,
-                                     Uid uid,
-                                     Set<Attribute> valuesToRemove,
-                                     OperationOptions options) {
+    public Uid addAttributeValues(ObjectClass objectClass, Uid uid, Set<Attribute> valuesToAdd,
+            OperationOptions options) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Uid removeAttributeValues(ObjectClass objectClass, Uid uid,
+            Set<Attribute> valuesToRemove, OperationOptions options) {
         throw new UnsupportedOperationException();
     }
 
@@ -331,7 +356,7 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
             }
         } catch (RequestNotSupportedException e) {
             this.passwordLevel = QPWDLVL_UNSET;
-            log.error("QPWDLVL System Value not supported on this resource");
+            LOG.error("QPWDLVL System Value not supported on this resource");
         } catch (Exception e) {
             throw new ConnectorException(e);
         }
@@ -345,9 +370,9 @@ public class OS400Connector implements PoolableConnector, AuthenticateOp, Resolv
             success = cc.run();
             AS400Message[] msgs = cc.getMessageList();
             if (success) {
-                //TODO implement
+                // TODO implement
             } else {
-                //TODO implement
+                // TODO implement
             }
         } catch (Exception e) {
             throw new ConnectorException(e);
