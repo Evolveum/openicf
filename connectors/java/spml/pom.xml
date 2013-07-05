@@ -45,9 +45,9 @@
         <url>http://builds.forgerock.org/job/OpenICF - Spml Connector</url>
     </ciManagement>
     <scm>
-        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/spml-connector</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/spml-connector</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/spml-connector</url>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/spml</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/spml</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/spml</url>
     </scm>
     <properties>
         <connectorPackage>org.identityconnectors.spml</connectorPackage>

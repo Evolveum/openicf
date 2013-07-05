@@ -38,7 +38,7 @@
     <url>https://openicf.forgerock.org/connectors/flatfile-connector</url>
     <issueManagement>
         <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10180</url>
+        <url>http://bugster.forgerock.org/jira/browse/OPENICF/component/10180</url>
     </issueManagement>
     <ciManagement>
         <system>jenkins</system>
