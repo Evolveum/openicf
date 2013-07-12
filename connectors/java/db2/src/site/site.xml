@@ -19,7 +19,7 @@
  !
  ! CCPL HEADER END
  !
- !      Copyright 2012 ForgeRock Inc.
+ !      Copyright 2012-2013 ForgeRock Inc.
  !
 -->
 
@@ -35,22 +35,16 @@
     <version position="right"/>
     <googleAnalyticsAccountId>UA-23412190-10</googleAnalyticsAccountId>
     <body>
-        <breadcrumbs>
-            <item name="Developer Community" href="http://www.forgerock.org/" />
-            <item name="OpenICF" href="../../index.html"/>
-            <item name="Connectors" href="../index.html" />
-            <item name="DB2 Connector" href="./index.html" />
-        </breadcrumbs>
         <menu name="Overview" img="images/arrow_right.png">
             <item name="Introduction" href="openicf-report.html"/>
             <item name="FAQ" href="faq.html"/>
         </menu>
 
-        <!--<menu name="DB2 Core Docs">
-            <item name="All Formats" href="docs.html" />
-            <item name="Release Notes" href="./doc/release-notes/index.html" />
+        <menu name="DB2 Core Docs">
+            <!--<item name="All Formats" href="docs.html" />
+            <item name="Release Notes" href="./doc/release-notes/index.html" />-->
             <item name="Developer Guide" href="./doc/db2-connector-1.1.0.0-SNAPSHOT/index.html" />
-        </menu>-->
+        </menu>
 
         <menu ref="reports"/>
     </body>
