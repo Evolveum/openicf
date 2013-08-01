@@ -1,29 +1,27 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.solaris.test;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,11 +36,13 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
 public abstract class SolarisTestBase {
-    /** this password is used to initialize all the test users */
-    public static final String SAMPLE_PASSWD = "samplePasswd";
-    private static final String testgroupName = "testgrp";
+    /** This password is used to initialize all the test users. */
+    public static final String SAMPLE_PASSWD = "Passw0rd";
+    private static final String TESTGROUP_NAME = "testgrp";
     private SolarisConnection connection;
     private SolarisConfiguration configuration;
     private ConnectorFacade facade;
@@ -57,7 +57,7 @@ public abstract class SolarisTestBase {
     }
 
     @BeforeMethod
-	public void beforeTestMethods() {
+    public void beforeTestMethods() {
         connection = SolarisTestCommon.getSolarisConn();
         configuration = connection.getConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(getConfiguration());
@@ -69,14 +69,15 @@ public abstract class SolarisTestBase {
     }
 
     @AfterMethod
-	public void afterTestMethods() {
+    public void afterTestMethods() {
         cleanUpUsers();
         cleanupGroup();
         try {
-            if (connection != null) 
+            if (connection != null) {
                 connection.dispose();
+            }
         } catch (Exception ex) {
-            //OK
+            // OK
         }
     }
 
@@ -111,20 +112,23 @@ public abstract class SolarisTestBase {
             }
         }
     }
-    
+
     /**
-     * Test use a special format for usernames. Get the username created by 
-     * the {@link SolarisTestBase} class, and control that the given {@code i}
-     * is in given range from 0 to {@link SolarisTestBase#getCreateUsersNumber()}.
-     * 
-     * @param i the ID for the user.
+     * Test use a special format for usernames. Get the username created by the
+     * {@link SolarisTestBase} class, and control that the given {@code i} is in
+     * given range from 0 to {@link SolarisTestBase#getCreateUsersNumber()}.
+     *
+     * @param i
+     *            the ID for the user.
      * @return the username for given iterator
-     * @throws {@link RuntimeException} if the user with the given {@code i} wasn't created
+     * @throws {@link RuntimeException} if the user with the given {@code i}
+     *         wasn't created
      */
     public String getUsername(int i) {
-        if (i >= getCreateUsersNumber() || i < 0)
+        if (i >= getCreateUsersNumber() || i < 0) {
             throw new RuntimeException("param 'i' is out of bounds.");
-        
+        }
+
         return formatName(i);
     }
 
@@ -135,9 +139,9 @@ public abstract class SolarisTestBase {
     private void generateGroup(List<String> usernames) {
         if (createGroup()) {
             Set<Attribute> attrs = new HashSet<Attribute>();
-            attrs.add(AttributeBuilder.build(Name.NAME, testgroupName));
+            attrs.add(AttributeBuilder.build(Name.NAME, TESTGROUP_NAME));
             attrs.add(AttributeBuilder.build(GroupAttribute.USERS.getName(), usernames));
-            
+
             facade.create(ObjectClass.GROUP, attrs, null);
         }
     }
@@ -145,30 +149,33 @@ public abstract class SolarisTestBase {
     private void cleanupGroup() {
         if (createGroup()) {
             try {
-                facade.delete(ObjectClass.GROUP, new Uid(testgroupName), null);
+                facade.delete(ObjectClass.GROUP, new Uid(TESTGROUP_NAME), null);
             } catch (RuntimeException ex) {
                 // OK
             }
         }
     }
-    
+
     public String getGroupName() {
         if (!createGroup()) {
-            throw new RuntimeException("Group was not initialized. Change the Unit test's createGroup() value to true.");
+            throw new RuntimeException(
+                    "Group was not initialized. Change the Unit test's createGroup() value to true.");
         }
-        return testgroupName;  
+        return TESTGROUP_NAME;
     }
-    
+
     /**
      * Enable authentication for the given user.
-     * 
-     * When Solaris Trusted extensions are enabled, an extra command is needed to be executed after create.
-     * 
-     * @param username which will be enabled to login.
+     *
+     * When Solaris Trusted extensions are enabled, an extra command is needed
+     * to be executed after create.
+     *
+     * @param username
+     *            which will be enabled to login.
      */
     public void enableTrustedLogin(final String username) {
         if (isTrustedExtensions) {
-            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
+            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username;
             getConnection().executeCommand(command);
         }
     }

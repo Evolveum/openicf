@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -49,16 +49,23 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
-class LoginsCommand {
+public final class LoginsCommand {
 
-    private static final Log log = Log.getLog(LoginsCommand.class);
-    
-    /** a hard-coded set of constants used provided by Logins command. DO NOT CHANGE */
-    private static final Set<NativeAttribute> set;
+    private static final Log logger = Log.getLog(LoginsCommand.class);
+
+    private LoginsCommand() {
+    }
+
+    /**
+     * a hard-coded set of constants used provided by Logins command. DO NOT
+     * CHANGE
+     */
+    private static final Set<NativeAttribute> ATTRIBUTE_SET;
     static {
-        set = EnumSet.of(COMMENT, DAYS_BEFORE_TO_WARN, DIR, GROUPS_SEC,
-                GROUP_PRIM, LOCK, MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG, 
-                PWSTAT, SHELL, ID, USER_EXPIRE, USER_INACTIVE);
+        ATTRIBUTE_SET =
+                EnumSet.of(COMMENT, DAYS_BEFORE_TO_WARN, DIR, GROUPS_SEC, GROUP_PRIM, LOCK,
+                        MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG, PWSTAT, SHELL, ID,
+                        USER_EXPIRE, USER_INACTIVE);
         /*
          * NativeAttribute.NAME is left out from the 'set' on purpose. The
          * reason is that the name is already known to the issuer of logins
@@ -67,14 +74,16 @@ class LoginsCommand {
     }
 
     /**
-     * get the attributes from Logins command for the given username
+     * get the attributes from Logins command for the given username.
+     *
      * @param username
      * @param conn
-     * @return the SolarisEntry initialized with fetched attributes or null if the user was not found.
+     * @return the SolarisEntry initialized with fetched attributes or null if
+     *         the user was not found.
      */
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn) {
         SolarisEntry entry = null;
-        final String cmd = conn.buildCommand("logins -oxma -l ", username);
+        final String cmd = conn.buildCommand(true, "logins -oxma -l ", username);
         String out = conn.executeCommand(cmd);
 
         if (out.endsWith("was not found")) {
@@ -87,97 +96,89 @@ class LoginsCommand {
     }
 
     /*
-     * IMPLEMENTATION NOTE:
-     * the logins command provides a fixed set of {@link NativeAttribute}-s. If
-     * the implementation is changed, don't forget to update the list of
-     * acquired attributes: {@link LoginsCmd#set}.
+     * IMPLEMENTATION NOTE: the logins command provides a fixed set of {@link
+     * NativeAttribute}-s. If the implementation is changed, don't forget to
+     * update the list of acquired attributes: {@link LoginsCmd#set}.
      */
     public static SolarisEntry getEntry(String accountLine, String username) {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
-        
+
         /* tokens delimited by ":" */
         final String[] tokens = accountLine.split(":", -1);
         final Iterator<String> tokenIt = Arrays.asList(tokens).iterator();
-        
+
         /*
-         *  The logins result is colon delimited and looks like this:
+         * The logins result is colon delimited and looks like this:
          *
-         *  name:uid:group_1:groupnum_1:comment:
-         *  [group_i:groupnum_i:]*
-         *  dir:shell:pwstat:pwlastchange:
-         *  mindaysbetweenchange:maxdaysbetweenchange:daysbeforetowarn
+         * name:uid:group_1:groupnum_1:comment: [group_i:groupnum_i:]*
+         * dir:shell:pwstat:pwlastchange:
+         * mindaysbetweenchange:maxdaysbetweenchange:daysbeforetowarn
          *
-         *  the []* part can be repeated 0 or more times if the user has
-         *  additional groups.
+         * the []* part can be repeated 0 or more times if the user has
+         * additional groups.
          */
-        
+
         /* NAME */
         final String foundUser = tokenIt.next();
         if (!username.equals(foundUser)) {
-            log.warn("The fetched username differs from what was expected: fetched = '" +  foundUser + "', expected = '" + username + "'.");
+            logger.warn("The fetched username differs from what was expected: fetched = '"
+                    + foundUser + "', expected = '" + username + "'.");
             return null;
         }
         bldr.addAttr(NAME, username);
         /* USER UID */
         bldr.addAttr(ID, Integer.valueOf(tokenIt.next()));
-        
+
         /* PRIMARY GROUP NAME */
         bldr.addAttr(GROUP_PRIM, tokenIt.next());
         /* PRIMARY GROUP GID - skip */
         tokenIt.next();
-        
+
         bldr.addAttr(COMMENT, tokenIt.next());
-        
-        
-        
+
         /* SECONDARY GROUPS */
         /** minimal number of tokens in the output of logins command */
-        final int MIN_TOKENS = 14;
+        final int minTokens = 14;
         final int totalTokens = tokens.length;
-        if (totalTokens < MIN_TOKENS) {
-            throw new RuntimeException("Error: Missing tokens in output for user '" + username + "'" + ", accountLine: <" + accountLine + ">");
+        if (totalTokens < minTokens) {
+            throw new RuntimeException("Error: Missing tokens in output for user '" + username
+                    + "'" + ", accountLine: <" + accountLine + ">");
         }
-        
-        final int numSecondaryGroups = (totalTokens-MIN_TOKENS)/2;
+
+        final int numSecondaryGroups = (totalTokens - minTokens) / 2;
         final List<String> secondaryGroupNames = new ArrayList<String>(numSecondaryGroups);
-        
+
         for (int i = 0; i < numSecondaryGroups; i++) {
             // store secondary group name
             secondaryGroupNames.add(tokenIt.next());
             // ignore secondary group GID
             tokenIt.next();
         }
-        
-        
-        
+
         bldr.addAttr(GROUPS_SEC, secondaryGroupNames);
         bldr.addAttr(DIR, tokenIt.next());
         bldr.addAttr(SHELL, tokenIt.next());
-        
-        
-        
+
         /* PWSTAT + PASSWD_LOCK */
         final String pwstat = tokenIt.next();
         boolean isPwStat = false;
         boolean isLock = false;
         if ("PS".equals(pwstat)) {
             isPwStat = true;
-        } 
+        }
         if ("LK".equals(pwstat)) {
             isLock = true;
         }
         bldr.addAttr(PWSTAT, isPwStat);
         bldr.addAttr(LOCK, isLock);
-        
+
         /* PASSWD CHANGE - skip */
         tokenIt.next();
-        
-        
-        
+
         bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
         bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
         bldr.addAttr(DAYS_BEFORE_TO_WARN, Integer.valueOf(tokenIt.next()));
-        
+
         /* USER INACTIVE */
         Integer userInactive = Integer.valueOf(tokenIt.next());
         if (userInactive.equals(-1)) {
@@ -186,7 +187,7 @@ class LoginsCommand {
             userInactive = null;
         }
         bldr.addAttr(USER_INACTIVE, userInactive);
-        
+
         /* USER EXPIRE */
         String userExpire = tokenIt.next();
         if (userExpire.equals("0") || userExpire.equals("000000")) {
@@ -195,21 +196,22 @@ class LoginsCommand {
             userExpire = null;
         }
         bldr.addAttr(USER_EXPIRE, userExpire);
-        
+
         return bldr.build();
     }
-    
+
     /**
-     * @param attr the attribute in question.
+     * @param attr
+     *            the attribute in question.
      * @return true if the attribute is provided by {@link LoginsCommand}.
      */
     private static boolean isProvided(NativeAttribute attr) {
-        return set.contains(attr);
+        return ATTRIBUTE_SET.contains(attr);
     }
-    
+
     /**
-     * evaluate if logins command is required for retrieval of given attributes
-     * 
+     * evaluate if logins command is required for retrieval of given attributes.
+     *
      * @param attrs
      *            attributes
      * @return true if {@link LoginsCommand} is required to be called, as it

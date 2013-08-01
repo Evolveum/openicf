@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -27,6 +27,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
+import org.identityconnectors.solaris.mode.SolarisModeDriver;
 import org.identityconnectors.solaris.operation.search.SolarisEntries;
 
 public final class SolarisConfiguration extends AbstractConfiguration {
@@ -52,7 +53,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * When connecting to this resource, the initial login is done as the Login
      * User. If a Root User is specified, the su command is used to log in as
      * the Root User before managing the resource.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#password},
      * {@link SolarisConfiguration#loginShellPrompt}.
      */
@@ -61,67 +62,64 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     /**
      * <b>Login Password</b><br>
      * Enter a password for the login account.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#loginUser}.
      */
     private GuardedString password;
 
     /**
-     * <b>Login Shell Prompt</b><br>
+     * Login Shell Prompt.
+     *
      * Enter the full shell prompt for the login account. This is used by the
      * adapter to determine when to send a command and when to stop capturing
      * output.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#loginUser}.
      */
     private String loginShellPrompt;
 
     /**
-     * <b>Root User</b>
-     * 
-     * <br>
+     * Root User.
+     *
      * Leave this field blank if the user account entered in the Login User
      * field has permission to manage this resource (create user accounts).
      * Otherwise, enter the name of the user account that does have permission
      * to manage this resource. This is often the root account.<br>
-     * 
+     *
      * <br>
      * When connecting to this resource, the initial login is done as the Login
      * User. If a Root User is specified, the su command is used to log in as
      * the Root User before managing the resource.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#credentials},
      * {@link SolarisConfiguration#rootShellPrompt}.
      */
     private String rootUser;
 
     /**
-     * <b>credentials</b>
-     * 
-     * <br>
+     * Root User Credential.
+     *
      * Password for the Root User account. Leave blank if the Root User field is
      * blank.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#rootUser}.
      */
     private GuardedString credentials;
 
     /**
-     * <b>Root Shell Prompt</b>
-     * 
-     * <br>
+     * Root Shell Prompt.
+     *
      * Enter the full shell prompt for the root account. This is used by the
      * adapter to determine when to send a command and when to stop capturing
      * output. Leave blank if the Root User field is blank.
-     * 
+     *
      * This property is coupled with {@link SolarisConfiguration#rootUser}.
      */
     private String rootShellPrompt;
 
     /**
-     * RA_SUDO_AUTH
-     * 
-     * <b>Sudo Authorization</b><br>
+     * Sudo Authorization.
+     *
      * Indicate whether the admin commands are to authorize the user through the
      * sudo utility. Enter a value of TRUE to use sudo or FALSE for standard
      * authorization.
@@ -129,40 +127,39 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     private boolean sudoAuthorization = false;
 
     /**
-     * <b>Connection Type</b>
-     * 
-     * <br>
+     * Connection Type.
+     *
      * Specify the script connection protocol type. The default protocol is
      * Telnet. Supported protocols are Telnet, SSH, and SSHPubKey.
      */
     private String connectionType = ConnectionType.TELNET.toString();
 
     /**
-     * <b>Private Key</b><br>
-     * 
+     * Private Key.
+     *
      * Specify the private key for SSH connection. A private key is required for
      * key/pair based authentication. If a private key is specified, you must
      * enter SSHPubKey as the value for the <b>Connection Type</b> field. Do not
      * use this field if you implement password-based authentication.
-     * 
+     *
      * This attribute makes sense for {@link ConnectionType#SSHPUBKEY}. See
      * {@link SolarisConfiguration#passphrase}.
      */
     private GuardedString privateKey;
 
     /**
-     * <b>Key Passphrase</b><br>
-     * 
+     * Key Passphrase.
+     *
      * Specify the passphrase, used during key generation.
-     * 
+     *
      * This attribute makes sense for {@link ConnectionType#SSHPUBKEY}. See
      * {@link SolarisConfiguration#privateKey}.
      */
     private GuardedString passphrase;
 
     /**
-     * <b>Block size</b><br>
-     * 
+     * Block size.
+     *
      * when performing full scan (
      * {@link SolarisEntries#getAllAccounts(java.util.Set, SolarisConnection)})
      * on all the accounts we can limit the number of accounts fetched at once.
@@ -170,142 +167,152 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     private int blockSize = 100;
 
     /**
-     * RA_BLOCK_FETCH_TIMEOUT
-     * 
-     * <b>Block Fetch Timeout</b><br>
+     * Block Fetch Timeout.
+     *
      * Specify the number of seconds a block fetch operation is to execute
      * before timing out. The default value is 600 seconds.
-     * 
+     *
      * Unit: milliseconds
      */
     private int blockFetchTimeout = 6000;
 
     /*
      * RA_MUTEX_ACQUIRE_TIMEOUT Mutex Acquire Timeout
-     * 
+     *
      * Unit: seconds
      */
     private int mutexAcquireTimeout = DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
 
     /**
-     * RA_MAKE_DIR
-     * 
-     * <b>Make Directory</b><br>Indicate whether the user''s home directory
-     * should be created. Enter a value of TRUE to create the user''s home
-     * directory or FALSE to do nothing.
-     */ 
-    /*<br>The user''s home directory will be
-     * created in /home unless set by using a <b>dir</b> attribute setting in
-     * the schema map to set the home directory path.
+     *
+     * Make Directory.
+     *
+     * Indicate whether the user''s home directory should be created. Enter a
+     * value of TRUE to create the user''s home directory or FALSE to do
+     * nothing.
      */
-    private boolean makeDirectory;// (if to make home directory)
+    /*
+     * <br>The user''s home directory will be created in /home unless set by
+     * using a <b>dir</b> attribute setting in the schema map to set the home
+     * directory path.
+     */
+    private boolean makeDirectory;
 
     /**
-     * <b>Home Base Directory</b>
-     * 
-     * <br>Indicate the home directory base to be used
-     * when creating user home directories. The accountID will be appended to
-     * this value to form the user home directory.
+     * Home Base Directory.
+     *
+     * Indicate the home directory base to be used when creating user home
+     * directories. The accountID will be appended to this value to form the
+     * user home directory.
      */
     private String homeBaseDirectory;
 
     /**
-     * <b>Default Primary Group</b>
-     * 
-     * <br>Default group a new user will be placed
-     * in.
+     * Default Primary Group.
+     *
+     * Default group a new user will be placed in.
      */
     private String defaultPrimaryGroup;
 
     /**
-     * <b>Login Shell</b><br>
-     * 
+     * Login Shell.
+     *
      * Default shell a new user will be given.
      */
     private String loginShell;
 
     /**
-     * <b>Skeleton Directory</b><br>
-     * 
-     * Specify a directory to use to copy default
-     * files to the user''s home directory. Typically this is /etc/skel. This
-     * directory must already exist.
+     * Skeleton Directory.
+     *
+     * Specify a directory to use to copy default files to the user''s home
+     * directory. Typically this is /etc/skel. This directory must already
+     * exist.
      */
     private String skeletonDirectory;
 
     /**
-     * <b>Delete Home Directory</b><br>
-     * 
-     * Specifies whether an
-     * accounts home directory should be deleted when the account is deleted.
+     * Delete Home Directory.
+     *
+     * Specifies whether an accounts home directory should be deleted when the
+     * account is deleted.
      */
     private boolean deleteHomeDirectory = false;
 
     /**
-     * <b>System Database Type</b><br>
-     * 
-     * Specify the system database type in use.
-     * The default type is FILES. Supported types are NIS.
+     * System Database Type.
+     *
+     * Specify the system database type in use. The default type is FILES.
+     * Supported types are NIS.
      */
     private String systemDatabaseType = "FILES";
 
-    /** 
-     * <b>NIS Build Directory</b><br>
-     * 
-     * Enter the directory name where the NIS
-     * build files are located.
+    /**
+     * NIS Build Directory.
+     *
+     * Enter the directory name where the NIS build files are located.
      */
     private String nisBuildDirectory = "/var/yp";
 
     static final String DEFAULT_NISPWDDIR = "/etc";
-    
+
     /**
-     * <b>NIS Password Source Directory</b><br>
-     * 
-     * Enter the directory name where
-     * the NIS password source files are located.
+     * NIS Password Source Directory.
+     *
+     * Enter the directory name where the NIS password source files are located.
      */
     private String nisPwdDir = DEFAULT_NISPWDDIR;
 
-    /** 
-     * <b>NIS Shadow Password Support</b><br>
-     * 
-     * Specify TRUE if the NIS database
-     * used shadow passwords, FALSE otherwise.
+    /**
+     * NIS Shadow Password Support.
+     *
+     * Specify TRUE if the NIS database used shadow passwords, FALSE otherwise.
      */
     private boolean nisShadowPasswordSupport = false;
-    
+
     /**
-     * <b>Command Timeout</b><br/>
-     * 
+     * Command Timeout.
+     *
      * This is the time that we wait for, when we are capturing some string from
      * the response of the resource.
-     * 
+     *
      * Note (backward compatibility): This is the successor of Default Capture
      * Timeout, Default Wait For Timeout, Default Wait For Ignore Case Timeout
      * from the Solaris resource adapter <br/>
-     * 
+     *
      * Units: milliseconds.
      */
     private int commandTimeout = 24000;
-    
+
     /**
-     * <b>Check commands availability</b>
-     * 
-     * By default, the connector checks if the necessary commands
-     * for user management are available.
-     * 
+     * UNIX Mode
+     *
+     * Specifies the unix flavour assumed for execution of certain commands.
+     */
+    private String unixMode = SolarisModeDriver.MODE_NAME;
+
+    /**
+     * Sun IDM Compatibility.
+     *
+     * Turns on behavior and schema that is almost identical to Sun IDM adapter.
+     */
+    private boolean sunCompat = false;
+
+    /**
+     * Check commands availability.
+     *
+     * By default, the connector checks if the necessary commands for user
+     * management are available.
+     *
      * This might be turned off for some hardened machines. Defaults to true
      */
     private boolean checkCommandsAvailability = true;
-    
 
-    /*            ********** CONSTRUCTOR ************ */
+    /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
         // default constructor
     }
 
-    /*            ********** GET / SET ************ */
+    /* ********** GET / SET ************ */
     @ConfigurationProperty(order = 1, required = true)
     public String getHost() {
         return host;
@@ -380,11 +387,11 @@ public final class SolarisConfiguration extends AbstractConfiguration {
 
     /**
      * Compare with {@link SolarisConfiguration#isSuAuthorization()}
-     * 
+     *
      * SudoAuthorization turned on means, that we log in with an ordinary
      * {@link SolarisConfiguration#loginUser} and add the {@code sudo} prefix
      * before every command that needs root privileges.
-     * 
+     *
      * @return true if sudoAuthorization is turned on
      */
     @ConfigurationProperty(order = 9)
@@ -404,7 +411,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setConnectionType(String connectionType) {
         this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
-    
+
     @ConfigurationProperty(order = 11, confidential = true)
     public GuardedString getPrivateKey() {
         return privateKey;
@@ -413,7 +420,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setPrivateKey(GuardedString privateKey) {
         this.privateKey = privateKey;
     }
-    
+
     @ConfigurationProperty(order = 12, confidential = true)
     public GuardedString getPassphrase() {
         return passphrase;
@@ -431,7 +438,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public int getBlockSize() {
         return blockSize;
     }
-    
+
     public void setBlockFetchTimeout(int blockFetchTimeout) {
         this.blockFetchTimeout = blockFetchTimeout;
     }
@@ -449,7 +456,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setMutexAcquireTimeout(int mutexAcquireTimeout) {
         this.mutexAcquireTimeout = mutexAcquireTimeout;
     }
-    
+
     @ConfigurationProperty(order = 16)
     public boolean isMakeDirectory() {
         return makeDirectory;
@@ -458,7 +465,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setMakeDirectory(boolean makeDir) {
         makeDirectory = makeDir;
     }
-    
+
     @ConfigurationProperty(order = 17)
     public String getHomeBaseDirectory() {
         return homeBaseDirectory;
@@ -467,7 +474,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setHomeBaseDirectory(String homeBaseDir) {
         homeBaseDirectory = homeBaseDir;
     }
-    
+
     @ConfigurationProperty(order = 18)
     public String getDefaultPrimaryGroup() {
         return defaultPrimaryGroup;
@@ -476,7 +483,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setDefaultPrimaryGroup(String defaultPrimaryGroup) {
         this.defaultPrimaryGroup = defaultPrimaryGroup;
     }
-    
+
     @ConfigurationProperty(order = 19)
     public String getLoginShell() {
         return loginShell;
@@ -512,7 +519,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setSystemDatabaseType(String sysDbType) {
         systemDatabaseType = sysDbType;
     }
-    
+
     @ConfigurationProperty(order = 23)
     public String getNisBuildDirectory() {
         return nisBuildDirectory;
@@ -548,7 +555,25 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setCommandTimeout(int commandTimeout) {
         this.commandTimeout = commandTimeout;
     }
-    
+
+    @ConfigurationProperty(order = 27)
+    public String getUnixMode() {
+        return unixMode;
+    }
+
+    public void setUnixMode(String unixMode) {
+        this.unixMode = unixMode;
+    }
+
+    @ConfigurationProperty(order = 28)
+    public boolean getSunCompat() {
+        return sunCompat;
+    }
+
+    public void setSunCompat(boolean sunCompat) {
+        this.sunCompat = sunCompat;
+    }
+
     @ConfigurationProperty(order = 27)
     public boolean isCheckCommandsAvailability() {
         return checkCommandsAvailability;
@@ -557,31 +582,31 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setCheckCommandsAvailability(boolean checkCommands) {
         checkCommandsAvailability = checkCommands;
     }
-    
 
-    /*            *********** AUXILIARY METHODS ***************** */
+    /* *********** AUXILIARY METHODS ***************** */
     /**
      * Compare with {@link SolarisConfiguration#isSudoAuthorization()}.
-     * 
+     *
      * Means that we log in with an ordinary user (
      * {@link SolarisConfiguration#loginUser}) that lacks administrator
      * privileges. But later on we issue an {@code su} command to switch to the
      * root shell. {@link SolarisConfiguration#rootUser} and
      * {@link SolarisConfiguration#credentials} credentials are used when we
      * switch to superuser.
-     * 
+     *
      * This switch using {@code su} happens only once in lifecycle of the
      * {@link SolarisConnection}.
-     * 
+     *
      * @return true if {@code su authorization} is used for the current
      *         configuration.
      */
     public boolean isSuAuthorization() {
-        return !isSudoAuthorization() && StringUtil.isNotBlank(rootUser) && !loginUser.equals(rootUser); 
+        return !isSudoAuthorization() && StringUtil.isNotBlank(rootUser)
+                && !loginUser.equals(rootUser);
     }
-    
+
     /**
-     * Get the Localization message for the current key
+     * Get the Localization message for the current key.
      */
     public String getMessage(String key) {
         return getConnectorMessages().format(key, key);
@@ -597,17 +622,22 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     @Override
     public void validate() {
         String msg = "'%s' cannot be null or empty.";
-        boolean isLoginUserCredentials = StringUtil.isNotBlank(loginUser) && StringUtil.isNotBlank(loginShellPrompt) && password != null;
+        boolean isLoginUserCredentials =
+                StringUtil.isNotBlank(loginUser) && StringUtil.isNotBlank(loginShellPrompt)
+                        && password != null;
         if (!isLoginUserCredentials) {
-            throw new ConfigurationException(String.format(msg, "[loginUser, loginShellPrompt, password]")); 
-        } 
-        
-        if (connectionType.equals(ConnectionType.SSHPUBKEY.toString()) && (passphrase == null || privateKey == null)) {
+            throw new ConfigurationException(String.format(msg,
+                    "[loginUser, loginShellPrompt, password]"));
+        }
+
+        if (connectionType.equals(ConnectionType.SSHPUBKEY.toString())
+                && (passphrase == null || privateKey == null)) {
             throw new ConfigurationException(String.format(msg, "[passphares, privateKey]"));
         }
-        
+
         if (isSudoAuthorization() && getCredentials() == null) {
-            throw new ConfigurationException("Root Password missing. In case of sudo authorization for every command you should provide root password too ('credentials' property).");
+            throw new ConfigurationException(
+                    "Root Password missing. In case of sudo authorization for every command you should provide root password too ('credentials' property).");
         }
 
         if (StringUtil.isBlank(getHost())) {
@@ -623,11 +653,13 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         }
 
         if (StringUtil.isNotBlank(rootUser) && credentials == null) {
-            throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'credentials' have to be defined.");
+            throw new ConfigurationException(
+                    "Missing 'credentials' property. Both 'rootUser' and 'credentials' have to be defined.");
         }
-        
+
         if (StringUtil.isNotBlank(rootUser) && StringUtil.isBlank(rootShellPrompt)) {
-            throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'rootShellPrompt' have to be defined.");
+            throw new ConfigurationException(
+                    "Missing 'credentials' property. Both 'rootUser' and 'rootShellPrompt' have to be defined.");
         }
     }
 }

@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2011-2012 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -35,7 +35,7 @@
     <packaging>bundle</packaging>
     <name>Solaris Connector</name>
     <description>Connector for Solaris</description>
-    <url>https://openicf.forgerock.org/connectors/solaris-connector</url>
+    <url>http://openicf.forgerock.org/connectors/solaris-connector</url>
     <issueManagement>
         <system>jira</system>
         <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10183</url>
@@ -52,7 +52,7 @@
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
-        <openicf.osgi.embed>expect4j,jsch,connector-test-common,oro,commons-net</openicf.osgi.embed>
+        <openicf.osgi.embed>expect4j,jsch,oro,commons-net</openicf.osgi.embed>
         <connectorPackage>org.identityconnectors.solaris</connectorPackage>
         <connectorClass>SolarisConnector</connectorClass>
         <jira.componentIds>10183</jira.componentIds>
@@ -77,38 +77,25 @@
         </repository>
     </repositories>
     <dependencies>
-        <!--
-        Download from http://expect4j.googlecode.com/files/expect4j-1.0.jar
-        mvn install:install-file -Dfile=expect4j-1.0.jar -DgroupId=com.google.p.expect4j -DartifactId=expect4j -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true
-        -->
         <dependency>
             <groupId>com.google.p.expect4j</groupId>
             <artifactId>expect4j</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
+            <version>1.1.e17</version>
         </dependency>
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
+            <version>3.3</version>
         </dependency>
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
-            <version>0.1.42</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.forgerock.openicf.framework</groupId>
-            <artifactId>connector-test-common</artifactId>
-            <scope>provided</scope>
+            <version>0.1.50</version>
         </dependency>
         <dependency>
             <groupId>oro</groupId>
             <artifactId>oro</artifactId>
             <version>2.0.8</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
     <build>
@@ -137,19 +124,14 @@
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>com.google.p.expect4j</groupId>
-                        <artifactId>expect4j</artifactId>
-                        <version>1.0</version>
-                    </dependency>
-                    <dependency>
                         <groupId>commons-net</groupId>
                         <artifactId>commons-net</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.3</version>
                     </dependency>
                     <dependency>
                         <groupId>com.jcraft</groupId>
                         <artifactId>jsch</artifactId>
-                        <version>0.1.42</version>
+                        <version>0.1.50</version>
                     </dependency>
                     <dependency>
                         <groupId>oro</groupId>

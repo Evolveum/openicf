@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -40,29 +40,29 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class UpdateNISUser extends AbstractNISOp {
-    private static final Log log = Log.getLog(UpdateNISUser.class);
-    
+    private static final Log logger = Log.getLog(UpdateNISUser.class);
+
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
-    
+
     public static void updateUser(SolarisEntry userEntry, final GuardedString passwd, SolarisConnection connection) {
         final String accountName = userEntry.getName();
         String pwddir = connection.getConfiguration().getNisPwdDir();
         String pwdfile = pwddir + "/passwd";
-        
+
         boolean recordUpdate = false;
         boolean isRename = false;
-        
+
         String shell = null;
         String uid = null;
         String gid = null;
         String gecos = null;
         String homedir = null;
-        final String cpCmd = connection.buildCommand("cp");
-        final String chownCmd = connection.buildCommand("chown");
-        final String diffCmd = connection.buildCommand("diff");
-        final String grepCmd = connection.buildCommand("grep");
-        
+        final String cpCmd = connection.buildCommand(false, "cp");
+        final String chownCmd = connection.buildCommand(true, "chown");
+        final String diffCmd = connection.buildCommand(false, "diff");
+        final String grepCmd = connection.buildCommand(false, "grep");
+
         // Test for a rename operation
         Attribute nameAttr = userEntry.searchForAttribute(NativeAttribute.NAME);
         String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : accountName;
@@ -71,23 +71,24 @@ public class UpdateNISUser extends AbstractNISOp {
             recordUpdate = true;
             isRename = true;
         }
-        
+
         String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
+        // @formatter:off
         String getOwner =
             "OWNER=`ls -l " + pwdfile + " | awk '{ print $3 }'`; " +
             "GOWNER=`ls -l " + pwdfile + " | awk '{ print $4 }'`; " +
             "unset GRPERRMSG";
-        
+
         String updateUser =
             "if [ -n \"$ENTRYTEXT\" ]; then " +
-              cpCmd + "-p " + pwdfile + " " + tmpPwdfile1 + "; " +
-              grepCmd + "-v \"^" + accountName + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
-              chownCmd + "$WHOIAM " + tmpPwdfile2 + "\n " +
-              "echo " + newName + ":$PASSWD:$NEWUID:$GROUP:$GECOS:$HOMEDIR:$SHELL >> " + tmpPwdfile2 + "; " +
-              diffCmd + pwdfile + " " + tmpPwdfile1 + " 2>&1 >/dev/null; " +
+              cpCmd + "-p " + pwdfile + " " + TMP_PWDFILE_1 + "; " +
+              grepCmd + "-v \"^" + accountName + ":\" " + TMP_PWDFILE_1 + " > " + TMP_PWDFILE_2 + "; " +
+              chownCmd + "$WHOIAM " + TMP_PWDFILE_2 + "\n " +
+              "echo " + newName + ":$PASSWD:$NEWUID:$GROUP:$GECOS:$HOMEDIR:$SHELL >> " + TMP_PWDFILE_2 + "; " +
+              diffCmd + pwdfile + " " + TMP_PWDFILE_1 + " 2>&1 >/dev/null; " +
               "RC=$?\n" +
               "if [ $RC -eq 0 ]; then " +
-                cpCmd + "-f " + tmpPwdfile2 + " " + pwdfile + "; " +
+                cpCmd + "-f " + TMP_PWDFILE_2 + " " + pwdfile + "; " +
                 chownCmd + "$OWNER:$GOWNER " + pwdfile + "; " +
               "else " +
                 "GRPERRMSG=\"" + ERROR_MODIFYING + pwdfile + ", for entry " + newName + ".\"; " +
@@ -95,10 +96,11 @@ public class UpdateNISUser extends AbstractNISOp {
             "else\n" +
             "GRPERRMSG=\"" + accountName + " not found in " + pwdfile + ".\"; " +
             "fi";
-        
+        // @formatter:on
+
         // Get specified user attributes
-        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(userEntry, allowedNISattributes);
-        
+        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(userEntry, ALLOWED_NIS_ATTRIBUTES);
+
         for (Map.Entry<NativeAttribute, List<Object>> it : attributes.entrySet()) {
             NativeAttribute key = it.getKey();
             String value = (String) it.getValue().get(0);
@@ -122,22 +124,22 @@ public class UpdateNISUser extends AbstractNISOp {
             default:
                 matched = false;
                 break;
-            }// switch
-            if (matched) {
-                log.ok("{0} attribute '{1}' got value '{2}'",userEntry.getName(),key.toString(),value);
             }
-        }// for
-        
+            if (matched) {
+                logger.ok("{0} attribute '{1}' got value '{2}'", userEntry.getName(), key.toString(), value);
+            }
+        }
+
         connection.doSudoStart();
         try {
-            connection.executeCommand(AbstractNISOp.whoIAm);
+            connection.executeCommand(AbstractNISOp.WHO_I_AM);
             try {
-                connection.executeMutexAcquireScript(pwdMutexFile, tmpPwdMutexFile, pwdPidFile);
+                connection.executeMutexAcquireScript(PWD_MUTEX_FILE, TMP_PWD_MUTEX_FILE, PWD_PID_FILE);
 
                 final Pair<Boolean, String> response = initPasswordRecord1(accountName, uid, gid, homedir, recordUpdate);
                 recordUpdate = response.first;
                 final String passwordRecord1 = response.second;
-                
+
                 final String passwordRecord2;
                 if (gecos != null) {
                     passwordRecord2 = ("GECOS=\"" + gecos + "\"; ");
@@ -145,7 +147,7 @@ public class UpdateNISUser extends AbstractNISOp {
                 } else {
                     passwordRecord2 = ("GECOS=`echo $ENTRYTEXT | cut -d: -f5`; ");
                 }
-                
+
                 if (recordUpdate) {
                     final String passwdVars = initPasswdVars(connection.getConfiguration());
 
@@ -162,20 +164,21 @@ public class UpdateNISUser extends AbstractNISOp {
                     connection.executeCommand(updateUser);
                     connection.executeCommand(removeTmpFilesScript);
 
-                    if ((isRename == true) && connection.getConfiguration().isNisShadowPasswordSupport()) {
-                        // Make sure we get the rename to the shadow file 
+                    if (isRename && connection.getConfiguration().isNisShadowPasswordSupport()) {
+                        // Make sure we get the rename to the shadow file
                         String shadowfile = pwddir + "/shadow";
+                        // @formatter:off
                         String shadowRename =
                             "GRPENTRY=`grep '^" + accountName + ":' " + shadowfile + "`; " +
                             "if [ -n \"$GRPENTRY\" ]; then " +
-                              cpCmd + "-p " + shadowfile + " " + tmpPwdfile1 + "; " +
-                              grepCmd + "-v \"^" + accountName + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
-                              chownCmd + "$WHOIAM " + tmpPwdfile2 + "\n " +
-                              "echo $GRPENTRY | sed 's/^" +accountName + ":/" + newName + ":/g' >> " + tmpPwdfile2 + "; " +
-                              diffCmd + shadowfile + " " + tmpPwdfile1 + " 2>&1 >/dev/null; " +
+                              cpCmd + "-p " + shadowfile + " " + TMP_PWDFILE_1 + "; " +
+                              grepCmd + "-v \"^" + accountName + ":\" " + TMP_PWDFILE_1 + " > " + TMP_PWDFILE_2 + "; " +
+                              chownCmd + "$WHOIAM " + TMP_PWDFILE_2 + "\n " +
+                              "echo $GRPENTRY | sed 's/^" + accountName + ":/" + newName + ":/g' >> " + TMP_PWDFILE_2 + "; " +
+                              diffCmd + shadowfile + " " + TMP_PWDFILE_1 + " 2>&1 >/dev/null; " +
                               "RC=$?\n" +
                               "if [ $RC -eq 0 ]; then " +
-                                cpCmd + "-f " + tmpPwdfile2 + " " + shadowfile + "; " +
+                                cpCmd + "-f " + TMP_PWDFILE_2 + " " + shadowfile + "; " +
                                 chownCmd + "$OWNER:$GOWNER " + shadowfile + "; " +
                               "else\n" +
                               "GRPERRMSG=\"" + ERROR_MODIFYING + shadowfile + ", for entry " + newName + ".\"; " +
@@ -183,6 +186,7 @@ public class UpdateNISUser extends AbstractNISOp {
                             "else\n" +
                             "GRPERRMSG=\"" + ERROR_MODIFYING + shadowfile + ", " + accountName + " not found.\"; " +
                             "fi";
+                        // @formatter:on
 
                         getOwner = initGetOwner(shadowfile);
 
@@ -195,8 +199,8 @@ public class UpdateNISUser extends AbstractNISOp {
                     // The changes to the NIS database have to be made before the
                     // changes for shell and password.
                     AbstractNISOp.addNISMake("passwd", connection);
-                }//if (recordUpdate)
-                
+                }
+
                 if (shell != null) {
                     addNISShellUpdate(accountName, shell, connection);
                 }
@@ -209,7 +213,7 @@ public class UpdateNISUser extends AbstractNISOp {
 
 
             } finally {
-                connection.executeMutexReleaseScript(pwdMutexFile);
+                connection.executeMutexReleaseScript(PWD_MUTEX_FILE);
             }
         } finally {
             connection.doSudoReset();
@@ -218,7 +222,7 @@ public class UpdateNISUser extends AbstractNISOp {
 
     private static void addNISPasswordUpdate(String account,
             GuardedString password, SolarisConnection connection) {
-        final String passwdCmd = connection.buildCommand("yppasswd", account);
+        final String passwdCmd = connection.buildCommand(true, "yppasswd", account);
         connection.executeCommand(passwdCmd, Collections.<String>emptySet(), CollectionUtil.newSet(" password:"));
         connection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"));
         connection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet());
@@ -226,11 +230,11 @@ public class UpdateNISUser extends AbstractNISOp {
 
     private static void addNISShellUpdate(String account, String shell,
             SolarisConnection connection) {
-        final String passwdCmd = connection.buildCommand("passwd", "-r nis -e", account);
-        
+        final String passwdCmd = connection.buildCommand(true, "passwd", "-r nis -e", account);
+
         final Set<String> chshReject = CollectionUtil.newSet("password:", "passwd:" /* // passwd: User unknown: <id>\nPermission denied\n */);
         connection.executeCommand(passwdCmd, chshReject, CollectionUtil.newSet("new shell:"));
-        
+
         connection.executeCommand(shell, CollectionUtil.newSet("unacceptable as a new shell"));
     }
 
@@ -244,17 +248,17 @@ public class UpdateNISUser extends AbstractNISOp {
         return builder.toString();
     }
 
-    private static Pair<Boolean,String> initPasswordRecord1(String accountName, String uid,
+    private static Pair<Boolean, String> initPasswordRecord1(String accountName, String uid,
             String gid, String homedir, final boolean recordUpdate) {
         boolean recordUpdateTmp = recordUpdate;
         StringBuffer passwordRecord1 = new StringBuffer(
-                // The connection to the resource is pooled.  Clear the environment
-                // variables that will be used.
-                "unset GRPERRMSG; unset dupuid; unset DUPUIDERRMSG; " 
+        // The connection to the resource is pooled. Clear the environment
+        // variables that will be used.
+                "unset GRPERRMSG; unset dupuid; unset DUPUIDERRMSG; "
                 );
         passwordRecord1.append("ENTRYTEXT=`ypmatch " + accountName + " passwd`; ");
-        
-        
+
+
         if (StringUtil.isNotBlank(gid)) { // "" gid does not make sense
             passwordRecord1.append("GROUP=`ypmatch " + gid + " group | cut -d: -f3`; ");
             passwordRecord1.append("if [ -z \"$GROUP\" ]; then\n");
@@ -264,14 +268,14 @@ public class UpdateNISUser extends AbstractNISOp {
         } else {
             passwordRecord1.append("GROUP=`echo $ENTRYTEXT | cut -d: -f4`; ");
         }
-        
+
         if (homedir != null) {
             passwordRecord1.append("HOMEDIR=" + homedir +"; ");
-            recordUpdateTmp = true;            
+            recordUpdateTmp = true;
         } else {
             passwordRecord1.append("HOMEDIR=`echo $ENTRYTEXT | cut -d: -f6`; ");
         }
-        
+
         if (StringUtil.isNotBlank(uid)) { // "" uid does not make sense
             passwordRecord1.append("NEWUID=" + uid + "; \\\n");
             //check whether newuid is duplicate or not.
@@ -283,7 +287,7 @@ public class UpdateNISUser extends AbstractNISOp {
         } else {
             passwordRecord1.append("NEWUID=`echo $ENTRYTEXT | cut -d: -f3`; ");
         }
-        
+
         return new Pair<Boolean, String>(recordUpdateTmp, passwordRecord1.toString());
     }
 }

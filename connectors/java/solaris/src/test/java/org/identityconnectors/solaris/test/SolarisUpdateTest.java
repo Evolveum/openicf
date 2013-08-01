@@ -1,29 +1,27 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.solaris.test;
 
-import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +33,8 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 public class SolarisUpdateTest extends SolarisTestBase {
 
@@ -48,7 +48,7 @@ public class SolarisUpdateTest extends SolarisTestBase {
         enableTrustedLogin(username);
 
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
-        final GuardedString newPassword = new GuardedString("buzz".toCharArray());
+        final GuardedString newPassword = new GuardedString("Passw1rd".toCharArray());
         Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(newPassword);
         replaceAttributes.add(chngPasswdAttribute);
         // 1) PERFORM THE UPDATE OF PASSWORD
@@ -59,29 +59,39 @@ public class SolarisUpdateTest extends SolarisTestBase {
             getFacade().authenticate(ObjectClass.ACCOUNT, username, newPassword, null);
         } catch (RuntimeException ex) {
             ex.printStackTrace();
-            AssertJUnit.fail(String.format("Authenticate failed for user with changed password: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
+            AssertJUnit
+                    .fail(String
+                            .format("Authenticate failed for user with changed password: '%s'\n ExceptionMessage: %s",
+                                    username, ex.getMessage()));
         }
     }
 
     @Test(expectedExceptions = RuntimeException.class)
     public void unknownObjectClass() {
         String username = getConfiguration().getRootUser();
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
-        getFacade().update(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid(username), replaceAttributes, null);
+        Set<Attribute> replaceAttributes =
+                CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
+        getFacade().update(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid(username),
+                replaceAttributes, null);
     }
 
     @Test(expectedExceptions = RuntimeException.class)
     public void testUpdateUnknownUsername() {
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
+        Set<Attribute> replaceAttributes =
+                CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
 
-        getFacade().update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
+        getFacade().update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes,
+                null);
     }
-    
+
     @Test(expectedExceptions = RuntimeException.class)
     public void testUpdateUnknownGroupname() {
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(), Collections.emptyList()));
+        Set<Attribute> replaceAttributes =
+                CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(),
+                        Collections.emptyList()));
 
-        getFacade().update(ObjectClass.GROUP, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
+        getFacade().update(ObjectClass.GROUP, new Uid("NONEXISTING_UID___"), replaceAttributes,
+                null);
     }
 
     @Test
@@ -90,11 +100,15 @@ public class SolarisUpdateTest extends SolarisTestBase {
         final String groupName = getGroupName();
 
         // verify if group exists
-        final String command = (!getConnection().isNis()) ? "cat /etc/group | grep '" + groupName + "'" : "ypcat group | grep '" + groupName + "'";
+        final String command =
+                (!getConnection().isNis()) ? "cat /etc/group | grep '" + groupName + "'"
+                        : "ypcat group | grep '" + groupName + "'";
         String output = getConnection().executeCommand(command);
         AssertJUnit.assertTrue(output.contains(groupName));
 
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(), CollectionUtil.newList("root", username)));
+        Set<Attribute> replaceAttributes =
+                CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(),
+                        CollectionUtil.newList("root", username)));
         getFacade().update(ObjectClass.GROUP, new Uid(groupName), replaceAttributes, null);
         output = getConnection().executeCommand(command);
         String msg = "Output is missing attribute '%s', buffer: <%s>";
@@ -103,7 +117,7 @@ public class SolarisUpdateTest extends SolarisTestBase {
         AssertJUnit.assertTrue(String.format(msg, "root", output), output.contains("root"));
     }
 
-    /*    ************* AUXILIARY METHODS *********** */
+    /* ************* AUXILIARY METHODS *********** */
 
     @Override
     public boolean createGroup() {

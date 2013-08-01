@@ -1,33 +1,32 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.solaris.test;
 
-import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.junit.Ignore;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 public class SolarisConfigurationTest {
     @Test
@@ -36,7 +35,7 @@ public class SolarisConfigurationTest {
         config.validate();
         // no IllegalArgumentException should be thrown for valid configuration
     }
-    
+
     /* **************** "MISSING" PROPERTY TESTS ***************** */
     @Test(expectedExceptions = ConfigurationException.class)
     public void testMissingUsername() {
@@ -45,7 +44,7 @@ public class SolarisConfigurationTest {
         config.validate();
         AssertJUnit.fail("Configuration allowed a null admin username.");
     }
-    
+
     @Test(expectedExceptions = ConfigurationException.class)
     public void testMissingPassword() {
         SolarisConfiguration config = getConfiguration();
@@ -53,7 +52,7 @@ public class SolarisConfigurationTest {
         config.validate();
         AssertJUnit.fail("Configuration allowed a null password.");
     }
-    
+
     @Test(expectedExceptions = ConfigurationException.class)
     public void testMissingHostname() {
         SolarisConfiguration config = getConfiguration();
@@ -61,7 +60,7 @@ public class SolarisConfigurationTest {
         config.validate();
         AssertJUnit.fail("Configuration allowed a null hostname.");
     }
-    
+
     private SolarisConfiguration getConfiguration() {
         return SolarisTestCommon.createConfiguration();
     }
@@ -73,7 +72,7 @@ public class SolarisConfigurationTest {
         config.validate();
         AssertJUnit.fail("Configuration allowed a null port.");
     }
-    
+
     @Test(expectedExceptions = ConfigurationException.class)
     public void testMissingCredentials() {
         SolarisConfiguration config = getConfiguration();
@@ -82,7 +81,7 @@ public class SolarisConfigurationTest {
         config.validate();
         AssertJUnit.fail("Configuration allowed a null credential when rootUser was defined");
     }
-    
+
     @Test
     public void testIsSuAuthorization() {
         GuardedString dummyPassword = new GuardedString("dummy".toCharArray());
@@ -93,7 +92,7 @@ public class SolarisConfigurationTest {
         config.setRootUser(null);
         config.setCredentials(null);
         AssertJUnit.assertFalse(config.isSuAuthorization());
-        
+
         config = getConfiguration();
         config.setLoginUser("loginuser");
         config.setPassword(dummyPassword);
@@ -101,7 +100,7 @@ public class SolarisConfigurationTest {
         config.setCredentials(dummyPassword);
         config.setRootShellPrompt("#");
         AssertJUnit.assertTrue(config.isSuAuthorization());
-        
+
         config = getConfiguration();
         final String loginUser = "sameLoginUser";
         config.setLoginUser(loginUser);
@@ -111,7 +110,7 @@ public class SolarisConfigurationTest {
         config.setRootShellPrompt("#");
         AssertJUnit.assertFalse(config.isSuAuthorization());
     }
-    
+
     @Test
     public void testIsCorrectRootuser() {
         SolarisConfiguration config = getConfiguration();
@@ -122,9 +121,9 @@ public class SolarisConfigurationTest {
             config.validate();
             AssertJUnit.fail("configurationException expected for missing credentials.");
         } catch (ConfigurationException ex) {
-            //OK
+            // OK
         }
-        
+
         config = getConfiguration();
         config.setRootUser("root");
         config.setCredentials(new GuardedString("dummy".toCharArray()));
@@ -133,12 +132,14 @@ public class SolarisConfigurationTest {
             config.validate();
             AssertJUnit.fail("configurationException expected for missing credentials.");
         } catch (ConfigurationException ex) {
-            //OK
+            // OK
         }
     }
-    
-    @Test @Ignore // TODO
+
+    @Test(enabled = false)
     public void testGetMessageProperty() {
+        // This is requires a ConnectorInfo initialised with the messages and
+        // the TestHelpersSpi does not do it.
         String result = getConfiguration().getMessage("SOLARIS");
         AssertJUnit.assertTrue(result.equals("Solaris"));
     }

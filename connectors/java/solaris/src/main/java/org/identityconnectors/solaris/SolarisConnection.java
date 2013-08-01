@@ -1,24 +1,25 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2012 Evolveum, Radovan Semancik
  */
 package org.identityconnectors.solaris;
 
@@ -36,9 +37,13 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
+import org.identityconnectors.solaris.mode.LinuxModeDriver;
+import org.identityconnectors.solaris.mode.SolarisModeDriver;
+import org.identityconnectors.solaris.mode.UnixModeDriver;
 import org.identityconnectors.solaris.operation.SolarisCreate;
 import org.identityconnectors.solaris.operation.SolarisUpdate;
 
@@ -56,60 +61,71 @@ import expect4j.matches.RegExpMatch;
 import expect4j.matches.TimeoutMatch;
 
 /**
- * Connection class provides connection to the Solaris resource. It also creates an 
- * abstraction layer for interpretation of errors.
- * 
- * <p>The connection offers the following authentication types: SSH, Telnet and SSH Pubkey.
- * 
+ * Connection class provides connection to the Solaris resource. It also creates
+ * an abstraction layer for interpretation of errors.
+ *
+ * <p>
+ * The connection offers the following authentication types: SSH, Telnet and SSH
+ * Pubkey.
+ *
  * @author David Adam
- * 
- * <p><i>Implementation notes:</i> Expect4J is an expect based matching system for analyzing the 
- * responses from a unix resource, and for defining actions to these responses.
- * <p> Expect4j uses internally JSch to provide the SSH connection channel to the resource. (This is 
- * transparent to the user of Expect4J, so it is for {@link SolarisConnection}.
+ *
+ *         <p>
+ *         <i>Implementation notes:</i> Expect4J is an expect based matching
+ *         system for analyzing the responses from a unix resource, and for
+ *         defining actions to these responses.
+ *         <p>
+ *         Expect4j uses internally JSch to provide the SSH connection channel
+ *         to the resource. (This is transparent to the user of Expect4J, so it
+ *         is for {@link SolarisConnection}.
  *
  */
 public class SolarisConnection {
     /*
-     * Implementation constant: the maximum timeout that the connection 
-     * waits before retrying to read an emergency output (after occurrence of ERROR in 
+     * Implementation constant: the maximum timeout that the connection waits
+     * before retrying to read an emergency output (after occurrence of ERROR in
      * output stream from the resource.
-     * 
+     *
      * Constant's unit: millisecond.
      */
     private static final int WAITFOR_TIMEOUT_FOR_ERROR = 600;
-    
+
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
-    /* 
-     * Root Shell Prompt used by the connector.
-     * As Expect uses regular expressions, the pattern should be quoted as a string literal. 
+    /*
+     * Root Shell Prompt used by the connector. As Expect uses regular
+     * expressions, the pattern should be quoted as a string literal.
      */
     private static final String CONNECTOR_PROMPT = "~ConnectorPrompt";
     /*
-     * Implementation constant: the maximum length of overall timeout that we 
+     * Implementation constant: the maximum length of overall timeout that we
      * wait after discovering ERROR in output stream of the unix resource.
-     * 
-     * - we are using System.nanotime() for time measuring, so the unit of 
-     * this constant is nanosecond.
+     *
+     * - we are using System.nanotime() for time measuring, so the unit of this
+     * constant is nanosecond.
      */
-    private static final double ERROR_WAIT = 100 * Math.pow(10, 6); // 100 mseconds, hard-coded constant in the adapter.
-    
+    // 100 mseconds, hard-coded constant in the adapter.
+    private static final double ERROR_WAIT = 100 * Math.pow(10, 6);
+
     /**
      * default way of handling error messages.
      */
-    private static final ErrorHandler defaultErrorHandler =  new ErrorHandler() {
+    private static final ErrorHandler DEFAULT_ERROR_HANDLER = new ErrorHandler() {
         public void handle(String buffer) {
+            if (buffer.contains("is already in use.  Choose another.")) {
+                throw new AlreadyExistsException("ERROR, buffer content: <" + buffer + ">");
+            }
             throw new ConnectorException("ERROR, buffer content: <" + buffer + ">");
         }
     };
-    
+
     private String loginShellPrompt;
     private Expect4j expect4j;
-    
+
     /**
      * the configuration object from which this connection is created.
      */
-    private SolarisConfiguration configuration;
+    private final SolarisConfiguration configuration;
+
     public SolarisConfiguration getConfiguration() {
         return configuration;
     }
@@ -119,22 +135,25 @@ public class SolarisConnection {
     private Session session;
 
     private ChannelShell channel;
-    
+
     private Boolean isVersionLT10;
-    
+
+    private final UnixModeDriver modeDriver;
+
     public SolarisConnection(SolarisConfiguration config) {
         if (config == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
         }
         configuration = config;
-        
+
         loginShellPrompt = configuration.getLoginShellPrompt();
-        
+
         final String loginUser = configuration.getLoginUser();
         final GuardedString password = configuration.getPassword();
 
-        final ConnectionType connType = ConnectionType.toConnectionType(configuration.getConnectionType());
+        final ConnectionType connType =
+                ConnectionType.toConnectionType(configuration.getConnectionType());
         switch (connType) {
         case SSH:
             createSSHConn(loginUser, password);
@@ -146,38 +165,54 @@ public class SolarisConnection {
             createTelnetConn(loginUser, password);
             break;
         }
-        
+
+        modeDriver = createModeDriver(configuration.getUnixMode());
+
+        // TODO: it is not ideal to do this in a constructor. Refactor later.
+
         try {
             if (!connType.selfAuthenticates()) {
                 /*
-                 * telnet doesn't authenticate automatically, so an extra step is needed:
+                 * telnet doesn't authenticate automatically, so an extra step
+                 * is needed:
                  */
-                executeCommand(null, Collections.<String>emptySet(), CollectionUtil.newSet("login")/* wait for login prompt */);
-                executeCommand(loginUser.trim(), Collections.<String>emptySet(), CollectionUtil.newSet("assword"));
+                executeCommand(null, Collections.<String> emptySet(), CollectionUtil
+                        .newSet("login")/* wait for login prompt */);
+                executeCommand(loginUser.trim(), Collections.<String> emptySet(), CollectionUtil
+                        .newSet("assword"));
                 sendPassword(password);
             }
-            
+
             waitForRootShellPrompt(CollectionUtil.newSet("incorrect"));
             /*
-             * turn off the echoing of keyboard input on the resource.
-             * Saves bandwith too.
+             * turn off the echoing of keyboard input on the resource. Saves
+             * bandwith too.
              */
             executeCommand("stty -echo");
-            
-            // if the login and root users are different, we will need to su to root here.
+
+            // if the login and root users are different, we will need to su to
+            // root here.
             final String rootUser = configuration.getRootUser();
             if (!configuration.isSudoAuthorization() && configuration.isSuAuthorization()) {
-                executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id", "does not exist"), CollectionUtil.newSet("assword:"));
-                
-                // we need to change the type of rootShellPrompt here (we used loginUser's up to now)
-                final String rootShellPrompt = (StringUtil.isNotBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : loginShellPrompt;
+                executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id",
+                        "does not exist"), CollectionUtil.newSet("assword:"));
+
+                // we need to change the type of rootShellPrompt here (we used
+                // loginUser's up to now)
+                final String rootShellPrompt =
+                        (StringUtil.isNotBlank(configuration.getRootShellPrompt())) ? configuration
+                                .getRootShellPrompt() : loginShellPrompt;
                 loginShellPrompt = rootShellPrompt;
-                
+
                 final GuardedString rootPassword = configuration.getCredentials();
-                sendPassword(rootPassword, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */);
+                sendPassword(rootPassword, CollectionUtil.newSet("Sorry", "incorrect password"),
+                        Collections.<String> emptySet() /*
+                                                         * wait for
+                                                         * rootShellPrompt
+                                                         */);
                 executeCommand("stty -echo");
             }
-            
+
             /*
              * Change root shell prompt, for simplier parsing of the output.
              * Revert the changes after the connection is closed.
@@ -185,7 +220,9 @@ public class SolarisConnection {
             loginShellPrompt = CONNECTOR_PROMPT;
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
-            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", configuration.getHost(), configuration.getPort(), loginUser), e);
+            throw new ConnectorException(String.format(
+                    "Connection failed to host '%s:%s' for user '%s'", configuration.getHost(),
+                    configuration.getPort(), loginUser), e);
         }
     }
 
@@ -199,17 +236,29 @@ public class SolarisConnection {
         this.expect4j = expect4j;
     }
 
+    private UnixModeDriver createModeDriver(String unixMode) {
+        // TODO: Ugly and difficult to extend. Refactor later.
+        if (unixMode == null || unixMode.equals(SolarisModeDriver.MODE_NAME)) {
+            return new SolarisModeDriver(this);
+        } else if (unixMode.equals(LinuxModeDriver.MODE_NAME)) {
+            return new LinuxModeDriver(this);
+        } else {
+            throw new ConfigurationException("Unknown unix mode '" + unixMode + "'");
+        }
+    }
+
     /**
      * Connect to the resource using privateKey + passphrase pair.
-     * 
+     *
      * @param username
-     * 
-     * Implementational note: this piece of code is a combination of the adapter's
-     * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
+     *
+     *            Implementational note: this piece of code is a combination of
+     *            the adapter's SSHPubKeyConnection#OpenSession() method and
+     *            ExpectUtils#SSH()
      */
     private void createSSHPubKeyConn(final String username) {
-        final JSch jsch=new JSch();
-        
+        final JSch jsch = new JSch();
+
         final GuardedString privateKey = getConfiguration().getPrivateKey();
         final GuardedString keyPassphrase = getConfiguration().getPassphrase();
         privateKey.access(new GuardedString.Accessor() {
@@ -218,15 +267,18 @@ public class SolarisConnection {
                     public void access(final char[] keyPassphraseClearText) {
                         final String identityName = "IdentityConnector";
                         try {
-                            jsch.addIdentity(identityName, convertToBytes(privateKeyClearText), null, convertToBytes(keyPassphraseClearText));
-                            session = jsch.getSession(username, getConfiguration().getHost(), getConfiguration().getPort());
-                            
+                            jsch.addIdentity(identityName, convertToBytes(privateKeyClearText),
+                                    null, convertToBytes(keyPassphraseClearText));
+                            session =
+                                    jsch.getSession(username, getConfiguration().getHost(),
+                                            getConfiguration().getPort());
+
                             Hashtable<String, String> config = new Hashtable<String, String>();
                             config.put("StrictHostKeyChecking", "no");
                             session.setConfig(config);
                             session.setDaemonThread(true);
-                            
-                            session.connect(3 * 1000);//making a connection with timeout.
+                            // making a connection with timeout.
+                            session.connect(3 * 1000);
                         } catch (JSchException e) {
                             throw ConnectorException.wrap(e);
                         } finally {
@@ -247,20 +299,20 @@ public class SolarisConnection {
                     }
                 });
             }
-        }); 
-        
+        });
+
         try {
             channel = (ChannelShell) session.openChannel("shell");
         } catch (JSchException e) {
             throw ConnectorException.wrap(e);
         }
-        
+
         channel.setPtyType("vt102");
-        
+
         Expect4j expect = null;
         try {
             expect = new Expect4j(channel.getInputStream(), channel.getOutputStream());
-            channel.connect(5*1000);
+            channel.connect(5 * 1000);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -268,7 +320,6 @@ public class SolarisConnection {
         expect4j = expect;
     }
 
-    
     private void createSSHConn(final String username, GuardedString password) {
         JSch jsch = new JSch();
 
@@ -280,22 +331,29 @@ public class SolarisConnection {
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 session.setPassword(new String(clearChars));
-                java.util.Hashtable<Object, Object> config = new java.util.Hashtable<Object, Object>();
+                java.util.Hashtable<Object, Object> config =
+                        new java.util.Hashtable<Object, Object>();
                 config.put("StrictHostKeyChecking", "no");
                 session.setConfig(config);
                 session.setDaemonThread(true);
 
                 try {
-                    session.connect(/*3 * 1000*/); // in adapter there's no timeout given
+                    log.info("Connecting to {0}:{1}", configuration.getHost(), configuration
+                            .getPort());
+                    session.connect(/* 3 * 1000 */); // in adapter there's no
+                                                     // timeout given
+                    log.ok("Connected");
                 } catch (JSchException e) {
+                    log.error("Unable to connect to {0}:{1}: {2}", configuration.getHost(),
+                            configuration.getPort(), e.getMessage());
                     throw ConnectorException.wrap(e);
                 } finally {
-                    session.setPassword(""); // cleaning password, as it is no longer used
+                    session.setPassword(""); // cleaning password, as it is no
+                                             // longer used
                 }
             }
         });
-        
-        
+
         try {
             channel = (ChannelShell) session.openChannel("shell");
 
@@ -303,31 +361,36 @@ public class SolarisConnection {
 
             expect4j = new Expect4j(channel.getInputStream(), channel.getOutputStream());
 
-            channel.connect(/*5 * 1000*/); // in adapter there's no timeout given
+            // in adapter there's no timeout given
+            channel.connect(/* 5 * 1000 */);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
     }
 
+    public UnixModeDriver getModeDriver() {
+        return modeDriver;
+    }
+
     /* *************** METHODS ****************** */
     /**
      * send a command to the resource, no end of line needed.
+     *
      * @param string
      */
     private void sendInternal(String string, boolean isLog) throws IOException {
         expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
-        if (isLog){
-            log.ok("Data: {0}",string);
-        }
-        else{
-            log.ok("Data: *******");
+        if (isLog) {
+            log.ok("TX: {0}", string);
+        } else {
+            log.ok("TX: *******");
         }
     }
-    
+
     /**
      * send a password to the resource, and return the response from the
      * resource, if any.
-     * 
+     *
      * @param passwd
      *            the password to send
      * @param rejects
@@ -337,16 +400,16 @@ public class SolarisConnection {
      *            Optional parameter. {@see
      *            SolarisConnection#executeCommand(String, Set, Set)} contract
      * @return feedback on the sent password from the resource.
-     * 
-     * Note on usage of params 'rejects', 'accepts': If none of the parameters are given, we wait for RootShellPrompt
+     *
+     *         Note on usage of params 'rejects', 'accepts': If none of the
+     *         parameters are given, we wait for RootShellPrompt
      */
     public String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts) {
         sendPassword(passwd);
-        
         return executeCommand(null/* no command is executed here */, rejects, accepts);
     }
-    
-    /** 
+
+    /**
      * just send a password but don't anticipate any response from the resource.
      */
     public void sendPassword(GuardedString passwd) {
@@ -355,10 +418,11 @@ public class SolarisConnection {
                 try {
                     for (char c : clearChars) {
                         if (Character.isISOControl(c)) {
-                            throw new IllegalArgumentException("User password contains one or more control characters.");
+                            throw new IllegalArgumentException(
+                                    "User password contains one or more control characters.");
                         }
                     }
-                    
+
                     sendInternal(new String(clearChars), false);
                 } catch (IOException e) {
                     throw ConnectorException.wrap(e);
@@ -366,37 +430,39 @@ public class SolarisConnection {
             }
         });
     }
-    
-    /** 
-     * {@see SolarisConnection#executeCommand(String, Set, Set)} 
+
+    /**
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}.
      */
     public String executeCommand(String command) {
-        return executeCommand(command, Collections.<String>emptySet(), Collections.<String>emptySet());
+        return executeCommand(command, Collections.<String> emptySet(), Collections
+                .<String> emptySet());
     }
-    
+
     /**
-     * {@see SolarisConnection#executeCommand(String, Set, Set)}
-     * 
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}.
+     *
      * @param timeout
      *            the time interval, that we will wait for the response (marked
      *            by {@link SolarisConfiguration#getRootShellPrompt()}
      */
     public String executeCommand(String command, int timeout) {
-        return executeCommand(command, Collections.<String>emptySet(), Collections.<String>emptySet(), timeout);
+        return executeCommand(command, Collections.<String> emptySet(), Collections
+                .<String> emptySet(), timeout);
     }
 
     /**
-     * {@see SolarisConnection#executeCommand(String, Set, Set)}
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}.
      */
     public String executeCommand(String command, Set<String> rejects) {
-        return executeCommand(command, rejects, Collections.<String>emptySet());
+        return executeCommand(command, rejects, Collections.<String> emptySet());
     }
 
     /**
      * This method's contract is similar to
      * {@link SolarisConnection#executeCommand(String, Map, Set)}. The only
      * difference is the 'rejects' parameter.
-     * 
+     *
      * @param rejects
      *            the error messages that can occur. If they are found, a
      *            {@link ConnectorException} is thrown.
@@ -405,60 +471,66 @@ public class SolarisConnection {
         Map<String, ErrorHandler> rejectsMap = new HashMap<String, ErrorHandler>();
         for (String rej : rejects) {
             // by default rejects throw ConnectorException.
-            rejectsMap.put(rej, defaultErrorHandler);
+            rejectsMap.put(rej, DEFAULT_ERROR_HANDLER);
         }
         return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts);
     }
-    
+
     /**
-     * {@see SolarisConnection#executeCommand(String, Set, Set)}
-     * 
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}.
+     *
      * @param timeout
      *            the time interval, that we will wait for the response (marked
      *            by {@link SolarisConfiguration#getRootShellPrompt()}
      */
-    private String executeCommand(String command, Set<String> rejects, Set<String> accepts, int timeout) {
+    private String executeCommand(String command, Set<String> rejects, Set<String> accepts,
+            int timeout) {
         Map<String, ErrorHandler> rejectsMap = new HashMap<String, ErrorHandler>();
         for (String rej : rejects) {
             // by default rejects throw ConnectorException.
-            rejectsMap.put(rej, defaultErrorHandler);
+            rejectsMap.put(rej, DEFAULT_ERROR_HANDLER);
         }
         return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts, timeout);
     }
 
     /**
-     * {@link SolarisConnection#executeCommand(String, Map, Set)}
+     * {@link SolarisConnection#executeCommand(String, Map, Set)}.
+     *
      * @param timeout
      *            the time interval, that we will wait for the response (marked
      *            by {@link SolarisConfiguration#getRootShellPrompt()}
      */
-    private String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts, int timeout) {
+    private String executeCommand(String command, Map<String, ErrorHandler> rejects,
+            Set<String> accepts, int timeout) {
         try {
             if (command != null) {
                 sendInternal(command, true);
             }
         } catch (Exception e) {
-            throw new ConnectorException("Error occured in SolarisConnection, during send(). Exception message: " + e.getMessage());
+            throw new ConnectorException(
+                    "Error occured in SolarisConnection, during send(). Exception message: "
+                            + e.getMessage());
         }
-        
+
         /*
          * IMPLEMENTATION NOTE on 'Ordering of matchers w.r.t. Expect4j'
-         * 
-         * Expect4j matches the first pattern, that occurs at the minimum index in the input stream.
-         * That said, for instance input stream is 
-         * '$ foobar $'
-         * with List of patterns = { "foobar", "$" }.
-         * The matching pattern according to expect is "$".
-         * *WHY*?
-         * Expect matches the "$" pattern, despite of "foobar" being the first in the list of patterns.
-         * In fact, the implementation iterates over the list of matchers, and searches for the index 
-         * of matching substring. The first minimal index wins. In other words, if two matchers both 
-         * match the input from the start, the matcher, which is the first in the list of patterns, wins.
-         * 
-         * This explains why "$" was matched (it has index 0), rather then foobar (with larger match index 2).
+         *
+         * Expect4j matches the first pattern, that occurs at the minimum index
+         * in the input stream. That said, for instance input stream is '$
+         * foobar $' with List of patterns = { "foobar", "$" }. The matching
+         * pattern according to expect is "$". *WHY*? Expect matches the "$"
+         * pattern, despite of "foobar" being the first in the list of patterns.
+         * In fact, the implementation iterates over the list of matchers, and
+         * searches for the index of matching substring. The first minimal index
+         * wins. In other words, if two matchers both match the input from the
+         * start, the matcher, which is the first in the list of patterns, wins.
+         *
+         * This explains why "$" was matched (it has index 0), rather then
+         * foobar (with larger match index 2).
          */
-        
-        // according to the previous implementation note, the error matchers should go first!:
+
+        // according to the previous implementation note, the error matchers
+        // should go first!:
         MatchBuilder builder = new MatchBuilder();
         // #1 Adding Error matchers
         final List<ErrorClosure> cecList = new ArrayList<ErrorClosure>();
@@ -466,16 +538,23 @@ public class SolarisConnection {
             ErrorClosure cec = new ErrorClosure(rejEntry.getValue());
             cecList.add(cec);
             /*
-             * Errors are matched without respect to case. E.g. 'Error' and 'ERROR' is treated the same.
+             * Errors are matched without respect to case. E.g. 'Error' and
+             * 'ERROR' is treated the same.
              */
             builder.addCaseInsensitiveRegExpMatch(rejEntry.getKey(), cec);
         }
-        
-        // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
+
+        // #2 Adding RootShellPrompt matcher or other acceptance matchers if
+        // given
         List<SolarisClosure> captureClosures = null;
         if (accepts.size() > 0) {
-            captureClosures = CollectionUtil.<SolarisClosure>newList();
+            captureClosures = CollectionUtil.<SolarisClosure> newList();
             for (String acc : accepts) {
+                if (acc == null) {
+                    // This means that we accept also empty output, which means
+                    // that a prompt appears
+                    acc = getRootShellPrompt();
+                }
                 SolarisClosure closure = new SolarisClosure();
                 captureClosures.add(closure);
                 builder.addCaseInsensitiveRegExpMatch(acc, closure);
@@ -484,154 +563,151 @@ public class SolarisConnection {
             // by default rootShellPrompt is added.
             SolarisClosure closure = new SolarisClosure();
             captureClosures = CollectionUtil.newList(closure);
+            // captureClosures.add(closure);
             builder.addRegExpMatch(getRootShellPrompt(), closure);
         }
-        
+
         // #3 set the timeout for matching too
         builder.addTimeoutMatch(timeout, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
-                throw new ConnectorException("executeCommand: timeout occured, and no ERROR matched. Buffer: <" + state.getBuffer() + ">");
+                log.ok("RX (timeout): {0}", state.getBuffer());
+                throw new ConnectorException(
+                        "executeCommand: timeout occured, and no ERROR matched. Buffer: <"
+                                + state.getBuffer() + ">");
             }
         });
-        
+
         try {
             /*
              * Implementation notes on Expect4J (v. 1.0)
-             * 
+             *
              * 1) What is Expect4J and how it is used in the connector?
-             * 
+             *
              * Expect4J is a wrapping library over SSH connection (provided by
              * JSch library), that is capable of analyzing the response from the
              * SSH connection. Expect supports various other connection types
              * too: telnet, SSH keypair.
-             * 
+             *
              * The role of Expect in SolarisConnector is to analyze the feedback
              * from the resource, and to invoke the assigned actions based on
              * the resource's feedback.
-             * 
+             *
              * The previous paragraph sounds a bit generic, so let's be more
              * specific about the way Expect analyzes the resource's response
              * (referred as "response" further). Expect has two basic commands:
              * -- send(string) -- that sends the string to an SSH connection *
              * -- expect(Match[]) -- waits for response, that will contain the
-             *      given matches. A match consists of a [string, Closure] pair. If
-             *      the given string is matched, the Closure is executed. 
-             * 
-             * Expect follows the algorithm: 
-             * -- a) read the response from the resource 
-             * -- b) scan through matches, and choose a single winner match 
-             * that is in the response
-             * -- c) if no matches found try to read from the resource, until 
-             *         some time is left from timeout.
-             *         
+             * given matches. A match consists of a [string, Closure] pair. If
+             * the given string is matched, the Closure is executed.
+             *
+             * Expect follows the algorithm: -- a) read the response from the
+             * resource -- b) scan through matches, and choose a single winner
+             * match that is in the response -- c) if no matches found try to
+             * read from the resource, until some time is left from timeout.
+             *
              * WARNING: Expect's way of matching patterns is pretty intricate!
-             * 
-             * Note: a Closure is a callback interface, that is invoked when 
-             * the associated matching string is matched.
-             * 
-             * 
-             * 
-             * 
-             * 
+             *
+             * Note: a Closure is a callback interface, that is invoked when the
+             * associated matching string is matched.
+             *
+             *
+             *
+             *
+             *
              * 2) How does expect choose which matcher matches the response?
-             * 
-             * If you'd like to verify the following paragraphs in the code, 
+             *
+             * If you'd like to verify the following paragraphs in the code,
              * look at expect4j.Expect4j.runFirstMatch(List).
-             * 
+             *
              * Expect receives a list of matchers (String, Closure) pairs.
-             * 
-             * 
-             * 
-             * What matters for Expect when choosing the "winner" matching string?
-             * 
-             * CRITERIA #1
-             * -- The order of matcher string *does matter*.
-             * 
-             * CRITERIA #2
-             * -- The position of match in the response for the given 
-             *      matcher *does matter*.
-             * 
-             * 
-             * 
-             * 
+             *
+             *
+             *
+             * What matters for Expect when choosing the "winner" matching
+             * string?
+             *
+             * CRITERIA #1 -- The order of matcher string *does matter*.
+             *
+             * CRITERIA #2 -- The position of match in the response for the
+             * given matcher *does matter*.
+             *
+             *
+             *
+             *
              * == CRITERIA #1 explained -- "order matters" ==
-             * 
-             *    In general, the most specific matcher strings should come first 
-             * in the list of matchers that expect receives. The more generic 
-             * should come to the end of List.
-             * If we take an extreme example, when we have a matcher list:
-             * ["Error Foo specific", "Error"]
-             * In case the response is identical to the first matcher, than 
-             * it'll be the winner. The second matcher could be matched too, 
-             * but it is only coming as second, moreover it has the same 
-             * matching position -- see the criteria further.
-             * 
-             * 
-             * 
+             *
+             * In general, the most specific matcher strings should come first
+             * in the list of matchers that expect receives. The more generic
+             * should come to the end of List. If we take an extreme example,
+             * when we have a matcher list: ["Error Foo specific", "Error"] In
+             * case the response is identical to the first matcher, than it'll
+             * be the winner. The second matcher could be matched too, but it is
+             * only coming as second, moreover it has the same matching position
+             * -- see the criteria further.
+             *
+             *
+             *
              * == CRITERIA #2 explained -- "match position matters" ==
-             * 
-             *    If there are two matchers, one is _prefix_ of another 
-             * (for example the previous ["Error Foo specific", "Error"])
-             * so we can have cases, when both matchers are matched. 
-             * In this case Expect *prefers* the matcher who:
-             *  -- is matched as first
-             *  -- && match position is closer or equal to the start of the string.
-             * 
-             * Reflected back onto the example, if the responses are:
-             * matcher list: ["Error Foo specific", "Error"]
-             * response#1: "bla Error Foo specific bla bla"
-             * winner#1: "Error Foo specific" -- both matchers have the same position 
-             *            of the first match character (=4), so the one earlier on 
-             *            the matching list wins.
-             * 
-             * response#2: "bla Error bla Error Foo specific bla"
-             * winner #2: "Error" -- the earlier match position wins here.
-             * 
-             * 
-             * 
-             * 3) What part of the output do I get from expect in case of successful match?
-             * 
-             * Let's give an example:
-             * matcher list = ["Ahoj"]
-             * response: "foo bar baz Ahoj ship"
-             * returned output from expect: "foo bar baz Ahoj"
-             * 
-             * In other words, expect returns the response buffer content up to 
+             *
+             * If there are two matchers, one is _prefix_ of another (for
+             * example the previous ["Error Foo specific", "Error"]) so we can
+             * have cases, when both matchers are matched. In this case Expect
+             * *prefers* the matcher who: -- is matched as first -- && match
+             * position is closer or equal to the start of the string.
+             *
+             * Reflected back onto the example, if the responses are: matcher
+             * list: ["Error Foo specific", "Error"] response#1:
+             * "bla Error Foo specific bla bla" winner#1: "Error Foo specific"
+             * -- both matchers have the same position of the first match
+             * character (=4), so the one earlier on the matching list wins.
+             *
+             * response#2: "bla Error bla Error Foo specific bla" winner #2:
+             * "Error" -- the earlier match position wins here.
+             *
+             *
+             *
+             * 3) What part of the output do I get from expect in case of
+             * successful match?
+             *
+             * Let's give an example: matcher list = ["Ahoj"] response:
+             * "foo bar baz Ahoj ship" returned output from expect:
+             * "foo bar baz Ahoj"
+             *
+             * In other words, expect returns the response buffer content up to
              * the first successful match (including characters of this match).
-             * 
-             * Note: connector has and additional funcionality of altering the output:
-             * it deletes the trailing rootShellPrompt (e.g. typicalli $).
-             * 
-             * 
-             * 
-             * 4) What happens if the match is unsuccessful?
-             * A timeout occurs. This timeout can be registered by a timeout closure, 
-             * as it is done in the SolarisConnection too.
-             * 
-             * 
-             * 5) How do we handle connection errors?
-             * In case an error string is matched we enter into mode of special 
-             * processing, that is inherited from the Solaris resource adapter. 
-             * This means, that we try to read as much of error output as it is possible. 
-             * (We disregard any terminating characters exceptionally.)
-             * This fuctionality is visible in method: 
-             * org.identityconnectors.solaris.SolarisConnection.handleRejects(List<ErrorClosure>)
-             * .
-             * 
-             * 6) Can I pass regurlar expressions in matchers? 
-             * Yes, Expect4j uses Apache Oro regular expression library. 
-             * The regular expressions are matched throughout the whole response.
-             * For example:
-             * -- regexp: "ship"
-             * -- string to match: "ahoj ship"
-             * the match is successful, the initial other letters are ignored by the matcher.
-             * 
+             *
+             * Note: connector has and additional funcionality of altering the
+             * output: it deletes the trailing rootShellPrompt (e.g. typicalli
+             * $).
+             *
+             *
+             *
+             * 4) What happens if the match is unsuccessful? A timeout occurs.
+             * This timeout can be registered by a timeout closure, as it is
+             * done in the SolarisConnection too.
+             *
+             *
+             * 5) How do we handle connection errors? In case an error string is
+             * matched we enter into mode of special processing, that is
+             * inherited from the Solaris resource adapter. This means, that we
+             * try to read as much of error output as it is possible. (We
+             * disregard any terminating characters exceptionally.) This
+             * fuctionality is visible in method:
+             * org.identityconnectors.solaris.
+             * SolarisConnection.handleRejects(List<ErrorClosure>) .
+             *
+             * 6) Can I pass regurlar expressions in matchers? Yes, Expect4j
+             * uses Apache Oro regular expression library. The regular
+             * expressions are matched throughout the whole response. For
+             * example: -- regexp: "ship" -- string to match: "ahoj ship" the
+             * match is successful, the initial other letters are ignored by the
+             * matcher.
              */
             expect4j.expect(builder.build());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
-        
+
         String output = null;
         for (SolarisClosure cl : captureClosures) {
             if (cl.isMatched()) {
@@ -640,71 +716,88 @@ public class SolarisConnection {
                 break;
             }
         }
-        
+
         if (output == null) {
-            // handle error message processing, throw an exception if error found
+            log.ok("RX <nothing>");
+            // handle error message processing, throw an exception if error
+            // found
             handleRejects(cecList);
         } else {
-            log.ok("Data: {0}",output);
+            log.ok("RX: {0}", output);
             output = trimOutput(output);
         }
 
         return output;
     }
-    
+
     /**
      * Execute a issue a command on the resource. Return the match of feedback
      * up to the root shell prompt
      * {@link SolarisConnection#getRootShellPrompt()}.
-     * 
+     *
      * Warning: all the matches (rejects, accepts parameter) are interpreted as
-     * regular expressions (see {@link Pattern}). Be careful with special
-     * symbols, such as {@code $, ^}, as they should be escaped. For instance to
-     * match the {@code $} prompt you should use {@code \\$}.
-     * 
+     * regular expressions (see {@link java.util.regex.Pattern}). Be careful
+     * with special symbols, such as {@code $, ^}, as they should be escaped.
+     * For instance to match the {@code $} prompt you should use {@code \\$}.
+     *
      * @param command
      *            the executed command. In special cases (such as waiting for
-     *            the first prompt after login, the command can have {@code
-     *            null} value. If {@code command} is {@code null}, then we wait
-     *            for root shell prompt without executing any other commands
-     *            (given that {@code root shell prompt} was not overriden by
-     *            {@code accepts} parameter.
-     * 
+     *            the first prompt after login, the command can have
+     *            {@code null} value. If {@code command} is {@code null}, then
+     *            we wait for root shell prompt without executing any other
+     *            commands (given that {@code root shell prompt} was not
+     *            overriden by {@code accepts} parameter.
+     *
      * @param rejects
      *            Map that contains error message,
      *            {@link SolarisConnection.ErrorHandler} pairs. If the error
      *            message is found in response from the resource, the error
      *            handler is called. .
      *            <p>
-     * 
+     *
      * @param accepts
      *            these are accepting strings, if they are found the result is
      *            returned. If empty set is given, the default accept is
-     *            {@link SolarisConnection#getRootShellPrompt()}. Caution: in case
-     *            <code>accepts</code> parameter is specified, it'll be the last
-     *            element in the response from the resource. If we don't respect this 
-     *            rule than we will loose precious output of the following commands, that 
-     *            are issued. <i>A larger illustration of violation of the previous contract
-     *            follows. It is above the basic usage, however we should be aware of 
-     *            consequences of violating contract for 'accepts' parameter.</i> 
-     *            EXAMPLE: see the following calls / respones from the {@link SolarisConnection}:
+     *            {@link SolarisConnection#getRootShellPrompt()}. Caution: in
+     *            case <code>accepts</code> parameter is specified, it'll be the
+     *            last element in the response from the resource. If we don't
+     *            respect this rule than we will loose precious output of the
+     *            following commands, that are issued. <i>A larger illustration
+     *            of violation of the previous contract follows. It is above the
+     *            basic usage, however we should be aware of consequences of
+     *            violating contract for 'accepts' parameter.</i> EXAMPLE: see
+     *            the following calls / respones from the
+     *            {@link SolarisConnection}:
+     *
      *            <pre>
-     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
-     *            Assert.assertEquals("one", out); // will succeed
-     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
-     *            Assert.assertEquals("two", out); // fail, due to empty output
-     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
-     *            Assert.assertEquals("three", out); // fail, due to empty output
-     *            </pre>
-     *            If we analyze the previous example we will see the following sequence of request/response going on:
+     * out =
+     *         conn.executeCommand(&quot;echo 'one'&quot;, Collections.&lt;String&gt; emptySet(), CollectionUtil
+     *                 .newSet(&quot;one&quot;));
+     * Assert.assertEquals(&quot;one&quot;, out); // will succeed
+     * out =
+     *         conn.executeCommand(&quot;echo 'two'&quot;, Collections.&lt;String&gt; emptySet(), CollectionUtil
+     *                 .newSet(&quot;two&quot;));
+     * Assert.assertEquals(&quot;two&quot;, out); // fail, due to empty output
+     * out =
+     *         conn.executeCommand(&quot;echo 'three'&quot;, Collections.&lt;String&gt; emptySet(), CollectionUtil
+     *                 .newSet(&quot;three&quot;));
+     * Assert.assertEquals(&quot;three&quot;, out); // fail, due to empty output
+     * </pre>
+     *
+     *            If we analyze the previous example we will see the following
+     *            sequence of request/response going on:
+     *
      *            <pre>
      *            >> echo 'one'
      *            << one
      *            >> echo 'two'
      *            << two~ConnectorPrompt // at least this is what we expect, but we'll get an empty output
      *                                   // because of {@link SolarisConnection#trimOutput(String)}, that cuts off everything after root shell prompt.
-     *            </pre>
-     *            The solution is to wait for rootShellPrompt after every 'accept' parameter, that doesn't terminate the output:
+     * </pre>
+     *
+     *            The solution is to wait for rootShellPrompt after every
+     *            'accept' parameter, that doesn't terminate the output:
+     *
      *            <pre>
      *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
      *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
@@ -715,17 +808,18 @@ public class SolarisConnection {
      *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
      *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
      *            Assert.assertEquals("three", out); // will succeed
-     *            </pre>
-     * 
+     * </pre>
+     *
      * @return the response from the resource when the command is successful,
      *         free of error messages. Otherwise throw a
      *         {@link ConnectorException}.
-     * 
+     *
      * @throws ConnectorException
      *             in case a <code>rejects</code> string is found in the
      *             response of the resource.
      */
-    public String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts) {
+    public String executeCommand(String command, Map<String, ErrorHandler> rejects,
+            Set<String> accepts) {
         return executeCommand(command, rejects, accepts, getConfiguration().getCommandTimeout());
     }
 
@@ -746,10 +840,10 @@ public class SolarisConnection {
                 out = waitForInput(out);
 
                 connectorExceptionClosure.getErrorHandler().handle(out);
-            }//fi
-        }//for
+            }
+        }
     }
-    
+
     private String waitForInput(final String out) {
         StringBuilder buffer = new StringBuilder(out);
         long start = System.nanoTime();
@@ -770,33 +864,35 @@ public class SolarisConnection {
     }
 
     /**
-     * wait for shell prompt
-     * 
+     * wait for shell prompt.
+     *
      * @param rejects
      *            throw {@link ConnectorException} if a reject is matched in the
      *            feedback up to the rootShellPrompt.
-     * @throws {@link ConnectorException} in case of timeout in waiting for
+     * @throws ConnectorException in case of timeout in waiting for
      *         rootShellPrompt character.
      */
     public void waitForRootShellPrompt(Set<String> rejects) {
         executeCommand(null, rejects);
     }
-    
-    /** {@see SolarisConnection#waitForRootShellPrompt(Set)} */
+
+    /** {@see SolarisConnection#waitForRootShellPrompt(Set)}. */
     public void waitForRootShellPrompt() {
-        executeCommand(null, Collections.<String>emptySet());
+        executeCommand(null, Collections.<String> emptySet());
     }
-    
-    private String waitForImpl(final String string, final int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
+
+    private String waitForImpl(final String string, final int millis, boolean caseInsensitive)
+            throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
         /** internal buffer for the Solaris resource's output */
         final StringBuilder buffer = new StringBuilder();
-        
+
         // build the matchers
         /** in case of successful match this closure is called */
         SolarisClosure successClosure = new SolarisClosure() {
             public void run(ExpectState state) {
-                // save the content of buffer (the response from Solaris resource)
+                // save the content of buffer (the response from Solaris
+                // resource)
                 buffer.append(state.getBuffer());
             }
         };
@@ -808,14 +904,15 @@ public class SolarisConnection {
         }
         builder.addTimeoutMatch(millis, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
-                String msg = String.format("Timeout in waitFor('%s', %s) buffer: <%s>",
-                        string, Integer.toString(millis), state.getBuffer());
+                String msg =
+                        String.format("Timeout in waitFor('%s', %s) buffer: <%s>", string, Integer
+                                .toString(millis), state.getBuffer());
                 throw new ConnectorException(msg);
             }
         });
-        
+
         expect4j.expect(builder.build());
-        
+
         return buffer.toString();
     }
 
@@ -833,131 +930,140 @@ public class SolarisConnection {
             // OK
         }
         log.info("dispose()");
-        
+
         if (expect4j != null) {
             expect4j.close();
             expect4j = null;
         }
-        
-        if (channel != null)
+
+        if (channel != null) {
             channel.disconnect();
-        
-        if (session != null)
+        }
+
+        if (session != null) {
             session.disconnect();
+        }
     }
-    
+
     /**
-     * The method formats the given command, and inserts {@code sudo} prefix in front
-     * of the command according to the state of the connection's {@link SolarisConnection#configuration}.
-     * 
+     * The method formats the given command, and inserts {@code sudo} prefix in
+     * front of the command according to the state of the connection's
+     * {@link SolarisConnection#configuration}.
+     *
      * @param command
      *            the command can be a chain of strings separated by spaces. In
      *            case for some reason we want to delegate the chaining to this
      *            builder, we can use the additional arguments parameter.
      * @param arguments
      *            optional parameter for chaining extra arguments at the end of
-     *            command.
-     * <br>
-     * Note: Don't use this method, if you want to have a plain command, <b>withouth</b> 
-     * the {@code sudo} prefix. 
+     *            command. <br>
+     *            Note: Don't use this method, if you want to have a plain
+     *            command, <b>withouth</b> the {@code sudo} prefix.
      */
-    public String buildCommand(String command, CharSequence... arguments) {
+    public String buildCommand(boolean needSudo, String command, CharSequence... arguments) {
         StringBuilder buff = new StringBuilder();
-        if (configuration.isSudoAuthorization()) {
+        if (needSudo && configuration.isSudoAuthorization()) {
             buff.append("sudo ");
         }
         buff.append(command);
-        buff.append(" ");// for safety reasons, in case there are no arguments, and the command is used within legacy scrips from adapter.
-        
+        // for safety reasons, in case there are no arguments, and the command
+        // is used within legacy scrips from adapter.
+        buff.append(" ");
+
         for (CharSequence string : arguments) {
             buff.append(" ");
             buff.append(string.toString());
         }
-        
+
         return SolarisUtil.limitString(buff);
     }
 
     public String getRootShellPrompt() {
         return loginShellPrompt;
     }
-    
+
     /*
      * MUTEXING
      */
-    /** mutex acquire constants */
-    private static final String tmpPidMutexFile = "/tmp/WSlockuid.$$";
-    private static final String pidMutexFile = "/tmp/WSlockuid";
-    private static final String pidFoundFile = "/tmp/WSpidfound.$$";
+    /** mutex acquire constants. */
+    private static final String TMP_PID_MUTEX_FILE = "/tmp/WSlockuid.$$";
+    private static final String PID_MUTEX_FILE = "/tmp/WSlockuid";
+    private static final String PID_FOUND_FILE = "/tmp/WSpidfound.$$";
+
     /**
-     * Mutexing script is used to prevent race conditions when creating
-     * multiple users. These conditions are present at {@link SolarisCreate} and
+     * Mutexing script is used to prevent race conditions when creating multiple
+     * users. These conditions are present at {@link SolarisCreate} and
      * {@link SolarisUpdate}. The code is taken from the resource adapter.
      */
     private String getAcquireMutexScript() {
         // This code is from SolarisResouceAdapter
         long timeout = getConfiguration().getMutexAcquireTimeout();
-        String rmCmd = buildCommand("rm");
-        String catCmd = buildCommand("cat");
+        String rmCmd = buildCommand(false, "rm");
+        String catCmd = buildCommand(false, "cat");
 
         if (timeout < 1) {
             timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
         }
 
+        // @formatter:off
         String pidMutexAcquireScript =
             "TIMEOUT=" + timeout + "; " +
-            "echo $$ > " + tmpPidMutexFile + "; " +
+            "echo $$ > " + TMP_PID_MUTEX_FILE + "; " +
             "while test 1; " +
             "do " +
-              "ln -n " + tmpPidMutexFile + " " + pidMutexFile + " 2>/dev/null; " +
+              "ln -n " + TMP_PID_MUTEX_FILE + " " + PID_MUTEX_FILE + " 2>/dev/null; " +
               "rc=$?; " +
               "if [ $rc -eq 0 ]; then\n" +
-                "LOCKPID=`" + catCmd + " " +  pidMutexFile + "`; " +
+                "LOCKPID=`" + catCmd + " " + PID_MUTEX_FILE + "`; " +
                 "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                  rmCmd + " -f " + tmpPidMutexFile + "; " +
+                  rmCmd + " -f " + TMP_PID_MUTEX_FILE + "; " +
                   "break; " +
                 "fi; " +
               "fi\n" +
-              "if [ -f " + pidMutexFile + " ]; then " +
-                "LOCKPID=`" + catCmd + " " + pidMutexFile + "`; " +
+              "if [ -f " + PID_MUTEX_FILE + " ]; then " +
+                "LOCKPID=`" + catCmd + " " + PID_MUTEX_FILE + "`; " +
                 "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                  rmCmd + " -f " + pidMutexFile + "\n" +
+                  rmCmd + " -f " + PID_MUTEX_FILE + "\n" +
                 "else " +
                   "ps -ef | while read REPLY\n" +
                   "do " +
                     "TESTPID=`echo $REPLY | awk '{ print $2 }'`; " +
                     "if [ \"$LOCKPID\" = \"$TESTPID\" ]; then " +
-                      "touch " + pidFoundFile + "; " +
+                      "touch " + PID_FOUND_FILE + "; " +
                       "break; " +
                     "fi\n" +
                   "done\n" +
-                  "if [ ! -f " + pidFoundFile + " ]; then " +
-                    rmCmd + " -f " + pidMutexFile + "; " +
+                  "if [ ! -f " + PID_FOUND_FILE + " ]; then " +
+                    rmCmd + " -f " + PID_MUTEX_FILE + "; " +
                   "else " +
-                    rmCmd + " -f " + pidFoundFile + "; " +
+                    rmCmd + " -f " + PID_FOUND_FILE + "; " +
                   "fi\n" +
                 "fi\n" +
               "fi\n" +
               "TIMEOUT=`echo | awk 'BEGIN { n = '$TIMEOUT' } { n -= 1 } END { print n }'`\n" +
               "if [ $TIMEOUT = 0 ]; then " +
                 "echo \"ERROR: failed to obtain uid mutex\"; " +
-                rmCmd + " -f " + tmpPidMutexFile + "; " +
+                rmCmd + " -f " + TMP_PID_MUTEX_FILE + "; " +
                 "break; " +
               "fi\n" +
               "sleep 1; " +
             "done";
+        // @formatter:on
 
         return pidMutexAcquireScript;
     }
-    
-    private String getAcquireMutexScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
+
+    private String getAcquireMutexScript(String uidMutexFile, String tmpUidMutexFile,
+            String pidFoundFile) {
         long timeout = getConfiguration().getMutexAcquireTimeout();
-        String rmCmd = buildCommand("rm");
-        String catCmd = buildCommand("cat");
+        String rmCmd = buildCommand(false, "rm");
+        String catCmd = buildCommand(false, "cat");
 
         if (timeout < 1) {
             timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
         }
-        
+
+        // @formatter:off
         String uidMutexAcquireScript =
             "TIMEOUT=" + timeout + "; " +
             "echo $$ > " + tmpUidMutexFile + "; " +
@@ -997,13 +1103,15 @@ public class SolarisConnection {
               "sleep 1; " +
             "fi\n" +
           "done";
+          // @formatter:on
 
         return uidMutexAcquireScript;
     }
 
-    /** Counterpart of {@link SolarisConnection#getAcquireMutexScript()} */
+    /** Counterpart of {@link SolarisConnection#getAcquireMutexScript()}. */
     private String getMutexReleaseScript(String uidMutexFile) {
-        String rmCmd = buildCommand("rm");
+        String rmCmd = buildCommand(false, "rm");
+        // @formatter:off
         String pidMutexReleaseScript =
             "if [ -f " + uidMutexFile + " ]; then " +
               "LOCKPID=`cat " + uidMutexFile + "`; " +
@@ -1011,17 +1119,18 @@ public class SolarisConnection {
                 rmCmd + " -f " + uidMutexFile + "; " +
               "fi; " +
             "fi";
+        // @formatter:off
         return pidMutexReleaseScript;
     }
-    
+
     private String getMutexReleaseScript() {
-        return getMutexReleaseScript(pidMutexFile);
+        return getMutexReleaseScript(PID_MUTEX_FILE);
     }
 
     /**
      * Acquires Mutex before manipulating users or groups. Prevents concurrency
      * issues.
-     * 
+     *
      * Finally the {@link SolarisConnection#executeMutexReleaseScript()} should
      * be called to release the allocated mutex.
      */
@@ -1030,43 +1139,49 @@ public class SolarisConnection {
             executeCommand(getAcquireMutexScript(), CollectionUtil.newSet("ERROR"));
         }
     }
-    
-    /** 
+
+    /**
      * Acquires Mutex before manipulating users or groups. Prevents concurrency
-     * issues. This is a special version used for operations on Solaris with NIS user database.
-     * 
-     * Finally the {@link SolarisConnection#executeMutexReleaseScript(String)} should
-     * be called to release the allocated mutex.
+     * issues. This is a special version used for operations on Solaris with NIS
+     * user database.
+     *
+     * Finally the {@link SolarisConnection#executeMutexReleaseScript(String)}
+     * should be called to release the allocated mutex.
      */
-    public void executeMutexAcquireScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
-        executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile), CollectionUtil.newSet("ERROR"));
+    public void executeMutexAcquireScript(String uidMutexFile, String tmpUidMutexFile,
+            String pidFoundFile) {
+        executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile),
+                CollectionUtil.newSet("ERROR"));
     }
-    
-    /** {@see SolarisConnection#executeMutexAcquireScript()} */
+
+    /** {@see SolarisConnection#executeMutexAcquireScript()}. */
     public void executeMutexReleaseScript() {
         if (isVersionLT10()) {
             executeCommand(getMutexReleaseScript());
         }
     }
-    
-    /** {@see SolarisConnection#executeMutexAcquireScript(String, String, String)} */
+
+    /**
+     * {@see SolarisConnection#executeMutexAcquireScript(String, String,
+     * String)}.
+     */
     public void executeMutexReleaseScript(String uidMutexFile) {
         executeCommand(getMutexReleaseScript(uidMutexFile));
     }
-    
+
     public void checkAlive() {
         String out = executeCommand("echo 'checkAlive'");
         if (StringUtil.isBlank(out) || !out.contains("checkAlive")) {
             throw new RuntimeException("Solaris Connector no longer alive.");
         }
     }
-    
+
     /*
      * SUDO
      */
     private static final String SUDO_START_COMMAND = "sudo -v";
     private static final String SUDO_RESET_COMMAND = "sudo -k";
-    
+
     public void doSudoStart() {
         final SolarisConfiguration config = getConfiguration();
         if (config.isSudoAuthorization()) {
@@ -1075,16 +1190,30 @@ public class SolarisConnection {
                 executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
 
                 // 2) send sudo start command
-                executeCommand(SUDO_START_COMMAND, Collections.<String>emptySet(), CollectionUtil.newSet("assword:")); 
+                // Solaris prompts just "password:", linux prompts
+                // "password for username:". following regexp should match both
+                // password prompt is also optional, it may not appear (e.g. if
+                // NOPASSWD: was congifured in sudoers file)
+                String output =
+                        executeCommand(SUDO_START_COMMAND, Collections.<String> emptySet(),
+                                CollectionUtil.newSet("assword[^:]*:", null));
 
-                GuardedString passwd = config.getCredentials();
-                sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet());
+                if (output.matches("[Pp]assword")) {
+                    // sudo asked for password. If this is not true then it has
+                    // not asked and we would sent the password as command
+                    // instead
+                    // of responding to the prompt. that could be dangerous (the
+                    // password may appear in command history).
+                    GuardedString passwd = config.getCredentials();
+                    sendPassword(passwd, CollectionUtil.newSet("may not run",
+                            "not allowed to execute"), Collections.<String> emptySet());
+                }
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }
         }
     }
-    
+
     public void doSudoReset() {
         final SolarisConfiguration config = getConfiguration();
         if (config.isSudoAuthorization()) {
@@ -1092,12 +1221,12 @@ public class SolarisConnection {
             executeCommand(SUDO_RESET_COMMAND);
         }
     }
-    
+
     public boolean isNis() {
         final String sysDB = getConfiguration().getSystemDatabaseType();
         return sysDB != null && sysDB.equalsIgnoreCase("nis");
     }
-    
+
     public boolean isDefaultNisPwdDir() {
         return configuration.getNisPwdDir().equals(SolarisConfiguration.DEFAULT_NISPWDDIR);
     }
@@ -1118,7 +1247,7 @@ public class SolarisConnection {
         if (StringUtil.isBlank(versionOut)) {
             return true;
         }
-        
+
         versionOut = versionOut.trim();
         String[] version = versionOut.split("\\.");
         boolean isVersionLT10 = true;
@@ -1132,17 +1261,18 @@ public class SolarisConnection {
                 // OK
             }
         }
-        
+
         return isVersionLT10;
     }
 
     /**
-     * Use this class to construct a sequence of matchers.
-     * Matchers consists of two parts:
+     * Use this class to construct a sequence of matchers. Matchers consists of
+     * two parts:
      * <ul>
-     *  <li>1) regular expression -- used to detect the match,</li>
-     *  <li>2) closure -- call-back interface that is executed upon the match.</li>
+     * <li>1) regular expression -- used to detect the match,</li>
+     * <li>2) closure -- call-back interface that is executed upon the match.</li>
      * </ul>
+     *
      * @author David Adam
      */
     private final static class MatchBuilder {
@@ -1154,7 +1284,8 @@ public class SolarisConnection {
 
         /**
          * adds a case sensitive matcher. Compare with
-         * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, SolarisClosure)}.
+         * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, SolarisClosure)}
+         * .
          */
         public void addRegExpMatch(String regExp, SolarisClosure closure) {
             try {
@@ -1163,7 +1294,7 @@ public class SolarisConnection {
                 throw ConnectorException.wrap(ex);
             }
         }
-        
+
         /**
          * adds a case *insensitive matcher. Compare with
          * {@link MatchBuilder#addRegExpMatch(String, SolarisClosure)}
@@ -1175,7 +1306,7 @@ public class SolarisConnection {
                 throw ConnectorException.wrap(ex);
             }
         }
-        
+
         /** add a timeout match with given 'millis' period. */
         public void addTimeoutMatch(long millis, SolarisClosure closure) {
             matches.add(new TimeoutMatch(millis, closure));
@@ -1184,33 +1315,34 @@ public class SolarisConnection {
         public Match[] build() {
             return matches.toArray(new Match[matches.size()]);
         }
-    }// MatchBuilder
-    
+    }
+
     /**
-     * internal Closure to hold the buffer state of the resource, plus indicator of match.
+     * internal Closure to hold the buffer state of the resource, plus indicator
+     * of match.
      */
     private class SolarisClosure implements Closure {
         private String buffer;
-        private boolean isReject;
-        
+        private boolean isMatched;
+
         /** @return the buffer content up to the matched string */
         public String getMatchedBuffer() {
             return buffer;
         }
-        
+
         public boolean isMatched() {
-            return isReject;
+            return isMatched;
         }
-        
+
         public void run(ExpectState state) throws Exception {
             buffer = state.getBuffer();
-            isReject = true;
+            isMatched = true;
         }
     }
-    
+
     private class ErrorClosure extends SolarisClosure {
         private final ErrorHandler errHandler;
-        
+
         public ErrorClosure(ErrorHandler errHandler) {
             this.errHandler = errHandler;
         }
@@ -1219,11 +1351,11 @@ public class SolarisConnection {
             return errHandler;
         }
     }
-    
+
     /**
      * Call-back interface for {@link SolarisConnection}. Used for customizable
      * exception messages.
-     * 
+     *
      * <p>
      * If an error is detected, {@link ErrorHandler#handle(String)} method will
      * be called with the error message received from the resource.

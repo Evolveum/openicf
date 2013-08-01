@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -41,44 +41,52 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class SolarisDelete extends AbstractOp {
 
-    private static final Log log = Log.getLog(SolarisDelete.class);
-    
-    private SolarisConnection connection;
-    
+    private static final Log logger = Log.getLog(SolarisDelete.class);
+
+    private final SolarisConnection connection;
+
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public SolarisDelete(SolarisConnector connector) {
+    public SolarisDelete(final SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
     }
-    
+
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        SolarisUtil.controlObjectClassValidity(objClass, acceptOC, getClass());
-        
+        SolarisUtil.controlObjectClassValidity(objClass, acceptOC, getClass(), connection
+                .getConfiguration());
+
         final String entryName = uid.getUidValue();
-        
-        log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
-        
+
+        logger.info("{0} delete(''{1}'')", ((objClass.is(ObjectClass.ACCOUNT_NAME)) ? "account"
+                : "group"), entryName);
+
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             if (connection.isNis()) {
-                // NIS is not able to signal that account is missing, so search in advance:
-                SolarisEntry searchedEntry = SolarisEntries.getAccount(entryName, EnumSet.of(NativeAttribute.NAME), connection);
+                // NIS is not able to signal that account is missing, so search
+                // in advance:
+                SolarisEntry searchedEntry =
+                        SolarisEntries.getAccount(entryName, EnumSet.of(NativeAttribute.NAME),
+                                connection);
                 if (searchedEntry == null) {
                     throw new UnknownUidException("user does not exist: " + entryName);
                 }
-                
+
                 invokeNISUserDelete(entryName);
             } else {
                 DeleteNativeUser.delete(entryName, connection);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
-                // NIS is not able to signal that group is missing, so search in advance:
-                SolarisEntry searchedEntry = SolarisEntries.getGroup(entryName, EnumSet.of(NativeAttribute.NAME), connection);
+                // NIS is not able to signal that group is missing, so search in
+                // advance:
+                SolarisEntry searchedEntry =
+                        SolarisEntries.getGroup(entryName, EnumSet.of(NativeAttribute.NAME),
+                                connection);
                 if (searchedEntry == null) {
                     throw new UnknownUidException("user does not exist: " + entryName);
                 }
-                
+
                 invokeNISGroupDelete(entryName);
             } else {
                 DeleteNativeGroup.delete(entryName, connection);
@@ -87,19 +95,21 @@ public class SolarisDelete extends AbstractOp {
             throw new UnsupportedOperationException();
         }
 
-        log.ok("userdel(''{0}'')", entryName);
+        logger.ok("userdel(''{0}'')", entryName);
 
     }
 
     /**
-     * compare with Native delete operation: {@see OpDeleteImpl#invokeNativeGroupDelete(Uid)}
+     * compare with Native delete operation: {@see
+     * OpDeleteImpl#invokeNativeGroupDelete(Uid)}.
      */
     private void invokeNISGroupDelete(String groupName) {
         if (connection.isDefaultNisPwdDir()) {
             DeleteNativeGroup.delete(groupName, connection);
-            
+
             /*
-             * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
+             * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file
+             * another bug?)
              */
             connection.doSudoStart();
             try {
@@ -113,7 +123,8 @@ public class SolarisDelete extends AbstractOp {
     }
 
     /**
-     * Compare with Native delete operation: {@see OpDeleteImpl#invokeNativeDelete(String)}
+     * Compare with Native delete operation: {@see
+     * OpDeleteImpl#invokeNativeDelete(String)}.
      */
     private void invokeNISUserDelete(String accountName) {
         // If the password source file is in /etc then use the native
@@ -121,7 +132,8 @@ public class SolarisDelete extends AbstractOp {
         if (connection.isDefaultNisPwdDir()) {
             DeleteNativeUser.delete(accountName, connection);
             /*
-             * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
+             * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file
+             * another bug?)
              */
             connection.doSudoStart();
             try {

@@ -1,6 +1,6 @@
 /*  +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
+ *  +---------------------------------------------------+
  */
 import org.identityconnectors.contract.data.groovy.Lazy
 import org.identityconnectors.contract.exceptions.ObjectNotFoundException
@@ -8,16 +8,36 @@ import org.identityconnectors.common.security.GuardedString
 
 host="__CONFIGURE_ME__"
 port= Integer.valueOf(22)
+connectionType="SSH"
 
 // single admin user = login user
 user="__CONFIGURE_ME__" // change to root for admin user
 pass=new org.identityconnectors.common.security.GuardedString("__CONFIGURE_ME__".toCharArray())
-loginShellPrompt = "#"
+loginShellPrompt = "\$" //"#"
 
 // root user (if not defined, login user has administrator privileges)
-rootUser = null
-credentials = null
-rootShellPrompt = null
+//rootUser = null
+//credentials = null
+//rootShellPrompt = "#"
+
+// Optional parameters
+//systemDatabaseType = null
+//nisBuildDirectory = null
+//nisPwdDir = null
+//nisShadowPasswordSupport = null
+//defaultPrimaryGroup = null
+//loginShell = null
+//homeBaseDirectory = null
+
+// is TrustedExtensions
+isSolarisTx=false
+
+unitTests {
+    SolarisConnection {
+        testsudoAuthorization=false
+        testSSHPubkeyMode=false
+    }
+}
 
 connector {
   host = Lazy.get("host")
@@ -33,16 +53,25 @@ connector {
 }
 
 
+environments {
+    solaris {
+
+    }
+    linux {
+        unixMode = "linux"
+    }
+}
+
 testsuite {
   // path to bundle jar - property is set by ant - leave it as it is
   bundleJar=System.getProperty("bundleJar")
   bundleName=System.getProperty("bundleName")
   bundleVersion=System.getProperty("bundleVersion")
   connectorName="org.identityconnectors.solaris.SolarisConnector"
-  
+
   Authentication.__ACCOUNT__.username = Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
   Authentication.__ACCOUNT__.wrong.password = new GuardedString("_nonExistingPassword_".toCharArray())
-  
+
   Search.disable.caseinsensitive = true
 
   Validate.invalidConfig = [
@@ -55,7 +84,7 @@ testsuite {
   ]//Validate
 
   Test.invalidConfig = [
-    [password: "nonsensePassword123456"], 
+    [password: "nonsensePassword123456"],
     [loginUser: "nonsenseUserName123456"]
   ]//Test
 
@@ -66,8 +95,8 @@ testsuite {
       shell.oclasses = ['shell', '__NAME__']
       __ACCOUNT__.oclasses = ['__NAME__', 'dir', 'shell', 'group', 'secondary_group',
         'uid', 'expire', 'inactive', 'comment', 'time_last_login',
-        'authorization', 'profile', 'role', 'max', 'min', 'warn', 'lock', 
-        '__PASSWORD__' /* TODO extra attribute that wasn't in the schema of Adatper -- is it OK? */, 
+        'authorization', 'profile', 'role', 'max', 'min', 'warn', 'lock',
+        '__PASSWORD__' /* TODO extra attribute that wasn't in the schema of Adatper -- is it OK? */,
          'force_change'
       ] //__ACCOUNT__.oclasses
     }//attributes
@@ -81,7 +110,7 @@ testsuite {
       multiValue: false,
       returnedByDefault: true
     ]// attrTemplate
-    
+
     attrTemplateIntNRBD = [
       type: int.class,
       readable: true,
@@ -91,7 +120,7 @@ testsuite {
       multiValue: false,
       returnedByDefault: false
     ]// attrTemplate
-    
+
     attrTemplateBooleanNRBD = [
       type: boolean.class,
       readable: true,
@@ -101,7 +130,7 @@ testsuite {
       multiValue: false,
       returnedByDefault: false
     ]// attrTemplate
-  
+
     attrRequiredTemplate = [
       type: String.class,
       readable: true,
@@ -131,7 +160,7 @@ testsuite {
       multiValue: false,
       returnedByDefault: false
     ]
-    
+
     attrMultiValuedTemplate = [
       type: String.class,
       readable: true,
@@ -141,7 +170,7 @@ testsuite {
       multiValue: true,
       returnedByDefault: false
     ]
-    
+
     attrNotUpdateableTemplate = [
       type: String.class,
       readable: true,
@@ -152,7 +181,7 @@ testsuite {
       returnedByDefault: true
     ]
 
-  
+
 
     gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplateIntNRBD")
     __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
@@ -165,7 +194,7 @@ testsuite {
       multiValue: true,
       returnedByDefault: true
     ]
-    
+
     shell.attribute.shell.oclasses = [
       type: String.class,
       readable: true,
@@ -220,7 +249,7 @@ testsuite {
       ResolveUsernameApiOp: ['__ACCOUNT__']
     ]//operations
   } //Schema
-  
+
   ScriptOnResource {
     language = "bash"
     script = "echo 'ahoj ship'"

@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ *
+ * You can obtain a copy of the License at
+ * http://opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * and include the License file at http://opensource.org/licenses/cddl1.php.
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -38,39 +38,40 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class AbstractNISOp {
-    public final static String whoIAm = "WHOIAM=`who am i | cut -d ' ' -f1`";
-    
+    public final static String WHO_I_AM = "WHOIAM=`who am i | cut -d ' ' -f1`";
+
     // Temporary file names
-    final static  String tmpPwdfile1 = "/tmp/wspasswd.$$";
-    final static String tmpPwdfile2 = "/tmp/wspasswd_work.$$";
-    final static String tmpPwdfile3 = "/tmp/wspasswd_out.$$";
-    
-    final static String pwdMutexFile = "/tmp/WSpwdlock";
-    final static String tmpPwdMutexFile = "/tmp/WSpwdlock.$$";
-    final static String pwdPidFile = "/tmp/WSpwdpid.$$";
-    
+    final static String TMP_PWDFILE_1 = "/tmp/wspasswd.$$";
+    final static String TMP_PWDFILE_2 = "/tmp/wspasswd_work.$$";
+    final static String TMP_PWDFILE_3 = "/tmp/wspasswd_out.$$";
+
+    final static String PWD_MUTEX_FILE = "/tmp/WSpwdlock";
+    final static String TMP_PWD_MUTEX_FILE = "/tmp/WSpwdlock.$$";
+    final static String PWD_PID_FILE = "/tmp/WSpwdpid.$$";
+
     // GROUP constants
-    final static String duplicateGroupNameMsg = "Duplicate group name";
-    final static String duplicateGroupIdMsg = "Duplicate group id";
-    
+    final static String DUPLICATE_GROUP_NAME_MSG = "Duplicate group name";
+    final static String DUPLICATE_GROUP_ID_MSG = "Duplicate group id";
+
     // GROUP "Mutex" files
-    protected final static String grpMutexFile = "/tmp/WSgrplock";
-    protected final static String tmpGrpMutexFile = "/tmp/WSgrplock.$$";
-    protected final static String grpPidFile = "/tmp/WSgrppid.$$";
-    
-    // This is a major string to look for if you want to do rejects on shadow file errors
+    protected final static String GRP_MUTEX_FILE = "/tmp/WSgrplock";
+    protected final static String TMP_GRP_MUTEX_FILE = "/tmp/WSgrplock.$$";
+    protected final static String GRP_PID_FILE = "/tmp/WSgrppid.$$";
+
+    // This is a major string to look for if you want to do rejects on shadow
+    // file errors
     final static String ERROR_MODIFYING = "Error modifying ";
-    
-    final static Set<NativeAttribute> allowedNISattributes;
+
+    final static Set<NativeAttribute> ALLOWED_NIS_ATTRIBUTES;
     static {
-        allowedNISattributes = new HashSet<NativeAttribute>();
-        allowedNISattributes.add(NativeAttribute.ID);
-        allowedNISattributes.add(NativeAttribute.GROUP_PRIM);
-        allowedNISattributes.add(NativeAttribute.DIR);
-        allowedNISattributes.add(NativeAttribute.COMMENT);
-        allowedNISattributes.add(NativeAttribute.SHELL);
+        ALLOWED_NIS_ATTRIBUTES = new HashSet<NativeAttribute>();
+        ALLOWED_NIS_ATTRIBUTES.add(NativeAttribute.ID);
+        ALLOWED_NIS_ATTRIBUTES.add(NativeAttribute.GROUP_PRIM);
+        ALLOWED_NIS_ATTRIBUTES.add(NativeAttribute.DIR);
+        ALLOWED_NIS_ATTRIBUTES.add(NativeAttribute.COMMENT);
+        ALLOWED_NIS_ATTRIBUTES.add(NativeAttribute.SHELL);
     }
-    
+
     protected final static GuardedString getPassword(SolarisEntry entry) {
         GuardedString password = null;
         for (Attribute passAttr : entry.getAttributeSet()) {
@@ -81,12 +82,12 @@ public class AbstractNISOp {
         }
         return password;
     }
-    
+
     public static void addNISMake(String target, SolarisConnection conn) {
-        final String makeCmd = conn.buildCommand("/usr/ccs/bin/make");
-        
+        final String makeCmd = conn.buildCommand(true, "/usr/ccs/bin/make");
+
         final String nisDir = conn.getConfiguration().getNisBuildDirectory();
-        
+
         StringBuilder buildscript = new StringBuilder("nisdomain=`domainname`; ");
         buildscript.append("cd " + nisDir + "/$nisdomain\n");
 
@@ -98,36 +99,39 @@ public class AbstractNISOp {
             throw ConnectorException.wrap(ex);
         }
     }
-    
-    public static String getRemovePwdTmpFiles(SolarisConnection conn) {
-        final String rmCmd = conn.buildCommand("rm");
 
+    public static String getRemovePwdTmpFiles(SolarisConnection conn) {
+        final String rmCmd = conn.buildCommand(false, "rm");
+
+        // @formatter:off
         String removePwdTmpFiles =
-            "if [ -f " + tmpPwdfile1 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile1 + "; " +
+            "if [ -f " + TMP_PWDFILE_1 + " ]; then " +
+              rmCmd + " -f " + TMP_PWDFILE_1 + "; " +
             "fi; " +
-            "if [ -f " + tmpPwdfile2 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile2 + "; " +
+            "if [ -f " + TMP_PWDFILE_2 + " ]; then " +
+              rmCmd + " -f " + TMP_PWDFILE_2 + "; " +
             "fi; " +
-            "if [ -f " + tmpPwdfile3 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile3 + "; " +
+            "if [ -f " + TMP_PWDFILE_3 + " ]; then " +
+              rmCmd + " -f " + TMP_PWDFILE_3 + "; " +
             "fi";
+        // @formatter:on
 
         return removePwdTmpFiles;
     }
-    
+
     /**
-     * filters the given entry's attributes, so they are just the ones that are allowed NIS attributes.
+     * filters the given entry's attributes, so they are just the ones that are
+     * allowed NIS attributes.
      */
     public static Map<NativeAttribute, List<Object>> constructNISUserAttributeParameters(
             SolarisEntry entry, Set<NativeAttribute> allowedNISattributes) {
-        
+
         Map<NativeAttribute, List<Object>> result = new HashMap<NativeAttribute, List<Object>>();
-        
+
         for (Attribute attr : entry.getAttributeSet()) {
             String type = attr.getName();
             List<Object> value = attr.getValue();
-            
+
             for (NativeAttribute nattr : allowedNISattributes) {
                 if (type.equals(nattr.toString())) {
                     result.put(NativeAttribute.forAttributeName(type), value);
@@ -137,56 +141,60 @@ public class AbstractNISOp {
         }
         return result;
     }
-    
+
     /**
      * check if the users exists, that are given by the user list argument.
-     * @param groupName name of the new group.
-     * @param userNames The list of usernames that we want to add to the new group.
+     *
+     * @param group
+     *            name of the new group.
+     * @param userNames
+     *            The list of usernames that we want to add to the new group.
      * @param conn
-     * <p>
-     * Note: used in both native and NIS attributes.
-     * <br/>
-     * <br/>
-     * Add commands to the script that will check to see which users exist.
-     * Only attempt to add the user that exist to the group. Generate
-     * and echo a list of users that do not exist, so that a message can be
-     * displayed indicating this.
-     * <p>
-     * Note 2: Any checks on users need to be done prior to invoking this
-     *       method.
+     *            <p>
+     *            Note: used in both native and NIS attributes. <br/>
+     *            <br/>
+     *            Add commands to the script that will check to see which users
+     *            exist. Only attempt to add the user that exist to the group.
+     *            Generate and echo a list of users that do not exist, so that a
+     *            message can be displayed indicating this.
+     *            <p>
+     *            Note 2: Any checks on users need to be done prior to invoking
+     *            this method.
      */
-    public static void changeGroupMembers(String group,
-            List<Object> userNames, boolean isNIS, SolarisConnection conn) {
+    public static void changeGroupMembers(String group, List<Object> userNames, boolean isNIS,
+            SolarisConnection conn) {
         // Three temporary files are needed by this script.
         // One to serve as a baseline to make sure /etc/group doesn't
-        // change underneath us.  The second is to serve as the destination
-        // for the changes to be copied to /etc/group.  The third is as
+        // change underneath us. The second is to serve as the destination
+        // for the changes to be copied to /etc/group. The third is as
         // an intermediate step so that sudo could function correctly.
         final String tmpfile1 = "/tmp/wsgroup.$$";
         final String tmpfile2 = "/tmp/wsgroupwork.$$";
         final String tmpfile3 = "/tmp/wsgroupwork2.$$";
-        
-        final String cpCmd = conn.buildCommand("/usr/bin/cp");
-        final String rmCmd = conn.buildCommand("rm");
-        final String mvCmd = conn.buildCommand("mv");
-        final String grepCmd = conn.buildCommand("grep");
-        final String sedCmd = conn.buildCommand("sed");
-        final String diffCmd = conn.buildCommand("diff");
-        final String chownCmd = conn.buildCommand("chown");
+
+        final String cpCmd = conn.buildCommand(false, "/usr/bin/cp");
+        final String rmCmd = conn.buildCommand(false, "rm");
+        final String mvCmd = conn.buildCommand(false, "mv");
+        final String grepCmd = conn.buildCommand(false, "grep");
+        final String sedCmd = conn.buildCommand(false, "sed");
+        final String diffCmd = conn.buildCommand(false, "diff");
+        final String chownCmd = conn.buildCommand(false, "chown");
         final String realUserCmd;
-        
+
         final String groupFile;
-        
+
         if (!isNIS) {
             groupFile = "/etc/group";
-            realUserCmd = conn.buildCommand("logins", "-ol $WSUSER 2>&1 | grep \"not found\"");
+            realUserCmd =
+                    conn.buildCommand(true, "logins", "-ol $WSUSER 2>&1 | grep \"not found\"");
         } else {
             String pwdDir = conn.getConfiguration().getNisPwdDir();
             groupFile = pwdDir + "/group";
-            
+
             realUserCmd = "ypmatch $WSUSER passwd 2>&1 | grep \"an't match key\"";
         }
-        
+
+        // @formatter:off
         final String checkUsers =
             "for WSUSER in $WSUSERS;\n" +
             "do " +
@@ -205,27 +213,27 @@ public class AbstractNISOp {
                 "fi\n" +
               "fi\n" +
             "done";
-        
+
         final String rmTmpFiles =
             "if [ -f " + tmpfile1 + " ]; then " +
               rmCmd + " -f " + tmpfile1 + "; " +
-            "fi; " + 
+            "fi; " +
             "if [ -f " + tmpfile2 + " ]; then " +
               rmCmd + " -f " + tmpfile2 + "; " +
             "fi; " +
             "if [ -f " + tmpfile3 + " ]; then " +
               rmCmd + " -f " + tmpfile3 + "; " +
             "fi";
-        
+
         final String changeUsersSetup =
             cpCmd + " -p " + groupFile + " " + tmpfile1 + "; " +
             cpCmd + " -p " + groupFile + " " + tmpfile2;
-        
+
         final String changeUsersEnv =
             "OWNER=`ls -l " + groupFile + " | awk '{ print $3 }'`; " +
             "GOWNER=`ls -l " + groupFile + " | awk '{ print $4 }'`; " +
             "GROUPTEXT=`" + grepCmd + " \"^$WSTARGETGRP:\" " + tmpfile1 + "`";
-        
+
         final String changeUsers =
             "if [ -n \"$GROUPTEXT\" ]; then\n" +
           "GRPPWD=`echo $GROUPTEXT | awk -F: '{ print $2 }'`; " +
@@ -244,11 +252,12 @@ public class AbstractNISOp {
         "else " +
           "GRPERRMSG=\"$WSTARGETGRP not found in " + groupFile + ".\"; " +
         "fi";
-        
+        // @formatter:on
+
         // Clear the environment variables that will be used. The connection to
         // the resource is pooled.
         conn.executeCommand("BADWSUSERS=;ADDWSUSERS=;GRPERRMSG=");
-        
+
         // for loop in bash script needs symbols separated by blank space.
         final String userList = prepareUserList(userNames);
         conn.executeCommand(String.format("WSUSERS=\"%s\"", userList));
@@ -257,7 +266,7 @@ public class AbstractNISOp {
         if (StringUtil.isNotBlank(badUsers)) {
             throw new ConnectorException("SolarisConnector: users do not exist: " + badUsers);
         }
-        
+
         conn.executeCommand("WSTARGETGRP='" + group + "'");
         conn.executeCommand(rmTmpFiles);
         conn.executeCommand(changeUsersSetup);
@@ -285,32 +294,38 @@ public class AbstractNISOp {
         return buff.toString();
     }
 
-    protected static final String tmpGroupfile1 = "/tmp/wsgroup.$$";
-    protected static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
-    protected static String getRemoveGroupTmpFiles(SolarisConnection conn) {
-        final String rmCmd = conn.buildCommand("rm");
-        String removeGroupTmpFiles =
-            "if [ -f " + tmpGroupfile1 + " ]; then " +
-              rmCmd + " -f " + tmpGroupfile1 + "; " +
-            "fi; " +
-            "if [ -f " + tmpGroupfile2 + " ]; then " +
-              rmCmd + " -f " + tmpGroupfile2 + "; " +
-            "fi";
+    protected static final String TMP_GROUPFILE_1 = "/tmp/wsgroup.$$";
+    protected static final String TMP_GROUPFILE_2 = "/tmp/wsgroup_work.$$";
 
+    protected static String getRemoveGroupTmpFiles(SolarisConnection conn) {
+        final String rmCmd = conn.buildCommand(false, "rm");
+        // @formatter:off
+        String removeGroupTmpFiles =
+            "if [ -f " + TMP_GROUPFILE_1 + " ]; then " +
+              rmCmd + " -f " + TMP_GROUPFILE_1 + "; " +
+            "fi; " +
+            "if [ -f " + TMP_GROUPFILE_2 + " ]; then " +
+              rmCmd + " -f " + TMP_GROUPFILE_2 + "; " +
+            "fi";
+        // @formatter:on
         return removeGroupTmpFiles;
     }
-    
+
     protected static String initGetOwner(final String file) {
         // Add script to remove entry in passwd file
         StringBuilder getOwner = new StringBuilder();
-        getOwner.append("OWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $3 }'`; ");
-        getOwner.append("GOWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $4 }'`");
+        getOwner.append("OWNER=`ls -l ");
+        getOwner.append(file);
+        getOwner.append(" | awk '{ print $3 }'`; ");
+        getOwner.append("GOWNER=`ls -l ");
+        getOwner.append(file);
+        getOwner.append(" | awk '{ print $4 }'`");
         return getOwner.toString();
     }
-    
+
     /**
-     * Only {@link CreateNISGroup} and {@link UpdateNISGroup} use this functionality
-     * to process output of some specific commands.
+     * Only {@link CreateNISGroup} and {@link UpdateNISGroup} use this
+     * functionality to process output of some specific commands.
      */
     protected static void parseNisOutputForErrors(String out) {
         if (StringUtil.isNotBlank(out)) {
@@ -318,7 +333,7 @@ public class AbstractNISOp {
                 out = out.substring(out.lastIndexOf(">") + 1);
                 out = out.trim();
             }
-            
+
             if (StringUtil.isNotBlank(out)) {
                 throw new ConnectorException("ERROR: " + out);
             }
