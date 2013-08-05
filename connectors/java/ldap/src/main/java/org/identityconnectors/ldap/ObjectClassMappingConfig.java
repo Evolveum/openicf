@@ -19,11 +19,12 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2011 Radovan Semancik (Evolveum)
  */
 package org.identityconnectors.ldap;
 
 import static org.identityconnectors.common.CollectionUtil.newReadOnlyList;
-import static org.identityconnectors.common.CollectionUtil.newReadOnlySet;
+import static org.identityconnectors.common.CollectionUtil.newSet;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class ObjectClassMappingConfig {
         this.container = container;
         assert shortNameLdapAttributes != null;
         this.shortNameLdapAttributes = newReadOnlyList(shortNameLdapAttributes);
-        this.operationalAttributes = newReadOnlySet(operationalAttributes);
+        this.operationalAttributes = newSet(operationalAttributes);
     }
 
     public ObjectClass getObjectClass() {
