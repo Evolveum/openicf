@@ -327,9 +327,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        // entry may be null, needs to be get fresh in that case
         internal ConnectorAttribute GetConnectorAttributeFromADEntry(ObjectClass oclass,
-            String attributeName, SearchResult searchResult)
+            String attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
+        	
+        	Boolean ourEntry = false;
             // Boolean translated = false;
             if (searchResult == null)
             {
@@ -338,8 +341,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "Could not add connector attribute to <null> search result"));
             }
 
-            return _customHandlers.GetCaFromDe(oclass, 
-                attributeName, searchResult);
+            if (entry == null) 
+            {
+            	ourEntry = true;
+            	entry = searchResult.GetDirectoryEntry();
+            }
+            try 
+            {
+            	return _customHandlers.GetCaFromDe(oclass, 
+                	attributeName, searchResult, entry);
+            }
+            finally
+            {
+            	if (ourEntry && entry != null)
+            	{
+            		entry.Dispose();
+            	}
+            }
 
         }
 

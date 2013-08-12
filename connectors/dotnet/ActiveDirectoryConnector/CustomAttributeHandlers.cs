@@ -122,6 +122,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_OpAtt_PasswordExpired);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
                 UpdateDeFromCa_OpAtt_PasswordExpireDate);
+            UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES,
+                UpdateDeFromCa_OpAtt_AccountExpireDate);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.LOCK_OUT_NAME,
                 UpdateDeFromCa_OpAtt_Lockout);
             UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_PASSWORD_NEVER_EXPIRES,
@@ -188,6 +190,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Lockout);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
                 GetCaFromDe_OpAtt_PasswordExpireDate);
+			GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES,
+                GetCaFromDe_OpAtt_AccountExpireDate);
             GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_PASSWORD_NEVER_EXPIRES,
                 GetCaFromDe_PasswordNeverExpires);
             // supporting class not implemented in the framework
@@ -275,7 +279,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
 
         internal ConnectorAttribute GetCaFromDe(ObjectClass oclass, 
-            string attributeName, SearchResult searchResult)
+            string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute attribute = null;
 
@@ -284,12 +288,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // if it's an attribute with a special handler,
                 // call the handler
                 GetCaFromDe_delegate handler = GetCaFromDeDelegates[attributeName];
-                attribute = handler(oclass, attributeName, searchResult);
+                attribute = handler(oclass, attributeName, searchResult, entry);
             }
             else
             {
                 // if none of the above, call the generic handler
-                attribute = GetCaFromDe_Att_Generic(oclass, attributeName, searchResult);
+                attribute = GetCaFromDe_Att_Generic(oclass, attributeName, searchResult, entry);
             }
 
             return attribute;
@@ -300,7 +304,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ConnectorAttribute attribute);
 
         internal delegate ConnectorAttribute GetCaFromDe_delegate(ObjectClass oclass,
-            string attributeName, SearchResult searchResult);
+            string attributeName, SearchResult searchResult, DirectoryEntry entry);
 
         public void GetAddsAndDeletes(ICollection<Object>valuesToAdd, ICollection<Object>valuesToRemove,
             PropertyValueCollection oldValues, ICollection<Object>newValues, UpdateType type) {
@@ -529,6 +533,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         internal void UpdateDeFromCa_OpAtt_PasswordExpireDate(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            DateTime? expireDate = ConnectorAttributeUtil.GetDateTimeValue(attribute);
+            if(expireDate.HasValue) {
+            	// FIXME map from operational attribute to real attribute for password expiration
+                directoryEntry.Properties[OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME].Value =
+                    ActiveDirectoryUtils.GetLargeIntegerFromLong(expireDate.Value.ToFileTime());
+            }
+        }
+
+        internal void UpdateDeFromCa_OpAtt_AccountExpireDate(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry,
             ConnectorAttribute attribute)
         {
@@ -802,7 +818,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region GetCaFromDe Handlers
         private ConnectorAttribute GetCaFromDe_Att_Generic(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttributeBuilder attributeBuilder = new ConnectorAttributeBuilder();
 
@@ -847,7 +863,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_GroupMembers(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry directoryEntry)
         {
             ConnectorAttributeBuilder attributeBuilder = new ConnectorAttributeBuilder();
 
@@ -968,7 +984,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return attributeBuilder.Build();
         }
         private ConnectorAttribute GetCaFromDe_OpAtt_Name(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             String value = null;
             ResultPropertyValueCollection pvc = null;
@@ -987,7 +1003,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Uid(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ICollection<Object> value = new List<Object>();
 
@@ -1008,31 +1024,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_Att_Container(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             if (searchResult == null)
             {
                 return null;
             }
 
-            DirectoryEntry de = searchResult.GetDirectoryEntry();
-            DirectoryEntry parentDe = de.Parent;
+            DirectoryEntry parentDe = entry.Parent;
             String container = "";
             if (parentDe != null)
             {
                 container = ActiveDirectoryUtils.GetDnFromPath(parentDe.Path);
+                parentDe.Dispose();
             }
-            parentDe.Dispose();
-            de.Dispose();
             return ConnectorAttributeBuilder.Build(
                 ActiveDirectoryConnector.ATT_CONTAINER, container);
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Groups(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_MEMBEROF, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_MEMBEROF, searchResult, entry);
             if (realAttribute == null)
             {
                 return null;
@@ -1045,10 +1059,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
         
         private ConnectorAttribute GetCaFromDe_OpAtt_Accounts(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_MEMBER, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_MEMBER, searchResult, entry);
             if (realAttribute == null)
             {
                 return null;
@@ -1061,25 +1075,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Enabled(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             if (searchResult == null)
             {
                 return null;
             }
-            DirectoryEntry de = searchResult.GetDirectoryEntry();
             bool disabled = UserAccountControl.IsSet(
-                de.Properties[UserAccountControl.UAC_ATTRIBUTE_NAME],
+                entry.Properties[UserAccountControl.UAC_ATTRIBUTE_NAME],
                 UserAccountControl.ACCOUNTDISABLE);
-            de.Dispose();
             return ConnectorAttributeBuilder.BuildEnabled(!disabled);
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_PasswordExpired(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_PWD_LAST_SET, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_PWD_LAST_SET, searchResult, entry);
             if (realAttribute != null)
             {
                 long? lastSetDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
@@ -1096,10 +1108,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Description(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute realDescription = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_DESCRIPTION, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_DESCRIPTION, searchResult, entry);
 
             if (realDescription != null)
             {
@@ -1114,10 +1126,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_ShortName(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute realShortName = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_SHORT_NAME, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_SHORT_NAME, searchResult, entry);
 
             if (realShortName != null)
             {
@@ -1132,11 +1144,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_PasswordExpireDate(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             // get the value from ad
+            // FIXME map between operational attribute and real AD attribute name
             ConnectorAttribute accountExpireAttribute = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES, searchResult);
+                oclass, OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, searchResult, entry);
 
             // now change name
             if (accountExpireAttribute != null)
@@ -1155,14 +1168,50 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             return null;
         }
+        
+        // copied from ConnectorAttributeBuilder
+        private ConnectorAttribute BuildAccountExpirationDate(DateTime dateTime)
+        {
+            return BuildPasswordExpirationDate(DateTimeUtil.GetUtcTimeMillis(dateTime));
+        }
+
+        private ConnectorAttribute BuildPasswordExpirationDate(long dateTime)
+        {
+            return ConnectorAttributeBuilder.Build(ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES, dateTime);
+        }
+
+        private ConnectorAttribute GetCaFromDe_OpAtt_AccountExpireDate(
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
+        {
+            // get the value from ad
+            ConnectorAttribute accountExpireAttribute = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES, searchResult, entry);
+
+            // now change name
+            if (accountExpireAttribute != null)
+            {
+                long? expireValue = ConnectorAttributeUtil.GetLongValue(accountExpireAttribute);
+                // if value present and not set to never expires
+                if ((expireValue != null) && (!expireValue.Value.Equals(9223372036854775807)))
+                {
+                    DateTime expireDate = DateTime.FromFileTime(expireValue.Value);
+                    return BuildAccountExpirationDate(expireDate);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            return null;
+        }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Lockout(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             bool locked = false;
 
             ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
-                oclass, ActiveDirectoryConnector.ATT_LOCKOUT_TIME, searchResult);
+                oclass, ActiveDirectoryConnector.ATT_LOCKOUT_TIME, searchResult, entry);
             if (realAttribute != null)
             {
                 long? lockoutDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
@@ -1177,20 +1226,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private ConnectorAttribute GetCaFromDe_PasswordNeverExpires(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             ConnectorAttribute ca = null;
-            DirectoryEntry de = searchResult.GetDirectoryEntry();
-            if(de != null) {
+            if(entry != null) {
                 PropertyValueCollection pvc = 
-                    de.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
+                    entry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
                 if (pvc != null)
                 {
                     bool pne = UserAccountControl.IsSet(pvc, 
                         UserAccountControl.DONT_EXPIRE_PASSWORD);
                     ca = ConnectorAttributeBuilder.Build(attributeName, pne);
                 }
-                de.Dispose();
             }
             return ca;
         }
@@ -1233,110 +1280,110 @@ namespace Org.IdentityConnectors.ActiveDirectory
  */
 
         private ConnectorAttribute GetCaFromDe_Att_TSInitialProgram(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
            return ReturnConnectorAttribute(TerminalServicesUtils.TS_INITIAL_PROGRAM,
-                                            TerminalServicesUtils.GetInitialProgram(searchResult));
+                                            TerminalServicesUtils.GetInitialProgram(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSInitalProgramDir(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_INITIAL_PROGRAM_DIR, 
-                TerminalServicesUtils.GetInitialProgramDir(searchResult));
+                TerminalServicesUtils.GetInitialProgramDir(entry));
         }
 
         
         private ConnectorAttribute GetCaFromDe_Att_TSAllowLogon(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_ALLOW_LOGON, 
-                TerminalServicesUtils.GetAllowLogon(searchResult));
+                TerminalServicesUtils.GetAllowLogon(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSMaxConnectionTime(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_MAX_CONNECTION_TIME, 
-                TerminalServicesUtils.GetMaxConnectionTime(searchResult));
+                TerminalServicesUtils.GetMaxConnectionTime(entry));
         }
         
         private ConnectorAttribute GetCaFromDe_Att_TSMaxDisconnectionTime(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_MAX_DISCONNECTION_TIME, 
-                TerminalServicesUtils.GetMaxDisconnectionTime(searchResult));
+                TerminalServicesUtils.GetMaxDisconnectionTime(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSMaxIdleTime(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_MAX_IDLE_TIME, 
-                TerminalServicesUtils.GetMaxIdleTime(searchResult));
+                TerminalServicesUtils.GetMaxIdleTime(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSConnectClientDrivesAtLogon(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_CONNECT_CLIENT_DRIVES_AT_LOGON, 
-                TerminalServicesUtils.GetConnectClientDrivesAtLogon(searchResult));
+                TerminalServicesUtils.GetConnectClientDrivesAtLogon(entry));
         }
         
         private ConnectorAttribute GetCaFromDe_Att_TSConnectClientPrintersAtLogon(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(
                 TerminalServicesUtils.TS_CONNECT_CLIENT_PRINTERS_AT_LOGON, 
-                TerminalServicesUtils.GetConnectClientPrintersAtLogon(searchResult));
+                TerminalServicesUtils.GetConnectClientPrintersAtLogon(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSDefaultToMainPrinter(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(
                 TerminalServicesUtils.TS_DEFAULT_TO_MAIN_PRINTER, 
-                TerminalServicesUtils.GetDefaultToMainPrinter(searchResult));
+                TerminalServicesUtils.GetDefaultToMainPrinter(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSBrokenConnectionAction(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(
                 TerminalServicesUtils.TS_BROKEN_CONNECTION_ACTION, 
-                TerminalServicesUtils.GetBrokenConnectionAction(searchResult));
+                TerminalServicesUtils.GetBrokenConnectionAction(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSReconnectionAction(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_RECONNECTION_ACTION, 
-                TerminalServicesUtils.GetReconnectionAction(searchResult));
+                TerminalServicesUtils.GetReconnectionAction(entry));
         }
        
         private ConnectorAttribute GetCaFromDe_Att_TSEnableRemoteControl(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_ENABLE_REMOTE_CONTROL, 
-                TerminalServicesUtils.GetEnableRemoteControl(searchResult));
+                TerminalServicesUtils.GetEnableRemoteControl(entry));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSProfilePath(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_PROFILE_PATH, 
-                TerminalServicesUtils.GetProfilePath(searchResult));
+                TerminalServicesUtils.GetProfilePath(entry));
         }
         private ConnectorAttribute GetCaFromDe_Att_TSHomeDirectory(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_HOME_DIRECTORY, 
-                TerminalServicesUtils.GetHomeDirectory(searchResult));
+                TerminalServicesUtils.GetHomeDirectory(entry));
         }
         private ConnectorAttribute GetCaFromDe_Att_TSHomeDrive(
-            ObjectClass oclass, string attributeName, SearchResult searchResult)
+            ObjectClass oclass, string attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
             return ReturnConnectorAttribute(TerminalServicesUtils.TS_HOME_DRIVE, 
-                TerminalServicesUtils.GetHomeDrive(searchResult));
+                TerminalServicesUtils.GetHomeDrive(entry));
         }
 
         #endregion
