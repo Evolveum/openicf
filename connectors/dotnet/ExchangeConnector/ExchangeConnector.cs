@@ -522,7 +522,7 @@ namespace Org.IdentityConnectors.Exchange
         {
             this.configuration = (ExchangeConfiguration)configuration;
             base.Init(configuration);            
-            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, configuration.ConnectorMessages);
+            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, this.configuration.ExchangeUri, configuration.ConnectorMessages);
         }
 
         /// <summary>
@@ -541,10 +541,9 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attribute">Attribute to be normalized</param>
         /// <returns>Normalized attribute</returns>
         public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
-            //public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
             // normalize the attribute using AD connector first
-            //attribute = base.NormalizeAttribute(oclass, attribute);
+            // attribute = base.NormalizeAttribute(oclass, attribute);
 
             // normalize external mail value
             if (attribute.Name == AttExternalMail && attribute.Value != null)

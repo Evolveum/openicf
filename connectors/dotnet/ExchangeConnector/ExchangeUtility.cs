@@ -61,7 +61,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Exchange 2010 registry key, used for building the exchange assembly resolver
         /// </summary>
-        private const string Exchange2010RegKey = "Software\\Microsoft\\ExchangeServer\\v14\\Setup\\";
+        // private const string Exchange2010RegKey = "Software\\Microsoft\\ExchangeServer\\v14\\Setup\\";
 
         /// <summary>
         /// Exchange registry value name, used together with <see cref="Exchange2010RegKey"/> or <see cref="Exchange2007RegKey"/> w.r.t the
@@ -82,18 +82,18 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="sender">The source of the event</param>
         /// <param name="args">A <see cref="System.ResolveEventArgs"/> that contains the event data</param>
         /// <returns>Assembly resolver that resolves Exchange 2010 assemblies</returns>
-        internal static Assembly AssemblyResolver2010(object sender, ResolveEventArgs args)
-        {
-            // Add path for the Exchange 2010 DLLs
-            if (args.Name.Contains("Microsoft.Exchange"))
-            {
-                string installPath = GetRegistryStringValue(Exchange2010RegKey, ExchangeRegValueName);
-                installPath += "\\bin\\" + args.Name.Split(',')[0] + ".dll";
-                return Assembly.LoadFrom(installPath);
-            }
-
-            return null;
-        }
+//        internal static Assembly AssemblyResolver2010(object sender, ResolveEventArgs args)
+//        {
+//            // Add path for the Exchange 2010 DLLs
+//            if (args.Name.Contains("Microsoft.Exchange"))
+//            {
+//                string installPath = GetRegistryStringValue(Exchange2010RegKey, ExchangeRegValueName);
+//                installPath += "\\bin\\" + args.Name.Split(',')[0] + ".dll";
+//                return Assembly.LoadFrom(installPath);
+//            }
+//
+//            return null;
+//        }
 
         /// <summary>
         /// Creates Exchange 2007 Assembly Resolver, <see cref="ResolveEventHandler"/>
