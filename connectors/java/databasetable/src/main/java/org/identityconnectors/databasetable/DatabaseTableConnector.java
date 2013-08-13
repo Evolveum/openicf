@@ -26,11 +26,14 @@ package org.identityconnectors.databasetable;
 import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -676,6 +679,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             		ret = new SyncToken(SQLUtil.jdbc2AttributeValue(value));
             	}
             }
+            if (ret == null){
+            	ret = new SyncToken(SQLUtil.jdbc2AttributeValue(SQLUtil.getCurrentJdbcTime(getColumnType(chlogName))));
+            }
             log.ok("getLatestSyncToken", ret);
             // commit changes
             log.info("commit getLatestSyncToken");
@@ -695,7 +701,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.ok("getLatestSyncToken commited");          
         return ret;
     }
-
+    
     // =======================================================================
     // Schema..
     // =======================================================================
