@@ -29,12 +29,14 @@ import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
@@ -964,6 +966,25 @@ public final class SQLUtil {
             }
             throw e;
         }
+    }
+    
+    public Object getCurrentJdbcTime(Integer columnType){
+    
+    	Object currentInMilis = null;
+    	switch(columnType){
+    	case Types.DATE:
+    		currentInMilis = new Date(System.currentTimeMillis());
+    		break;
+    	case Types.TIME:
+    		currentInMilis = new Time(System.currentTimeMillis());
+    		break;
+    	case Types.TIMESTAMP:
+    		currentInMilis = new Timestamp(System.currentTimeMillis());
+    		break;
+    		default:
+    			currentInMilis = new java.util.Date(System.currentTimeMillis());
+    	}
+    	return currentInMilis;
     }
 
     /**
