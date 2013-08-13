@@ -968,7 +968,7 @@ public final class SQLUtil {
         }
     }
     
-    public Object getCurrentJdbcTime(Integer columnType){
+    public static Object getCurrentJdbcTime(Integer columnType){
     
     	Object currentInMilis = null;
     	switch(columnType){
