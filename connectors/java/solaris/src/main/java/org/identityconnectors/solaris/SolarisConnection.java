@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Perl5Compiler;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -553,7 +554,7 @@ public class SolarisConnection {
                 if (acc == null) {
                     // This means that we accept also empty output, which means
                     // that a prompt appears
-                    acc = getRootShellPrompt();
+                    acc = Perl5Compiler.quotemeta(getRootShellPrompt());
                 }
                 SolarisClosure closure = new SolarisClosure();
                 captureClosures.add(closure);
@@ -564,7 +565,7 @@ public class SolarisConnection {
             SolarisClosure closure = new SolarisClosure();
             captureClosures = CollectionUtil.newList(closure);
             // captureClosures.add(closure);
-            builder.addRegExpMatch(getRootShellPrompt(), closure);
+            builder.addRegExpMatch(Perl5Compiler.quotemeta(getRootShellPrompt()), closure);
         }
 
         // #3 set the timeout for matching too
@@ -869,8 +870,8 @@ public class SolarisConnection {
      * @param rejects
      *            throw {@link ConnectorException} if a reject is matched in the
      *            feedback up to the rootShellPrompt.
-     * @throws ConnectorException in case of timeout in waiting for
-     *         rootShellPrompt character.
+     * @throws ConnectorException
+     *             in case of timeout in waiting for rootShellPrompt character.
      */
     public void waitForRootShellPrompt(Set<String> rejects) {
         executeCommand(null, rejects);

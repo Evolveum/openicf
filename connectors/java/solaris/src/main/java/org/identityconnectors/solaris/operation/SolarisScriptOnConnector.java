@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.oro.text.regex.Perl5Compiler;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -37,7 +38,7 @@ import org.identityconnectors.solaris.SolarisConnector;
 public class SolarisScriptOnConnector {
 
     private final static Pattern ANY_WORD_CHARACTER_PATTERN = Pattern.compile("(\\w)+");
-    private final static Pattern LINE_BREAK = Pattern.compile("\\r?\\n");
+    private final static Pattern LINE_BREAK = Pattern.compile("[\\r?\\n,\\r]");
 
     /*
      * Environment variable names used by the utilities in the Shell and
@@ -173,8 +174,8 @@ public class SolarisScriptOnConnector {
 
         String[] lines = LINE_BREAK.split(sb.toString());
         for (String line : lines) {
-            connection.executeCommand(line, CollectionUtil.newSet(connection.getConfiguration()
-                    .getLoginShellPrompt()), CollectionUtil.newSet(">"));
+            connection.executeCommand(line, CollectionUtil.newSet(Perl5Compiler
+                    .quotemeta(connection.getRootShellPrompt())), CollectionUtil.newSet(">"));
         }
 
         return connection.executeCommand("ENDSSH");
