@@ -1345,7 +1345,7 @@ public class VmsConnectorTests {
             deleteUser(userName, connector);
             try {
                 connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(
-                        new HashMap()));
+                        new HashMap<String, Object>()));
                 AssertJUnit.fail("exception expected");
             } catch (UnknownUidException ue) {
                 // expected
@@ -1357,7 +1357,7 @@ public class VmsConnectorTests {
             System.out.println(newUid.getValue() + " created");
             Uid retrievedUid =
                     connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(
-                            new HashMap()));
+                            new HashMap<String, Object>()));
             AssertJUnit.assertEquals(newUid, retrievedUid);
         } finally {
             connector.dispose();
