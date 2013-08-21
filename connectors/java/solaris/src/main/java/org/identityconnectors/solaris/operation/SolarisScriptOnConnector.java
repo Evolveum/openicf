@@ -38,7 +38,7 @@ import org.identityconnectors.solaris.SolarisConnector;
 public class SolarisScriptOnConnector {
 
     private final static Pattern ANY_WORD_CHARACTER_PATTERN = Pattern.compile("(\\w)+");
-    private final static Pattern LINE_BREAK = Pattern.compile("[\\r?\\n,\\r]");
+    private final static Pattern LINE_BREAK = Pattern.compile("\\r?\\n|\\r");
 
     /*
      * Environment variable names used by the utilities in the Shell and

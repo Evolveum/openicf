@@ -88,6 +88,13 @@ public class SolarisScriptOnConnectorTest extends SolarisTestBase {
     }
 
     @Test
+    public void testComaRunScriptOnResource() throws Exception {
+        ScriptContextBuilder builder = new ScriptContextBuilder("sh", "echo 'Hello, World'");
+        Object o = getFacade().runScriptOnResource(builder.build(), null);
+        assertEquals(o, "Hello, World");
+    }
+
+    @Test
     public void testQuoteForDCLWhenNeeded() throws Exception {
         assertEquals(quoteForDCLWhenNeeded("poweroff"), "poweroff");
         assertEquals(quoteForDCLWhenNeeded("`poweroff`"), "'`poweroff`'");
