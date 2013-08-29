@@ -1187,6 +1187,7 @@ public class SolarisConnection {
         if (config.isSudoAuthorization()) {
             try {
                 // 1) send sudo reset command
+            	log.ok("sudo reset (start will follow)");
                 executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
 
                 // 2) send sudo start command
@@ -1194,19 +1195,23 @@ public class SolarisConnection {
                 // "password for username:". following regexp should match both
                 // password prompt is also optional, it may not appear (e.g. if
                 // NOPASSWD: was congifured in sudoers file)
+                log.ok("sudo start");
                 String output =
                         executeCommand(SUDO_START_COMMAND, Collections.<String> emptySet(),
                                 CollectionUtil.newSet("assword[^:]*:", null));
 
-                if (output.matches("[Pp]assword")) {
+                if (output.matches(".*[Pp]assword.*")) {
                     // sudo asked for password. If this is not true then it has
                     // not asked and we would sent the password as command
                     // instead
                     // of responding to the prompt. that could be dangerous (the
                     // password may appear in command history).
+                	log.ok("Sending sudo password");
                     GuardedString passwd = config.getCredentials();
                     sendPassword(passwd, CollectionUtil.newSet("may not run",
                             "not allowed to execute"), Collections.<String> emptySet());
+                } else {
+                	log.ok("Not sending password to sudo because sudo had not requested it (output={0})",output);
                 }
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
@@ -1218,6 +1223,7 @@ public class SolarisConnection {
         final SolarisConfiguration config = getConfiguration();
         if (config.isSudoAuthorization()) {
             // send sudo reset command
+        	log.ok("sudo reset");
             executeCommand(SUDO_RESET_COMMAND);
         }
     }

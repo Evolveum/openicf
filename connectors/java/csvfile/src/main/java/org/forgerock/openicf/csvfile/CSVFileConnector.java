@@ -267,14 +267,31 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
      * {@inheritDoc}
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        throw new UnsupportedOperationException();
+    	// Connector and resource are the same in this case
+        return runScriptOnResource(request, options);
     }
 
     /**
      * {@inheritDoc}
      */
     public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
-        throw new UnsupportedOperationException();
+    	String command = request.getScriptText();
+    	Process process;
+    	try {
+    		log.ok("Executing ''{0}''", command);
+			process = Runtime.getRuntime().exec(command);
+		} catch (IOException e) {
+			log.error("Execution of ''{0}'' failed (exec): {1} ({2})", command, e.getMessage(), e.getClass());
+			throw new ConnectorIOException(e.getMessage(), e);
+		}
+    	try {
+			int exitCode = process.waitFor();
+			log.ok("Execution of ''{0}'' finished, exit code {1}", command, exitCode);
+			return exitCode;
+		} catch (InterruptedException e) {
+			log.error("Execution of ''{0}'' failed (waitFor): {1} ({2})", command, e.getMessage(), e.getClass());
+			throw new ConnectionBrokenException(e.getMessage(), e);
+		}
     }
 
     /**
