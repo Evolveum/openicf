@@ -129,7 +129,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("Create method");
+            Trace.TraceInformation("Create method 2");
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -208,7 +208,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 // have to make sure the new thing gets deleted in 
                 // the case of error
-                Console.WriteLine("caught exception:" + exception);
+                Console.WriteLine("caught COM exception:" + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {
@@ -216,11 +216,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // don't leave any partial objects around
                     newDe.DeleteTree();
                 }
+                Trace.TraceError("ErrorCode = " + exception.ErrorCode + ", ExtendedError = " + exception.ExtendedError + "/" + exception.ExtendedErrorMessage);
+                if (exception.ErrorCode == -2147019886) {
+                	throw new AlreadyExistsException("Object " + ldapEntryPath + " already exists", exception);
+                }
                 throw;
             }
             catch (Exception exception)
             {
-                Console.WriteLine("caught exception:" + exception);
+                Console.WriteLine("caught general exception:" + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {
