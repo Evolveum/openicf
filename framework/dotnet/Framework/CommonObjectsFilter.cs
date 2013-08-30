@@ -852,7 +852,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
                 // grab this value and the on from the attribute an compare..
                 IComparable o1 = (IComparable)attr.Value[0];
                 IComparable o2 = (IComparable)GetValue();
-                ret = o1.CompareTo(o1);
+                ret = o1.CompareTo(o2);
             }
             return ret;
         }
