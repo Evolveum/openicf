@@ -51,6 +51,7 @@ import java.nio.channels.FileLock;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import static org.forgerock.openicf.csvfile.util.Utils.*;
@@ -276,10 +277,22 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
      */
     public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
     	String command = request.getScriptText();
+    	String[] commandList = command.split("\\s+");
+		ProcessBuilder pb = new ProcessBuilder(commandList);
+		Map<String, String> env = pb.environment();
+		for (Entry<String,Object> argEntry: request.getScriptArguments().entrySet()) {
+			String varName = argEntry.getKey();
+			Object varValue = argEntry.getValue();
+			if (varValue == null) {
+				env.remove(varName);
+			} else {
+				env.put(varName, varValue.toString());
+			}
+		}
     	Process process;
     	try {
     		log.ok("Executing ''{0}''", command);
-			process = Runtime.getRuntime().exec(command);
+    		process = pb.start();
 		} catch (IOException e) {
 			log.error("Execution of ''{0}'' failed (exec): {1} ({2})", command, e.getMessage(), e.getClass());
 			throw new ConnectorIOException(e.getMessage(), e);
