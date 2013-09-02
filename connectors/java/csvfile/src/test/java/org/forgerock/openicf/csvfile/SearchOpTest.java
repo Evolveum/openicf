@@ -30,6 +30,9 @@ package org.forgerock.openicf.csvfile;
 import org.forgerock.openicf.csvfile.util.CSVSchemaException;
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.APIConfiguration;
+import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -37,6 +40,8 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.test.common.TestHelpers;
+import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -233,5 +238,48 @@ public class SearchOpTest {
             }
         };
         connector.executeQuery(ObjectClass.ACCOUNT, null, handler, null);
+    }
+
+    @Test(enabled = false) //TODO enable test and fix MID-1512
+    private void bigCsvSearch() throws Exception {
+        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+
+        CSVFileConfiguration config = new CSVFileConfiguration();
+        config.setEncoding("utf-8");
+        config.setFilePath(TestUtils.getTestFile("big.csv"));
+        config.setUniqueAttribute("id");
+        config.setPasswordAttribute("password");
+
+        APIConfiguration impl = TestHelpers.createTestConfiguration(CSVFileConnector.class, config);
+        final ConnectorFacade connector = factory.newInstance(impl);
+
+        final List<ConnectorObject> objects = new ArrayList<ConnectorObject>();
+        final List<ConnectorObject> cascadedObjects = new ArrayList<ConnectorObject>();
+        ResultsHandler handler = new ResultsHandler() {
+
+            int i = 0;
+
+            @Override
+            public boolean handle(ConnectorObject co) {
+                objects.add(co);
+                i++;
+
+                if (i == 10) {
+                    ResultsHandler handler = new ResultsHandler() {
+
+                        public boolean handle(ConnectorObject obj) {
+                            cascadedObjects.add(obj);
+                            return true;
+                        }
+                    };
+                    connector.search(ObjectClass.ACCOUNT, null, handler, null);
+                }
+
+                return true;
+            }
+        };
+        connector.search(ObjectClass.ACCOUNT, null, handler, null);
+
+        AssertJUnit.assertEquals(objects, cascadedObjects);
     }
 }

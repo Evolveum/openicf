@@ -175,7 +175,7 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         }
         Uid uid = new Uid(uidAttr.getValue().get(0).toString());
 
-        BufferedReader reader = null;
+        BufferedReader reader;
         BufferedWriter writer = null;
         synchronized (lock) {
             try {
@@ -622,9 +622,10 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         }
     }
 
-    private void createTempFile() {
-        File file = new File(configuration.getFilePath() + ".tmp");
+    private File createTempFile() {
+        File file;
         try {
+            file = new File(configuration.getFilePath().getCanonicalPath() + TMP_EXTENSION);
             if (file.exists()) {
                 if (!file.delete()) {
                     throw new ConnectorIOException("Couldn't delete old tmp file '" + file.getAbsolutePath() + "'.");
@@ -632,9 +633,12 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
             }
             file.createNewFile();
         } catch (IOException ex) {
+            file = new File(configuration.getFilePath() + TMP_EXTENSION);
             throw new ConnectorIOException("Couldn't create tmp file '" + file.getAbsolutePath()
                     + "', reason: " + ex.getMessage(), ex);
         }
+
+        return file;
     }
 
     private CsvItem findAccount(BufferedReader reader, List<String> header, String username) throws IOException {
@@ -853,10 +857,9 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         BufferedReader reader = null;
         BufferedWriter writer = null;
         synchronized (lock) {
-            createTempFile();
+            File tmpFile = createTempFile();
             try {
                 reader = createReader(configuration);
-                File tmpFile = new File(configuration.getFilePath().getCanonicalPath() + TMP_EXTENSION);
                 writer = createWriter(tmpFile, true);
                 List<String> header = readHeader(reader, writer, linePattern, configuration);
 
@@ -885,7 +888,6 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
                 closeWriter(writer, null);
 
                 try {
-                    File tmpFile = new File(configuration.getFilePath() + TMP_EXTENSION);
                     if (tmpFile.exists()) {
                         tmpFile.delete();
                     }
