@@ -29,6 +29,7 @@ package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.CSVSchemaException;
 import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -47,21 +48,27 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.Assert.*;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class SearchOpTest {
+public class SearchOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SearchOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public SearchOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("search.csv"));
@@ -69,11 +76,11 @@ public class SearchOpTest {
         config.setPasswordAttribute("password");
 
         connector = new CSVFileConnector();
-        connector.init(config);        
+        connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }
@@ -240,7 +247,7 @@ public class SearchOpTest {
         connector.executeQuery(ObjectClass.ACCOUNT, null, handler, null);
     }
 
-    @Test(enabled = false) //TODO enable test and fix MID-1512
+    @Test
     private void bigCsvSearch() throws Exception {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
 

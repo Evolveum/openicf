@@ -32,6 +32,8 @@ import org.forgerock.openicf.csvfile.util.Utils;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -45,9 +47,15 @@ import static org.junit.Assert.*;
  *
  * @author Viliam Repan (lazyman)
  */
-public class DeleteOpCustomTest {
+public class DeleteOpCustomTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(DeleteOpCustomTest.class);
 
     private String TEST_FOLDER = "../deleteOp/";
+
+    public DeleteOpCustomTest() {
+        super(LOG);
+    }
 
     @Test
     public void correctDeleteAfterCreate() throws Exception {

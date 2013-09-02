@@ -27,29 +27,36 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import org.testng.annotations.Test;
-import java.net.URL;
-import java.io.File;
 import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.logging.Log;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.testng.annotations.AfterMethod;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class UtilsTest {
+public class UtilsTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(UtilsTest.class);
 
     private CSVFileConnector connector;
 
-    @AfterMethod
-    public void after() {
+    public UtilsTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }
@@ -90,7 +97,7 @@ public class UtilsTest {
                     connector.getLinePattern(), (CSVFileConfiguration) connector.getConfiguration()).toArray()));
         }
     }
-    
+
     @Test
     @SuppressWarnings("deprecation")
     public void parseValuesSpecialTest() throws Exception {

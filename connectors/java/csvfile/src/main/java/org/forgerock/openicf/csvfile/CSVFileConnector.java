@@ -51,6 +51,8 @@ import java.nio.channels.FileLock;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 import static org.forgerock.openicf.csvfile.util.Utils.*;
@@ -71,6 +73,7 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
      * Setup logging for the {@link CSVFileConnector}.
      */
     private static final Log log = Log.getLog(CSVFileConnector.class);
+
     public static final String TMP_EXTENSION = ".tmp";
 
     private static enum Operation {
@@ -78,7 +81,8 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         DELETE, UPDATE, ADD_ATTR_VALUE, REMOVE_ATTR_VALUE;
     }
 
-    private static final Object lock = new Object();
+    private static final ReentrantReadWriteLock LOCK = new ReentrantReadWriteLock();
+
     private static final DateFormat FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
     private Pattern linePattern;
     /**
@@ -177,42 +181,42 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
 
         BufferedReader reader;
         BufferedWriter writer = null;
-        synchronized (lock) {
-            try {
-                reader = createReader(configuration);
-                List<String> header = readHeader(reader, linePattern, configuration);
 
-                CsvItem account = findAccount(reader, header, uid.getUidValue());
-                closeReader(reader, null);
+        LOCK.writeLock().lock();
+        try {
+            reader = createReader(configuration);
+            List<String> header = readHeader(reader, linePattern, configuration);
 
-                if (account != null) {
-                    throw new AlreadyExistsException("Account already exists '" + uid.getUidValue() + "'.");
-                }
+            CsvItem account = findAccount(reader, header, uid.getUidValue());
+            closeReader(reader, null);
 
-                StringBuilder record = createRecord(header, createAttributes);
-                if (record.length() == 0) {
-                    throw new ConnectorException("Can't insert empty record.");
-                }
-
-                FileInputStream fis = new FileInputStream(configuration.getFilePath());
-                fis.skip(configuration.getFilePath().length() - 1);
-
-                byte[] chars = new byte[1];
-                fis.read(chars);
-                fis.close();
-
-                writer = createWriter(true);
-                if (chars[0] != 10) { // 10 is the decimal value for \n
-                    writer.write('\n');
-                }
-                writer.append(record);
-                writer.append('\n');
-            } catch (Exception ex) {
-                handleGenericException(ex, "Couldn't create account");
-            } finally {
-                lock.notify();
-                closeWriter(writer, null);
+            if (account != null) {
+                throw new AlreadyExistsException("Account already exists '" + uid.getUidValue() + "'.");
             }
+
+            StringBuilder record = createRecord(header, createAttributes);
+            if (record.length() == 0) {
+                throw new ConnectorException("Can't insert empty record.");
+            }
+
+            FileInputStream fis = new FileInputStream(configuration.getFilePath());
+            fis.skip(configuration.getFilePath().length() - 1);
+
+            byte[] chars = new byte[1];
+            fis.read(chars);
+            fis.close();
+
+            writer = createWriter(true);
+            if (chars[0] != 10) { // 10 is the decimal value for \n
+                writer.write('\n');
+            }
+            writer.append(record);
+            writer.append('\n');
+        } catch (Exception ex) {
+            handleGenericException(ex, "Couldn't create account");
+        } finally {
+            closeWriter(writer, null);
+            LOCK.writeLock().unlock();
         }
 
         log.info("create::end");
@@ -236,17 +240,16 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
 
         List<String> headers = null;
         BufferedReader reader = null;
-        synchronized (lock) {
-            try {
-                reader = createReader(configuration);
-                headers = readHeader(reader, linePattern, configuration);
-                testHeader(headers);
-            } catch (Exception ex) {
-                handleGenericException(ex, "Couldn't create schema");
-            } finally {
-                lock.notify();
-                closeReader(reader, null);
-            }
+        LOCK.readLock().lock();
+        try {
+            reader = createReader(configuration);
+            headers = readHeader(reader, linePattern, configuration);
+            testHeader(headers);
+        } catch (Exception ex) {
+            handleGenericException(ex, "Couldn't create schema");
+        } finally {
+            closeReader(reader, null);
+            LOCK.readLock().unlock();
         }
 
         if (headers == null || headers.isEmpty()) {
@@ -315,32 +318,31 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         notNull(handler, "Results handled object can't be null.");
 
         BufferedReader reader = null;
-        synchronized (lock) {
-            try {
-                reader = createReader(configuration);
-                List<String> header = readHeader(reader, linePattern, configuration);
+        LOCK.readLock().lock();
+        try {
+            reader = createReader(configuration);
+            List<String> header = readHeader(reader, linePattern, configuration);
 
-                String line;
-                CsvItem item;
-                int lineNumber = 1;
-                while ((line = reader.readLine()) != null) {
-                    lineNumber++;
-                    if (isEmptyOrComment(line)) {
-                        continue;
-                    }
-                    item = Utils.createCsvItem(header, line, lineNumber, linePattern, configuration);
-
-                    ConnectorObject object = createConnectorObject(header, item);
-                    if (!handler.handle(object)) {
-                        break;
-                    }
+            String line;
+            CsvItem item;
+            int lineNumber = 1;
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                if (isEmptyOrComment(line)) {
+                    continue;
                 }
-            } catch (Exception ex) {
-                handleGenericException(ex, "Can't execute query");
-            } finally {
-                lock.notify();
-                closeReader(reader, null);
+                item = Utils.createCsvItem(header, line, lineNumber, linePattern, configuration);
+
+                ConnectorObject object = createConnectorObject(header, item);
+                if (!handler.handle(object)) {
+                    break;
+                }
             }
+        } catch (Exception ex) {
+            handleGenericException(ex, "Can't execute query");
+        } finally {
+            closeReader(reader, null);
+            LOCK.readLock().unlock();
         }
 
         log.info("executeQuery::end");
@@ -356,14 +358,13 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         long timestamp = configuration.getFilePath().lastModified();
         File syncFile = new File(configuration.getFilePath().getParentFile(),
                 configuration.getFilePath().getName() + "." + timestamp);
-        synchronized (lock) {
-            try {
-                copyAndReplace(configuration.getFilePath(), syncFile);
-            } catch (Exception ex) {
-                handleGenericException(ex, "Couldn't create file copy for sync");
-            } finally {
-                lock.notify();
-            }
+        LOCK.writeLock().lock();
+        try {
+            copyAndReplace(configuration.getFilePath(), syncFile);
+        } catch (Exception ex) {
+            handleGenericException(ex, "Couldn't create file copy for sync");
+        } finally {
+            LOCK.writeLock().unlock();
         }
 
         return Long.toString(timestamp);
@@ -412,14 +413,13 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         log.info("Next last sync token value will be {0} ({1}).", timestamp, FORMAT.format(new Date(timestamp)));
         File syncFile = new File(configuration.getFilePath().getParentFile(),
                 configuration.getFilePath().getName() + "." + timestamp + TMP_EXTENSION);
-        synchronized (lock) {
-            try {
-                copyAndReplace(configuration.getFilePath(), syncFile);
-            } catch (Exception ex) {
-                handleGenericException(ex, "Could not create file copy for sync");
-            } finally {
-                lock.notify();
-            }
+        LOCK.writeLock().lock();
+        try {
+            copyAndReplace(configuration.getFilePath(), syncFile);
+        } catch (Exception ex) {
+            handleGenericException(ex, "Could not create file copy for sync");
+        } finally {
+            LOCK.writeLock().unlock();
         }
 
         File tokenSyncFile = new File(configuration.getFilePath().getParent(), configuration.getFilePath().getName()
@@ -534,21 +534,20 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         configuration.validate();
 
         BufferedReader reader = null;
-        synchronized (lock) {
-            try {
-                log.info("Opening input stream to file {0}.", configuration.getFilePath());
-                reader = createReader(configuration);
+        LOCK.readLock().lock();
+        try {
+            log.info("Opening input stream to file {0}.", configuration.getFilePath());
+            reader = createReader(configuration);
 
-                List<String> headers = readHeader(reader, linePattern, configuration);
-                testHeader(headers);
-            } catch (Exception ex) {
-                log.error("Test configuration was unsuccessful, reason: {0}.", ex.getMessage());
-                handleGenericException(ex, "Test configuration was unsuccessful");
-            } finally {
-                log.info("Closing file input stream.");
-                lock.notify();
-                closeReader(reader, null);
-            }
+            List<String> headers = readHeader(reader, linePattern, configuration);
+            testHeader(headers);
+        } catch (Exception ex) {
+            log.error("Test configuration was unsuccessful, reason: {0}.", ex.getMessage());
+            handleGenericException(ex, "Test configuration was unsuccessful");
+        } finally {
+            log.info("Closing file input stream.");
+            closeReader(reader, null);
+            LOCK.readLock().unlock();
         }
 
         log.info("Test configuration was successful.");
@@ -794,55 +793,54 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         }
 
         BufferedReader reader = null;
-        synchronized (lock) {
-            try {
-                reader = createReader(configuration);
-                List<String> header = readHeader(reader, linePattern, configuration);
+        LOCK.readLock().lock();
+        try {
+            reader = createReader(configuration);
+            List<String> header = readHeader(reader, linePattern, configuration);
 
-                CsvItem account = findAccount(reader, header, username);
-                if (account == null) {
-                    String message;
-                    if (testPassword) {
-                        message = "Invalid username and/or password.";
-                    } else {
-                        message = "Invalid username.";
-                    }
-                    throw new InvalidCredentialException(message);
-                }
-
-                int index;
+            CsvItem account = findAccount(reader, header, username);
+            if (account == null) {
+                String message;
                 if (testPassword) {
-                    index = header.indexOf(configuration.getPasswordAttribute());
-                    final String password = account.getAttribute(index);
-                    if (StringUtil.isEmpty(password)) {
-                        throw new InvalidPasswordException("Invalid username and/or password.");
-                    }
-
-                    pwd.access(new GuardedString.Accessor() {
-
-                        public void access(char[] chars) {
-                            if (!new String(chars).equals(password)) {
-                                throw new InvalidPasswordException("Invalid username and/or password.");
-                            }
-                        }
-                    });
+                    message = "Invalid username and/or password.";
+                } else {
+                    message = "Invalid username.";
                 }
-                index = header.indexOf(configuration.getUniqueAttribute());
-                String uidAttribute = account.getAttribute(index);
-                if (StringUtil.isEmpty(uidAttribute)) {
-                    throw new UnknownUidException("Unique atribute doesn't have value for account '" + username + "'.");
-                }
-                return new Uid(uidAttribute);
-            } catch (Exception ex) {
-                handleGenericException(ex, "Can't authenticate '" + username + "'");
-                //it won't go here
-                return null;
-            } finally {
-                lock.notify();
-                closeReader(reader, null);
-
-                log.info("realAuthenticate::end");
+                throw new InvalidCredentialException(message);
             }
+
+            int index;
+            if (testPassword) {
+                index = header.indexOf(configuration.getPasswordAttribute());
+                final String password = account.getAttribute(index);
+                if (StringUtil.isEmpty(password)) {
+                    throw new InvalidPasswordException("Invalid username and/or password.");
+                }
+
+                pwd.access(new GuardedString.Accessor() {
+
+                    public void access(char[] chars) {
+                        if (!new String(chars).equals(password)) {
+                            throw new InvalidPasswordException("Invalid username and/or password.");
+                        }
+                    }
+                });
+            }
+            index = header.indexOf(configuration.getUniqueAttribute());
+            String uidAttribute = account.getAttribute(index);
+            if (StringUtil.isEmpty(uidAttribute)) {
+                throw new UnknownUidException("Unique atribute doesn't have value for account '" + username + "'.");
+            }
+            return new Uid(uidAttribute);
+        } catch (Exception ex) {
+            handleGenericException(ex, "Can't authenticate '" + username + "'");
+            //it won't go here
+            return null;
+        } finally {
+            closeReader(reader, null);
+
+            log.info("realAuthenticate::end");
+            LOCK.readLock().unlock();
         }
     }
 
@@ -856,45 +854,44 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
 
         BufferedReader reader = null;
         BufferedWriter writer = null;
-        synchronized (lock) {
-            File tmpFile = createTempFile();
+        LOCK.writeLock().lock();
+        File tmpFile = createTempFile();
+        try {
+            reader = createReader(configuration);
+            writer = createWriter(tmpFile, true);
+            List<String> header = readHeader(reader, writer, linePattern, configuration);
+
+            ConnectorObject changed = readAndUpdateFile(reader, writer, header, operation, uid, attributes);
+            if (changed == null) {
+                throw new UnknownUidException("Uid '" + uid.getUidValue() + "' not found in file.");
+            }
+            uid = changed.getUid();
+
+            closeReader(reader, null);
+            closeWriter(writer, null);
+            reader = null;
+            writer = null;
+
+            if (configuration.getFilePath().delete()) {
+                tmpFile.renameTo(configuration.getFilePath());
+            } else {
+                throw new ConnectorException("Couldn't delete old file '" + configuration.getFilePath().getAbsolutePath()
+                        + "' and replace it by new file '" + tmpFile.getAbsolutePath() + "'.");
+            }
+        } catch (Exception ex) {
+            handleGenericException(ex, "Couldn't do " + operation + " on account '" + uid.getUidValue() + "'");
+        } finally {
+            closeReader(reader, null);
+            closeWriter(writer, null);
+
             try {
-                reader = createReader(configuration);
-                writer = createWriter(tmpFile, true);
-                List<String> header = readHeader(reader, writer, linePattern, configuration);
-
-                ConnectorObject changed = readAndUpdateFile(reader, writer, header, operation, uid, attributes);
-                if (changed == null) {
-                    throw new UnknownUidException("Uid '" + uid.getUidValue() + "' not found in file.");
-                }
-                uid = changed.getUid();
-
-                closeReader(reader, null);
-                closeWriter(writer, null);
-                reader = null;
-                writer = null;
-
-                if (configuration.getFilePath().delete()) {
-                    tmpFile.renameTo(configuration.getFilePath());
-                } else {
-                    throw new ConnectorException("Couldn't delete old file '" + configuration.getFilePath().getAbsolutePath()
-                            + "' and replace it by new file '" + tmpFile.getAbsolutePath() + "'.");
+                if (tmpFile.exists()) {
+                    tmpFile.delete();
                 }
             } catch (Exception ex) {
-                handleGenericException(ex, "Couldn't do " + operation + " on account '" + uid.getUidValue() + "'");
-            } finally {
-                lock.notify();
-                closeReader(reader, null);
-                closeWriter(writer, null);
-
-                try {
-                    if (tmpFile.exists()) {
-                        tmpFile.delete();
-                    }
-                } catch (Exception ex) {
-                    //only try to cleanup tmp file, it will be replaced later, if exists
-                }
+                //only try to cleanup tmp file, it will be replaced later, if exists
             }
+            LOCK.writeLock().unlock();
         }
 
         log.info("doUpdate::end");

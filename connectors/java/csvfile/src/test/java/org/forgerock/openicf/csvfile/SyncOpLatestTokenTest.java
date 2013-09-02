@@ -28,24 +28,32 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import static org.testng.Assert.*;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class SyncOpLatestTokenTest {
+public class SyncOpLatestTokenTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SyncOpLatestTokenTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-	public void before() throws Exception {
+    public SyncOpLatestTokenTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("sync-token.csv"));
@@ -55,8 +63,8 @@ public class SyncOpLatestTokenTest {
         connector.init(config);
     }
 
-    @AfterMethod
-	public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

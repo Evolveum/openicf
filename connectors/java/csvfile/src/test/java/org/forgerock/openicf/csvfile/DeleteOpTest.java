@@ -27,29 +27,36 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.forgerock.openicf.csvfile.util.Utils;
-import java.io.File;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+
+import java.io.File;
+import java.lang.reflect.Method;
+
+import static org.testng.Assert.assertNull;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class DeleteOpTest {
+public class DeleteOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(DeleteOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public DeleteOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         File file = TestUtils.getTestFile("delete.csv");
         File backup = TestUtils.getTestFile("delete-backup.csv");
         Utils.copyAndReplace(backup, file);
@@ -65,14 +72,14 @@ public class DeleteOpTest {
         connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) {
         connector.dispose();
         connector = null;
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
+    @Override
+    public void customAfterClass() throws Exception {
         File file = TestUtils.getTestFile("delete.csv");
         file.delete();
     }
