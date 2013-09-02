@@ -27,42 +27,40 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-
-import static org.testng.Assert.*;
-
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.Base64;
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.framework.common.objects.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
+import java.io.File;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.Uid;
-
-import java.io.File;
-import org.identityconnectors.common.Base64;
-
-import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 /**
  * @author Viliam Repan (lazyman)
  */
-public class CreateOpTest {
+public class CreateOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(CreateOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public CreateOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         File file = TestUtils.getTestFile("create.csv");
         File backup = TestUtils.getTestFile("create-backup.csv");
         Utils.copyAndReplace(backup, file);
@@ -72,18 +70,10 @@ public class CreateOpTest {
         Utils.copyAndReplace(backup, file);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
-    }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-//        File file = TestUtils.getTestFile("create.csv");
-//        file.delete();
-//        file = TestUtils.getTestFile("create-empty.csv");
-//        file.delete();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

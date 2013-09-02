@@ -29,11 +29,18 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.identityconnectors.common.logging.Log;
 import org.testng.annotations.AfterMethod;
+
 import static org.testng.Assert.*;
+
+import java.lang.reflect.Method;
 import java.util.Iterator;
+
 import org.identityconnectors.framework.common.objects.ObjectClass;
+
 import java.util.Set;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -42,15 +49,20 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.testng.annotations.Test;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class SchemaOpTest {
+public class SchemaOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SchemaOpTest.class);
 
     private CSVFileConnector connector;
 
-    @AfterMethod
-    public void after() {
+    public SchemaOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

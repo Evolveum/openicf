@@ -28,6 +28,7 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.testng.annotations.Test;
 
@@ -35,7 +36,13 @@ import org.testng.annotations.Test;
  *
  * @author Viliam Repan (lazyman)
  */
-public class CSVFileConfigurationTest {
+public class CSVFileConfigurationTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(CSVFileConfigurationTest.class);
+
+    public CSVFileConfigurationTest() {
+        super(LOG);
+    }
 
     @Test
     public void validateGoodConfiguration() throws Exception {

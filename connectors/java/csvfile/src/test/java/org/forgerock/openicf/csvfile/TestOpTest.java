@@ -27,22 +27,29 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import org.testng.annotations.AfterMethod;
-import java.io.File;
-import java.net.URL;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class TestOpTest {
+public class TestOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(TestOpTest.class);
 
     private CSVFileConnector connector;
 
-    @AfterMethod
-	public void after() {
+    public TestOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

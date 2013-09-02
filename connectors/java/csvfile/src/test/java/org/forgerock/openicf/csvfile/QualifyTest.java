@@ -33,6 +33,7 @@ import java.util.Set;
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.forgerock.openicf.csvfile.util.Utils;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -45,7 +46,13 @@ import org.testng.annotations.Test;
  *
  * @author lazyman
  */
-public class QualifyTest {
+public class QualifyTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(QualifyTest.class);
+
+    public QualifyTest() {
+        super(LOG);
+    }
 
     @Test
     public void simpleAlwaysQualifyTrueTest() throws Exception {

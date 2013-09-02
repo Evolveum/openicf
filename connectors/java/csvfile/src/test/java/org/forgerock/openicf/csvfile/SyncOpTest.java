@@ -29,14 +29,15 @@ package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.*;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,15 +47,20 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class SyncOpTest {
+public class SyncOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SyncOpTest.class);
 
     private CSVFileConnector connector;
 
-    @AfterMethod
-    public void after() {
+    public SyncOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }
@@ -176,7 +182,7 @@ public class SyncOpTest {
         assertEquals(oldToken.getValue(),
                 Long.toString(new File("./src/test/resources/files/sync.csv").lastModified()));
 
-        CSVFileConfiguration config = (CSVFileConfiguration)connector.getConfiguration();
+        CSVFileConfiguration config = (CSVFileConfiguration) connector.getConfiguration();
         File syncFile = config.getFilePath();
         File file = new File(syncFile.getParent(), syncFile.getName() + "." + oldToken.getValue());
         file.delete();
