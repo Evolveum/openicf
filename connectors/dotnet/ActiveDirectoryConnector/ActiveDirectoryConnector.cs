@@ -129,7 +129,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("Create method 2");
+            Trace.TraceInformation("Create method");
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -216,11 +216,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // don't leave any partial objects around
                     newDe.DeleteTree();
                 }
-                Trace.TraceError("ErrorCode = " + exception.ErrorCode + ", ExtendedError = " + exception.ExtendedError + "/" + exception.ExtendedErrorMessage);
-                if (exception.ErrorCode == -2147019886) {
-                	throw new AlreadyExistsException("Object " + ldapEntryPath + " already exists", exception);
-                }
-                throw;
+                throw ActiveDirectoryUtils.ComToIcfException(exception, "when creating " + ldapEntryPath);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException("permission to create " + ldapEntryPath + " denied", e);
             }
             catch (Exception exception)
             {
@@ -436,14 +436,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     useGC = true;
                 }
 
-                IDictionary<string, object>searchOptions = options.Options;
+                IDictionary<string, object> searchOptions = options.Options;
 
                 SearchScope searchScope = GetADSearchScopeFromOptions(options);
                 string searchContainer = GetADSearchContainerFromOptions(options);
 
                 // for backward compatibility, support old query style from resource adapters
                 // but log a warning
-                if((query == null) || (query.Length == 0)) {
+                if ((query == null) || (query.Length == 0))
+                {
                     if ((options != null) && (options.Options != null))
                     {
                         Object oldStyleQuery = null;
@@ -468,6 +469,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 ExecuteQuery(oclass, query, handler, options,
                     false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope);
+            }
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "");
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException(e);
             }
             catch (Exception e)
             {
@@ -930,11 +939,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry updateEntry =
                 ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, updatedUid,
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-            
-            _utils.UpdateADObject(oclass, updateEntry,
-                attributes, type, _configuration);
 
-            updateEntry.Dispose();
+            try
+            {
+                _utils.UpdateADObject(oclass, updateEntry,
+                    attributes, type, _configuration);
+            }
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.ToString());
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException("permission to update " + updatedUid.ToString() + " denied", e);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError("Got exception when updating: {0}", e);
+                throw;
+            }
+            finally
+            {
+                updateEntry.Dispose();
+            }
             return updatedUid;
         }
 
@@ -956,28 +983,49 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // if it's not found, throw that, else just rethrow
                 if (e.ErrorCode == -2147016656)
                 {
-                    throw new UnknownUidException();
+                    throw new UnknownUidException(uid, objClass);
                 }
-                throw;
+                else
+                {
+                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                }
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException(e);
             }
 
-            if (objClass.Equals(ObjectClass.ACCOUNT))
+            try
             {
-                // if it's a user account, get the parent's child list
-                // and remove this entry
-                DirectoryEntry parent = de.Parent;
-                parent.Children.Remove(de);
+                if (objClass.Equals(ObjectClass.ACCOUNT))
+                {
+                    // if it's a user account, get the parent's child list
+                    // and remove this entry
+                    DirectoryEntry parent = de.Parent;
+                    parent.Children.Remove(de);
+                }
+                else
+                {
+                    // translate the object class.  We dont care what
+                    // it is, but this will throw the correct exception
+                    // if it's an invalid one.
+                    _utils.GetADObjectClass(objClass);
+                    // delete this entry and all it's children
+                    de.DeleteTree();
+                }
             }
-            else
+            catch (UnauthorizedAccessException e)
             {
-                // translate the object class.  We dont care what
-                // it is, but this will throw the correct exception
-                // if it's an invalid one.
-                _utils.GetADObjectClass(objClass);
-                // delete this entry and all it's children
-                de.DeleteTree();
+                throw new PermissionDeniedException("permission to delete " + uid.ToString() + " denied", e);
             }
-            de.Dispose();
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+            }
+            finally
+            {
+                de.Dispose();
+            }
         }
 
         #endregion
