@@ -784,13 +784,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // in the mean time, it was deleted.  In that case, 
                 // log an error and continue
                 Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
-                Trace.TraceWarning(e.Message);
+                Trace.TraceWarning("Exception details:" + e);
             }
             catch (Exception e)
             {
                 // In that case, of any error, try to continue
                 Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.");
-                Trace.TraceWarning(e.Message);
+                Trace.TraceWarning("Exception details:" + e);
             }
 			stopWatch.Stop();
         }
