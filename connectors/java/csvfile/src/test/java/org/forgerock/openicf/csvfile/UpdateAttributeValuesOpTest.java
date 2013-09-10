@@ -28,40 +28,37 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.CSVSchemaException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-
-import static org.testng.Assert.*;
-
 import org.forgerock.openicf.csvfile.util.TestUtils;
-
-import java.util.Set;
-
 import org.forgerock.openicf.csvfile.util.Utils;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.testng.Assert.*;
 
 /**
  * @author Viliam Repan (lazyman)
  */
-public class UpdateAttributeValuesOpTest {
+public class UpdateAttributeValuesOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(UpdateAttributeValuesOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws IOException, Exception {
+    public UpdateAttributeValuesOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         File file = TestUtils.getTestFile("update-attribute.csv");
         File backup = TestUtils.getTestFile("update-attribute-backup.csv");
         Utils.copyAndReplace(backup, file);
@@ -76,14 +73,14 @@ public class UpdateAttributeValuesOpTest {
         connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
+    @Override
+    public void customAfterClass() throws Exception {
         File file = TestUtils.getTestFile("update-attribute.csv");
         file.delete();
     }

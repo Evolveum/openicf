@@ -1,27 +1,28 @@
 package org.forgerock.openicf.csvfile;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.identityconnectors.common.Base64;
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.*;
+import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.forgerock.openicf.csvfile.util.TestUtils;
-import org.identityconnectors.common.Base64;
-import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Viliam Repan (lazyman)
  */
-public class MultivalueTest {
+public class MultivalueTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(MultivalueTest.class);
+
+    public MultivalueTest() {
+        super(LOG);
+    }
 
     private CSVFileConfiguration createConfig() throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
