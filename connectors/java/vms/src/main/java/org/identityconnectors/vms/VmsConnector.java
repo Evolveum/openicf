@@ -2238,13 +2238,15 @@ public class VmsConnector implements PoolableConnector, AuthenticateOp, CreateOp
 
         executeCommand(connection, "@" + tmpfile);
 
+        executeCommand(connection, "CMDSTATUS=$STATUS");
         executeCommand(connection, "SET DEFAULT SYS$LOGIN");
+
         executeCommand(connection, "DEAS SYS$ERROR");
         executeCommand(connection, "DEAS SYS$OUTPUT");
 
         // Capture the output
         //
-        String status = executeCommand(connection, "WRITE SYS$OUTPUT $STATUS");
+        String status = executeCommand(connection, "WRITE SYS$OUTPUT CMDSTATUS");
         String output = executeCommand(connection, "TYPE " + tmpfile + ".OUTPUT");
         String error = executeCommand(connection, "TYPE " + tmpfile + ".ERROR");
         executeCommand(connection, "DELETE " + tmpfile + ".OUTPUT;");
