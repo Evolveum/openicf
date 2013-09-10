@@ -327,9 +327,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        // entry may be null, needs to be get fresh in that case
         internal ConnectorAttribute GetConnectorAttributeFromADEntry(ObjectClass oclass,
-            String attributeName, SearchResult searchResult)
+            String attributeName, SearchResult searchResult, DirectoryEntry entry)
         {
+        	
+        	Boolean ourEntry = false;
             // Boolean translated = false;
             if (searchResult == null)
             {
@@ -338,8 +341,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "Could not add connector attribute to <null> search result"));
             }
 
-            return _customHandlers.GetCaFromDe(oclass, 
-                attributeName, searchResult);
+            if (entry == null) 
+            {
+            	ourEntry = true;
+            	entry = searchResult.GetDirectoryEntry();
+            }
+            try 
+            {
+            	return _customHandlers.GetCaFromDe(oclass, 
+                	attributeName, searchResult, entry);
+            }
+            finally
+            {
+            	if (ourEntry && entry != null)
+            	{
+            		entry.Dispose();
+            	}
+            }
 
         }
 
@@ -806,6 +824,53 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
             return result;
+        }
+
+        /// <summary>
+        /// Converts a DirectoryServicesCOMException into more meaningful ICF exception (e.g. AlreadyExistsException).
+        /// </summary>
+        /// 
+        /// Actually, it is questionable if the exception mapping can be done in a universal way like this,
+        /// or whether it has to be specific for individual operations (search, create, update, ...). We
+        /// will see.
+        public static Exception ComToIcfException(DirectoryServicesCOMException originalException, String message)
+        {
+            Trace.TraceError("ErrorCode = {0}, ExtendedError = {1}, ExtendedErrorMessage = {2}",
+                originalException.ErrorCode, originalException.ExtendedError, originalException.ExtendedErrorMessage);
+
+            if (originalException.ErrorCode == -2147463168 ||     // ADS_BAD_PATHNAME
+                originalException.ErrorCode == -2147016656)       // LDAP_NO_SUCH_OBJECT
+            {
+                return originalException;                       // ... there's nothing like 'object not found exception'
+            }
+            else if (originalException.ErrorCode == -2147217911)  // ADO_PERMISSION_DENIED
+            {
+                return new PermissionDeniedException(message, originalException);
+            }
+            else if (originalException.ErrorCode == -2147024891)    // ADS_INSUFFICIENT_RIGHTS
+            {
+                return new PermissionDeniedException(message, originalException);
+            }
+            else if (originalException.ErrorCode == -2147023570)    // LDAP_INVALID_CREDENTIALS
+            {
+                return new InvalidCredentialException(message, originalException);
+            }
+            else if (originalException.ErrorCode == -2147019886)    // LDAP_ALREADY_EXISTS
+            {
+                return new AlreadyExistsException(message, originalException);
+            }
+            else if (originalException.ErrorCode == -2147016691)    // LDAP_ATTRIBUTE_OR_VALUE_EXISTS This error occurs primarily when you try to add members to groups that have been members of this group beforehand.
+            {
+                return originalException;       // if we returned AlreadyExistsException here the caller might be confused WHAT does 'already exist'
+            }
+            else if (originalException.ErrorCode == -2147016657)    // LDAP_CONSTRAINT_VIOLATION
+            {
+                return originalException;       // here will be something like SchemaException when it will be available
+            }
+            else
+            {
+                return originalException;
+            }
         }
     }
 

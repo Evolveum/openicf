@@ -208,7 +208,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 // have to make sure the new thing gets deleted in 
                 // the case of error
-                Console.WriteLine("caught exception:" + exception);
+                Console.WriteLine("caught COM exception:" + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {
@@ -216,11 +216,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // don't leave any partial objects around
                     newDe.DeleteTree();
                 }
-                throw;
+                throw ActiveDirectoryUtils.ComToIcfException(exception, "when creating " + ldapEntryPath);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException("permission to create " + ldapEntryPath + " denied", e);
             }
             catch (Exception exception)
             {
-                Console.WriteLine("caught exception:" + exception);
+                Console.WriteLine("caught general exception:" + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {
@@ -432,14 +436,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     useGC = true;
                 }
 
-                IDictionary<string, object>searchOptions = options.Options;
+                IDictionary<string, object> searchOptions = options.Options;
 
                 SearchScope searchScope = GetADSearchScopeFromOptions(options);
                 string searchContainer = GetADSearchContainerFromOptions(options);
 
                 // for backward compatibility, support old query style from resource adapters
                 // but log a warning
-                if((query == null) || (query.Length == 0)) {
+                if ((query == null) || (query.Length == 0))
+                {
                     if ((options != null) && (options.Options != null))
                     {
                         Object oldStyleQuery = null;
@@ -464,6 +469,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 ExecuteQuery(oclass, query, handler, options,
                     false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope);
+            }
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "");
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException(e);
             }
             catch (Exception e)
             {
@@ -590,6 +603,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 Trace.TraceInformation("Search: Performing query");
+                
+                Stopwatch stopWatch = new Stopwatch();
+    			stopWatch.Start();
 
                 ICollection<string> attributesToReturn = null;
                 SearchResultCollection resultSet = null;
@@ -598,6 +614,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     resultSet = searcher.FindAll();
+                    TimeSpan ts = stopWatch.Elapsed;	// Get the elapsed time as a TimeSpan value.
+					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+        				ts.Hours, ts.Minutes, ts.Seconds,
+	        			ts.Milliseconds);
+   					Trace.TraceInformation("searcher.FindAll took {0}", elapsedTime);
+
                     foreach (SearchResult result in resultSet)
                     {
                         buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
@@ -606,7 +628,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 finally
                 {
-                    Trace.TraceInformation("Search: found {0} results", count);
+                	stopWatch.Stop();
+                    TimeSpan ts = stopWatch.Elapsed;
+					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
+                    Trace.TraceInformation("Search: found {0} results, took {1}", count, elapsedTime);
                     // Important to dispose to avoid memory leak
                     if (resultSet != null)
                     {
@@ -631,6 +656,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         private void buildConnectorObject(SearchResult result, ObjectClass oclass, bool useGlobalCatalog, string searchRoot, ICollection<string> attributesToReturn, ResultsHandler handler)
         {
+			Stopwatch stopWatch = new Stopwatch();
+			stopWatch.Start();
+
             try
             {
                 Trace.TraceInformation("Found object {0}", result.Path);
@@ -670,6 +698,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         DirectorySearcher dcSearcher =
                             new DirectorySearcher(dcSearchRoot, dcSearchQuery);
                         savedDcResult = dcSearcher.FindOne();
+                        Trace.TraceInformation("after dcSearcher.FindOne: T={0} ms", stopWatch.ElapsedMilliseconds);
                         if (savedDcResult == null)
                         {
                             // in this case, there is no choice, but to use
@@ -682,23 +711,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         }
                         dcSearcher.Dispose();
                         dcSearchRoot.Dispose();
+                        Trace.TraceInformation("after dcSearchRoot.Dispose: T={0} ms", stopWatch.ElapsedMilliseconds);
                     }
+                    
+                    DirectoryEntry entryDc = savedDcResult != null ? savedDcResult.GetDirectoryEntry() : null;
+                    DirectoryEntry entryGc = savedGcResult != null ? savedGcResult.GetDirectoryEntry() : null;
 
-                    foreach (string attributeName in attributesToReturn)
+                    try
                     {
-                        SearchResult savedResults = savedDcResult;
-                        // if we are using the global catalog, we had to get the
-                        // dc's version of the directory entry, but for usnchanged, 
-                        // we need the gc version of it
-                        if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
-                            StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            savedResults = savedGcResult;
-                        }
-
-                        AddAttributeIfNotNull(builder,
-                            _utils.GetConnectorAttributeFromADEntry(
-                            oclass, attributeName, savedResults));
+                    	foreach (string attributeName in attributesToReturn)
+                    	{
+                        	SearchResult savedResults = savedDcResult;
+	                        DirectoryEntry entry = entryDc;
+    	                    // if we are using the global catalog, we had to get the
+    	                    // dc's version of the directory entry, but for usnchanged, 
+    	                    // we need the gc version of it
+    	                    if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
+    	                        StringComparison.CurrentCultureIgnoreCase))
+    	                    {
+    	                        savedResults = savedGcResult;
+    	                        entry = entryGc;
+    	                    }
+	
+    	                    Stopwatch attw = new Stopwatch();
+    	                    attw.Start();
+    	                    AddAttributeIfNotNull(builder,
+    	                        _utils.GetConnectorAttributeFromADEntry(
+    	                        oclass, attributeName, savedResults, entry));
+    	                    attw.Stop();
+							Trace.TraceInformation("after AddAttributeIfNotNull({0}): T={1} ms, this attribute took={2} ticks", attributeName, stopWatch.ElapsedMilliseconds, attw.ElapsedTicks);
+    	                }
+                    }
+                    finally
+                    {
+                    	if (entryDc != null) {
+                    		entryDc.Dispose();
+                    	}
+                    	if (entryGc != null) {
+                    		entryGc.Dispose();
+                    	}
                     }
                 }
                 else
@@ -706,24 +757,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // get uid
                     AddAttributeIfNotNull(builder,
                         _utils.GetConnectorAttributeFromADEntry(
-                        oclass, Uid.NAME, result));
+                        oclass, Uid.NAME, result, null));
 
                     // get uid
                     AddAttributeIfNotNull(builder,
                         _utils.GetConnectorAttributeFromADEntry(
-                        oclass, Name.NAME, result));
+                        oclass, Name.NAME, result, null));
 
                     // get usnchanged
                     AddAttributeIfNotNull(builder,
                         _utils.GetConnectorAttributeFromADEntry(
-                        oclass, ATT_USN_CHANGED, result));
+                        oclass, ATT_USN_CHANGED, result, null));
 
                     // add isDeleted 
                     builder.AddAttribute(ATT_IS_DELETED, true);
                 }
 
-                String msg = String.Format("Returning ''{0}''",
-                    (result.Path != null) ? result.Path : "<path is null>");
+                String msg = String.Format("Returning ''{0}'', in {1} ms",
+                    (result.Path != null) ? result.Path : "<path is null>", stopWatch.ElapsedMilliseconds);
                 Trace.TraceInformation(msg);
                 handler(builder.Build());
             }
@@ -741,6 +792,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.");
                 Trace.TraceWarning(e.Message);
             }
+			stopWatch.Stop();
         }
       
         private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)
@@ -887,11 +939,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry updateEntry =
                 ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, updatedUid,
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-            
-            _utils.UpdateADObject(oclass, updateEntry,
-                attributes, type, _configuration);
 
-            updateEntry.Dispose();
+            try
+            {
+                _utils.UpdateADObject(oclass, updateEntry,
+                    attributes, type, _configuration);
+            }
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.ToString());
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException("permission to update " + updatedUid.ToString() + " denied", e);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError("Got exception when updating: {0}", e);
+                throw;
+            }
+            finally
+            {
+                updateEntry.Dispose();
+            }
             return updatedUid;
         }
 
@@ -913,28 +983,49 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // if it's not found, throw that, else just rethrow
                 if (e.ErrorCode == -2147016656)
                 {
-                    throw new UnknownUidException();
+                    throw new UnknownUidException(uid, objClass);
                 }
-                throw;
+                else
+                {
+                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                }
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new PermissionDeniedException(e);
             }
 
-            if (objClass.Equals(ObjectClass.ACCOUNT))
+            try
             {
-                // if it's a user account, get the parent's child list
-                // and remove this entry
-                DirectoryEntry parent = de.Parent;
-                parent.Children.Remove(de);
+                if (objClass.Equals(ObjectClass.ACCOUNT))
+                {
+                    // if it's a user account, get the parent's child list
+                    // and remove this entry
+                    DirectoryEntry parent = de.Parent;
+                    parent.Children.Remove(de);
+                }
+                else
+                {
+                    // translate the object class.  We dont care what
+                    // it is, but this will throw the correct exception
+                    // if it's an invalid one.
+                    _utils.GetADObjectClass(objClass);
+                    // delete this entry and all it's children
+                    de.DeleteTree();
+                }
             }
-            else
+            catch (UnauthorizedAccessException e)
             {
-                // translate the object class.  We dont care what
-                // it is, but this will throw the correct exception
-                // if it's an invalid one.
-                _utils.GetADObjectClass(objClass);
-                // delete this entry and all it's children
-                de.DeleteTree();
+                throw new PermissionDeniedException("permission to delete " + uid.ToString() + " denied", e);
             }
-            de.Dispose();
+            catch (DirectoryServicesCOMException e)
+            {
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+            }
+            finally
+            {
+                de.Dispose();
+            }
         }
 
         #endregion

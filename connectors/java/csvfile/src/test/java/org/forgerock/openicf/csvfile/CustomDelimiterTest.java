@@ -27,29 +27,44 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.testng.Assert.*;
-import org.testng.annotations.Test;
 
 /**
  * @author Viliam Repan (lazyman)
  */
-public class CustomDelimiterTest {
+public class CustomDelimiterTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(CustomDelimiterTest.class);
 
     private CSVFileConfiguration config;
     private CSVFileConnector connector;
+
+    public CustomDelimiterTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
+        connector.dispose();
+        connector = null;
+    }
 
     @Test
     public void pipeFieldDelimiter() throws Exception {
@@ -69,8 +84,6 @@ public class CustomDelimiterTest {
         };
         connector.executeQuery(ObjectClass.ACCOUNT, null, handler, null);
         testResults(results);
-
-        afterMethod();
     }
 
     @Test
@@ -91,8 +104,6 @@ public class CustomDelimiterTest {
         };
         connector.executeQuery(ObjectClass.ACCOUNT, null, handler, null);
         testResults(results);
-
-        afterMethod();
     }
 
     private void testResults(List<ConnectorObject> results) {
@@ -153,10 +164,5 @@ public class CustomDelimiterTest {
         config.setFilePath(TestUtils.getTestFile(fileName));
 
         config.setFieldDelimiter(delimiter);
-    }
-
-    private void afterMethod() {
-        connector.dispose();
-        connector = null;
     }
 }

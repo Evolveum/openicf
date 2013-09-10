@@ -31,6 +31,7 @@ import org.forgerock.openicf.csvfile.sync.Change;
 import org.forgerock.openicf.csvfile.sync.InMemoryDiff;
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.forgerock.openicf.csvfile.util.Utils;
+import org.identityconnectors.common.logging.Log;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -40,10 +41,15 @@ import java.util.regex.Pattern;
 import static org.testng.Assert.assertEquals;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class InMemoryDiffTest {
+public class InMemoryDiffTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(InMemoryDiffTest.class);
+
+    public InMemoryDiffTest() {
+        super(LOG);
+    }
 
     @Test
     public void test1() throws Exception {

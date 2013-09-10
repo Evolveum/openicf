@@ -28,27 +28,34 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.*;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class ComplexSyncOpTest {
+public class ComplexSyncOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SearchOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public ComplexSyncOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("sync.csv"));
@@ -59,8 +66,8 @@ public class ComplexSyncOpTest {
         connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

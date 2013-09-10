@@ -27,12 +27,9 @@
  */
 package org.forgerock.openicf.csvfile;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import static org.testng.Assert.*;
-import org.testng.annotations.Test;
 import org.forgerock.openicf.csvfile.util.TestUtils;
 import org.identityconnectors.common.Base64;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -40,17 +37,28 @@ import org.identityconnectors.framework.common.exceptions.InvalidCredentialExcep
 import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.testng.annotations.Test;
+
+import java.lang.reflect.Method;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class AuthenticateOpTest {
+public class AuthenticateOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(SearchOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public AuthenticateOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("authenticate.csv"));
@@ -61,8 +69,8 @@ public class AuthenticateOpTest {
         connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

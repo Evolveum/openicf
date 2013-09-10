@@ -24,6 +24,13 @@
 
 namespace Org.IdentityConnectors.Exchange
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Text;
+	using System.Diagnostics;
+	using Org.IdentityConnectors.Framework.Spi;
+	using Org.IdentityConnectors.Framework.Common.Exceptions;
+	using Org.IdentityConnectors.Framework.Spi.Operations;
     using Org.IdentityConnectors.ActiveDirectory;
 
     /// <summary>
@@ -31,5 +38,9 @@ namespace Org.IdentityConnectors.Exchange
     /// </summary>
     public class ExchangeConfiguration : ActiveDirectoryConfiguration
     {             
+    	[ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ExchangeUri", HelpMessageKey = "help_ExchangeUri", Order = 1)]
+        public string ExchangeUri
+        { get; set; }
+
     }    
 }

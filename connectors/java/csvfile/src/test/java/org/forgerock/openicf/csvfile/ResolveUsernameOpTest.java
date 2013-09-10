@@ -28,25 +28,33 @@
 package org.forgerock.openicf.csvfile;
 
 import org.forgerock.openicf.csvfile.util.TestUtils;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import static org.testng.Assert.*;
-import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 /**
- *
  * @author Viliam Repan (lazyman)
  */
-public class ResolveUsernameOpTest {
+public class ResolveUsernameOpTest extends AbstractCsvTest {
+
+    private static final Log LOG = Log.getLog(ResolveUsernameOpTest.class);
 
     private CSVFileConnector connector;
 
-    @BeforeMethod
-    public void before() throws Exception {
+    public ResolveUsernameOpTest() {
+        super(LOG);
+    }
+
+    @Override
+    public void customBeforeMethod(Method method) throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("resolve.csv"));
@@ -57,8 +65,8 @@ public class ResolveUsernameOpTest {
         connector.init(config);
     }
 
-    @AfterMethod
-    public void after() {
+    @Override
+    public void customAfterMethod(Method method) throws Exception {
         connector.dispose();
         connector = null;
     }

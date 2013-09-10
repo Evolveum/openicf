@@ -87,15 +87,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // used to be 'Terminal Services Home Directory Drive'
         public static string TS_HOME_DRIVE = "TerminalServicesHomeDrive";
 
-        private static T GetValue<T>(SearchResult searchResult, string name, T defaultValue)
+        private static T GetValue<T>(DirectoryEntry entry, string name, T defaultValue)
         {
-            // get the directory entry
-            DirectoryEntry directoryEntry = searchResult.GetDirectoryEntry();
+            Stopwatch stopWatch = new Stopwatch();
+    		stopWatch.Start();
 
             // get 'name' from the directory entry, and return it if it exists
             try
             {
-                object result = directoryEntry.InvokeGet(name);
+                object result = entry.InvokeGet(name);
                 if (result != null)
                 {
                     T value = (T)result;
@@ -109,7 +109,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             finally
             {
-                directoryEntry.Dispose();
+                stopWatch.Stop();
+    			TimeSpan ts = stopWatch.Elapsed;	// Get the elapsed time as a TimeSpan value.
+				string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+        			ts.Hours, ts.Minutes, ts.Seconds,
+        			ts.Milliseconds);
+   				Trace.TraceInformation("Getting {0} took {1}, that is {2} ticks", name, elapsedTime, stopWatch.ElapsedTicks);
             }
 
             // if the name didn't exist, return 'defaultValue'
@@ -143,9 +148,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             throw new ConnectorException(msg);
         }
 
-        internal static string GetInitialProgram(SearchResult searchResult)
+        internal static string GetInitialProgram(DirectoryEntry entry)
         {
-            return GetValue<string>(searchResult, TS_INITIAL_PROGRAM, null);
+            return GetValue<string>(entry, TS_INITIAL_PROGRAM, null);
         }
 
         internal static void SetInitialProgram(UpdateType type, DirectoryEntry directoryEntry,
@@ -154,9 +159,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_INITIAL_PROGRAM, initialProgram);
         }
 
-        internal static string GetInitialProgramDir(SearchResult searchResult)
+        internal static string GetInitialProgramDir(DirectoryEntry entry)
         {
-            return GetValue<string>(searchResult, TS_INITIAL_PROGRAM_DIR, null);
+            return GetValue<string>(entry, TS_INITIAL_PROGRAM_DIR, null);
         }
 
         internal static void SetInitialProgramDir(UpdateType type,
@@ -165,9 +170,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_INITIAL_PROGRAM_DIR, initialProgramDir);
         }
 
-        internal static int? GetAllowLogon(SearchResult searchResult)
+        internal static int? GetAllowLogon(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_ALLOW_LOGON, null);
+            return GetValue<int?>(entry, TS_ALLOW_LOGON, null);
         }
 
         internal static void SetAllowLogon(UpdateType type, DirectoryEntry directoryEntry,
@@ -176,9 +181,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_ALLOW_LOGON, isAllowed);
         }
 
-        internal static int? GetMaxConnectionTime(SearchResult searchResult)
+        internal static int? GetMaxConnectionTime(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_MAX_CONNECTION_TIME, null);
+            return GetValue<int?>(entry, TS_MAX_CONNECTION_TIME, null);
         }
 
         internal static void SetMaxConnectionTime(UpdateType type, DirectoryEntry directoryEntry,
@@ -187,9 +192,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_MAX_CONNECTION_TIME, maxConnectionTime);
         }
 
-        internal static int? GetMaxDisconnectionTime(SearchResult searchResult)
+        internal static int? GetMaxDisconnectionTime(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_MAX_DISCONNECTION_TIME, null);
+            return GetValue<int?>(entry, TS_MAX_DISCONNECTION_TIME, null);
         }
 
         internal static void SetMaxDisconnectionTime(UpdateType type,
@@ -198,9 +203,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_MAX_DISCONNECTION_TIME, maxDisconnectionTime);
         }
 
-        internal static int? GetMaxIdleTime(SearchResult searchResult)
+        internal static int? GetMaxIdleTime(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_MAX_IDLE_TIME, null);
+            return GetValue<int?>(entry, TS_MAX_IDLE_TIME, null);
         }
 
         internal static void SetMaxIdleTime(UpdateType type, DirectoryEntry directoryEntry,
@@ -209,9 +214,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_MAX_IDLE_TIME, maxIdleTime);
         }
 
-        internal static int? GetConnectClientDrivesAtLogon(SearchResult searchResult)
+        internal static int? GetConnectClientDrivesAtLogon(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_CONNECT_CLIENT_DRIVES_AT_LOGON, null);
+            return GetValue<int?>(entry, TS_CONNECT_CLIENT_DRIVES_AT_LOGON, null);
         }
 
         internal static void SetConnectClientDrivesAtLogon(UpdateType type,
@@ -221,9 +226,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 connectClientDrivesAtLogon);
         }
 
-        internal static int? GetConnectClientPrintersAtLogon(SearchResult searchResult)
+        internal static int? GetConnectClientPrintersAtLogon(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_CONNECT_CLIENT_PRINTERS_AT_LOGON, null);
+            return GetValue<int?>(entry, TS_CONNECT_CLIENT_PRINTERS_AT_LOGON, null);
         }
 
         internal static void SetConnectClientPrintersAtLogon(UpdateType type,
@@ -233,9 +238,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 connectClientPrintersAtLogon);
         }
 
-        internal static int? GetDefaultToMainPrinter(SearchResult searchResult)
+        internal static int? GetDefaultToMainPrinter(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_DEFAULT_TO_MAIN_PRINTER, null);
+            return GetValue<int?>(entry, TS_DEFAULT_TO_MAIN_PRINTER, null);
         }
 
         internal static void SetDefaultToMainPrinter(UpdateType type,
@@ -245,9 +250,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 defaultToMainPrinter);
         }
 
-        internal static int? GetBrokenConnectionAction(SearchResult searchResult)
+        internal static int? GetBrokenConnectionAction(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_BROKEN_CONNECTION_ACTION, null);
+            return GetValue<int?>(entry, TS_BROKEN_CONNECTION_ACTION, null);
         }
 
         internal static void SetBrokenConnectionAction(UpdateType type,
@@ -257,9 +262,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 brokenConnectionAction);
         }
 
-        internal static int? GetReconnectionAction(SearchResult searchResult)
+        internal static int? GetReconnectionAction(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_RECONNECTION_ACTION, null);
+            return GetValue<int?>(entry, TS_RECONNECTION_ACTION, null);
         }
 
         internal static void SetReconnectionAction(UpdateType type,
@@ -268,9 +273,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_RECONNECTION_ACTION, reconnectionAction);
         }
 
-        internal static int? GetEnableRemoteControl(SearchResult searchResult)
+        internal static int? GetEnableRemoteControl(DirectoryEntry entry)
         {
-            return GetValue<int?>(searchResult, TS_ENABLE_REMOTE_CONTROL, null);
+            return GetValue<int?>(entry, TS_ENABLE_REMOTE_CONTROL, null);
         }
 
         internal static void SetEnableRemoteControl(UpdateType type,
@@ -279,9 +284,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_ENABLE_REMOTE_CONTROL, enableRemoteControl);
         }
 
-        internal static string GetProfilePath(SearchResult searchResult)
+        internal static string GetProfilePath(DirectoryEntry entry)
         {
-            return GetValue<string>(searchResult, TS_PROFILE_PATH, null);
+            return GetValue<string>(entry, TS_PROFILE_PATH, null);
         }
 
         internal static void SetProfilePath(UpdateType type,
@@ -290,9 +295,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_PROFILE_PATH, profilePath);
         }
 
-        internal static string GetHomeDirectory(SearchResult searchResult)
+        internal static string GetHomeDirectory(DirectoryEntry entry)
         {
-            return GetValue<string>(searchResult, TS_HOME_DIRECTORY, null);
+            return GetValue<string>(entry, TS_HOME_DIRECTORY, null);
         }
 
         internal static void SetHomeDirectory(UpdateType type,
@@ -301,9 +306,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SetValue(type, directoryEntry, TS_HOME_DIRECTORY, homeDirectory);
         }
 
-        internal static string GetHomeDrive(SearchResult searchResult)
+        internal static string GetHomeDrive(DirectoryEntry entry)
         {
-            return GetValue<string>(searchResult, TS_HOME_DRIVE, null);
+            return GetValue<string>(entry, TS_HOME_DRIVE, null);
         }
 
         internal static void SetHomeDrive(UpdateType type,

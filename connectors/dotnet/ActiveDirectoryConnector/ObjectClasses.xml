@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright 2008 Sun Microsystems, Inc. All rights reserved.
   
@@ -42,10 +42,8 @@
   <ObjectClassInfo container="false" type="__ACCOUNT__">
     <AttributeInfos>
       <AttributeInfo name="sAMAccountName" type="String">
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
       <AttributeInfo name="userPrincipalName" type="String">
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
       <AttributeInfo name="givenName" type="String"/>
       <AttributeInfo name="sn" type="String"/>
@@ -53,6 +51,7 @@
       <AttributeInfoFlag value="NOT_CREATABLE"/>
       <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
+      <AttributeInfo name="uid" type="String"/>
       <AttributeInfo name="displayName" type="String"/>
       <AttributeInfo name="mail" type="String"/>
       <AttributeInfo name="telephoneNumber" type="String"/>
@@ -61,6 +60,7 @@
       <AttributeInfo name="employeeNumber" type="String"/>
       <AttributeInfo name="division" type="String"/>
       <AttributeInfo name="mobile" type="String"/>
+      <AttributeInfo name="pager" type="String"/>
       <AttributeInfo name="middleName" type="String"/>
       <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="department" type="String"/>
@@ -70,9 +70,12 @@
       <AttributeInfo name="info" type="String"/>
       <AttributeInfo name="co" type="String"/>
       <AttributeInfo name="c" type="String"/>
-      <AttributeInfo name="countryCode" type="String"/>
+      <AttributeInfo name="countryCode" type="Integer"/>
+      <AttributeInfo name="preferredLanguage" type="String"/>
+      <AttributeInfo name="wWWHomePage" type="String"/>
       <AttributeInfo name="company" type="String"/>
       <AttributeInfo name="facsimileTelephoneNumber" type="String"/>
+      <AttributeInfo name="ipPhone" type="String"/>
       <AttributeInfo name="homePhone" type="String"/>
       <AttributeInfo name="streetAddress" type="String"/>
       <AttributeInfo name="l" type="String"/>
@@ -80,53 +83,83 @@
       <AttributeInfo name="postalCode" type="String"/>
       <AttributeInfo name="postOfficeBox" type="String"/>
       <AttributeInfo name="physicalDeliveryOfficeName" type="String"/>
+      
+      <AttributeInfo name="accountExpires" type="long"/>      
+      <AttributeInfo name="userWorkstations" type="String"/>
+      <AttributeInfo name="userSharedFolderOther" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+<!--      <AttributeInfo name="memberOf" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo> -->            
+      <AttributeInfo name="scriptPath" type="String"/>
+      
       <AttributeInfo name="TerminalServicesInitialProgram" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+    	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
-      <AttributeInfo name="TerminalServicesWorkDirectory" type="String"/>
-      <AttributeInfo name="AllowLogon" type="Integer"/>
-      <AttributeInfo name="MaxConnectionTime" type="Integer"/>
+      <AttributeInfo name="TerminalServicesWorkDirectory" type="String">
+    	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
+      <AttributeInfo name="AllowLogon" type="Integer">
+		<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
+      <AttributeInfo name="MaxConnectionTime" type="Integer">
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
       <AttributeInfo name="MaxDisconnectionTime" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
-      <AttributeInfo name="MaxIdleTime" type="Integer"/>
+      <AttributeInfo name="MaxIdleTime" type="Integer">
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
       <AttributeInfo name="ConnectClientDrivesAtLogon" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="ConnectClientPrintersAtLogon" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="DefaultToMainPrinter" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="BrokenConnectionAction" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="ReconnectionAction" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="EnableRemoteControl" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesProfilePath" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesHomeDirectory" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesHomeDrive" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="uSNChanged" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
