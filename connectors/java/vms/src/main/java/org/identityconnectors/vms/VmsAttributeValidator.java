@@ -99,7 +99,7 @@ public final class VmsAttributeValidator {
     private static final Pattern CLI_TABLES_PATTERN = Pattern.compile("[a-zA-Z0-9$_:]{1,31}");
     private static final Pattern DEVICE_PATTERN = Pattern.compile(".{1,31}");
     private static final Pattern DIRECTORY_PATTERN = Pattern
-            .compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}");
+            .compile("(\\[[a-zA-Z$0-9:_]{1,39}\\])|[a-zA-Z$0-9:_]{1,39}");
     private static final Pattern FILE_SPEC_PATTERN = Pattern.compile("[a-zA-Z0-9$_:]+");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("[a-zA-Z0-9$_]{1,31}");
     private static final Pattern UIC_PATTERN = Pattern.compile("\\[[0-7]+,([0-7]+|\\*)\\]");
@@ -137,7 +137,7 @@ public final class VmsAttributeValidator {
             if (ownerList.size() != 1) {
                 return false;
             }
-            String owner = (String) ownerList.get(0).toString();
+            String owner = ownerList.get(0).toString();
             return (owner == null || owner.length() < 32);
         }
     }
@@ -153,7 +153,7 @@ public final class VmsAttributeValidator {
             if (dateList.size() != 1) {
                 return false;
             }
-            String date = (String) dateList.get(0).toString();
+            String date = dateList.get(0).toString();
             DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.US);
             try {
                 dateFormat.parse(date.trim());

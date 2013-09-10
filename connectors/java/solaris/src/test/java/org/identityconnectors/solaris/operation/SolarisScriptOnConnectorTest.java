@@ -27,11 +27,12 @@ package org.identityconnectors.solaris.operation;
 import static org.identityconnectors.solaris.operation.SolarisScriptOnConnector.quoteForDCLWhenNeeded;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ScriptContextBuilder;
 import org.identityconnectors.solaris.operation.SolarisScriptOnConnector.Shell;
 import org.identityconnectors.solaris.test.SolarisTestBase;
@@ -44,8 +45,6 @@ import org.testng.annotations.Test;
  * @author Laszlo Hordos
  */
 public class SolarisScriptOnConnectorTest extends SolarisTestBase {
-
-    private static Log log = Log.getLog(SolarisScriptOnConnectorTest.class);
 
     @DataProvider(name = "shell")
     public Iterator<Object[]> createData() {
@@ -66,6 +65,33 @@ public class SolarisScriptOnConnectorTest extends SolarisTestBase {
         builder = new ScriptContextBuilder("sh", "echo $ARG_1");
         o = getFacade().runScriptOnResource(builder.build(), null);
         assertNotEquals(o, "Acme");
+    }
+
+    @Test(expectedExceptions = ConnectorException.class,
+            expectedExceptionsMessageRegExp = "ERROR, buffer content: <Acme>")
+    public void testRunWrongScriptOnResource() throws Exception {
+        ScriptContextBuilder builder = new ScriptContextBuilder("sh", "echo $ARG_1\nENDSSH");
+        builder.addScriptArgument("ARG_1", "Acme");
+        getFacade().runScriptOnResource(builder.build(), null);
+        fail("Script must fail");
+    }
+
+    @Test
+    public void testMultilineRunScriptOnResource() throws Exception {
+        ScriptContextBuilder builder =
+                new ScriptContextBuilder("sh", "echo $ARG_1\necho $ARG_2\r\necho $ARG_3\r");
+        builder.addScriptArgument("ARG_1", "Unix");
+        builder.addScriptArgument("ARG_2", "Windows");
+        builder.addScriptArgument("ARG_3", "OSX");
+        Object o = getFacade().runScriptOnResource(builder.build(), null);
+        assertEquals(o, "Unix\r\nWindows\r\nOSX");
+    }
+
+    @Test
+    public void testComaRunScriptOnResource() throws Exception {
+        ScriptContextBuilder builder = new ScriptContextBuilder("sh", "echo 'Hello, World'");
+        Object o = getFacade().runScriptOnResource(builder.build(), null);
+        assertEquals(o, "Hello, World");
     }
 
     @Test

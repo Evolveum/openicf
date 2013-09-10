@@ -36,6 +36,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -45,10 +46,13 @@ import org.identityconnectors.framework.common.objects.SyncDeltaType;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
+import static org.identityconnectors.ldap.ADLdapUtil.fetchGroupMembersByRange;
+import static org.identityconnectors.ldap.ADLdapUtil.objectGUIDtoString;
 import org.identityconnectors.ldap.LdapConnection;
 import static org.identityconnectors.ldap.LdapUtil.buildMemberIdAttribute;
 import org.identityconnectors.ldap.ADUserAccountControl;
 import org.identityconnectors.ldap.LdapConnection.ServerType;
+import org.identityconnectors.ldap.LdapConstants;
 import org.identityconnectors.ldap.search.LdapInternalSearch;
 import org.identityconnectors.ldap.search.SearchResultsHandler;
 import org.identityconnectors.ldap.search.SimplePagedSearchStrategy;
@@ -68,11 +72,13 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
     private final String modifyTimestamp = "modifyTimestamp";
     private final LdapConnection conn;
     private final ObjectClass oclass;
+    private final ServerType server;
     private static final Log logger = Log.getLog(TimestampsSyncStrategy.class);
 
     public TimestampsSyncStrategy(LdapConnection conn, ObjectClass oclass) {
         this.conn = conn;
         this.oclass = oclass;
+        this.server = conn.getServerType();
     }
 
     public SyncToken getLatestSyncToken() {
@@ -89,7 +95,7 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
         SearchControls controls = LdapInternalSearch.createDefaultSearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         controls.setDerefLinkFlag(false);
-        controls.setReturningAttributes(new String[]{"*", createTimestamp, modifyTimestamp});
+        controls.setReturningAttributes(new String[]{"*", createTimestamp, modifyTimestamp,conn.getConfiguration().getUidAttribute()});
 
         LdapInternalSearch search = new LdapInternalSearch(conn,
                 generateFilter(oclass, token),
@@ -101,7 +107,6 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
             search.execute(new SearchResultsHandler() {
                 public boolean handle(String baseDN, SearchResult result) throws NamingException {
                     Attributes attrs = result.getAttributes();
-                    NamingEnumeration<? extends javax.naming.directory.Attribute> attrsEnum = attrs.getAll();
                     Uid uid = conn.getSchemaMapping().createUid(conn.getConfiguration().getUidAttribute(), attrs);
                     // build the object first
                     ConnectorObjectBuilder cob = new ConnectorObjectBuilder();
@@ -109,17 +114,39 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                     cob.setObjectClass(oclass);
                     cob.setName(result.getNameInNamespace());
 
-                    // Let's process ACCOUNT specifics...
-                    if (oclass.equals(ObjectClass.ACCOUNT) && conn.getServerType().equals(ServerType.MSAD_GC)) {
-                        javax.naming.directory.Attribute uac = attrs.get(ADUserAccountControl.MS_USR_ACCT_CTRL_ATTR);
-                        if (uac != null) {
-                            String controls = uac.get().toString();
-                            cob.addAttribute(AttributeBuilder.buildEnabled(!ADUserAccountControl.isAccountDisabled(controls)));
-                            cob.addAttribute(AttributeBuilder.buildLockOut(ADUserAccountControl.isAccountLockOut(controls)));
-                            cob.addAttribute(AttributeBuilder.buildPasswordExpired(ADUserAccountControl.isPasswordExpired(controls)));
+                    // Let's process AD specifics...
+                    if (ServerType.MSAD_GC.equals(server) || ServerType.MSAD.equals(server)) {
+                        if (ObjectClass.ACCOUNT.equals(oclass))  {
+                            javax.naming.directory.Attribute uac = attrs.get(ADUserAccountControl.MS_USR_ACCT_CTRL_ATTR);
+                            if (uac != null) {
+                                String controls = uac.get().toString();
+                                cob.addAttribute(AttributeBuilder.buildEnabled(!ADUserAccountControl.isAccountDisabled(controls)));
+                                cob.addAttribute(AttributeBuilder.buildLockOut(ADUserAccountControl.isAccountLockOut(controls)));
+                                cob.addAttribute(AttributeBuilder.buildPasswordExpired(ADUserAccountControl.isPasswordExpired(controls)));
+                            }
+                        }
+                        if (ObjectClass.GROUP.equals(oclass)) {
+                            // Make sure we're not hitting AD large group issue
+                            // see: http://msdn.microsoft.com/en-us/library/ms817827.aspx
+                            if (attrs.get("member;range=0-1499") != null) {
+                                // we're in the limitation
+                                Attribute range = AttributeBuilder.build("member", fetchGroupMembersByRange(conn, result));
+                                cob.addAttribute(range);
+                                if (conn.getConfiguration().isGetGroupMemberId()){
+                                    cob.addAttribute(buildMemberIdAttribute(conn, range));
+                                }
+                                attrs.remove("member;range=0-1499");
+                                attrs.remove("member");
+                            }
+                        }
+                        javax.naming.directory.Attribute guid = attrs.get(LdapConstants.MS_GUID_ATTR);
+                        if (guid != null) {
+                            cob.addAttribute(AttributeBuilder.build(LdapConstants.MS_GUID_ATTR, objectGUIDtoString(guid)));
+                            attrs.remove(LdapConstants.MS_GUID_ATTR);
                         }
                     }
                     // Set all Attributes
+                    NamingEnumeration<? extends javax.naming.directory.Attribute> attrsEnum = attrs.getAll();
                     while (attrsEnum.hasMore()) {
                         javax.naming.directory.Attribute attr = attrsEnum.next();
                         String id = attr.getID();
@@ -128,7 +155,8 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                         while (vals.hasMore()) {
                             values.add(vals.next());
                         }
-                        if (conn.getConfiguration().isGetGroupMemberId() && oclass.equals(ObjectClass.GROUP) && id.equalsIgnoreCase("member")) {
+                        if (conn.getConfiguration().isGetGroupMemberId() && ObjectClass.GROUP.equals(oclass) 
+                                && id.equalsIgnoreCase(conn.getConfiguration().getGroupMemberAttribute())) {
                             cob.addAttribute(buildMemberIdAttribute(conn, attr));
                         }
                         cob.addAttribute(AttributeBuilder.build(id, values));
@@ -152,12 +180,14 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private String getNowTime() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-        switch (conn.getServerType()) {
+        switch (server) {
             case MSAD_GC:
+            case MSAD:
                 return sdf.format(new Date()) + ".0Z";
             default:
                 return sdf.format(new Date()) + "Z";
@@ -171,11 +201,6 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
         if (token == null) {
             token = this.getLatestSyncToken();
         }
-        filter.append("(");
-        filter.append(modifyTimestamp);
-        filter.append(">=");
-        filter.append(token.getValue().toString());
-        filter.append(")");
         if (ObjectClass.ACCOUNT.equals(oc)) {
             String[] oclasses = conn.getConfiguration().getAccountObjectClasses();
             for (int i = 0; i < oclasses.length; i++) {
@@ -202,8 +227,18 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
             filter.append(")");
         }
 
+        filter.append("(|(");
+        filter.append(modifyTimestamp);
+        filter.append(">=");
+        filter.append(token.getValue().toString());
+        filter.append(")(");
+        filter.append(createTimestamp);
+        filter.append(">=");
+        filter.append(token.getValue().toString());
+        filter.append("))");
         filter.insert(0, "(&");
         filter.append(")");
+        logger.info("Using timestamp filter {0}",filter.toString());
         return filter.toString();
     }
 }
