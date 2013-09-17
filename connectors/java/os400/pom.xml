@@ -57,6 +57,7 @@
         <jira.componentIds>10206</jira.componentIds>
         <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
         <jira.fixVersionIds>0</jira.fixVersionIds>
+        <!--openicf.osgi.embed>jt400</openicf.osgi.embed-->
     </properties>
     <repositories>
         <repository>
@@ -77,14 +78,10 @@
         </repository>
     </repositories>
     <dependencies>
-        <!--
-        Download the jtopen_7_9.zip (16.6 MB) from from http://sourceforge.net/projects/jt400/files/JTOpen-full/ and Extract the jt400.jar
-        mvn install:install-file -Dfile=jt400.jar -DgroupId=net.sf.jt400 -DartifactId=jt400 -Dversion=7.9 -Dpackaging=jar -DgeneratePom=true -DcreateChecksum=true
-        -->
         <dependency>
             <groupId>net.sf.jt400</groupId>
             <artifactId>jt400</artifactId>
-            <version>7.9</version>
+            <version>7.10</version>
         </dependency>
     </dependencies>
     <build>
@@ -108,7 +105,7 @@
                     <dependency>
                         <groupId>net.sf.jt400</groupId>
                         <artifactId>jt400</artifactId>
-                        <version>7.9</version>
+                        <version>7.10</version>
                     </dependency>
                 </dependencies>
             </plugin>

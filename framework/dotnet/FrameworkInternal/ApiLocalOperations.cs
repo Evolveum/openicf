@@ -1201,9 +1201,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
 
             if (hdlCfg.EnableCaseInsensitiveFilter)
             {
-                Trace.TraceInformation("Creating case insensitive filter");
-                ObjectNormalizerFacade normalizer = CaseNormalizer.CreateCaseNormalizerFacade(oclass);
-                actualFilter = new NormalizingFilter(actualFilter, normalizer);
+                if (originalFilter != null)
+                {
+                    Trace.TraceInformation("Creating case insensitive filter");
+                    ObjectNormalizerFacade normalizer = CaseNormalizer.CreateCaseNormalizerFacade(oclass);
+                    actualFilter = new NormalizingFilter(actualFilter, normalizer);
+                }
+                else
+                {
+                    Trace.TraceInformation("Skipping creation of case insensitive filter, because original filter is null");
+                }
             }
 
             if (hdlCfg.EnableNormalizingResultsHandler)

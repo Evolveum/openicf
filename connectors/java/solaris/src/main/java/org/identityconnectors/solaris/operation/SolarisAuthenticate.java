@@ -83,7 +83,7 @@ public class SolarisAuthenticate extends AbstractOp {
         final Map<String, SolarisConnection.ErrorHandler> rejectsMap = initRejectsMap(username);
         final String command = "exec login " + username + " TERM=vt00";
 
-        connection.executeCommand(command, CollectionUtil.newSet("login: [p,P]ermission denied"),
+        connection.executeCommand(command, CollectionUtil.newSet("ermission denied"),
                 CollectionUtil.newSet("assword:"));
         connection.sendPassword(password);
         connection.executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
