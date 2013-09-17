@@ -36,11 +36,8 @@ import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.test.common.TestHelpers;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -74,6 +71,8 @@ public class SearchOpTest extends AbstractCsvTest {
         config.setFilePath(TestUtils.getTestFile("search.csv"));
         config.setUniqueAttribute("uid");
         config.setPasswordAttribute("password");
+        config.setMultivalueDelimiter(";");
+        config.setUsingMultivalue(true);
 
         connector = new CSVFileConnector();
         connector.init(config);
@@ -163,35 +162,34 @@ public class SearchOpTest extends AbstractCsvTest {
         testEntryTwo(results.get(1));
     }
 
-    @Test(enabled = false)
     private void testEntryOne(ConnectorObject object) {
         assertNotNull(object);
         assertNotNull(object.getUid());
         assertEquals("vilo", object.getUid().getUidValue());
-        assertEquals(object.getAttributes().size(), 5);
+        assertEquals(object.getAttributes().size(), 6);
         testAttribute(object, "__NAME__", "vilo");
         testAttribute(object, "__UID__", "vilo");
 //        testAttribute(object, "uid", "vilo"); //we're not returning unique attribute, it's already there as __UID__
         testAttribute(object, "firstName", "viliam");
         testAttribute(object, "lastName", "repan");
         testAttribute(object, "__PASSWORD__", new GuardedString("Z29vZA==".toCharArray()));
+        testAttribute(object, "UserID", "macko", "usko");
     }
 
-    @Test(enabled = false)
     private void testEntryTwo(ConnectorObject object) {
         assertNotNull(object);
         assertNotNull(object.getUid());
         assertEquals("miso", object.getUid().getUidValue());
-        assertEquals(object.getAttributes().size(), 4);
+        assertEquals(object.getAttributes().size(), 5);
         testAttribute(object, "__NAME__", "miso");
         testAttribute(object, "__UID__", "miso");
 //        testAttribute(object, "uid", "miso"); //we're not returning unique attribute, it's already there as __UID__
         testAttribute(object, "firstName", "michal");
         testAttribute(object, "lastName");
         testAttribute(object, "__PASSWORD__", new GuardedString("bad=".toCharArray()));
+        testAttribute(object, "UserID", "mmiso");
     }
 
-    @Test(enabled = false)
     private void testAttribute(ConnectorObject object, String name, Object... values) {
         Attribute attribute = object.getAttributeByName(name);
         if (values.length == 0) {
@@ -206,7 +204,7 @@ public class SearchOpTest extends AbstractCsvTest {
     }
 
     @Test(expectedExceptions = CSVSchemaException.class)
-    private void testMissingColumn() throws Exception {
+    public void testMissingColumn() throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(TestUtils.getTestFile("missing-column.csv"));
@@ -227,7 +225,7 @@ public class SearchOpTest extends AbstractCsvTest {
     }
 
     @Test(expectedExceptions = ConnectorIOException.class)
-    private void nonExistingFile() throws Exception {
+    public void nonExistingFile() throws Exception {
         CSVFileConfiguration config = new CSVFileConfiguration();
         config.setEncoding("utf-8");
         config.setFilePath(new File("C:\\non-existing-file.csv"));
@@ -248,7 +246,7 @@ public class SearchOpTest extends AbstractCsvTest {
     }
 
     @Test
-    private void bigCsvSearch() throws Exception {
+    public void bigCsvSearch() throws Exception {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
 
         CSVFileConfiguration config = new CSVFileConfiguration();
@@ -288,5 +286,36 @@ public class SearchOpTest extends AbstractCsvTest {
         connector.search(ObjectClass.ACCOUNT, null, handler, null);
 
         AssertJUnit.assertEquals(objects, cascadedObjects);
+    }
+
+    @Test
+    public void testMultivalueEqualsSearch() throws Exception {
+        CSVFileConfiguration config = new CSVFileConfiguration();
+        config.setEncoding("utf-8");
+        config.setFilePath(TestUtils.getTestFile("search.csv"));
+        config.setUniqueAttribute("uid");
+        config.setPasswordAttribute("password");
+        config.setMultivalueDelimiter(";");
+        config.setUsingMultivalue(true);
+
+        ConnectorFacade connector = getFacade(config);
+        Filter filter;
+        // filter = new EqualsFilter(AttributeBuilder.build("UserID", "macko", "usko"));
+        filter = new ContainsFilter(AttributeBuilder.build("UserID", "macko"));
+        // filter = new ContainsAllValuesFilter(AttributeBuilder.build("UserID", "macko", "usko"));
+
+        final List<ConnectorObject> results = new ArrayList<ConnectorObject>();
+        ResultsHandler handler = new ResultsHandler() {
+
+            @Override
+            public boolean handle(ConnectorObject co) {
+                results.add(co);
+                return true;
+            }
+        };
+
+        connector.search(ObjectClass.ACCOUNT, filter, handler, null);
+
+        AssertJUnit.assertEquals(1, results.size());
     }
 }

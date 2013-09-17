@@ -28,6 +28,10 @@
 package org.forgerock.openicf.csvfile;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.api.APIConfiguration;
+import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.test.common.TestHelpers;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -91,6 +95,13 @@ public class AbstractCsvTest {
 
     protected void customAfterClass() throws Exception {
 
+    }
+
+    protected ConnectorFacade getFacade(CSVFileConfiguration config) {
+        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+        // **test only**
+        APIConfiguration impl = TestHelpers.createTestConfiguration(CSVFileConnector.class, config);
+        return factory.newInstance(impl);
     }
 
 }
