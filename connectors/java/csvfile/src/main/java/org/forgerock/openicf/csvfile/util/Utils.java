@@ -29,6 +29,7 @@ package org.forgerock.openicf.csvfile.util;
 
 import org.forgerock.openicf.csvfile.CSVFileConfiguration;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 
 import java.io.*;
@@ -121,7 +122,7 @@ public class Utils {
             unlock(lock);
         }
         catch (IOException ex) {
-            throw new ConnectorException("Couldn't close reader, reason: " + ex.getMessage(), ex);
+            throw new ConnectorIOException("Couldn't close reader, reason: " + ex.getMessage(), ex);
         }
     }
 
@@ -131,7 +132,7 @@ public class Utils {
                 lock.release();
             }
             catch (IOException ex) {
-                throw new ConnectorException("Couldn't release file lock, reason: " + ex.getMessage(), ex);
+                throw new ConnectorIOException("Couldn't release file lock, reason: " + ex.getMessage(), ex);
             }
         }
     }

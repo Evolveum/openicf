@@ -888,7 +888,7 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
             if (configuration.getFilePath().delete()) {
                 tmpFile.renameTo(configuration.getFilePath());
             } else {
-                throw new ConnectorException("Couldn't delete old file '" + configuration.getFilePath().getAbsolutePath()
+                throw new ConnectorIOException("Couldn't delete old file '" + configuration.getFilePath().getAbsolutePath()
                         + "' and replace it by new file '" + tmpFile.getAbsolutePath() + "'.");
             }
         } catch (Exception ex) {
