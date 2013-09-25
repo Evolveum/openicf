@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -39,8 +39,7 @@ import org.identityconnectors.framework.common.objects.ConnectorMessages;
 /**
  * Class to represent a ScriptedJDBC Connection
  *
- * @author gael
- * @version 1.0
+ * @author Gael Allioux <gael.allioux@forgerock.com>
  * @since 1.0
  */
 public class ScriptedSQLConnection {

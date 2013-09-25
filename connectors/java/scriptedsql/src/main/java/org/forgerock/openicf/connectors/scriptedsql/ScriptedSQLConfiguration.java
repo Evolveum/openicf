@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -37,8 +37,7 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the ScriptedJDBC Connector.
  *
- * @author gael
- * @version 1.0
+ * @author Gael Allioux <gael.allioux@forgerock.com>
  * @since 1.0
  */
 public class ScriptedSQLConfiguration extends AbstractConfiguration {
@@ -486,10 +485,11 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         this.clearTextPasswordToScript = value;
     }
     /**
-     * By default, scripts are loaded and compiled when a connector instance
-     * is created and initialized. Setting reloadScriptOnExecution to true will
+     * By default, scripts are loaded and compiled when a connector instance is
+     * created and initialized. Setting reloadScriptOnExecution to true will
      * make the connector load and compile the script every time it is called.
-     * Use only for test/debug purpose since this can have a significant impact on performance.
+     * Use only for test/debug purpose since this can have a significant impact
+     * on performance.
      */
     private boolean reloadScriptOnExecution = false;
 
@@ -752,7 +752,6 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
     public void setSyncScriptFileName(String value) {
         this.syncScriptFileName = value;
     }
-
     /**
      * Schema script FileName
      */
@@ -872,6 +871,8 @@ public class ScriptedSQLConfiguration extends AbstractConfiguration {
         checkFileIsReadable("Sync", getSyncScriptFileName());
         log.info("Checking Test Script filename");
         checkFileIsReadable("Test", getTestScriptFileName());
+        log.info("Checking Schema Script filename");
+        checkFileIsReadable("Schema", getSchemaScriptFileName());
 
         log.ok("Configuration is valid");
     }

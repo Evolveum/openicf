@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -49,8 +49,7 @@ import org.identityconnectors.framework.spi.operations.*;
 /**
  * Main implementation of the ScriptedJDBC Connector
  *
- * @author gael
- * @version 1.0
+ * @author Gael Allioux <gael.allioux@forgerock.com>
  * @since 1.0
  */
 @ConnectorClass(displayNameKey = "ScriptedSQL", configurationClass = ScriptedSQLConfiguration.class)
@@ -119,7 +118,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
 
         schemaExecutor = getScriptExecutor("", config.getSchemaScriptFileName());
         log.ok("Sync script loaded");
-        
+
         testExecutor = getScriptExecutor(config.getTestScript(), config.getTestScriptFileName());
         log.ok("Test script loaded");
     }
@@ -164,17 +163,10 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public Uid create(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
         if (config.isReloadScriptOnExecution()) {
             createExecutor = getScriptExecutor(config.getCreateScript(), config.getCreateScriptFileName());
-            log.ok("Create script loaded");
+            log.ok("Create script reloaded");
         }
         if (createExecutor != null) {
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("Object class: {0}", objClass.getObjectClassValue());
-
-            if (attrs == null || attrs.isEmpty()) {
-                throw new IllegalArgumentException(config.getMessage("MSG_INVALID_ATTRIBUTE_SET"));
-            }
 
             final Map<String, Object> arguments = new HashMap<String, Object>();
 
@@ -251,21 +243,13 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
         if (config.isReloadScriptOnExecution()) {
             deleteExecutor = getScriptExecutor(config.getDeleteScript(), config.getDeleteScriptFileName());
-            log.ok("Delete script loaded");
+            log.ok("Delete script reloaded");
         }
         if (deleteExecutor != null) {
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("Object class: {0}", objClass.getObjectClassValue());
 
-            if (uid == null || (uid.getUidValue() == null)) {
-                throw new IllegalArgumentException(config.getMessage("MSG_UID_BLANK"));
-            }
             final String id = uid.getUidValue();
-
             final Map<String, Object> arguments = new HashMap<String, Object>();
-
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("action", "DELETE");
             arguments.put("log", log);
@@ -292,6 +276,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
         SchemaBuilder scmb = new SchemaBuilder(ScriptedSQLConnector.class);
         if (config.isReloadScriptOnExecution()) {
             schemaExecutor = getScriptExecutor("", config.getSchemaScriptFileName());
+            log.ok("Schema script reloaded");
         }
         if (schemaExecutor != null) {
             Map<String, Object> arguments = new HashMap<String, Object>();
@@ -314,9 +299,6 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
      * {@inheritDoc}
      */
     public FilterTranslator<Map> createFilterTranslator(ObjectClass objClass, OperationOptions options) {
-        if (objClass == null) {
-            throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-        }
         log.ok("ObjectClass: {0}", objClass.getObjectClassValue());
         return new ScriptedSQLFilterTranslator();
     }
@@ -327,17 +309,12 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public void executeQuery(ObjectClass objClass, Map query, ResultsHandler handler, OperationOptions options) {
         if (config.isReloadScriptOnExecution()) {
             searchExecutor = getScriptExecutor(config.getSearchScript(), config.getSearchScriptFileName());
-            log.ok("Search script loaded");
+            log.ok("Search script reloaded");
         }
 
         if (searchExecutor != null) {
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("ObjectClass: {0}", objClass.getObjectClassValue());
-            if (handler == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
-            }
+
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("objectClass", objClass.getObjectClassValue());
@@ -363,17 +340,12 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public void sync(ObjectClass objClass, SyncToken token, SyncResultsHandler handler, final OperationOptions options) {
         if (config.isReloadScriptOnExecution()) {
             syncExecutor = getScriptExecutor(config.getSyncScript(), config.getSyncScriptFileName());
-            log.ok("Sync script loaded");
+            log.ok("Sync script reloaded");
         }
 
         if (syncExecutor != null) {
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("ObjectClass: {0}", objClass.getObjectClassValue());
-            if (handler == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_RESULT_HANDLER_NULL"));
-            }
+
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("connection", connection.getSqlConnection());
             arguments.put("objectClass", objClass.getObjectClassValue());
@@ -399,13 +371,10 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
     public SyncToken getLatestSyncToken(ObjectClass objClass) {
         if (config.isReloadScriptOnExecution()) {
             syncExecutor = getScriptExecutor(config.getSyncScript(), config.getSyncScriptFileName());
-            log.ok("Sync script loaded");
+            log.ok("Sync script reloaded");
         }
         if (syncExecutor != null) {
             SyncToken st = null;
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("ObjectClass: {0}", objClass.getObjectClassValue());
 
             Map<String, Object> arguments = new HashMap<String, Object>();
@@ -457,8 +426,6 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
                 log.ok("runOnConnector script ok");
             } catch (Exception e) {
                 throw new ConnectorException("runOnConnector script error", e);
-            } finally {
-                // clean up.. ??? should we close?
             }
             return result;
         } else {
@@ -474,7 +441,7 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
 
         if (config.isReloadScriptOnExecution()) {
             testExecutor = getScriptExecutor(config.getTestScript(), config.getTestScriptFileName());
-            log.ok("Test script loaded");
+            log.ok("Test script reloaded");
         }
 
         if (testExecutor != null) {
@@ -611,21 +578,8 @@ public class ScriptedSQLConnector implements PoolableConnector, AuthenticateOp, 
             log.ok("Update ({0}) script loaded", method);
         }
         if (updateExecutor != null) {
-
-            if (objClass == null) {
-                throw new IllegalArgumentException(config.getMessage("MSG_ACCOUNT_OBJECT_CLASS_REQUIRED"));
-            }
             log.ok("Object class: {0}", objClass.getObjectClassValue());
-
-            if (attrs == null || attrs.isEmpty()) {
-                throw new IllegalArgumentException(config.getMessage("MSG_INVALID_ATTRIBUTE_SET"));
-            }
-
-            if (uid == null || (uid.getUidValue() == null)) {
-                throw new IllegalArgumentException(config.getMessage("MSG_UID_BLANK"));
-            }
             final String id = uid.getUidValue();
-
             final Map<String, Object> arguments = new HashMap<String, Object>();
 
             arguments.put("connection", connection.getSqlConnection());
