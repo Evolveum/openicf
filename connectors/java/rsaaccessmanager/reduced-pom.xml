@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.forgerock.openicf.connectors</groupId>
+  <artifactId>rsaauthenticationmanager-connector</artifactId>
+  <version>1.1</version>
+  <name>RSA Authentication Manager8 Connector</name>
+  <description>Connector for RSA Authentication Manager 8</description>
+  <url>https://openicf.forgerock.org/connectors/rsaauthenticationmanager-connector</url>
+  <scm>
+    <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/rsaauthenticationmanager-connector</connection>
+    <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/rsaauthenticationmanager-connector</developerConnection>
+    <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/rsaauthenticationmanager-connector</url>
+  </scm>
+  <issueManagement>
+    <system>jira</system>
+    <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10191</url>
+  </issueManagement>
+  <ciManagement>
+    <system>jenkins</system>
+    <url>http://builds.forgerock.org/job/OpenICF - RSA Authentication Manager8 Connector</url>
+  </ciManagement>
+</project>

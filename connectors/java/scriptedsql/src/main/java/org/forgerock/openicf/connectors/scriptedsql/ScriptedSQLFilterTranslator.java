@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2010-2013 ForgeRock Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -21,36 +21,33 @@
  * your own identifying information:
  * "Portions Copyrighted 2010 [name of copyright owner]"
  *
- * $Id$
  */
 package org.forgerock.openicf.connectors.scriptedsql;
 
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.common.StringUtil;
-
 import java.util.Map;
 import java.util.HashMap;
 
 /**
- * This is an implementation of AbstractFilterTranslator that gives a concrete representation
- * of which filters can be applied at the connector level (natively). If the 
- * ScriptedJDBC doesn't support a certain expression type, that factory
- * method should return null. This level of filtering is present only to allow any
- * native constructs that may be available to help reduce the result set for the framework,
- * which will (strictly) reapply all filters specified after the connector does the initial
- * filtering.<p><p>Note: The generic query type is most commonly a String, but does not have to be.
- * 
- * @author gael
+ * This is an implementation of AbstractFilterTranslator that gives a concrete
+ * representation of which filters can be applied at the connector level
+ * (natively). If the ScriptedJDBC doesn't support a certain expression type,
+ * that factory method should return null. This level of filtering is present
+ * only to allow any native constructs that may be available to help reduce the
+ * result set for the framework, which will (strictly) reapply all filters
+ * specified after the connector does the initial filtering.<p><p>Note: The
+ * generic query type is most commonly a String, but does not have to be.
+ *
+ * @author Gael Allioux <gael.allioux@forgerock.com>
  * @version 1.0
  * @since 1.0
  */
 public class ScriptedSQLFilterTranslator extends AbstractFilterTranslator<Map> {
 
-    public ScriptedSQLFilterTranslator(){
-        
+    public ScriptedSQLFilterTranslator() {
     }
-
 
     /**
      * {@inheritDoc}

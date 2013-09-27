@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+    default-lazy-init="true">
+
+    <!--
+     | Override for the system properties file. To change the default name and/or location
+     | of config.properties, override the ims.client.config.properties property as well as the 'location' property
+   | in the PropertyPlaceholderConfigurer bean.
+     | This location must be a properly defined URL either as file:location or classpath:location.
+     |-->
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order" value="1"/>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="ignoreResourceNotFound" value="true"/>
+    <property name="location" value="file:config.properties"/>
+        <property name="properties">
+            <props>
+                <!-- Provide a default location as the current directory file "config.properties" -->
+                <prop key="ims.client.config.properties">file:config.properties</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--
+     | Override the definition of ConnectionInfoProvider
+     | to allow accessing the server configuration values
+     | for communication from the same file as the property
+     | placeholder post processor.
+     |
+     |   Default RSA Info Provider Class = com.rsa.command.PropertiesConnectionInfoProvider
+     |   Default file location value = ${ims.client.config.properties}
+     |-->
+    <bean name="ConnectionInfoProvider"
+          class="org.forgerock.openicf.connectors.rsaauthenticationmanager.RSAAuthenticationManager8ConnectionInfoProvider"
+          lazy-init="false">
+        <property name="propertiesFile" value="config.properties"/>
+        <!--property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/-->
+  </bean>
+
+    <!--
+     | This is the HttpInvoker connection to the server. It is used for containers other than WebLogic.
+     | This overrides the default configuration to allow a custom URL to be used for testing.
+     | The default configuration assumes the java.naming.provider.url is the URL for this connection.
+     | Since this uses HTTP protocol and custom path we need to allow an alternative property so
+     | it can coexist with the EJB connection and made easier to run in the example.
+     -->
+    <!--bean name="HttpInvokerCommandTargetBasicAuth" parent="CommandTargetBasicAuth">
+        <property name="targetClass" value="com.rsa.command.HttpInvokerCommandTarget"/>
+        <property name="providerURL" value="${ims.httpinvoker.client.provider.url}"/>
+        <property name="cacheable" value="false"/>
+    </bean-->
+
+    <!--
+     | Alias to a CommandTarget bean definition that can be used to
+     | change system configuration options quickly without changing
+     | the code that interfaces with it. To make use of this call
+     | the ConnectionFactory.getConnection("CommandAPIConnection")
+     | method which will create the appropriate bean instance for you.
+     | Can be set to any of the following:
+     | <alias alias="CommandAPIConnection" name="CacheableCommandTargetBasicAuth"/>
+     | <alias alias="CommandAPIConnection" name="CommandTargetSSLClientAuth"/>
+     | <alias alias="CommandAPIConnection" name="SOAPCommandTargetBasicAuth"/>
+     -->
+    <alias alias="CommandAPIConnection" name="CacheableCommandTargetBasicAuth"/>
+</beans>
