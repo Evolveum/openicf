@@ -20,45 +20,23 @@
  */
 package org.identityconnectors.solaris.attr;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.mode.ActivationMode;
 
 /**
  * @author Radovan Semancik
  *
  */
 public final class AttrUtil {
-
-    private AttrUtil() {
-    }
-
-    public static AttributeInfo convertAccountSunAttrToAttrInfo(boolean sunCompat,
-            AccountAttribute origAttr) {
-        if (sunCompat) {
-            return null;
-        }
-        if (origAttr == AccountAttribute.LOCK) {
-            return AttributeInfoBuilder.build(OperationalAttributes.ENABLE_NAME, boolean.class);
-        }
-        return null;
-    }
-
-    public static String convertAccountIcfAttrToSun(boolean sunCompat, String icfAttrName) {
-        String sunAttrName = icfAttrName;
-        if (!sunCompat) {
-            if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
-                sunAttrName = AccountAttribute.LOCK.getName();
-            }
-        }
-        return sunAttrName;
-    }
-
-    public static NativeAttribute convertAccountIcfAttrToNative(boolean sunCompat,
-            String icfAttrName) {
-        return AccountAttribute
-                .forAttributeName(convertAccountIcfAttrToSun(sunCompat, icfAttrName)).getNative();
-    }
 
     public static Boolean parseBoolean(Object val) {
         if (val == null) {
@@ -72,5 +50,131 @@ public final class AttrUtil {
             throw new IllegalArgumentException("Unexpected class " + val.getClass());
         }
     }
+    
+    public static ConnectorAttribute toSolarisAttribute(String icfAttrName, ObjectClass objectClass, SolarisConfiguration config) {
+        ConnectorAttribute sunAttr = null;
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+        	if (Uid.NAME.equalsIgnoreCase(icfAttrName)) {
+        		sunAttr = AccountAttribute.NAME;
+        	} else {
+        		sunAttr = AccountAttribute.forAttributeName(icfAttrName);
+        	}
+        } else {
+        	if (Uid.NAME.equalsIgnoreCase(icfAttrName)) {
+        		sunAttr = GroupAttribute.GROUPNAME;
+        	} else {
+        		sunAttr = GroupAttribute.forAttributeName(icfAttrName);
+        	}
+        }
 
+        if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
+        	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+        		sunAttr = AccountAttribute.EXPIRE;
+        		
+        	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+        		sunAttr = AccountAttribute.LOCK;
+        		
+        	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
+        		// nothing to do
+        		
+        	} else {
+        		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
+        	}
+        }
+        
+        return sunAttr;
+    }
+
+    public static List<Object> toSolarisAttributeValues(String icfAttrName, List<Object> icfValues, SolarisConfiguration config) {
+        if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
+        	Boolean icfValue = null;
+        	Object sunValue = icfValue;
+        	if (icfValues != null) {
+            	if (icfValues.size() > 1) {
+            		throw new IllegalArgumentException("More than one value for attribute "+OperationalAttributes.ENABLE_NAME);
+            	}
+            	if (icfValues.size() > 0) {
+            		icfValue = (Boolean)icfValues.get(0);
+            	}
+        	}
+        	
+        	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+        		if (icfValue != null) {
+        			if (icfValue) {
+        				sunValue = "";
+        			} else {
+        				sunValue = "1";
+        			}
+        		}
+        		
+        	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+        		if (icfValue != null) {
+                	sunValue = !icfValue;
+                }
+        		
+        	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
+        		// nothing to do
+        		
+        	} else {
+        		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
+        	}
+        	
+        	List sunValues = new ArrayList(1);
+        	if (sunValue != null) {
+        		sunValues.add(sunValue);
+        	}
+        	return sunValues;
+        }
+        
+        return icfValues;
+    }
+    
+    public static List<Object> toIcfAttributeValues(String icfAttrName, List<Object> sunValues, SolarisConfiguration config) {
+        if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
+        	Object sunValue = null;
+        	Boolean icfValue = null;
+        	if (sunValues != null) {
+            	if (sunValues.size() > 1) {
+            		throw new IllegalArgumentException("More than one value for attribute "+OperationalAttributes.ENABLE_NAME);
+            	}
+            	if (sunValues.size() > 0) {
+            		sunValue = sunValues.get(0);
+            	}
+        	}
+        	
+        	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+        		if (sunValue == null) {
+        			// No expiration => account enabled
+        			icfValue = true;
+        		} else {
+        			if ("".equals(sunValue)) {
+        				icfValue = true;
+        			} else if ("1".equals(sunValue)) {
+        				icfValue = false;
+        			}
+        		}
+        		
+        	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+        		if (sunValue != null) {
+                	icfValue = !((Boolean)sunValue);
+                }
+        		
+        	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
+        		// nothing to do
+        		
+        	} else {
+        		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
+        	}
+        	
+        	List<Object> icfValues = null;
+        	
+        	if (icfValue != null) {
+        		icfValues = new ArrayList<Object>(1);
+        		icfValues.add(icfValue);
+        	}
+        	return icfValues;
+        }
+        
+        return sunValues;
+    }
 }

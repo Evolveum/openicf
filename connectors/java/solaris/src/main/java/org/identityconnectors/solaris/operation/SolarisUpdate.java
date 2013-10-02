@@ -59,7 +59,6 @@ public class SolarisUpdate extends AbstractOp {
     private static final Log logger = Log.getLog(SolarisUpdate.class);
 
     private SolarisConnection connection;
-    private boolean sunCompat;
 
     /** These objectclasses are valid for update operation. */
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
@@ -67,7 +66,6 @@ public class SolarisUpdate extends AbstractOp {
     public SolarisUpdate(SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
-        this.sunCompat = ((SolarisConfiguration) connector.getConfiguration()).getSunCompat();
     }
 
     /** main update method. */
@@ -83,8 +81,8 @@ public class SolarisUpdate extends AbstractOp {
         final Map<String, Attribute> attrMap =
                 new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
         final SolarisEntry entry =
-                SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass,
-                        replaceAttributes, sunCompat);
+                SolarisUtil.convertIcfAttributesToSolarisEntry(uid.getUidValue(), objclass,
+                        replaceAttributes, connection.getConfiguration());
 
         final String newName = fetchName(entry);
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {

@@ -27,13 +27,20 @@ package org.identityconnectors.solaris;
 //import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
+import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -42,6 +49,7 @@ import org.identityconnectors.solaris.attr.AttrUtil;
 import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.mode.ActivationMode;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntries;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -49,6 +57,8 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 /** helper class for Solaris specific operations. */
 public final class SolarisUtil {
 
+	private static final Log logger = Log.getLog(SolarisUtil.class);
+	
     private SolarisUtil() {
     }
 
@@ -124,37 +134,75 @@ public final class SolarisUtil {
      *            connector attributes
      * @return the translated attributes encapsulated
      */
-    public static SolarisEntry forConnectorAttributeSet(String entryName, ObjectClass objectClass,
-            Set<Attribute> attributes, boolean sunCompat) {
+    public static SolarisEntry convertIcfAttributesToSolarisEntry(String entryName, ObjectClass objectClass,
+            Set<Attribute> attributes, SolarisConfiguration config) {
         // translate connector attributes to native counterparts
         final SolarisEntry.Builder builder = new SolarisEntry.Builder(entryName);
         for (Attribute attribute : attributes) {
-
-            String icfAttrName = attribute.getName();
-            ConnectorAttribute sunAttr = null;
+        	String icfAttrName = attribute.getName();
+        	ConnectorAttribute sunAttr = null;
+        	List<Object> icfValues = attribute.getValue();
+        	List<Object> sunValues = icfValues;
+        	
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-                String sunAttrName = AttrUtil.convertAccountIcfAttrToSun(sunCompat, icfAttrName);
-                sunAttr = AccountAttribute.forAttributeName(sunAttrName);
+            	if (Uid.NAME.equalsIgnoreCase(icfAttrName)) {
+            		sunAttr = AccountAttribute.NAME;
+            	} else {
+            		sunAttr = AccountAttribute.forAttributeName(icfAttrName);
+            	}
             } else {
-                sunAttr = GroupAttribute.forAttributeName(attribute.getName());
+            	if (Uid.NAME.equalsIgnoreCase(icfAttrName)) {
+            		sunAttr = GroupAttribute.GROUPNAME;
+            	} else {
+            		sunAttr = GroupAttribute.forAttributeName(icfAttrName);
+            	}
             }
 
-            List<?> values = attribute.getValue();
-
-            if (!sunCompat) {
-                if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
-                    if (values != null && !values.isEmpty()) {
-                        List<Boolean> stringValues = new ArrayList<Boolean>(values.size());
-                        // Values has to be List<Boolean> in this case
-                        for (Boolean boolVal : (List<Boolean>) values) {
-                            stringValues.add(!boolVal);
-                        }
-                        values = stringValues;
+            if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
+            	Boolean icfValue = null;
+            	Object sunValue = icfValue;
+            	if (icfValues != null) {
+                	if (icfValues.size() > 1) {
+                		throw new IllegalArgumentException("More than one value for attribute "+OperationalAttributes.ENABLE_NAME);
+                	}
+                	if (icfValues.size() > 0) {
+                		icfValue = (Boolean)icfValues.get(0);
+                	}
+            	}
+            	
+            	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+            		sunAttr = AccountAttribute.EXPIRE;
+            		
+            		if (icfValue != null) {
+            			if (icfValue) {
+            				sunValue = "";
+            			} else {
+            				sunValue = "1";
+            			}
+            		}
+            		
+            	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+            		sunAttr = AccountAttribute.LOCK;
+            		
+            		if (icfValue != null) {
+                    	sunValue = !icfValue;
                     }
-                }
+            		
+            	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
+            		// nothing to do
+            		
+            	} else {
+            		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
+            	}
+            	
+            	sunValues = new ArrayList<Object>(1);
+            	if (sunValue != null) {
+            		sunValues.add(sunValue);
+            	}
             }
+            
             if (sunAttr != null) {
-                builder.addAttr(sunAttr.getNative(), values);
+                builder.addAttr(sunAttr.getNative(), sunValues);
             } else if (!attribute.getName().equals(OperationalAttributes.PASSWORD_NAME)
                     && !attribute.getName().equals(Uid.NAME)) {
                 // FIXME: do we really need this exception here? It'd be way
@@ -164,6 +212,44 @@ public final class SolarisUtil {
                 throw new ConnectorException("ERROR: Unsupported attribute: " + attribute.getName());
             }
         }
+        return builder.build();
+    }
+    
+    /**
+     * @param entry
+     *            can be both ACCOUNT and GROUP
+     * @return A connector object based on attributes of given 'entry', that
+     *         contains the ATTRS_TO_GET.
+     */
+    public static ConnectorObject convertToConnectorObject(SolarisEntry entry, String[] attrsToGet, 
+    		ObjectClass oclass, SolarisConfiguration config) {
+        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+        Map<String, Attribute> indexedEntry = AttributeUtil.toMap(entry.getAttributeSet());
+
+        // add UID and Name (contract of ConnectorObject)
+        final String entryName = entry.getName();
+        builder.addAttribute(new Uid(entryName));
+        builder.addAttribute(new Name(entryName));
+
+        // and rest of the attributes
+        for (String icfAttrName : attrsToGet) {
+        	ConnectorAttribute connAttr = AttrUtil.toSolarisAttribute(icfAttrName, oclass, config);
+        	
+            final Attribute attrToConvert = indexedEntry.get(connAttr.getNative().getName());
+            List<Object> sunValues = (attrToConvert != null) ? attrToConvert.getValue() : null;
+            if (sunValues == null) {
+                sunValues = Collections.emptyList();
+            }
+
+            List<Object> icfValues = AttrUtil.toIcfAttributeValues(icfAttrName, sunValues, config);
+
+            logger.ok("Converted attr {0}={1} to {2}={3}", connAttr.getName(), sunValues, icfAttrName, icfValues);
+            
+            if (icfValues != null) {
+            	builder.addAttribute(icfAttrName, icfValues);
+            }
+        }
+
         return builder.build();
     }
 

@@ -58,7 +58,13 @@ public enum AccountAttribute implements ConnectorAttribute {
      */
     UID("uid", NativeAttribute.ID),
 
+    /**
+     * The date on which the user account will be disabled.
+     */
     EXPIRE("expire", NativeAttribute.USER_EXPIRE),
+    /**
+     * The number of days after a password expires until the account is permanently disabled.
+     */
     INACTIVE("inactive", NativeAttribute.USER_INACTIVE),
     COMMENT(PredefinedAttributes.DESCRIPTION, NativeAttribute.COMMENT),
     TIME_LAST_LOGIN(PredefinedAttributes.LAST_LOGIN_DATE_NAME, NativeAttribute.LAST_LOGIN),
@@ -72,7 +78,13 @@ public enum AccountAttribute implements ConnectorAttribute {
     MAX("max", NativeAttribute.MAX_DAYS_BETWEEN_CHNG),
     MIN("min", NativeAttribute.MIN_DAYS_BETWEEN_CHNG),
     WARN("warn", NativeAttribute.DAYS_BEFORE_TO_WARN),
+    
+    /**
+     * Lock-out, means that the account was disabled due to too many failed login attempts.
+     * Enable/disable is simulated using expire date.
+     */
     LOCK(OperationalAttributes.LOCK_OUT_NAME, NativeAttribute.LOCK),
+    
     PASSWD_FORCE_CHANGE("force_change", NativeAttribute.PWSTAT);
     // @formatter:on
 

@@ -53,14 +53,12 @@ public class SolarisCreate extends AbstractOp {
     private static final Log logger = Log.getLog(SolarisCreate.class);
 
     private final SolarisConnection connection;
-    private boolean sunCompat;
 
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
     public SolarisCreate(final SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
-        this.sunCompat = ((SolarisConfiguration) connector.getConfiguration()).getSunCompat();
     }
 
     /**
@@ -84,7 +82,7 @@ public class SolarisCreate extends AbstractOp {
         logger.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryName);
 
         final SolarisEntry entry =
-                SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs, sunCompat);
+                SolarisUtil.convertIcfAttributesToSolarisEntry(name.getNameValue(), oclass, attrs, connection.getConfiguration());
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             GuardedString password = null;
             Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);

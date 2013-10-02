@@ -371,7 +371,7 @@ public class LinuxModeDriver extends UnixModeDriver {
     }
 
     @Override
-    public Schema buildSchema(boolean sunCompat) {
+    public Schema buildSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(SolarisConnector.class);
 
         /*
@@ -412,9 +412,8 @@ public class LinuxModeDriver extends UnixModeDriver {
 
         for (AccountAttribute attr : AccountAttribute.values()) {
             String attrName = attr.getName();
-            AttributeInfo newAttr = AttrUtil.convertAccountSunAttrToAttrInfo(sunCompat, attr);
-            if (newAttr == null) {
-                switch (attr) {
+            AttributeInfo newAttr = null;
+            switch (attr) {
                 case NAME:
                     newAttr =
                             AttributeInfoBuilder.build(attrName, String.class, EnumSet
@@ -450,13 +449,15 @@ public class LinuxModeDriver extends UnixModeDriver {
                 default:
                     newAttr = AttributeInfoBuilder.build(attrName);
                     break;
-                }
             }
 
             if (newAttr != null) {
                 attributes.add(newAttr);
             }
         }
+        
+        tweakAccountActivationSchema(attributes);
+        
         final ObjectClassInfo ociInfoAccount =
                 new ObjectClassInfoBuilder().setType(ObjectClass.ACCOUNT_NAME).addAllAttributeInfo(
                         attributes).build();

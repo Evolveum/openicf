@@ -25,8 +25,11 @@ package org.identityconnectors.solaris.mode;
 import java.util.List;
 import java.util.Set;
 
+import org.identityconnectors.framework.common.objects.AttributeInfo;
+import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -76,6 +79,21 @@ public abstract class UnixModeDriver {
 
     public abstract void configurePasswordProperties(SolarisEntry entry, SolarisConnection conn);
 
-    public abstract Schema buildSchema(boolean sunCompat);
+    public abstract Schema buildSchema();
+    
+    protected void tweakAccountActivationSchema(Set<AttributeInfo> attributes) {
+		String activationMode = conn.getConfiguration().getActivationMode();
+		if (ActivationMode.EXPIRATION.getConfigString().equals(activationMode) 
+				|| ActivationMode.LOCKING.getConfigString().equals(activationMode)) {
+			attributes.add(OperationalAttributeInfos.ENABLE);
+    		
+    	} else if (ActivationMode.NONE.getConfigString().equals(activationMode)) {
+    		// nothing to do
+    		
+    	} else {
+    		throw new IllegalArgumentException("Unknown activation mode "+activationMode);
+    	}
+		
+	}
 
 }

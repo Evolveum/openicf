@@ -27,6 +27,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
+import org.identityconnectors.solaris.mode.ActivationMode;
 import org.identityconnectors.solaris.mode.SolarisModeDriver;
 import org.identityconnectors.solaris.operation.search.SolarisEntries;
 
@@ -284,18 +285,18 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     private int commandTimeout = 24000;
 
     /**
-     * UNIX Mode
+     * UNIX Mode.
      *
      * Specifies the unix flavour assumed for execution of certain commands.
      */
     private String unixMode = SolarisModeDriver.MODE_NAME;
-
+    
     /**
-     * Sun IDM Compatibility.
-     *
-     * Turns on behavior and schema that is almost identical to Sun IDM adapter.
+     * Activation mode.
+     * 
+     * Specifies how to process activation (ENABLE/DISABLE) requests.
      */
-    private boolean sunCompat = false;
+    private String activationMode = ActivationMode.NONE.getConfigString();
 
     /**
      * Check commands availability.
@@ -565,15 +566,6 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.unixMode = unixMode;
     }
 
-    @ConfigurationProperty(order = 28)
-    public boolean getSunCompat() {
-        return sunCompat;
-    }
-
-    public void setSunCompat(boolean sunCompat) {
-        this.sunCompat = sunCompat;
-    }
-
     @ConfigurationProperty(order = 27)
     public boolean isCheckCommandsAvailability() {
         return checkCommandsAvailability;
@@ -582,6 +574,17 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setCheckCommandsAvailability(boolean checkCommands) {
         checkCommandsAvailability = checkCommands;
     }
+    
+    @ConfigurationProperty(order = 28)
+    public String getActivationMode() {
+		return activationMode;
+	}
+
+	public void setActivationMode(String activationMode) {
+		this.activationMode = activationMode;
+	}
+
+
 
     /* *********** AUXILIARY METHODS ***************** */
     /**

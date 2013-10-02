@@ -53,6 +53,7 @@ import org.identityconnectors.solaris.attr.AttrUtil;
 import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.mode.ActivationMode;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.nodes.AcceptAllNode;
 import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
@@ -63,7 +64,6 @@ public class SolarisSearch extends AbstractOp {
     private static final Log logger = Log.getLog(SolarisSearch.class);
 
     private SolarisConnection connection;
-    boolean sunCompat;
 
     /**
      * SHELL objectClass supports only Search operation. It encapsulates the
@@ -95,11 +95,10 @@ public class SolarisSearch extends AbstractOp {
             ResultsHandler handler, OperationOptions options) {
         super(connector);
         connection = connector.getConnection();
+        SolarisConfiguration config = connection.getConfiguration();
 
         this.oclass = oclass;
         this.handler = handler;
-
-        this.sunCompat = ((SolarisConfiguration) connector.getConfiguration()).getSunCompat();
 
         if (filter == null) {
             // NULL indicates that we should return all results.
@@ -129,9 +128,18 @@ public class SolarisSearch extends AbstractOp {
             for (String accountAttrName : attrsToGet) {
                 if (Uid.NAME.equalsIgnoreCase(accountAttrName)) {
                     translatedAttrs.add(AccountAttribute.NAME.getNative());
+                } else if (OperationalAttributes.ENABLE_NAME.equals(accountAttrName)) {
+                	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+                		translatedAttrs.add(NativeAttribute.USER_EXPIRE);
+                	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+                		translatedAttrs.add(NativeAttribute.LOCK);
+                	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
+                		// nothing to do
+                	} else {
+                		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
+                	}
                 } else {
-                    translatedAttrs.add(AttrUtil.convertAccountIcfAttrToNative(sunCompat,
-                            accountAttrName));
+                    translatedAttrs.add(AccountAttribute.forAttributeName(accountAttrName).getNative());
                 }
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
@@ -250,7 +258,7 @@ public class SolarisSearch extends AbstractOp {
         while (entryIt.hasNext()) {
             final SolarisEntry entry = entryIt.next();
             if (filter.evaluate(entry)) {
-                ConnectorObject connObj = convertToConnectorObject(entry, oclass);
+                ConnectorObject connObj = SolarisUtil.convertToConnectorObject(entry, attrsToGet, oclass, connection.getConfiguration());
                 handler.handle(connObj);
             }
         }
@@ -282,66 +290,9 @@ public class SolarisSearch extends AbstractOp {
         }
 
         if (singleEntry != null) {
-            ConnectorObject connObj = convertToConnectorObject(singleEntry, oclass);
+            ConnectorObject connObj = SolarisUtil.convertToConnectorObject(singleEntry, attrsToGet, oclass, connection.getConfiguration());
             handler.handle(connObj);
         }
-    }
-
-    /**
-     * @param entry
-     *            can be both ACCOUNT and GROUP
-     * @return A connector object based on attributes of given 'entry', that
-     *         contains the ATTRS_TO_GET.
-     */
-    private ConnectorObject convertToConnectorObject(SolarisEntry entry, ObjectClass oclass) {
-        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-        Map<String, Attribute> indexedEntry = AttributeUtil.toMap(entry.getAttributeSet());
-
-        // add UID and Name (contract of ConnectorObject)
-        final String entryName = entry.getName();
-        builder.addAttribute(new Uid(entryName));
-        builder.addAttribute(new Name(entryName));
-
-        // and rest of the attributes
-        for (String attribute : attrsToGet) {
-            ConnectorAttribute connAttr = null;
-            if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-                if (Uid.NAME.equalsIgnoreCase(attribute)) {
-                    connAttr = AccountAttribute.NAME;
-                } else {
-                    String sunAttrName = AttrUtil.convertAccountIcfAttrToSun(sunCompat, attribute);
-                    connAttr = AccountAttribute.forAttributeName(sunAttrName);
-                }
-            } else {
-                connAttr =
-                        Uid.NAME.equalsIgnoreCase(attribute) ? GroupAttribute.GROUPNAME
-                                : GroupAttribute.forAttributeName(attribute);
-            }
-
-            final Attribute attrToConvert = indexedEntry.get(connAttr.getNative().getName());
-            List<?> values = (attrToConvert != null) ? attrToConvert.getValue() : null;
-            if (values == null) {
-                values = Collections.emptyList();
-            }
-
-            // This is ugly. We convert from "native" names to sun-compat names
-            // and then to ICF names.
-            // TODO: Refactor
-            if (!sunCompat) {
-                if (attribute.equals(OperationalAttributes.ENABLE_NAME)) {
-                    List<Boolean> booleanValues = new ArrayList<Boolean>(values.size());
-                    for (Object val : values) {
-                        Boolean boolVal = AttrUtil.parseBoolean(val);
-                        booleanValues.add(!boolVal);
-                    }
-                    values = booleanValues;
-                }
-            }
-
-            builder.addAttribute(connAttr.getName(), values);
-        }
-
-        return builder.build();
     }
 
     /**

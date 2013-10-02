@@ -185,7 +185,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp, Sche
     public Schema schema() {
         logger.info("schema()");
         if (schema == null) {
-            schema = connection.getModeDriver().buildSchema(configuration.getSunCompat());
+            schema = connection.getModeDriver().buildSchema();
         }
         return schema;
     }
