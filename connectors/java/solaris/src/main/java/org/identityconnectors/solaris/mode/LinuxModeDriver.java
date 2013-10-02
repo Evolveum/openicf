@@ -484,4 +484,9 @@ public class LinuxModeDriver extends UnixModeDriver {
         return schemaBuilder.build();
     }
 
+	@Override
+	public String getSudoPasswordRegexp() {
+		return "\\[sudo\\].*[pP]assword[^:]*:";
+	}
+
 }

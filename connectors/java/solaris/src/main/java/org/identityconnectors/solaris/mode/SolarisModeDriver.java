@@ -462,4 +462,9 @@ public class SolarisModeDriver extends UnixModeDriver {
         return schemaBuilder.build();
     }
 
+	@Override
+	public String getSudoPasswordRegexp() {
+		return "^[pP]assword[^:]*:";
+	}
+
 }

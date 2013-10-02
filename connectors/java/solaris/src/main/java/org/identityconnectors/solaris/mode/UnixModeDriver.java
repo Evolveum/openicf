@@ -96,4 +96,6 @@ public abstract class UnixModeDriver {
 		
 	}
 
+	abstract public String getSudoPasswordRegexp();
+
 }

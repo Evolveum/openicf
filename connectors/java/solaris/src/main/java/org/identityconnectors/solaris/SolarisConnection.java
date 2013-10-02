@@ -567,6 +567,12 @@ public class SolarisConnection {
             // captureClosures.add(closure);
             builder.addRegExpMatch(Perl5Compiler.quotemeta(getRootShellPrompt()), closure);
         }
+        
+        if (configuration.isSudoAuthorization()) {
+        	SudoPasswordClosure closure = new SudoPasswordClosure();
+        	String sudoRegexp = getModeDriver().getSudoPasswordRegexp();
+			builder.addRegExpMatch(sudoRegexp, closure);
+        }
 
         // #3 set the timeout for matching too
         builder.addTimeoutMatch(timeout, new SolarisClosure() {
@@ -1192,28 +1198,12 @@ public class SolarisConnection {
                 executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
 
                 // 2) send sudo start command
-                // Solaris prompts just "password:", linux prompts
-                // "password for username:". following regexp should match both
-                // password prompt is also optional, it may not appear (e.g. if
-                // NOPASSWD: was congifured in sudoers file)
                 log.ok("sudo start");
-                String output =
-                        executeCommand(SUDO_START_COMMAND, Collections.<String> emptySet(),
-                                CollectionUtil.newSet("assword[^:]*:", null));
-
-                if (output.matches(".*[Pp]assword.*")) {
-                    // sudo asked for password. If this is not true then it has
-                    // not asked and we would sent the password as command
-                    // instead
-                    // of responding to the prompt. that could be dangerous (the
-                    // password may appear in command history).
-                	log.ok("Sending sudo password");
-                    GuardedString passwd = config.getCredentials();
-                    sendPassword(passwd, CollectionUtil.newSet("may not run",
-                            "not allowed to execute"), Collections.<String> emptySet());
-                } else {
-                	log.ok("Not sending password to sudo because sudo had not requested it (output={0})",output);
-                }
+                executeCommand(SUDO_START_COMMAND);
+                // Sudo password will be sent from the expect4j closure inside executeCommand() method
+                // this is the same way as is used for other subsequent commands that might request sudo password
+                // e.g. because the initial sudo start timed out
+                log.ok("sudo start done");
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }
@@ -1294,7 +1284,7 @@ public class SolarisConnection {
          * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, SolarisClosure)}
          * .
          */
-        public void addRegExpMatch(String regExp, SolarisClosure closure) {
+        public void addRegExpMatch(String regExp, Closure closure) {
             try {
                 matches.add(new RegExpMatch(regExp, closure));
             } catch (MalformedPatternException ex) {
@@ -1344,6 +1334,26 @@ public class SolarisConnection {
         public void run(ExpectState state) throws Exception {
             buffer = state.getBuffer();
             isMatched = true;
+        }
+    }
+    
+    private class SudoPasswordClosure implements Closure {
+
+        public void run(final ExpectState state) throws Exception {
+        	log.ok("Sudo password prompt detected, sending password");
+        	GuardedString passwd = configuration.getCredentials();
+        	passwd.access(new GuardedString.Accessor() {
+                public void access(char[] clearChars) {
+                    for (char c : clearChars) {
+                        if (Character.isISOControl(c)) {
+                            throw new IllegalArgumentException(
+                                    "User password contains one or more control characters.");
+                        }
+                    }
+                    state.setBuffer(new String(clearChars));
+                }
+            });
+            
         }
     }
 
