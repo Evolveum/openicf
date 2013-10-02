@@ -23,6 +23,7 @@ package org.identityconnectors.solaris.attr;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
@@ -84,50 +85,6 @@ public final class AttrUtil {
         
         return sunAttr;
     }
-
-    public static List<Object> toSolarisAttributeValues(String icfAttrName, List<Object> icfValues, SolarisConfiguration config) {
-        if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
-        	Boolean icfValue = null;
-        	Object sunValue = icfValue;
-        	if (icfValues != null) {
-            	if (icfValues.size() > 1) {
-            		throw new IllegalArgumentException("More than one value for attribute "+OperationalAttributes.ENABLE_NAME);
-            	}
-            	if (icfValues.size() > 0) {
-            		icfValue = (Boolean)icfValues.get(0);
-            	}
-        	}
-        	
-        	if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
-        		if (icfValue != null) {
-        			if (icfValue) {
-        				sunValue = "";
-        			} else {
-        				sunValue = "1";
-        			}
-        		}
-        		
-        	} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
-        		if (icfValue != null) {
-                	sunValue = !icfValue;
-                }
-        		
-        	} else if (ActivationMode.NONE.getConfigString().equals(config.getActivationMode())) {
-        		// nothing to do
-        		
-        	} else {
-        		throw new IllegalArgumentException("Unknown activation mode "+config.getActivationMode());
-        	}
-        	
-        	List sunValues = new ArrayList(1);
-        	if (sunValue != null) {
-        		sunValues.add(sunValue);
-        	}
-        	return sunValues;
-        }
-        
-        return icfValues;
-    }
     
     public static List<Object> toIcfAttributeValues(String icfAttrName, List<Object> sunValues, SolarisConfiguration config) {
         if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
@@ -147,10 +104,29 @@ public final class AttrUtil {
         			// No expiration => account enabled
         			icfValue = true;
         		} else {
-        			if ("".equals(sunValue)) {
+        			Long longValue = null;
+        			if (sunValue instanceof String) {
+	        			if (StringUtil.isBlank((String) sunValue)) {
+	        				longValue = null;
+	        			} else if (((String)sunValue).matches("\\d+")) {
+	        				longValue = Long.valueOf((String)sunValue);
+	        			} else {
+	        				throw new IllegalStateException("Unexepect expiration format: "+sunValue);
+	        			}
+        			} else if (sunValue instanceof Long) {
+        				longValue = (Long) sunValue;
+        			} else {
+        				throw new IllegalStateException("Unexepect expiration value class: "+sunValue.getClass());
+        			}
+        			if (longValue == null) {
         				icfValue = true;
-        			} else if ("1".equals(sunValue)) {
-        				icfValue = false;
+        			} else {
+        				long currentDays = System.currentTimeMillis()/(1000*60*60*24);
+        				if (longValue <= currentDays) {
+        					icfValue = false;
+        				} else {
+        					icfValue = true;
+        				}
         			}
         		}
         		

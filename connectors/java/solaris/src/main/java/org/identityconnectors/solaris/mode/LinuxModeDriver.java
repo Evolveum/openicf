@@ -59,6 +59,7 @@ import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.CommandSwitches;
 import org.identityconnectors.solaris.operation.search.GetentPasswordCommand;
+import org.identityconnectors.solaris.operation.search.GetentShadowCommand;
 import org.identityconnectors.solaris.operation.search.IdCommand;
 import org.identityconnectors.solaris.operation.search.PasswdCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -247,6 +248,7 @@ public class LinuxModeDriver extends UnixModeDriver {
             scriptBuilder.append(buildGetUserScriptLine(true, "getent", "passwd " + username));
             scriptBuilder.append(buildGetUserScriptLine(true, "id", "-Grn " + username));
             scriptBuilder.append(buildGetUserScriptLine(true, "passwd", "-S " + username));
+            scriptBuilder.append(buildGetUserScriptLine(true, "getent", "shadow " + username));
             if (isLast) {
                 // TODO
             }
@@ -266,6 +268,7 @@ public class LinuxModeDriver extends UnixModeDriver {
         String linePwent = readLine(it, username, "pwent");
         String lineId = readLine(it, username, "id");
         String linePasswd = readLine(it, username, "passwd");
+        String lineShadow = readLine(it, username, "shadow");
 
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username);
 
@@ -277,7 +280,10 @@ public class LinuxModeDriver extends UnixModeDriver {
 
         SolarisEntry passwdEntry = PasswdCommand.getEntry(linePasswd, username);
         entryBuilder.addAllAttributesFrom(passwdEntry);
-
+        
+        SolarisEntry shadowEntry = GetentShadowCommand.getEntry(lineShadow, username);
+        entryBuilder.addAllAttributesFrom(shadowEntry);
+        
         SolarisEntry entry = entryBuilder.build();
 
         return entry;
@@ -423,8 +429,9 @@ public class LinuxModeDriver extends UnixModeDriver {
                 case MAX:
                 case WARN:
                 case INACTIVE:
+                case EXPIRE:
                 case UID:
-                    newAttr = AttributeInfoBuilder.build(attrName, int.class);
+                    newAttr = AttributeInfoBuilder.build(attrName, long.class);
                     break;
                 case PASSWD_FORCE_CHANGE:
                     newAttr =

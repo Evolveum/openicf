@@ -41,6 +41,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
 import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
 import org.identityconnectors.solaris.mode.LinuxModeDriver;
 import org.identityconnectors.solaris.mode.SolarisModeDriver;
@@ -530,9 +531,20 @@ public class SolarisConnection {
          * foobar (with larger match index 2).
          */
 
+        MatchBuilder builder = new MatchBuilder();
+        
+        SudoPasswordClosure sudoClosure = new SudoPasswordClosure();
+        
+        if (configuration.isSudoAuthorization()) {
+			SudoErrorClosure errorClosure = new SudoErrorClosure();
+			builder.addRegExpMatch("Sorry, try again", errorClosure);
+        	String sudoRegexp = getModeDriver().getSudoPasswordRegexp();
+			builder.addRegExpMatch(sudoRegexp, sudoClosure);
+        }
+        
         // according to the previous implementation note, the error matchers
         // should go first!:
-        MatchBuilder builder = new MatchBuilder();
+       
         // #1 Adding Error matchers
         final List<ErrorClosure> cecList = new ArrayList<ErrorClosure>();
         for (Map.Entry<String, ErrorHandler> rejEntry : rejects.entrySet()) {
@@ -568,12 +580,6 @@ public class SolarisConnection {
             builder.addRegExpMatch(Perl5Compiler.quotemeta(getRootShellPrompt()), closure);
         }
         
-        if (configuration.isSudoAuthorization()) {
-        	SudoPasswordClosure closure = new SudoPasswordClosure();
-        	String sudoRegexp = getModeDriver().getSudoPasswordRegexp();
-			builder.addRegExpMatch(sudoRegexp, closure);
-        }
-
         // #3 set the timeout for matching too
         builder.addTimeoutMatch(timeout, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
@@ -713,6 +719,35 @@ public class SolarisConnection {
             expect4j.expect(builder.build());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
+        }
+        
+        if (sudoClosure.isMatched) {
+        	GuardedString passwd = configuration.getCredentials();
+        	passwd.access(new GuardedString.Accessor() {
+                public void access(char[] clearChars) {
+                    for (char c : clearChars) {
+                        if (Character.isISOControl(c)) {
+                            throw new IllegalArgumentException(
+                                    "User password contains one or more control characters.");
+                        }
+                    }
+                    try {
+                    	log.ok("Sending sudo password");
+						expect4j.send(new String(clearChars) + HOST_END_OF_LINE_TERMINATOR);
+					} catch (IOException e) {
+						throw ConnectorException.wrap(e);
+					}
+                }
+            });
+        	
+        	// restart ...
+        	sudoClosure.reset();
+	        try {
+	            expect4j.expect(builder.build());
+	        } catch (Exception e) {
+	            throw ConnectorException.wrap(e);
+	        }
+
         }
 
         String output = null;
@@ -1339,21 +1374,28 @@ public class SolarisConnection {
     
     private class SudoPasswordClosure implements Closure {
 
+    	private boolean isMatched;
+    	
+    	public boolean isMatched() {
+            return isMatched;
+        }
+    	
+        public void reset() {
+        	isMatched = false;
+		}
+
+		public void run(final ExpectState state) throws Exception {
+        	log.ok("Sudo password prompt detected ({0}), sending password", state.getBuffer());
+        	isMatched = true;
+        }
+    }
+    
+    private class SudoErrorClosure implements Closure {
+
         public void run(final ExpectState state) throws Exception {
-        	log.ok("Sudo password prompt detected, sending password");
-        	GuardedString passwd = configuration.getCredentials();
-        	passwd.access(new GuardedString.Accessor() {
-                public void access(char[] clearChars) {
-                    for (char c : clearChars) {
-                        if (Character.isISOControl(c)) {
-                            throw new IllegalArgumentException(
-                                    "User password contains one or more control characters.");
-                        }
-                    }
-                    state.setBuffer(new String(clearChars));
-                }
-            });
-            
+        	String errorMessage = state.getBuffer();
+        	log.ok("Sudo error: {0}", errorMessage);
+        	throw new ConnectorSecurityException("Sudo authentication failed: '"+errorMessage+"'");
         }
     }
 

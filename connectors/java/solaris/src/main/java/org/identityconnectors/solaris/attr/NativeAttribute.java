@@ -70,6 +70,8 @@ public enum NativeAttribute {
     USER_INACTIVE,
     /** USER attribute. */
     LOCK,
+    
+    LAST_PASSWORD_CHANGE,
 
     /** USER attribute. */
     ROLES {

@@ -138,6 +138,23 @@ public final class SolarisUtil {
             Set<Attribute> attributes, SolarisConfiguration config) {
         // translate connector attributes to native counterparts
         final SolarisEntry.Builder builder = new SolarisEntry.Builder(entryName);
+        
+        boolean ignoreExpire = false;
+        boolean ignoreLock = false;
+        
+        // This is kind of HACK. We brutally override the original values if activation is configured.
+        // TODO: do it correctly and change the entire connector to delta-based. However it may be easier to
+        // just drop the connector and create a new one.
+        for (Attribute attribute : attributes) {
+        	if (attribute.getName().equals(OperationalAttributes.ENABLE_NAME)) {
+        		if (ActivationMode.EXPIRATION.getConfigString().equals(config.getActivationMode())) {
+        			ignoreExpire = true;
+        		} else if (ActivationMode.LOCKING.getConfigString().equals(config.getActivationMode())) {
+        			ignoreLock = true;
+        		}
+        	}
+        }
+        
         for (Attribute attribute : attributes) {
         	String icfAttrName = attribute.getName();
         	ConnectorAttribute sunAttr = null;
@@ -156,6 +173,16 @@ public final class SolarisUtil {
             	} else {
             		sunAttr = GroupAttribute.forAttributeName(icfAttrName);
             	}
+            }
+            
+            if (ignoreExpire && sunAttr != null && sunAttr.getNative() == NativeAttribute.USER_EXPIRE) {
+            	// skip, will be overridden by __ENABLE__
+            	continue;
+            }
+
+            if (ignoreLock && sunAttr != null && sunAttr.getNative() == NativeAttribute.LOCK) {
+            	// skip, will be overridden by __ENABLE__
+            	continue;
             }
 
             if (icfAttrName.equals(OperationalAttributes.ENABLE_NAME)) {
