@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.mode;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -90,6 +92,8 @@ public class LinuxModeDriver extends UnixModeDriver {
     private static final int CHARS_PER_LINE = 160;
 
     private static final Log logger = Log.getLog(LinuxModeDriver.class);
+
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY-MM-DD");
 
     public LinuxModeDriver(final SolarisConnection conn) {
         super(conn);
@@ -494,6 +498,34 @@ public class LinuxModeDriver extends UnixModeDriver {
 	@Override
 	public String getSudoPasswordRegexp() {
 		return "\\[sudo\\].*[pP]assword[^:]*:";
+	}
+	
+	@Override
+	public String getRenameDirScript(SolarisEntry entry, String newName) {
+		// @formatter:off
+        String renameDir =
+            "NEWNAME=" + newName + "; " +
+            "OLDNAME=" + entry.getName() + "; " +
+            "OLDDIR=`" + conn.buildCommand(true, "getent") + " passwd $NEWNAME | cut -d: -f6`; " +
+            "OLDBASE=`basename $OLDDIR`; " +
+            "if [ \"$OLDNAME\" = \"$OLDBASE\" ]; then\n" +
+              "PARENTDIR=`dirname $OLDDIR`; " +
+              "NEWDIR=`echo $PARENTDIR/$NEWNAME`; " +
+              "if [ ! -s $NEWDIR ]; then " +
+                conn.buildCommand(true, "chown") + " $NEWNAME $OLDDIR; " +
+                conn.buildCommand(true, "mv") + " -f $OLDDIR $NEWDIR; " +
+                "if [ $? -eq 0 ]; then\n" +
+                  conn.buildCommand(true, "usermod") + " -d $NEWDIR $NEWNAME; " +
+                "fi; " +
+              "fi; " +
+            "fi";
+        // @formatter:off
+        return renameDir;
+	}
+
+	@Override
+	public String formatDate(long daysSinceEpoch) {
+		return DATE_FORMAT.format(daysSinceEpoch*(24*60*60*1000));
 	}
 
 }

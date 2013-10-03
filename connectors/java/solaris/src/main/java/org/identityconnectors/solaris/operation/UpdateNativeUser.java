@@ -153,25 +153,7 @@ class UpdateNativeUser extends CommandSwitches {
 
     private static String getRenameDirScript(SolarisEntry entry, SolarisConnection conn,
             String newName) {
-        // @formatter:off
-        String renameDir =
-            "NEWNAME=" + newName + "; " +
-            "OLDNAME=" + entry.getName() + "; " +
-            "OLDDIR=`" + conn.buildCommand(true, "logins") + " -ox -l $NEWNAME | cut -d: -f6`; " +
-            "OLDBASE=`basename $OLDDIR`; " +
-            "if [ \"$OLDNAME\" = \"$OLDBASE\" ]; then\n" +
-              "PARENTDIR=`dirname $OLDDIR`; " +
-              "NEWDIR=`echo $PARENTDIR/$NEWNAME`; " +
-              "if [ ! -s $NEWDIR ]; then " +
-                conn.buildCommand(true, "chown") + " $NEWNAME $OLDDIR; " +
-                conn.buildCommand(true, "mv") + " -f $OLDDIR $NEWDIR; " +
-                "if [ $? -eq 0 ]; then\n" +
-                  conn.buildCommand(true, "usermod") + " -d $NEWDIR $NEWNAME; " +
-                "fi; " +
-              "fi; " +
-            "fi";
-        // @formatter:off
-        return renameDir;
+    	return conn.getModeDriver().getRenameDirScript(entry, newName);
     }
 
     private static String getSecondaryGroupsScript(SolarisEntry entry,

@@ -153,4 +153,19 @@ public final class AttrUtil {
         
         return sunValues;
     }
+    
+    public static Long toLong(Object obj) {
+    	if (obj == null) {
+    		return null;
+    	} else if (obj instanceof Long) {
+    		return (Long)obj;
+    	} else if (obj instanceof String) {
+    		if (StringUtil.isBlank((String)obj)) {
+    			return null;
+    		}
+    		return Long.valueOf((String)obj);
+    	} else {
+    		throw new IllegalArgumentException("Cannot conver "+obj+" to long");
+    	}
+    }
 }

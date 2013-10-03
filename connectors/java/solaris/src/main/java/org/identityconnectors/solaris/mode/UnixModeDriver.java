@@ -98,4 +98,8 @@ public abstract class UnixModeDriver {
 
 	abstract public String getSudoPasswordRegexp();
 
+	abstract public String getRenameDirScript(SolarisEntry entry, String newName);
+	
+	abstract public String formatDate(long daysSinceEpoch);
+
 }

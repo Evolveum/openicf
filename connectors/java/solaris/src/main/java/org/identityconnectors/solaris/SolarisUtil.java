@@ -175,11 +175,6 @@ public final class SolarisUtil {
             	}
             }
             
-            if (ignoreExpire && sunAttr != null && sunAttr.getNative() == NativeAttribute.USER_EXPIRE) {
-            	// skip, will be overridden by __ENABLE__
-            	continue;
-            }
-
             if (ignoreLock && sunAttr != null && sunAttr.getNative() == NativeAttribute.LOCK) {
             	// skip, will be overridden by __ENABLE__
             	continue;
@@ -202,9 +197,9 @@ public final class SolarisUtil {
             		
             		if (icfValue != null) {
             			if (icfValue) {
-            				sunValue = "";
+            				sunValue = null;
             			} else {
-            				sunValue = "1";
+            				sunValue = 0L;
             			}
             		}
             		
@@ -270,7 +265,7 @@ public final class SolarisUtil {
 
             List<Object> icfValues = AttrUtil.toIcfAttributeValues(icfAttrName, sunValues, config);
 
-            logger.ok("Converted attr {0}={1} to {2}={3}", connAttr.getName(), sunValues, icfAttrName, icfValues);
+//            logger.ok("Converted attr {0}={1} to {2}={3}", connAttr.getName(), sunValues, icfAttrName, icfValues);
             
             if (icfValues != null) {
             	builder.addAttribute(icfAttrName, icfValues);

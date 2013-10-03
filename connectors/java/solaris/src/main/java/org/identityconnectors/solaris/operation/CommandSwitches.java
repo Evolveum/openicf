@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.attr.AttrUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -166,6 +167,19 @@ public class CommandSwitches {
                             "Solaris allows to set 'force_change' attribute only to 'true' value. Anything else is invalid and will be ignored.");
                 }
                 break;
+            case USER_EXPIRE:
+            	buffer.append(cmdSwitchForAttr).append(" ");
+            	buffer.append("\"");
+            	if (values == null || values.isEmpty() || values.get(0) == null) {
+            		// no value
+            	} else {
+            		Long value = AttrUtil.toLong(values.get(0));
+            		if (value != null) {
+            			buffer.append(conn.getModeDriver().formatDate(value));
+            		}
+            	}
+            	buffer.append("\" ");
+            	break;
             default:
                 buffer.append(cmdSwitchForAttr).append(" ");
 
