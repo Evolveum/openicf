@@ -538,7 +538,10 @@ public class SolarisConnection {
         if (configuration.isSudoAuthorization()) {
 			SudoErrorClosure errorClosure = new SudoErrorClosure();
 			builder.addRegExpMatch("Sorry, try again", errorClosure);
-        	String sudoRegexp = getModeDriver().getSudoPasswordRegexp();
+			String sudoRegexp = configuration.getSudoPasswordPrompt();
+			if (sudoRegexp == null) {
+        		sudoRegexp = getModeDriver().getSudoPasswordRegexp();
+			}
 			builder.addRegExpMatch(sudoRegexp, sudoClosure);
         }
         

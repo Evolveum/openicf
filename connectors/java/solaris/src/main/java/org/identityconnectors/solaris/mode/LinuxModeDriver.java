@@ -93,7 +93,7 @@ public class LinuxModeDriver extends UnixModeDriver {
 
     private static final Log logger = Log.getLog(LinuxModeDriver.class);
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY-MM-DD");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-DD");
 
     public LinuxModeDriver(final SolarisConnection conn) {
         super(conn);

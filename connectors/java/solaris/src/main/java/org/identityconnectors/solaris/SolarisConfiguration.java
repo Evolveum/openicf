@@ -297,6 +297,8 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * Specifies how to process activation (ENABLE/DISABLE) requests.
      */
     private String activationMode = ActivationMode.NONE.getConfigString();
+    
+    private String sudoPasswordPrompt = null;
 
     /**
      * Check commands availability.
@@ -584,9 +586,16 @@ public final class SolarisConfiguration extends AbstractConfiguration {
 		this.activationMode = activationMode;
 	}
 
+	@ConfigurationProperty(order = 29)
+    public String getSudoPasswordPrompt() {
+		return sudoPasswordPrompt;
+	}
 
+	public void setSudoPasswordPrompt(String sudoPasswordPrompt) {
+		this.sudoPasswordPrompt = sudoPasswordPrompt;
+	}
 
-    /* *********** AUXILIARY METHODS ***************** */
+	/* *********** AUXILIARY METHODS ***************** */
     /**
      * Compare with {@link SolarisConfiguration#isSudoAuthorization()}.
      *

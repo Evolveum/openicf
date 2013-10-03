@@ -86,7 +86,7 @@ public class SolarisModeDriver extends UnixModeDriver {
     private static final String SHELL_CONT_CHARS = "> ";
     private static final int CHARS_PER_LINE = 160;
     
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MM/DD/YYYY");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MM/DD/yyyy");
 
     public SolarisModeDriver(final SolarisConnection conn) {
         super(conn);
