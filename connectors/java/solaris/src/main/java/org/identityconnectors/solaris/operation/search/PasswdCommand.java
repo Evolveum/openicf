@@ -61,34 +61,50 @@ public final class PasswdCommand {
         }
         bldr.addAttr(NAME, username);
 
-        /* PWSTAT + PASSWD_LOCK */
-        final String pwstat = tokenIt.next();
-        boolean isPwStat = false;
-        boolean isLock = false;
-        if ("PS".equals(pwstat)) {
-            isPwStat = true;
+        if (tokenIt.hasNext()) {
+	        /* PWSTAT + PASSWD_LOCK */
+	        final String pwstat = tokenIt.next();
+	        boolean isPwStat = false;
+	        boolean isLock = false;
+	        if ("PS".equals(pwstat)) {
+	            isPwStat = true;
+	        }
+	        if ("LK".equals(pwstat)) {
+	            isLock = true;
+	        }
+	        bldr.addAttr(PWSTAT, isPwStat);
+	        bldr.addAttr(LOCK, isLock);
+	
+	        if (tokenIt.hasNext()) {
+		        /* PASSWD CHANGE - skip */
+		        tokenIt.next();
+		        
+		        if (tokenIt.hasNext()) {
+			        bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
+			        
+			        if (tokenIt.hasNext()) {
+				        bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
+				        
+				        if (tokenIt.hasNext()) {
+				        	bldr.addAttr(DAYS_BEFORE_TO_WARN, Integer.valueOf(tokenIt.next()));
+				        	
+				        	if (tokenIt.hasNext()) {
+						        /* USER INACTIVE */
+						        Integer userInactive = Integer.valueOf(tokenIt.next());
+						        if (userInactive.equals(-1)) {
+						            // This is set to not expire and security modules may
+						            // not even be installed on the host so reset this to null.
+						            userInactive = null;
+						        }
+						        bldr.addAttr(USER_INACTIVE, userInactive);
+				        	}
+	
+				        }
+			        }
+		        }
+		
+	        }
         }
-        if ("LK".equals(pwstat)) {
-            isLock = true;
-        }
-        bldr.addAttr(PWSTAT, isPwStat);
-        bldr.addAttr(LOCK, isLock);
-
-        /* PASSWD CHANGE - skip */
-        tokenIt.next();
-
-        bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
-        bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
-        bldr.addAttr(DAYS_BEFORE_TO_WARN, Integer.valueOf(tokenIt.next()));
-
-        /* USER INACTIVE */
-        Integer userInactive = Integer.valueOf(tokenIt.next());
-        if (userInactive.equals(-1)) {
-            // This is set to not expire and security modules may
-            // not even be installed on the host so reset this to null.
-            userInactive = null;
-        }
-        bldr.addAttr(USER_INACTIVE, userInactive);
 
         return bldr.build();
     }
