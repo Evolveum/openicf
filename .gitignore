@@ -5,3 +5,35 @@ target
 .classpath
 .idea
 *.iml
+
+# c#/visualstudio files
+
+AssemblyInfo.cs
+
+*.suo
+*.user
+*.sln.docstates
+*.wxs
+*.bat
+
+# Build results
+
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+[Bb]in/
+[Oo]bj/
+
+*.obj
+*.exe
+*.dll
+
+# Enable "build/" folder in the NuGet Packages folder since NuGet packages use it for MSBuild targets
+!packages/*/build/
+
+UpgradeLog*.XML
+UpgradeLog*.htm
+
+framework/dotnet/_UpgradeReport_Files
+version.txt

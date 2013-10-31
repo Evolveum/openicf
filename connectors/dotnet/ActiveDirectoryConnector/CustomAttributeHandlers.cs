@@ -352,6 +352,31 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region UpdateDeFromCa handlers
 
+        internal string DumpPVC(PropertyValueCollection pvc)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (pvc != null)
+            {
+                bool first = true;
+                foreach (object o in pvc)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        sb.Append(", ");
+                    }
+                    sb.Append(o);
+                }
+            }
+            else
+            {
+                sb.Append("(null)");
+            }
+            return sb.ToString();
+        }
 
 
         internal void UpdateDeFromCa_OpAtt_Groups(ObjectClass oclass,
@@ -372,7 +397,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<Object> groupsToAdd = new HashSet<Object>();
                 ICollection<Object> groupsToRemove = new HashSet<Object>();
 
+                Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: user = {0}, oldValues = {1}, newValues = {2}, updateType = {3}",
+                    directoryEntry.Name, DumpPVC(oldValues), CollectionUtil.Dump(newValues), type);
+
                 GetAddsAndDeletes(groupsToAdd, groupsToRemove, oldValues, newValues, type);
+
+                Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: user = {0}, groupsToAdd = {1}, groupsToRemove = {2}",
+                    directoryEntry.Name, CollectionUtil.Dump(groupsToAdd), CollectionUtil.Dump(groupsToRemove));
                 
                 foreach (Object obj in groupsToRemove)
                 {
@@ -383,8 +414,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     DirectoryEntry groupDe = new DirectoryEntry(groupPath,
                         _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
-                    groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Remove(distinguishedName);
-                    groupDe.CommitChanges();
+                    Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, removing {2}",
+                        groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
+                    if (groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Contains(distinguishedName))
+                    {
+                        groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Remove(distinguishedName);
+                        groupDe.CommitChanges();
+                    }
+                    else
+                    {
+                        Trace.TraceWarning("{0} is NOT a member of {1}, no remove operation is executed", distinguishedName, groupPath);
+                    }
                     groupDe.Dispose();
                 }
 
@@ -397,8 +437,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     DirectoryEntry groupDe = new DirectoryEntry(groupPath,
                         _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
-                    groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Add(distinguishedName);
-                    groupDe.CommitChanges();
+                    Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, adding {2}",
+                        groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
+                    if (!groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Contains(distinguishedName))
+                    {
+                        groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Add(distinguishedName);
+                        groupDe.CommitChanges();
+                    }
+                    else
+                    {
+                        Trace.TraceWarning("{0} is already a member of {1}, no add operation is executed", distinguishedName, groupPath);
+                    }
                     groupDe.Dispose();
                 }
             }
