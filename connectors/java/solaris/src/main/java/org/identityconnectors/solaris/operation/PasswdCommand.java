@@ -39,7 +39,8 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  */
 final class PasswdCommand extends CommandSwitches {
 
-    private static final String NEW_PASSWORD_MATCH = "ew Password:";
+    private static final Set<String> NEW_PASSWORD_MATCHES = CollectionUtil.newSet("ew Password:",
+    		"ew UNIX password:");
 
     private final static Set<String> PASSWD_REJECTS = CollectionUtil.newSet("Permission denied",
             "command not found", "not allowed to execute");
@@ -55,10 +56,9 @@ final class PasswdCommand extends CommandSwitches {
             }
 
             String command = conn.getModeDriver().buildPasswdCommand(entry.getName());
-            conn.executeCommand(command, PASSWD_REJECTS, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
+            conn.executeCommand(command, PASSWD_REJECTS, NEW_PASSWORD_MATCHES);
 
-            conn.sendPassword(password, Collections.<String> emptySet(), CollectionUtil
-                    .newSet(NEW_PASSWORD_MATCH));
+            conn.sendPassword(password, Collections.<String> emptySet(), NEW_PASSWORD_MATCHES);
 
             conn.sendPassword(password, Collections.<String> emptySet(), Collections
                     .<String> emptySet());
