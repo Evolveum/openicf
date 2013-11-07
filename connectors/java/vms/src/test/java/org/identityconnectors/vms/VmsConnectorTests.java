@@ -28,6 +28,7 @@ import static org.identityconnectors.vms.VmsConstants.ATTR_BIOLM;
 import static org.identityconnectors.vms.VmsConstants.ATTR_BYTLM;
 import static org.identityconnectors.vms.VmsConstants.ATTR_DEFPRIVILEGES;
 import static org.identityconnectors.vms.VmsConstants.ATTR_DIOLM;
+import static org.identityconnectors.vms.VmsConstants.ATTR_DIRECTORY;
 import static org.identityconnectors.vms.VmsConstants.ATTR_FILLM;
 import static org.identityconnectors.vms.VmsConstants.ATTR_FLAGS;
 import static org.identityconnectors.vms.VmsConstants.ATTR_GRANT_IDS;
@@ -56,12 +57,14 @@ import static org.identityconnectors.vms.VmsConstants.DAYS_WED;
 import static org.identityconnectors.vms.VmsConstants.PRIV_NETMBX;
 import static org.identityconnectors.vms.VmsConstants.PRIV_TMPMBX;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -171,7 +174,6 @@ public class VmsConnectorTests {
         testScriptOnResource(context, config);
     }
 
-
     @Test(groups = { "integration" })
     public void testScriptOnResourceStatus() throws Exception {
 
@@ -180,7 +182,6 @@ public class VmsConnectorTests {
         ScriptContext context = new ScriptContext("DCL", script, map);
 
         VmsConfiguration config = createConfiguration();
-
 
         VmsConnector info = createConnector(config);
         try {
@@ -201,8 +202,7 @@ public class VmsConnectorTests {
             HashMap<String, Object> optionsMap = new HashMap<String, Object>();
             OperationOptions options = new OperationOptions(optionsMap);
             String[] results = (String[]) info.runScriptOnResource(context, options);
-            assertTrue(results[1].contains(config.getUserName()
-                    .toUpperCase()), results[1]);
+            assertTrue(results[1].contains(config.getUserName().toUpperCase()), results[1]);
             assertTrue(results[1].contains("Hello World"), results[1]);
         } finally {
             info.dispose();
@@ -942,8 +942,7 @@ public class VmsConnectorTests {
                 Attribute expireDate =
                         user.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
                 assertTrue(AttributeUtil.getLongValue(expireDate) > (now - 120000));
-                assertTrue(AttributeUtil.getLongValue(expireDate) < new Date()
-                        .getTime());
+                assertTrue(AttributeUtil.getLongValue(expireDate) < new Date().getTime());
             }
             // Show that we can expire never (this should also for expired to be
             // false)
@@ -973,6 +972,45 @@ public class VmsConnectorTests {
     }
 
     @Test
+    public void testValidDirectoryAttribute() {
+        VmsConfiguration config = createConfiguration();
+        // @formatter:off
+    	   List<String> validDirectories = Arrays.asList(
+    			   "ABCD",
+    			   "A1",
+    			   "1234",
+    			   "abcd",
+    			   "abcd_",
+    			   "_abcd",
+    			   "abcd-",
+    			   // "-abcd", -- bad one, see testBadAttributes()
+    			   "abcd$",
+    			   "$abcd",
+    			   "[ABCD]",
+    			   "[A1]",
+    			   "[1234]",
+    			   "[abcd]",
+    			   "[abcd_]",
+    			   "[_abcd]",
+    			   "[abcd-]",
+    			   //"[-abcd]", -- bad one, see testBadAttributes()
+    			   "[abcd$]",
+    			   "[$abcd]");
+        // @formatter:on
+        List<String> errors = new ArrayList<String>();
+        for (Object dir : validDirectories) {
+            try {
+                VmsAttributeValidator.validate(ATTR_DIRECTORY, Arrays.asList(dir), config);
+            } catch (IllegalArgumentException e) {
+                errors.add(dir.toString());
+            }
+        }
+        if (errors.size() > 0)
+            fail("Validation failed for " + errors.toString());
+
+    }
+
+    @Test
     public void testBadAttributes() throws Exception {
         // Negative tests
         //
@@ -985,6 +1023,16 @@ public class VmsConnectorTests {
         testBadValue(AttributeBuilder.build(ATTR_FLAGS, badFlags));
         testBadValue(AttributeBuilder.build(ATTR_DEFPRIVILEGES, badFlags));
         testBadValue(AttributeBuilder.build(ATTR_PRIVILEGES, badFlags));
+        // DIRECTORY
+        // could not start with "-"
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "-ABCD"));
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "[-ABCD]"));
+        // could not contains ":"
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "AB:CD"));
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "[AB:CD]"));
+        // could not contains "~"
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "AB~CD"));
+        testBadValue(AttributeBuilder.build(ATTR_DIRECTORY, "[AB~CD]"));
     }
 
     private void testBadValue(Attribute attribute) throws Exception {
