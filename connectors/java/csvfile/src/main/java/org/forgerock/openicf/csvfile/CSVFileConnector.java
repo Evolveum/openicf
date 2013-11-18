@@ -468,6 +468,8 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
     }
 
     private void handleGenericException(Exception ex, String message) {
+        log.ok(ex, "Exception occurred: {0} , reason {1}", message, ex.getMessage());
+
         if (ex instanceof ConnectorException) {
             throw (ConnectorException) ex;
         }
