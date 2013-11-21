@@ -26,12 +26,10 @@ package org.forgerock.openicf.connectors.rsaauthenticationmanager;
 
 import com.rsa.admin.AddPrincipalsCommand;
 import com.rsa.admin.DeletePrincipalsCommand;
-import com.rsa.admin.EndSearchPrincipalsIterativeCommand;
 import com.rsa.admin.GetPrincipalGroupsCommand;
 import com.rsa.admin.LinkGroupPrincipalsCommand;
 import com.rsa.admin.SearchGroupsCommand;
 import com.rsa.admin.SearchPrincipalsCommand;
-import com.rsa.admin.SearchPrincipalsIterativeCommand;
 import com.rsa.admin.SearchSecurityDomainCommand;
 import com.rsa.admin.UnlinkGroupPrincipalsCommand;
 import com.rsa.admin.UpdatePrincipalCommand;
@@ -69,7 +67,12 @@ import com.rsa.command.exception.InsufficientPrivilegeException;
 import com.rsa.command.exception.InvalidArgumentException;
 import com.rsa.command.exception.ObjectInUseException;
 import com.rsa.common.search.Filter;
-
+import com.rsa.authmgr.admin.tokenmgt.GenerateOneTimeTokenCodeSetCommand;
+import com.rsa.authmgr.admin.tokenmgt.SearchTokensCommand;
+import com.rsa.command.ClientSession;
+import com.rsa.command.CommandTargetPolicy;
+import com.rsa.common.SystemException;
+        
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -81,6 +84,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
@@ -305,9 +309,10 @@ public class RSAAuthenticationManager8Connector implements
 
             // Operational Attribs
             GuardedString Password = aa.getPassword();
-            if (Password == null) {
+            /* Server side settings can allow for null password
+             * if (Password == null) {
                        throw new IllegalArgumentException("The Password attribute cannot be null.");
-            }
+            }*/
             Boolean Enabled = aa.getEnabled(true);
             
             // Getting UserID
@@ -487,7 +492,10 @@ public class RSAAuthenticationManager8Connector implements
             logger.info("Creating User Principal...");
             //PrincipalDTO User = new PrincipalDTO();
             try {
-                cmd.execute();
+                ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+                
                 
                 // only one user was created, there should be one GUID result
                 Uid = cmd.getGuids()[0];
@@ -507,8 +515,8 @@ public class RSAAuthenticationManager8Connector implements
                 logger.error("Invalid Argument ERROR: " + e.getMessage() + " key: " +e.getMessageKey());
                 throw new ConnectorException("Create Principal failure.", e);
             } catch (InsufficientPrivilegeException e) {
-                logger.error("Insufficient Privileges to create Principal: " + e.getMessage() + " User ID: " + configuration.getCmdclientUser());
-                throw new ConnectorException("Create Principal failure.", e);
+                logger.error("Insufficient Privileges to create Principal (User may already Exist): " + e.getMessage() + " User ID: " + configuration.getCmdclientUser());
+                throw new ConnectorException("Create Principal failure. (User may already Exist)", e);
             } catch (CommandException e) {
                 logger.error("An exception was thrown by the RSA command: " + e.getMessage() + " key: " +e.getMessageKey() + " cause: " + e.getCause());
                 throw new ConnectorException("Create Principal failure.", e);
@@ -531,7 +539,10 @@ public class RSAAuthenticationManager8Connector implements
                 // Perform Account Creation
                 AddAMPrincipalCommand AMcmd = new AddAMPrincipalCommand(AMprincipal);
                 try {
-                    AMcmd.execute();
+                    ClientSession ses = connection.newSession();
+                AMcmd.execute(ses);
+                connection.sessionLogout(ses);
+                    
                     logger.info("AM Principal created.");
                 } catch (CommandException e) {
                     logger.error("An exception was thrown by the RSA AM command: " + e.getMessage() + " key: " +
@@ -622,7 +633,10 @@ public class RSAAuthenticationManager8Connector implements
             cmd.setIdentitySourceGuid(this.connection.getIdSource().getGuid());
             
             try {
-                cmd.execute();
+                ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+                
                 logger.info("User Deleted.");
             } catch (ObjectInUseException e) {
                 logger.error("The User Principal object of user: " + UserId + " is currently in use and can't be deleted.");
@@ -658,7 +672,13 @@ public class RSAAuthenticationManager8Connector implements
     public FilterTranslator<Filter> createFilterTranslator(ObjectClass objectClass,
             OperationOptions options) {
         //throw new UnsupportedOperationException();
-        return new RSAAuthenticationManager8FilterTranslator();
+        
+        if (ObjectClass.ACCOUNT.equals(objectClass)) {
+            return (FilterTranslator<Filter>) new RSAAuthenticationManager8FilterTranslator(); 
+        } 
+        else {
+            return new RSAAuthenticationManager8TokenFilterTranslator();
+        }
     }
 
     /**
@@ -667,30 +687,32 @@ public class RSAAuthenticationManager8Connector implements
     public void executeQuery(ObjectClass objectClass, Filter query, ResultsHandler handler, OperationOptions options) {
         //throw new UnsupportedOperationException();
         
+        // If no query, then fetch all objects
+        if (query == null) {
+            query = Filter.empty();
+        }
+
+        if (query.checkEmpty()) {
+            logger.info("Searching  RSA with an empty filter...");
+            searchAll = true;
+        } else {
+            logger.info("Searching for RSA {0} matching query: {1} ", objectClass.getObjectClassValue(), query.toString());
+        }
+        
         // Search for ACCOUNTS
         if (ObjectClass.ACCOUNT.equals(objectClass)) {
-            
-            if (query == null)
-                query = Filter.empty();
-            
-            if (query.checkEmpty()) {
-                logger.info ("Searching for RSA Principals with an empty filter...");
-                searchAll = true;
-            } else
-                logger.info ("Searching for RSA Principals matching query: " + query.toString());
-
             // Execute search of users matching the provided filter
             PrincipalDTO[] results;
 
             SearchPrincipalsCommand cmd = new SearchPrincipalsCommand();
             // For paginated search, use:
             //SearchPrincipalsIterativeCommand cmd = new SearchPrincipalsIterativeCommand();
-            
+
             // Search size limit default
             cmd.setLimit(RSAAuthenticationManager8Configuration.SEARCH_LIMIT_DEFAULT);
-            
+
             // Get Search size limit from options, if any, and override the limit
-            Map<String,Object> TokenOpts = options.getOptions();
+            Map<String, Object> TokenOpts = options.getOptions();
             if (TokenOpts != null) {
                 if (TokenOpts.get(RSAAuthenticationManager8Configuration.SEARCH_LIMIT_NAME) != null) {
                     int limit = (Integer) TokenOpts.get(RSAAuthenticationManager8Configuration.SEARCH_LIMIT_NAME);
@@ -698,27 +720,248 @@ public class RSAAuthenticationManager8Connector implements
                     cmd.setLimit(limit);
                 }
             }
-            
+
             cmd.setIdentitySourceGuid(this.connection.getIdSource().getGuid());
             cmd.setSecurityDomainGuid(this.connection.getDomain().getGuid());
             cmd.setAttributeMask(new String[]{"ALL_INTRINSIC_ATTRIBUTES", "CORE_ATTRIBUTES", "SYSTEM_ATTRIBUTES", "ALL_EXTENDED_ATTRIBUTES"});
             cmd.setFilter(query);
             cmd.setSearchSubDomains(true);
-            
+
             try {
-                    cmd.execute();
-                    results = cmd.getPrincipals();
-                    for (PrincipalDTO principal : results) {
-                        if (!(searchAll))
-                            logger.info("Building results for user {0}.", principal.getUserID());
-                        buildUser(principal, handler);
+                ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+                
+                results = cmd.getPrincipals();
+                for (PrincipalDTO principal : results) {
+                    if (!(searchAll)) {
+                        logger.info("Building results for user {0}.", principal.getUserID());
                     }
+                    buildUser(principal, handler);
+                }
             } catch (CommandException e) {
-                logger.error("An error occured during search. Cause : " + e.getCause() + " Msg: " + e.getMessage() );
-                throw new RuntimeException ("An error occured during Search.", e);
-            } 
+                logger.error("An error occured during search. Cause : " + e.getCause() + " Msg: " + e.getMessage());
+                throw new RuntimeException("An error occured during Search.", e);
+            }
             searchAll = false;
-            
+
+        // ---- TOKENS - Emergency Access data
+        } else if (RSAAuthenticationManager8Configuration.TOKEN_OBJECTCLASS.equals(objectClass.getObjectClassValue())) {
+            // TOKEN Search: fetches the Emergency Access data of a given Token
+            // and generates new 1-time TokenCodes for the lost token.
+            // Used mainly to retrieve the tokenCodes once a Token has been lost
+
+            // Token search parameter: "serialNumber", ie: ListTokenDTO.FILTER_SERIAL_NO
+
+            logger.info("Fetching tokenCodes with filter: {0} ", query);
+            if (query.checkEmpty()) {
+                throw new IllegalArgumentException("Searching for tokens with an empty filter is not supported. Please specify a Token serialNumber .");
+            }
+
+            // Get the token's GUID
+            SearchTokensCommand TokenSrchCmd = new SearchTokensCommand();
+            TokenSrchCmd.setFilter(query);
+            TokenSrchCmd.setAssigned(true); // look for assigned tokens
+            TokenSrchCmd.setLimit(1); // Only fetch 1 token
+
+            ListTokenDTO[] listTokens = null;
+            try {
+                ClientSession ses = connection.newSession();
+                TokenSrchCmd.execute(ses);
+                connection.sessionLogout(ses);
+                // Retrieve only the first and only result
+                listTokens = TokenSrchCmd.getListSecurIDTokens();
+            } catch (Exception e) {
+                logger.error("Failed to fetch token with filter:" + query.toString());
+                throw new RuntimeException("Token Lookup failure.", e);
+            }
+
+            ListTokenDTO listToken = null;
+            if (listTokens.length > 0) {
+                listToken = listTokens[0];
+            } else {
+                logger.warn("No Tokens were found with the given filter...");
+            }
+
+            String TokenGuid = null;
+            if (listToken != null) {
+                TokenGuid = listToken.getGuid();
+            }
+
+            // Fetch the token's Emergency Access attributes
+            String serial = "";
+            String isLost = "";
+            String eaAccessCode = "";
+            String fixedTokenCode = "";
+            String nbUnusedCodes = "";
+
+            ArrayList<String> tokenCodes = null;
+            if (TokenGuid != null) {
+                LookupTokenEmergencyAccessCommand TokenEAcmd = new LookupTokenEmergencyAccessCommand();
+                TokenEAcmd.setGuid(TokenGuid);
+                try {
+                    ClientSession ses = connection.newSession();
+                TokenEAcmd.execute(ses);
+                connection.sessionLogout(ses);
+                   
+                    logger.info("Succesfully retrieved the token's Emergency Acces info.");
+                } catch (CommandException e) {
+                    logger.error("Token " + TokenGuid + " Emergency Access data Lookup failure:" + e.getCause() + " - " + e.getMessage()
+                            + " - " + e.getMessageKey());
+                    throw new RuntimeException("Token " + TokenGuid + " Emergency Access data Lookup failure.", e);
+                }
+                // Generate TokenCodes for the fetched token
+                TokenEmergencyAccessDTO tokenEA = TokenEAcmd.getTokenEmergencyAccess();
+                if (tokenEA != null) {
+                    
+                    // Is the token lost?
+                    isLost = String.valueOf(tokenEA.isTokenLost());
+                    logger.info("Token is lost ? Answer: " + isLost);
+
+                    if (tokenEA.isTokenLost()) {
+                        
+                        // First clear any unused TokenCodes from the token, then generate
+                        // a new set of TokenCodes.
+                        // 1. Clear tokencodes:
+                        tokenEA.setClearUnusedCodes(true);
+
+                        // Update the Token's EA record:
+                        UpdateTokenEmergencyAccessCommand lostUpdCmd = new UpdateTokenEmergencyAccessCommand();
+                        lostUpdCmd.setTokenEmergencyAccessDTO(tokenEA);
+                        logger.info("Clearing the unused TokenCodes of Token {0} with SN: {1}", TokenGuid, tokenEA.getSerialNumber());
+                        try {
+                            ClientSession ses = connection.newSession();
+                lostUpdCmd.execute(ses);
+                connection.sessionLogout(ses);
+                            
+                            logger.info("TokenCodes succesfully cleared.");
+                        } catch (CommandException e) {
+                            logger.error("Token " + tokenEA.getSerialNumber() + " Emergency Access data Update failure:" + e.getCause() + " - " + e.getMessage()
+                                    + " - " + e.getMessageKey());
+                            throw new RuntimeException("Token " + tokenEA.getSerialNumber() + " Emergency Access data Update failure.", e);
+                        }
+
+                        // 2. Read the new EA Token data to get the latest Token version
+                        // for optimistic locking
+                        LookupTokenEmergencyAccessCommand TokenEAcmd3 = new LookupTokenEmergencyAccessCommand();
+                        TokenEAcmd3.setGuid(TokenGuid);
+                        try {
+                            ClientSession ses = connection.newSession();
+                TokenEAcmd.execute(ses);
+                connection.sessionLogout(ses);
+                            
+                            logger.info("Succesfully retrieved the Updated Token's Emergency Acces info.");
+                        } catch (CommandException e) {
+                            logger.error("Token " + TokenGuid + " Emergency Access data Lookup failure:" + e.getCause() + " - " + e.getMessage()
+                                    + " - " + e.getMessageKey());
+                            throw new RuntimeException("Token " + TokenGuid + " Emergency Access data Lookup failure.", e);
+                        }
+                        TokenEmergencyAccessDTO tokenEA2 = TokenEAcmd.getTokenEmergencyAccess();
+                        
+                        // Generate tokencodes for this lost token:
+                        logger.info("Generating {0} new TokenCodes for this token...", RSAAuthenticationManager8Configuration.NB_EA_TOKENCODES);
+                        GenerateOneTimeTokenCodeSetCommand tokenCodeGenCmd = new GenerateOneTimeTokenCodeSetCommand();
+                        tokenCodeGenCmd.setTokenGuid(TokenGuid);
+                        tokenCodeGenCmd.setSetSize(RSAAuthenticationManager8Configuration.NB_EA_TOKENCODES);
+
+                        String[] ottAry = null;
+                        try {
+                            ClientSession ses = connection.newSession();
+                tokenCodeGenCmd.execute(ses);
+                connection.sessionLogout(ses);
+                           
+                            ottAry = tokenCodeGenCmd.getOtts();
+                            //  DEBUG - Log the generated codes, comment-out for production
+                            /* for (int i = 0; i < ottAry.length; i++) {
+                                logger.info(ottAry[i]);
+                            } */
+                        } catch (CommandException ex) {
+                            logger.error("An error occured while generating EA TokenCodes for token.");
+                            throw new RuntimeException("TokenCodes generation error - ", ex);
+                        } catch (SystemException ex) {
+                            logger.error("An unexpected error occured while generating EA TokenCodes for token.");
+                            throw new RuntimeException("TokenCodes generation error - ", ex);
+                        }
+
+                        if (ottAry != null) {
+                            logger.info("Succesfully Generated {0} TokenCodes.", ottAry.length);
+
+                            // set new TokenCodes onto lost token
+                            tokenEA2.setOneTimeTokencodeSet(ottAry);
+                            
+                            // Update the Token's EA record with the new codes:
+                            UpdateTokenEmergencyAccessCommand lostUpdCdCmd = new UpdateTokenEmergencyAccessCommand();
+                            lostUpdCdCmd.setTokenEmergencyAccessDTO(tokenEA2);
+                            logger.info("Setting the TokenCodes on Token {0} with SN: {1}", TokenGuid, tokenEA2.getSerialNumber());
+                            try {
+                                ClientSession ses = connection.newSession();
+                lostUpdCdCmd.execute(ses);
+                connection.sessionLogout(ses);
+                                
+                                logger.info("Token Lost status succesfully updated.");
+                            } catch (CommandException e) {
+                                logger.error("Token " + tokenEA2.getSerialNumber() + " Emergency Access data Update failure:" + e.getCause() + " - " + e.getMessage()
+                                        + " - " + e.getMessageKey());
+                                throw new RuntimeException("Token " + tokenEA2.getSerialNumber() + " Emergency Access data Update failure.", e);
+                            }
+
+                            // Convert to ArrayList
+                            tokenCodes = new ArrayList<String>(Arrays.asList(ottAry));
+                        } else {
+                            logger.warn("No TokenCodes retrieved for the given token.");
+                        }
+                    }
+                    // Fetch the updated TokenEA record once again to get the latest 
+                    // post-update EA data and return the Other EA Token attributes
+                    LookupTokenEmergencyAccessCommand TokenEAcmd2 = new LookupTokenEmergencyAccessCommand();
+                    TokenEAcmd2.setGuid(TokenGuid);
+                    try {
+                        ClientSession ses = connection.newSession();
+                TokenEAcmd.execute(ses);
+                connection.sessionLogout(ses);
+                        
+                        logger.info("Succesfully retrieved the Updated Token's Emergency Acces info.");
+                    } catch (CommandException e) {
+                        logger.error("Token " + TokenGuid + " Emergency Access data Lookup failure:" + e.getCause() + " - " + e.getMessage()
+                            + " - " + e.getMessageKey());
+                        throw new RuntimeException("Token " + TokenGuid + " Emergency Access data Lookup failure.", e);
+                    }
+                    TokenEmergencyAccessDTO tokenEAupd = TokenEAcmd.getTokenEmergencyAccess();
+                    
+                    serial = tokenEAupd.getSerialNumber();
+                    eaAccessCode = tokenEAupd.getEmergencyAccessTokenCode();
+                    fixedTokenCode = tokenEAupd.getTemporaryFixedTokencode();
+                    nbUnusedCodes = String.valueOf(tokenEAupd.getNumUnusedCodes());
+                } else {
+                    logger.warn("Couldn't fetch any Emergency Access (EA) data for the given Token search filter.");
+                }
+            }
+
+            // Build result handler
+            ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+            builder.setObjectClass(new ObjectClass(RSAAuthenticationManager8Configuration.TOKEN_OBJECTCLASS));
+
+            // Create the result multi-valued attribute
+            if (tokenCodes == null) {
+                tokenCodes = new ArrayList<String>();
+            }
+
+            // These can't be null or blank in the Connector Object
+            if (TokenGuid == null) {
+                TokenGuid = "NotFound";
+                serial = "NotFound";
+            }
+            builder.setUid(serial);
+            builder.setName(serial);
+            builder.addAttribute(AttributeBuilder.build(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TEMP_TOKEN_CODES,
+                    tokenCodes));
+            builder.addAttribute(AttributeBuilder.build(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EA_ACCESS_CODE, eaAccessCode));
+            builder.addAttribute(AttributeBuilder.build(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TEMP_FIXED_TOKENCODE, fixedTokenCode));
+            builder.addAttribute(AttributeBuilder.build(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_IS_LOST, isLost));
+            builder.addAttribute(AttributeBuilder.build(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_NB_UNUSED_TOKENCODES, nbUnusedCodes));
+            //Build and call handler for the principal
+            handler.handle(builder.build());
+
         } else {
             // Unsupported Object Class
             // TODO - Add support for GROUP and TOKEN ObjClasses
@@ -785,7 +1028,9 @@ public class RSAAuthenticationManager8Connector implements
             lookupAMCmd.setGuid(RSAUser.getGuid());
             AMPrincipalDTO currAMprincipal = null;
             try {
-                lookupAMCmd.execute();
+                ClientSession ses = connection.newSession();
+                lookupAMCmd.execute(ses);
+                connection.sessionLogout(ses);
                 currAMprincipal = lookupAMCmd.getAmp();
             } catch (CommandException e) {
                 logger.warn("Failed to fetch the AM principal of user:" + RSAUser.getUserID() + " - " + e.getMessage() 
@@ -806,8 +1051,17 @@ public class RSAAuthenticationManager8Connector implements
      */
     // TODO
     public void test() {
-        //throw new UnsupportedOperationException();
+        logger.info("Performing Connector Test");
         this.connection.test();
+        String defCommandTgt = null;
+        defCommandTgt = CommandTargetPolicy.getDefaultCommandTarget().toString();
+        logger.info("Using default command target for this thread: {0}",defCommandTgt);
+        /*try {
+            this.lookupSecurityDomain(this.configuration.getSecurityDomain());
+        } catch (Exception ex) {
+            logger.error("Connection Test Failed: {0}", ex.getMessage());
+            throw new RuntimeException("Connection Test Failed", ex);
+        }*/
     }
 
     /**
@@ -816,7 +1070,18 @@ public class RSAAuthenticationManager8Connector implements
     // TODO
     public Uid update(ObjectClass objectClass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
         //throw new UnsupportedOperationException();
-
+        
+        Iterator rai = replaceAttributes.iterator();
+        while (rai.hasNext()) {
+            Attribute attr = (Attribute)rai.next();
+            try {
+            logger.info("Inbound Replace Attribute: {0} = {1}",attr.getName(), attr.getValue());
+            } catch (Exception e) {
+                logger.error("failed to log Attribute name/value: " + e.getMessage());
+            }
+        }
+        
+        
         // Look for requested User
         PrincipalDTO user;
         try {
@@ -843,7 +1108,7 @@ public class RSAAuthenticationManager8Connector implements
         if (objectClass.is("__ACCOUNT__")) {
             HashMap<String, Object> AttribMap = new HashMap<String, Object>();
             // Operation Attributes
-            AttribMap.put(PrincipalDTO.PASSWORD, aa.getPassword());
+            if (aa.getPassword() != null) AttribMap.put(PrincipalDTO.PASSWORD, aa.getPassword());
             //AttribMap.put(PrincipalDTO.LOGINUID, uid.getUidValue());
             // Flag indicating whether the principal is enabled or not
             AttribMap.put(PrincipalDTO.ENABLE_FLAG, aa.getEnabled(true));
@@ -851,11 +1116,11 @@ public class RSAAuthenticationManager8Connector implements
             // Maintained by system, do not update
             //AttribMap.put(PrincipalDTO.LOCKOUT_FLAG, aa.findBoolean(PrincipalDTO.LOCKOUT_FLAG));
             // Other Attributes
-            AttribMap.put(PrincipalDTO.FIRST_NAME, aa.findString(PrincipalDTO.FIRST_NAME));
-            AttribMap.put(PrincipalDTO.LAST_NAME, aa.findString(PrincipalDTO.LAST_NAME));
-            AttribMap.put(PrincipalDTO.DESCRIPTION, aa.findString(PrincipalDTO.DESCRIPTION));
-            AttribMap.put(PrincipalDTO.MIDDLE_NAME, aa.findString(PrincipalDTO.MIDDLE_NAME));
-            AttribMap.put(PrincipalDTO.EMAIL, aa.findString(PrincipalDTO.EMAIL));
+            if (aa.findString(PrincipalDTO.FIRST_NAME) != null) AttribMap.put(PrincipalDTO.FIRST_NAME, aa.findString(PrincipalDTO.FIRST_NAME));
+            if (aa.findString(PrincipalDTO.LAST_NAME) != null) AttribMap.put(PrincipalDTO.LAST_NAME, aa.findString(PrincipalDTO.LAST_NAME));
+            if (aa.findString(PrincipalDTO.DESCRIPTION) != null) AttribMap.put(PrincipalDTO.DESCRIPTION, aa.findString(PrincipalDTO.DESCRIPTION));
+            if (aa.findString(PrincipalDTO.MIDDLE_NAME) != null) AttribMap.put(PrincipalDTO.MIDDLE_NAME, aa.findString(PrincipalDTO.MIDDLE_NAME));
+            if (aa.findString(PrincipalDTO.EMAIL) != null) AttribMap.put(PrincipalDTO.EMAIL, aa.findString(PrincipalDTO.EMAIL));
             // Flag indicating principal has administrative roles.
             // Maintained by system, do not update.
             //AttribMap.put(PrincipalDTO.ADMINISTRATOR_FLAG, aa.findBoolean(PrincipalDTO.ADMINISTRATOR_FLAG));
@@ -874,7 +1139,7 @@ public class RSAAuthenticationManager8Connector implements
                 try {
                     d = sdf.parse(endDt);
                 } catch (ParseException e) {
-                    logger.error("Invalid date format for EXPIRATION_DATE. Expected format {0}, found {1) ",
+                    logger.error("Invalid date format for EXPIRATION_DATE. Expected format {0}, found {1} ",
                                  RSAAuthenticationManager8Configuration.DATE_FORMAT,
                                  endDt);
                     throw new IllegalArgumentException("Invalid Date Format");
@@ -919,10 +1184,10 @@ public class RSAAuthenticationManager8Connector implements
                 AttribMap.put(PrincipalDTO.IMPERSONATOR_FLAG, impers);
             
             // Extended/Custom attribs
-            AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EMPLOYEE_NB, aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EMPLOYEE_NB));
+            if (aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EMPLOYEE_NB) != null) AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EMPLOYEE_NB, aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EMPLOYEE_NB));
             //AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_ALLOWED_TO_CREATE_PIN, aa.findBoolean(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_ALLOWED_TO_CREATE_PIN));
             //AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_REQUIRED_TO_CREATE_PIN, aa.findBoolean(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_REQUIRED_TO_CREATE_PIN));
-            AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_SECRET_WORD, aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_SECRET_WORD));
+            //AttribMap.put(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_SECRET_WORD, aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_SECRET_WORD));
 
             // Initialize RSA Update Command
             logger.info("Setting ID Source...");
@@ -967,7 +1232,9 @@ public class RSAAuthenticationManager8Connector implements
 
             // perform the update
             try {
-                cmd.execute();
+                ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
                 logger.info("User Principal Updated.");
             } catch (CommandException e) {
                 logger.error("User Principal Update Failure, message: " + e.getMessage() + " Key: " +
@@ -994,7 +1261,10 @@ public class RSAAuthenticationManager8Connector implements
                 lookupAMCmd.setGuid(user.getGuid());
                 AMPrincipalDTO currAMprincipal = null;
                 try {
-                    lookupAMCmd.execute();
+                    ClientSession ses = connection.newSession();
+                lookupAMCmd.execute(ses);
+                connection.sessionLogout(ses);
+                    
                     currAMprincipal = lookupAMCmd.getAmp();
                 } catch (CommandException e) {
                     logger.warn("Failed to fetch the AM principal of user:" + user.getUserID() + " - " + e.getMessage() 
@@ -1015,7 +1285,10 @@ public class RSAAuthenticationManager8Connector implements
                 // Perform Account Creation
                 UpdateAMPrincipalCommand AMUpdcmd = new UpdateAMPrincipalCommand(currAMprincipal);
                 try {
-                    AMUpdcmd.execute();
+                    ClientSession ses = connection.newSession();
+                AMUpdcmd.execute(ses);
+                connection.sessionLogout(ses);
+                    
                     logger.info("AM Principal Updated.");
                 } catch (CommandException e) {
                     logger.error("An exception was thrown by the RSA AM command: " + e.getMessage() + " key: " +
@@ -1214,15 +1487,21 @@ public class RSAAuthenticationManager8Connector implements
             // Token #1
             String token1PinMode = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN1_NEW_PIN_MODE);
             String token1ClearPin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN1_CLEAR_PIN);
-            updateTokenPin(Token1,token1PinMode,token1ClearPin,1);
+            String token1Pin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN1_PIN);
+            logger.info("token1PinMode: {0}, token1Pin: {1}, token1ClearPin: {2}", token1PinMode, token1Pin, token1ClearPin);
+            updateTokenPin(Token1,token1PinMode,token1Pin,token1ClearPin,1);
             // Token #2
             String token2PinMode = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN2_NEW_PIN_MODE);
             String token2ClearPin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN2_CLEAR_PIN);
-            updateTokenPin(Token2,token2PinMode,token2ClearPin,2);
+            String token2Pin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN2_PIN);
+            logger.info("token2PinMode: {0},token2Pin: {1}, token2ClearPin: {2}", token2PinMode, token2Pin, token2ClearPin);
+            updateTokenPin(Token2,token2PinMode,token2Pin,token2ClearPin,2);
             // Token #3
             String token3PinMode = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN3_NEW_PIN_MODE);
             String token3ClearPin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN3_CLEAR_PIN);
-            updateTokenPin(Token3,token3PinMode,token3ClearPin,2);
+            String token3Pin = aa.findString(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN3_PIN);
+            logger.info("token3PinMode: {0}, token3Pin: {1}, token3ClearPin: {2}", token3PinMode, token3Pin, token3ClearPin);
+            updateTokenPin(Token3,token3PinMode,token3Pin,token3ClearPin,3);
          
             /*   */
 
@@ -1431,6 +1710,23 @@ public class RSAAuthenticationManager8Connector implements
         aib.setMultiValued(true);
         aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TOKEN_SN_LIST);
         attributes.add(aib.build());
+        // Temp Token List
+        aib.setMultiValued(true);
+        aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TEMP_TOKEN_CODES);
+        attributes.add(aib.build());
+        // Temp Token List
+        aib.setMultiValued(false);
+        aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_EA_ACCESS_CODE);
+        attributes.add(aib.build());
+        aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_IS_LOST);
+        attributes.add(aib.build());
+        aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_NB_UNUSED_TOKENCODES);
+        attributes.add(aib.build());
+        aib.setName(RSAAuthenticationManager8Configuration.CUSTOM_ATTR_TEMP_FIXED_TOKENCODE);
+        attributes.add(aib.build());
+               
+        
+        
         schemaBuilder.defineObjectClass(RSAAuthenticationManager8Configuration.TOKEN_OBJECTCLASS, attributes);
         
         // GROUP objects
@@ -1462,16 +1758,60 @@ public class RSAAuthenticationManager8Connector implements
      */
     @Override
     public void checkAlive() {
-        String sessionId = null;
+        logger.info("Checking Connection");
+        if (this.connection.getDomain() == null) {
+            logger.info("Connection has no cached realm domain");
+            throw new RuntimeException (" Pool has no current RSA Connection");
+    }
+    if (this.connection.getIdSource() == null){
+            logger.info("Connection has no cached realm idSource");
+            throw new RuntimeException (" Pool has no current RSA Connection");
+    }
+        //String sessionId = null;
         try {
-            sessionId = this.connection.getRSASession().getSessionId();
+            //sessionId = this.connection.getRSASession().getSessionId();
+            //logger.info("Found session with ID: {0}.", sessionId);
+            
+//            this.lookupSecurityDomain(this.configuration.getSecurityDomain());
+            
+            /*  check if session alive by querying session with a command
+            GetSessionCommand cmd = new GetSessionCommand();
+            cmd.setSessionId(sessionId);
+            cmd.execute();
+            SessionDTO session = cmd.getSession();
+            if (session == null) throw new RuntimeException (" RSA Connection is dead:" + sessionId);
             logger.info("The session with ID: {0} is still alive.", sessionId);
+            logger.info("Session Command Response ID: {0}", session.getId());
+            logger.info("Session Max Inactivity: {0}", session.getMaxInactivity());
+            logger.info("Session Max Time To Live: {0}", session.getMaxTimeToLive());
+            logger.info("Session Creation Time: {0}", session.getCreationTime());
+            logger.info("Session Client IP: {0}", session.getClientIP());
+            */
+            
+            
+            
+            
+            
+            // as checkalive, query self to see if there is proper response
+            SearchPrincipalsCommand cmd = new SearchPrincipalsCommand();
+            cmd.setLimit(RSAAuthenticationManager8Configuration.SEARCH_LIMIT_DEFAULT);
+            cmd.setIdentitySourceGuid(this.connection.getIdSource().getGuid());
+            cmd.setSecurityDomainGuid(this.connection.getDomain().getGuid());
+            cmd.setAttributeMask(new String[]{"CORE_ATTRIBUTES"});
+            cmd.setFilter(Filter.equal(PrincipalDTO.LOGINUID, configuration.getUserMgrPrincipal()));
+            cmd.setSearchSubDomains(true);
+            
+            ClientSession ses = connection.newSession();
+            logger.info("Performing search for {0}", configuration.getUserMgrPrincipal());
+            cmd.execute(ses);
+            connection.sessionLogout(ses);
+            int numResults = cmd.getPrincipals().length;
+            logger.info("The connection is still alive. found {0} result", numResults);
         } catch (Exception e) {
-            logger.warn("The connection is not alive...");
+            logger.warn("The connection is not alive: " + e.getMessage());
             throw new RuntimeException (" RSA Connection is dead.", e);
         }
-        if (sessionId == null)
-            throw new RuntimeException (" RSA Connection is dead.");
+        
     }
     
     
@@ -1484,18 +1824,22 @@ public class RSAAuthenticationManager8Connector implements
      * 
      * @param token A TokenDTO object encapsulating the token to update.
      * @param pinMode a String representation of a boolean to determine the new pin mode
+     * @param pin A string representation of the new pin to set
      * @param clear a String representation of a boolean to determine whether to clear the pin or not
      * @param tokenNb the token number
      */
-    private void updateTokenPin (TokenDTO token, String pinMode, String clear, int tokenNb) {
+    private void updateTokenPin (TokenDTO token, String pinMode, String pin, String clear, int tokenNb) {
         if (token != null) {
+            logger.info("Updating token PIN for token {0}, pinMode: {1}, clear: {2}, tokenNb: {3}", token.getSerialNumber(), pinMode, clear, tokenNb);
             // Must first fetch the Token object, which includes row versions and all
             // Else update may fail on optimistic lock
             logger.info("Fetching Token...");
             LookupTokenCommand TokCmd = new LookupTokenCommand();
             TokCmd.setGuid(token.getId());
             try {
-                TokCmd.execute();
+                ClientSession ses = connection.newSession();
+                TokCmd.execute(ses);
+                connection.sessionLogout(ses);
                 logger.info("token succefully retrieved.");
             } catch (CommandException e) {
                 logger.error ("An error occured while searching for Token with serial: " + token.getSerialNumber());
@@ -1508,11 +1852,20 @@ public class RSAAuthenticationManager8Connector implements
                 // Set New Pin mode
                 currToken.setNewPinMode(Boolean.valueOf(pinMode));
                 updated = true;
+                logger.info("Set New Pin Mode: {0}.", Boolean.valueOf(pinMode));
             }
             if ((clear != null) && (!(clear.isEmpty()))) {
-                // Set New Pin mode
+                // Set Pin is Set
                 currToken.setPinIsSet(Boolean.valueOf(clear));
                 updated = true;
+                logger.info("Set Clear Pin Flag: {0}.", Boolean.valueOf(clear));
+            }
+            
+            if ((pin != null) && (!(pin.isEmpty()))) {
+                // Set New Pin
+                currToken.setPin(pin);
+                updated = true;
+                logger.info("Setting Pin : {0}.", pin);
             }
 
             if (updated) {
@@ -1522,7 +1875,9 @@ public class RSAAuthenticationManager8Connector implements
                 UpdateTokenCommand cmd2 = new UpdateTokenCommand();
                 cmd2.setToken(currToken);
                 try {
-                    cmd2.execute();
+                    ClientSession ses = connection.newSession();
+                cmd2.execute(ses);
+                connection.sessionLogout(ses);
                     logger.info("PIN data succesfully updated.");
                 } catch (ObjectInUseException e) {
                     logger.error("Can't update the PIN because Token {0} is in use.", tokenNb);
@@ -1582,7 +1937,10 @@ public class RSAAuthenticationManager8Connector implements
             logger.info("Resync-in Token {0} with SN: {1}", tokenNb, token.getSerialNumber());
             ResynchronizeTokenCommand sync3Cmd = new ResynchronizeTokenCommand(token.getSerialNumber(), seq1, seq2);
             try {
-                sync3Cmd.execute();
+                ClientSession ses = connection.newSession();
+                sync3Cmd.execute(ses);
+                connection.sessionLogout(ses);
+                
                 logger.info("Succesfully Resync-ed Token {0}...", tokenNb);
             } catch (CommandException e) {
                 logger.error("Token " + Integer.toString(tokenNb) + " Resync failure:" + e.getCause() + " - " +
@@ -1592,13 +1950,23 @@ public class RSAAuthenticationManager8Connector implements
         }
     }
     /**
-     * Processes the Lost status of a given Token
+     * Processes the Lost status of a given Token.
+     * This method will not generate Temporary TokenCodes, the SearchOp of the
+     * __TOKEN__ objectclass will do this instead.
+     * 
      * @param isLost a STring representation of a boolean - true if the token is in fact lost.
      * @param token the TokenDTO object encapsulating the Token
-     * @param tokenNb the token nunmber
+     * @param tokenNb the token number
      */
     private void processLostToken (String isLost, TokenDTO token, int tokenNb) {
         
+        if (token == null) {
+          logger.info("Ignoring null token {2}", tokenNb);
+           
+        } else {
+        
+        logger.info("Processing Lost Token, token serial = {0}, isLost= {1}. tokenNb={2}", token.getSerialNumber(), isLost, tokenNb);
+                
         if ((isLost != null) && (!(isLost.isEmpty()))) {
             if (token == null) {
                 logger.error("Token Lost operation was requested but the user doesn't have a Token {0}.", tokenNb);
@@ -1609,7 +1977,10 @@ public class RSAAuthenticationManager8Connector implements
             LookupTokenEmergencyAccessCommand lostLookupCmd = new LookupTokenEmergencyAccessCommand();
             lostLookupCmd.setGuid(token.getId());
             try {
-                lostLookupCmd.execute();
+                ClientSession ses = connection.newSession();
+                lostLookupCmd.execute(ses);
+                connection.sessionLogout(ses);
+                
             } catch (CommandException e) {
                 logger.error("Token " + Integer.toString(tokenNb) + " Emergency Access data Lookup failure:" + e.getCause() + " - " + e.getMessage() +
                              " - " + e.getMessageKey());
@@ -1618,21 +1989,42 @@ public class RSAAuthenticationManager8Connector implements
             TokenEmergencyAccessDTO tokenEA = lostLookupCmd.getTokenEmergencyAccess();
             
             // Set the token lost flag
-            tokenEA.setTokenLost(Boolean.valueOf(isLost));
+            Boolean islost = Boolean.valueOf(isLost);
+            tokenEA.setTokenLost(islost);
+            
+            if (islost) {
+                // Set Lost mode: Disable EA and mark token as not lost 
+                // after a successful authentication with the original token
+                // Temp TokenCodes are generated in SearchOp for the __TOKEN__
+                // Object class. The RSA SDK doesn't allow for the retrieval
+                // of the TokenCodes once they are created.
+                tokenEA.setLostMode(TokenEmergencyAccessDTO.DISABLE_EA_ON_AUTH);
+                // EA Mode: one-time tokencode
+                tokenEA.setEaMode(2);
+                
+            }
             
             // Update the Emergency Data for this token
             UpdateTokenEmergencyAccessCommand lostUpdCmd = new UpdateTokenEmergencyAccessCommand ();
             lostUpdCmd.setTokenEmergencyAccessDTO(tokenEA);
             logger.info("Updating the lost status of Token {0} with SN: {1} to {2}", tokenNb, token.getSerialNumber(), isLost);
             try {
-                lostUpdCmd.execute();
+                ClientSession ses = connection.newSession();
+                lostUpdCmd.execute(ses);
+                connection.sessionLogout(ses);
+                
                 logger.info("Token Lost status succesfully updated.");
             } catch (CommandException e) {
                 logger.error("Token " + Integer.toString(tokenNb) + " Emergency Access data Update failure:" + e.getCause() + " - " + e.getMessage() +
                              " - " + e.getMessageKey());
                 throw new RuntimeException("Token " + Integer.toString(tokenNb) + " Emergency Access data Update failure.", e);
             }
+            
+            // Get Emergency TokenCodes for this lost token
+            // GenerateEmergencyAccessCodeCommand
+            
         }
+    }
     }
     
     /**
@@ -1649,7 +2041,9 @@ public class RSAAuthenticationManager8Connector implements
         ListTokensByPrincipalCommand cmd = new ListTokensByPrincipalCommand(UserGuid);
         ListTokenDTO[] tokensList = null;
         try {
-            cmd.execute();
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
             tokensList = cmd.getTokenDTOs();
         } catch (DataNotFoundException dne) {
             logger.warn("No tokens found for User with GUID {0}.", UserGuid);
@@ -1668,7 +2062,9 @@ public class RSAAuthenticationManager8Connector implements
                     LookupTokenCommand LookupCmd = new LookupTokenCommand();
                     LookupCmd.setGuid(lstToken.getGuid());
                     try {
-                        LookupCmd.execute();
+                        ClientSession ses = connection.newSession();
+                LookupCmd.execute(ses);
+                connection.sessionLogout(ses);
                     } catch (CommandException e) {
                         logger.error("An error occured while converting list tokens into tokens...");
                         throw new RuntimeException("User token convertion error", e);
@@ -1716,8 +2112,12 @@ public class RSAAuthenticationManager8Connector implements
             logger.info("Unassigning {0} Tokens...", TokensAry.length);
             UnlinkTokensFromPrincipalsCommand UnlinkCmd = new UnlinkTokensFromPrincipalsCommand ();
             UnlinkCmd.setTokenGuids(TokensAry);
-            try {
-                UnlinkCmd.execute();
+            try 
+            {
+                ClientSession ses = connection.newSession();
+                UnlinkCmd.execute(ses);
+                connection.sessionLogout(ses);
+                
                 logger.info("Succuesfully unassigned {0} Tokens...", TokensAry.length);
             } catch (CommandException e) {
                 logger.error("An error occured while Un-assigning the tokens given tokens.");
@@ -1747,7 +2147,9 @@ public class RSAAuthenticationManager8Connector implements
             // Link tokens
             LinkTokensWithPrincipalCommand cmd2 = new LinkTokensWithPrincipalCommand(TokensAry, UserGuid);
             try {
-                cmd2.execute();
+                ClientSession ses = connection.newSession();
+                cmd2.execute(ses);
+                connection.sessionLogout(ses);
                 logger.info("Succesfully assigned {0} tokens to the user.", TokensAry.length);
             } catch (CommandException e) {
                 logger.error("An error occured while assigning the tokens to user {0}.", UserGuid);
@@ -1777,7 +2179,9 @@ public class RSAAuthenticationManager8Connector implements
             LookupTokenCommand cmd = new LookupTokenCommand();
             cmd.setSerialNumber(TokenSN);
             try {
-                cmd.execute();
+                ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
                 token = cmd.getToken();
             } catch (CommandException e) {
                 logger.error("The provided Token Serial Number {0} doesn't match any tokens, or an error occured while fetching the token.", TokenSN);
@@ -1806,7 +2210,10 @@ public class RSAAuthenticationManager8Connector implements
         EnableCmd.setTokenGuids(tokens);
         EnableCmd.setEnable(enable);
         try {
-            EnableCmd.execute();
+            ClientSession ses = connection.newSession();
+                EnableCmd.execute(ses);
+                connection.sessionLogout(ses);
+            
             logger.info("{0} Tokens processed succesfully.", tokens.length);
         } catch (CommandException e) {
             logger.error("An error occured while processing the Enablement of the tokens.");
@@ -1827,12 +2234,20 @@ public class RSAAuthenticationManager8Connector implements
         // in order to search all levels we set searchbase to "*"
         cmd.setSearchBase("*");
         cmd.setSearchScope(SecurityDomainDTO.SEARCH_SCOPE_SUB);
-        cmd.execute();
+        logger.info("Looking up Security Domain {0}", name);
+        try {
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+        } catch (CommandException e) {
+            logger.error("An error occured while looking up Domain {0}: {1}", name, e.getMessage());
+            throw new RuntimeException ("An error occured while looking up Domain", e);
+        }
 
         if (cmd.getSecurityDomains().length == 0) {
             throw new Exception("Could not find security domain " + name);
         }
-
+        
         return cmd.getSecurityDomains()[0];
     }
     
@@ -1851,7 +2266,10 @@ public class RSAAuthenticationManager8Connector implements
         // the scope flags are part of the SecurityDomainDTO
         cmd.setSearchScope(SecurityDomainDTO.SEARCH_SCOPE_SUB);
 
-        cmd.execute();
+        ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+        
         if (cmd.getAgents().length < 1) {
             throw new Exception("ERROR: Unable to find agent " + name + ".");
         }
@@ -1880,7 +2298,10 @@ public class RSAAuthenticationManager8Connector implements
         cmd.setSearchSubDomains(true);
         cmd.setAttributeMask(new String[]{"ALL_INTRINSIC_ATTRIBUTES", "CORE_ATTRIBUTES", "SYSTEM_ATTRIBUTES", "ALL_EXTENDED_ATTRIBUTES"}); //"ALL_ATTRIBUTES"
 
-        cmd.execute();
+        ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+        
 
         if (cmd.getPrincipals().length < 1) {
             throw new UnknownUidException("Unable to find user " + userId + ".");
@@ -2099,7 +2520,10 @@ public class RSAAuthenticationManager8Connector implements
         ListTokensByPrincipalCommand cmd = new ListTokensByPrincipalCommand(User.getGuid());
         ListTokenDTO[] tokensList = null;
         try {
-            cmd.execute();
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+            
             tokensList = cmd.getTokenDTOs();
             if (!(searchAll))
                 logger.info("Found {0} tokens.",tokensList.length);
@@ -2183,7 +2607,10 @@ public class RSAAuthenticationManager8Connector implements
         cmd.setGroupGuid(null);
 
         try {
-            cmd.execute();
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+            
         } catch (DataNotFoundException e) {
             logger.error ("Unable to find group {0}.", name);
             throw new RuntimeException ("Unable to find group.", e);
@@ -2223,10 +2650,13 @@ public class RSAAuthenticationManager8Connector implements
         //cmd.setSecurityDomainID(this.connection.getDomain().getGuid());
         
         try {
-            cmd.execute();
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+            
             groups = cmd.getGroups();
             if (!(searchAll))
-                logger.info("Succesfully retrieved {0}'s {1) groups.", userID, groups.length);
+                logger.info("Succesfully retrieved {0}'s {1} groups.", userID, groups.length);
         } catch (InvalidArgumentException e) {
             logger.error("The provided parameters are invalid or data is missing. " + e.getCause() + "\n" + e.getMessage()
                          + "\n" + e.getMessageKey());
@@ -2342,7 +2772,10 @@ public class RSAAuthenticationManager8Connector implements
         cmd.setIdentitySourceGuid(this.connection.getIdSource().getGuid());
         // Run command
         try {
-            cmd.execute();
+            ClientSession ses = connection.newSession();
+                cmd.execute(ses);
+                connection.sessionLogout(ses);
+            
             logger.info(" {0} Group(s) succesfully linked.", GroupGuids.length);
         } catch (InvalidArgumentException e) {
             logger.error ("The provided group names or UserID {0} is invalid.", user.getUserID());
@@ -2379,7 +2812,10 @@ public class RSAAuthenticationManager8Connector implements
         UnlinkCmd.setPrincipalGuids(new String[] { user.getGuid() });
         UnlinkCmd.setIdentitySourceGuid(this.connection.getIdSource().getGuid());
         try {
-            UnlinkCmd.execute();
+            ClientSession ses = connection.newSession();
+                UnlinkCmd.execute(ses);
+                connection.sessionLogout(ses);
+            
             logger.info("Group succesfully unlinked {0} groups.", GroupGuids.length);
         } catch (InvalidArgumentException e) {
             logger.error ("The provided group(s)or UserID {0} is invalid.", user.getUserID());
