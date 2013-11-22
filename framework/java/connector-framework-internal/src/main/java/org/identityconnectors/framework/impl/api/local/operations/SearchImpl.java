@@ -25,6 +25,7 @@ package org.identityconnectors.framework.impl.api.local.operations;
 import java.util.List;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.api.ResultsHandlerConfiguration;
 import org.identityconnectors.framework.api.operations.SearchApiOp;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -38,6 +39,8 @@ import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
 public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApiOp {
+
+    private static final Log LOG = Log.getLog(SearchImpl.class);
 
     /**
      * Initializes the operation works.
@@ -69,7 +72,17 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
                 null != getOperationalContext() ? getOperationalContext()
                         .getResultsHandlerConfiguration() : new ResultsHandlerConfiguration();
         ResultsHandler handlerChain = handler;
-        Filter finalFilter = originalFilter;
+        Filter actualFilter = originalFilter;               // actualFilter is used for chaining filters - it points to the filter where new filters should be chained
+
+        if (hdlCfg.isEnableCaseInsensitiveFilter()) {
+            if (originalFilter != null) {
+                LOG.ok("Creating case insensitive filter");
+                ObjectNormalizerFacade caseNormalizer = new ObjectNormalizerFacade(objectClass, new CaseNormalizer());
+                actualFilter = new NormalizingFilter(actualFilter, caseNormalizer);
+            } else {
+//                LOG.ok("Skipping creation of case insensitive filter, because original filter is null");
+            }
+        }
 
         if (hdlCfg.isEnableNormalizingResultsHandler()) {
             final ObjectNormalizerFacade normalizer = getNormalizer(objectClass);
@@ -77,25 +90,25 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
             // filter handler)
             NormalizingResultsHandler normalizingHandler =
                     new NormalizingResultsHandler(handler, normalizer);
-            final Filter normalizedFilter = normalizer.normalizeFilter(originalFilter);
+
             // chain a filter handler..
             if (hdlCfg.isEnableFilteredResultsHandler()) {
                 // chain a filter handler..
+                Filter normalizedFilter = normalizer.normalizeFilter(actualFilter);
                 handlerChain = new FilteredResultsHandler(normalizingHandler, normalizedFilter);
-                finalFilter = normalizedFilter;
+                actualFilter = normalizedFilter;
             } else {
                 handlerChain = normalizingHandler;
             }
         } else if (hdlCfg.isEnableFilteredResultsHandler()) {
             // chain a filter handler..
-            handlerChain = new FilteredResultsHandler(handler, originalFilter);
-            finalFilter = originalFilter;
+            handlerChain = new FilteredResultsHandler(handler, actualFilter);
         }
         // chain an attributes to get handler..
         if (hdlCfg.isEnableAttributesToGetSearchResultsHandler()) {
             handlerChain = getAttributesToGetResutlsHandler(handlerChain, options);
         }
-        rawSearch(search, objectClass, finalFilter, handlerChain, options);
+        rawSearch(search, objectClass, actualFilter, handlerChain, options);
     }
 
     /**
