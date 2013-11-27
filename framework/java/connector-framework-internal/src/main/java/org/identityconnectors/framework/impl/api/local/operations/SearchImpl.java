@@ -74,14 +74,10 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
         ResultsHandler handlerChain = handler;
         Filter actualFilter = originalFilter;               // actualFilter is used for chaining filters - it points to the filter where new filters should be chained
 
-        if (hdlCfg.isEnableCaseInsensitiveFilter()) {
-            if (originalFilter != null) {
-                LOG.ok("Creating case insensitive filter");
-                ObjectNormalizerFacade caseNormalizer = new ObjectNormalizerFacade(objectClass, new CaseNormalizer());
-                actualFilter = new NormalizingFilter(actualFilter, caseNormalizer);
-            } else {
-//                LOG.ok("Skipping creation of case insensitive filter, because original filter is null");
-            }
+        if (hdlCfg.isEnableFilteredResultsHandler() && hdlCfg.isEnableCaseInsensitiveFilter() && actualFilter != null) {
+            LOG.ok("Creating case insensitive filter");
+            ObjectNormalizerFacade caseNormalizer = new ObjectNormalizerFacade(objectClass, new CaseNormalizer());
+            actualFilter = new NormalizingFilter(actualFilter, caseNormalizer);
         }
 
         if (hdlCfg.isEnableNormalizingResultsHandler()) {
