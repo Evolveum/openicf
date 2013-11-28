@@ -1199,18 +1199,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             ResultsHandler handlerChain = handler;
             Filter actualFilter = originalFilter;       // actualFilter is used for chaining filters - it points to the filter where new filters should be chained
 
-            if (hdlCfg.EnableCaseInsensitiveFilter)
+            if (hdlCfg.EnableFilteredResultsHandler && hdlCfg.EnableCaseInsensitiveFilter && originalFilter != null)
             {
-                if (originalFilter != null)
-                {
-                    Trace.TraceInformation("Creating case insensitive filter");
-                    ObjectNormalizerFacade normalizer = CaseNormalizer.CreateCaseNormalizerFacade(oclass);
-                    actualFilter = new NormalizingFilter(actualFilter, normalizer);
-                }
-                else
-                {
-                    Trace.TraceInformation("Skipping creation of case insensitive filter, because original filter is null");
-                }
+                Trace.TraceInformation("Creating case insensitive filter");
+                ObjectNormalizerFacade normalizer = CaseNormalizer.CreateCaseNormalizerFacade(oclass);
+                actualFilter = new NormalizingFilter(actualFilter, normalizer);
             }
 
             if (hdlCfg.EnableNormalizingResultsHandler)
