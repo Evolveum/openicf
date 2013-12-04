@@ -217,7 +217,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     //  Uncommenting the next line is very helpful in
                     //  finding mysterious errors.                    
-                    //  directoryEntry.CommitChanges();
+                    // Trace.TraceInformation("Committing after setting attribute {0} to {1}", attribute.Name, attribute.Value);
+                    // directoryEntry.CommitChanges();
                 }
 
                 directoryEntry.CommitChanges();
@@ -264,8 +265,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 */
                 directoryEntry.CommitChanges();
 
-                HandleNameChange(type, directoryEntry, attributes);
-                HandleContainerChange(type, directoryEntry, attributes, config);
+                HandleNameAndContainerChange(type, directoryEntry, attributes, config);
             }
             else if (oclass.Equals(ActiveDirectoryConnector.groupObjectClass))
             {
@@ -283,8 +283,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 directoryEntry.CommitChanges();
-                HandleNameChange(type, directoryEntry, attributes);
-                HandleContainerChange(type, directoryEntry, attributes, config);
+                HandleNameAndContainerChange(type, directoryEntry, attributes, config);
             }
             else if (oclass.Equals(ActiveDirectoryConnector.ouObjectClass))
             {
@@ -302,8 +301,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 directoryEntry.CommitChanges();
-                HandleNameChange(type, directoryEntry, attributes);
-                HandleContainerChange(type, directoryEntry, attributes, config);
+                HandleNameAndContainerChange(type, directoryEntry, attributes, config);
             }
             else
             {
@@ -322,8 +320,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 directoryEntry.CommitChanges();
-                HandleNameChange(type, directoryEntry, attributes);
-                HandleContainerChange(type, directoryEntry, attributes, config);
+                HandleNameAndContainerChange(type, directoryEntry, attributes, config);
             }
         }
 
@@ -590,14 +587,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return pathName.Retrieve((int)ADS_FORMAT_ENUM.ADS_FORMAT_LEAF);
         }
 
+        public static string RandomStr()
+        {
+            return System.IO.Path.GetRandomFileName().Replace(".", "-");
+        }
+
         /// <summary>
-        /// This does not work ... for now, don't handle container changes
         /// </summary>
         /// <param name="type"></param>
         /// <param name="directoryEntry"></param>
         /// <param name="attributes"></param>
         /// <param name="config"></param>
-        private static void HandleContainerChange(UpdateType type, 
+        private static void HandleNameAndContainerChange(UpdateType type, 
             DirectoryEntry directoryEntry, ICollection<ConnectorAttribute> attributes, 
             ActiveDirectoryConfiguration config)
         {
@@ -614,53 +615,70 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // add a name or delete a name
                 return;
             }
-            
+
+            String oldName = directoryEntry.Name;
+            String newName = GetRelativeName(nameAttribute);
+            bool nameChanged = !NormalizeLdapString(oldName).Equals(NormalizeLdapString(newName), StringComparison.OrdinalIgnoreCase);
+
             String oldContainer = GetParentDn(directoryEntry.Path);
             String newContainer = GetParentDn(nameAttribute.GetNameValue());
+            bool containerChanged = !NormalizeLdapString(oldContainer).Equals(NormalizeLdapString(newContainer), StringComparison.OrdinalIgnoreCase);
 
-            if (!NormalizeLdapString(oldContainer).Equals(NormalizeLdapString(newContainer), StringComparison.OrdinalIgnoreCase))
+            if (!nameChanged && !containerChanged)
             {
-                if (newContainer != null)
-                {
-                    try
-                    {
-                        if (!NormalizeLdapString(oldContainer).Equals(
-                            NormalizeLdapString(newContainer), StringComparison.OrdinalIgnoreCase))
-                        {
-                            String newContainerLdapPath = ActiveDirectoryUtils.GetLDAPPath(
-                                config.LDAPHostName, newContainer);
-                            DirectoryEntry newContainerDe = new DirectoryEntry(newContainerLdapPath,
-                                config.DirectoryAdminName, config.DirectoryAdminPassword);
-                            directoryEntry.MoveTo(newContainerDe);
-                            newContainerDe.Dispose();
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        throw e;
-                    }
-                }
+                return;
             }
-        }
 
-        private static void HandleNameChange(UpdateType type, 
-            DirectoryEntry directoryEntry,
-            ICollection<ConnectorAttribute> attributes)
-        {
-            Name nameAttribute = ConnectorAttributeUtil.GetNameFromAttributes(attributes);
-            if (nameAttribute != null)
+            if (nameChanged && !containerChanged)           // rename without moving
             {
-                // this only make sense for replace.  you can't
-                // add a name or delete a name
-                if (type.Equals(UpdateType.REPLACE))
+                Trace.TraceInformation("Renaming {0} to {1}", oldName, newName);
+                directoryEntry.Rename(newName);
+                Trace.TraceInformation("Rename OK");
+                return;
+            }
+
+            // so this is move with or without rename
+            
+            // step 1: if WITH rename, we have to rename the entry to a temporary name first
+
+            String temporaryName = null;
+            if (nameChanged)
+            {
+                temporaryName = oldName + "-" + RandomStr();
+                Trace.TraceInformation("Renaming {0} to a temporary name of {1}", oldName, temporaryName);
+                directoryEntry.Rename(temporaryName);
+                Trace.TraceInformation("Rename OK");
+            }
+
+            // step 2: do the move
+
+            try
+            {
+                String newContainerLdapPath = ActiveDirectoryUtils.GetLDAPPath(config.LDAPHostName, newContainer);
+                DirectoryEntry newContainerDe = new DirectoryEntry(newContainerLdapPath, config.DirectoryAdminName, config.DirectoryAdminPassword);
+                Trace.TraceInformation("Moving from {0} to {1} ({2})", oldContainer, newContainer, newContainerLdapPath);
+                directoryEntry.MoveTo(newContainerDe);
+                Trace.TraceInformation("Move OK");
+                newContainerDe.Dispose();
+            }
+            catch (Exception e)
+            {
+                Trace.TraceInformation("Exception caught when moving: {0}", e);
+                if (nameChanged)
                 {
-                    String oldName = directoryEntry.Name;
-                    String newName = GetRelativeName(nameAttribute);
-                    if (!NormalizeLdapString(oldName).Equals(NormalizeLdapString(newName), StringComparison.OrdinalIgnoreCase))
-                    {
-                        directoryEntry.Rename(newName);
-                    }
+                    Trace.TraceInformation("Renaming back from temporary name of {0} to {1}", temporaryName, oldName);
+                    directoryEntry.Rename(oldName);
+                    Trace.TraceInformation("Rename OK");
                 }
+                throw e;
+            }
+
+            // step 3: if WITH rename, then rename from temporary name to the new name
+            if (nameChanged)
+            {
+                Trace.TraceInformation("Renaming from temporary name of {0} to a new name of {1}", temporaryName, newName);
+                directoryEntry.Rename(newName);
+                Trace.TraceInformation("Rename OK");
             }
         }
 
