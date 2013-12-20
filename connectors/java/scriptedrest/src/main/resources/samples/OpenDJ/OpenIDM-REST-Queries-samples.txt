@@ -1,0 +1,124 @@
+Once you have installed the connector in OpenIDM,
+
+you can try a few REST queries to test your environment:
+
+******* TEST
+
+POST http://localhost:8080/openidm/system/RESTLDAP?_action=test
+
+{
+    "name": "RESTLDAP",
+    "ok": true
+}
+
+
+******* READ GROUP
+
+GET http://localhost:8080/openidm/system/RESTLDAP/group/openidm
+
+{
+    "lastModified": null,
+    "__NAME__": "openidm",
+    "members": [
+        "jdoe"
+    ],
+    "created": null,
+    "displayName": "openidm",
+    "_id": "openidm"
+}
+
+******* READ USER
+
+GET http://localhost:8080/openidm/system/RESTLDAP/user/jdoe
+
+{
+    "givenName": "John",
+    "displayName": "John Doe",
+    "lastModified": null,
+    "created": null,
+    "familyName": "Doe",
+    "__NAME__": "jdoe",
+    "emailAddress": "jdoe@example.com",
+    "userName": "jdoe@example.com",
+    "telephoneNumber": "12345",
+    "managerId": null,
+    "managerDisplayName": null,
+    "_id": "jdoe"
+}
+
+******* QUERY ALL GROUPS
+
+GET http://localhost:8080/openidm/system/RESTLDAP/group/?_queryId=query-all-ids
+
+{
+    "result": [
+        {
+            "__NAME__": "openidm2",
+            "_id": "openidm2"
+        },
+        {
+            "__NAME__": "openidm",
+            "_id": "openidm"
+        }
+    ]
+}
+
+******* QUERY ALL USERS
+
+GET http://localhost:8080/openidm/system/RESTLDAP/user/?_queryId=query-all-ids
+
+{
+    "result": [
+        {
+            "__NAME__": "jdoe",
+            "_id": "jdoe"
+        }
+    ]
+}
+
+******* CREATE USER
+
+POST http://localhost:8080/openidm/system/RESTLDAP/user/?_action=create
+{
+    "givenName": "Bob",
+    "displayName": "Bob Flemming",
+    "lastModified": null,
+    "created": null,
+    "familyName": "Flemming",
+    "__NAME__": "bob",
+    "emailAddress": "bob@example.com",
+    "telephoneNumber": "12345",
+    "_id": "bob"
+}
+
+******* MODIFY USER  (change phone number)
+
+PUT http://localhost:8080/openidm/system/RESTLDAP/user/bob
+{
+    "givenName": "Bob",
+    "displayName": "Bob Flemming",
+    "lastModified": null,
+    "created": null,
+    "familyName": "Flemming",
+    "__NAME__": "bob",
+    "emailAddress": "bob@example.com",
+    "telephoneNumber": "00000000000",
+    "_id": "bob"
+}
+
+******* ADD MEMBER TO GROUP
+
+PUT http://localhost:8080/openidm/system/RESTLDAP/group/openidm
+{
+    "members": [
+        "jdoe","bob"
+    ]
+}
+
+******** DELETE USER
+
+DELETE http://localhost:8080/openidm/system/RESTLDAP/user/bob
+
+
+
+
