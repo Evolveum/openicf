@@ -19,13 +19,14 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2010-2013 ForgeRock AS.
  */
 package org.identityconnectors.framework.impl.api.local.operations;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.identityconnectors.common.Assertions;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.api.ResultsHandlerConfiguration;
 import org.identityconnectors.framework.api.operations.SearchApiOp;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -33,14 +34,14 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.SearchResult;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Connector;
+import org.identityconnectors.framework.spi.SearchResultsHandler;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
 public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApiOp {
-
-    private static final Log LOG = Log.getLog(SearchImpl.class);
 
     /**
      * Initializes the operation works.
@@ -53,14 +54,15 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
      * Call the SPI search routines to return the results to the
      * {@link ResultsHandler}.
      *
-     * @see SearchApiOp#search(org.identityconnectors.framework.common.objects.ObjectClass,
-     *      org.identityconnectors.framework.common.objects.filter.Filter,
+     * @see SearchOp#executeQuery(org.identityconnectors.framework.common.objects.ObjectClass,
+     *      Object,
      *      org.identityconnectors.framework.common.objects.ResultsHandler,
      *      org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public void search(final ObjectClass objectClass, final Filter originalFilter,
-            final ResultsHandler handler, OperationOptions options) {
-        Assertions.nullCheck(objectClass, "oclass");
+    @Override
+    public SearchResult search(ObjectClass objectClass, Filter originalFilter,
+                               ResultsHandler handler, OperationOptions options) {
+        Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(handler, "handler");
         // cast null as empty
         if (options == null) {
@@ -71,14 +73,8 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
         ResultsHandlerConfiguration hdlCfg =
                 null != getOperationalContext() ? getOperationalContext()
                         .getResultsHandlerConfiguration() : new ResultsHandlerConfiguration();
-        ResultsHandler handlerChain = handler;
-        Filter actualFilter = originalFilter;               // actualFilter is used for chaining filters - it points to the filter where new filters should be chained
 
-        if (hdlCfg.isEnableFilteredResultsHandler() && hdlCfg.isEnableCaseInsensitiveFilter() && actualFilter != null) {
-            LOG.ok("Creating case insensitive filter");
-            ObjectNormalizerFacade caseNormalizer = new ObjectNormalizerFacade(objectClass, new CaseNormalizer());
-            actualFilter = new NormalizingFilter(actualFilter, caseNormalizer);
-        }
+        Filter finalFilter = originalFilter;
 
         if (hdlCfg.isEnableNormalizingResultsHandler()) {
             final ObjectNormalizerFacade normalizer = getNormalizer(objectClass);
@@ -86,25 +82,40 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
             // filter handler)
             NormalizingResultsHandler normalizingHandler =
                     new NormalizingResultsHandler(handler, normalizer);
-
+            final Filter normalizedFilter = normalizer.normalizeFilter(originalFilter);
             // chain a filter handler..
             if (hdlCfg.isEnableFilteredResultsHandler()) {
                 // chain a filter handler..
-                Filter normalizedFilter = normalizer.normalizeFilter(actualFilter);
-                handlerChain = new FilteredResultsHandler(normalizingHandler, normalizedFilter);
-                actualFilter = normalizedFilter;
+                handler = new FilteredResultsHandler(normalizingHandler, normalizedFilter);
+                finalFilter = normalizedFilter;
             } else {
-                handlerChain = normalizingHandler;
+                handler = normalizingHandler;
             }
         } else if (hdlCfg.isEnableFilteredResultsHandler()) {
             // chain a filter handler..
-            handlerChain = new FilteredResultsHandler(handler, actualFilter);
+            handler = new FilteredResultsHandler(handler, originalFilter);
+            finalFilter = originalFilter;
         }
         // chain an attributes to get handler..
         if (hdlCfg.isEnableAttributesToGetSearchResultsHandler()) {
-            handlerChain = getAttributesToGetResutlsHandler(handlerChain, options);
+            handler = getAttributesToGetResutlsHandler(handler, options);
         }
-        rawSearch(search, objectClass, actualFilter, handlerChain, options);
+
+        final ResultsHandler handlerChain = handler;
+
+        final AtomicReference<SearchResult> result = new AtomicReference<SearchResult>(null);
+        rawSearch(search, objectClass, finalFilter, new SearchResultsHandler() {
+            @Override
+            public void handleResult(final SearchResult searchResult) {
+                result.set(searchResult);
+            }
+
+            @Override
+            public boolean handle(ConnectorObject connectorObject) {
+                return handlerChain.handle(connectorObject);
+            }
+        }, options);
+        return result.get();
     }
 
     /**
@@ -113,7 +124,7 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
      * @param search
      *            The underlying implementation of search (generally the
      *            connector itself)
-     * @param oclass
+     * @param objectClass
      *            The object class
      * @param filter
      *            The filter
@@ -122,12 +133,13 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
      * @param options
      *            The options
      */
-    public static void rawSearch(SearchOp<?> search, final ObjectClass oclass, final Filter filter,
-            ResultsHandler handler, OperationOptions options) {
-        FilterTranslator<?> translator = search.createFilterTranslator(oclass, options);
-        List<?> queries = (List<?>) translator.translate(filter);
+    public static void rawSearch(SearchOp<?> search, ObjectClass objectClass, Filter filter,
+            SearchResultsHandler handler, OperationOptions options) {
+        FilterTranslator<?> translator = search.createFilterTranslator(objectClass, options);
+        List<?> queries = translator.translate(filter);
+
         if (queries.size() == 0) {
-            search.executeQuery(oclass, null, handler, options);
+            search.executeQuery(objectClass, null, handler, options);
         } else {
             // eliminate dups if more than one
             boolean eliminateDups = queries.size() > 1;
@@ -137,7 +149,7 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
             for (Object query : queries) {
                 @SuppressWarnings("unchecked")
                 SearchOp<Object> hack = (SearchOp<Object>) search;
-                hack.executeQuery(oclass, query, handler, options);
+                hack.executeQuery(objectClass, query, handler, options);
                 // don't run any more queries if the consumer
                 // has stopped
                 if (handler instanceof DuplicateFilteringResultsHandler) {
@@ -170,7 +182,7 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
 
         private final ResultsHandler handler;
 
-        public AttributesToGetSearchResultsHandler(ResultsHandler handler, String[] attrsToGet) {
+        public AttributesToGetSearchResultsHandler(final ResultsHandler handler, String[] attrsToGet) {
             super(attrsToGet);
             Assertions.nullCheck(handler, "handler");
             this.handler = handler;
@@ -179,6 +191,7 @@ public class SearchImpl extends ConnectorAPIOperationRunner implements SearchApi
         /**
          * Handle the object w/ reduced attributes.
          */
+        @Override
         public boolean handle(ConnectorObject obj) {
             obj = reduceToAttrsToGet(obj);
             return handler.handle(obj);
