@@ -404,7 +404,6 @@ namespace Org.IdentityConnectors.Exchange
                             }
                         }
                     }
-
                     return this.serCmdInfo;
                 }
             }            

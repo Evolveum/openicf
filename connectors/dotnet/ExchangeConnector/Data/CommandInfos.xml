@@ -33,9 +33,9 @@
       <string>UserPrincipalName</string>
       <string>Alias</string>
       <string>DisplayName</string>
-      <strign>DomainController</strign>
+      <string>DomainController</string>
       <string>FirstName</string>
-      <strign>Initials</strign>
+      <string>Initials</string>
       <string>LastName</string>
       <string>MacAttachmentFormat</string>
       <string>MessageBodyFormat</string>

@@ -70,6 +70,11 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         internal const string AttIsDeleted = "isDeleted";
 
+        internal const string AttAlias = "Alias";
+        internal const string AttHiddenFromAddressListsEnabled = "HiddenFromAddressListsEnabled";
+        internal const string AttEmailAddresses = "EmailAddresses";
+        internal const string AttPrimarySmtpAddress = "PrimarySmtpAddress";
+
         /// <summary>
         /// External Mail attribute name as in AD
         /// </summary>
@@ -110,7 +115,7 @@ namespace Org.IdentityConnectors.Exchange
                 ConnectorAttributeInfoBuilder.Build(
                         AttRecipientType,
                         typeof(string),
-                        ConnectorAttributeInfo.Flags.REQUIRED | ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+                        ConnectorAttributeInfo.Flags.REQUIRED);
 
         /// <summary>
         /// External Mail attribute info
@@ -119,7 +124,7 @@ namespace Org.IdentityConnectors.Exchange
                 ConnectorAttributeInfoBuilder.Build(
                         AttExternalMail,
                         typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT | ConnectorAttributeInfo.Flags.MULTIVALUED);
+                        ConnectorAttributeInfo.Flags.MULTIVALUED);
 
         /// <summary>
         /// Database attribute info
@@ -128,7 +133,31 @@ namespace Org.IdentityConnectors.Exchange
                 ConnectorAttributeInfoBuilder.Build(
                         AttDatabase,
                         typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+                        0);
+
+        private static readonly ConnectorAttributeInfo AttInfoAlias =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttAlias,
+                        typeof(string),
+                        0);
+
+        private static readonly ConnectorAttributeInfo AttInfoEmailAddresses =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttEmailAddresses,
+                        typeof(string),
+                        ConnectorAttributeInfo.Flags.MULTIVALUED);
+
+        private static readonly ConnectorAttributeInfo AttInfoPrimarySmtpAddress =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttPrimarySmtpAddress,
+                        typeof(string),
+                        0);
+
+        private static readonly ConnectorAttributeInfo AttInfoHiddenFromAddressListsEnabled =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttHiddenFromAddressListsEnabled,
+                        typeof(Boolean),
+                        0);
 
         /// <summary>
         /// Recipient type attribute for Mailbox
@@ -205,7 +234,8 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             // first create the object in AD
-            Uid uid = base.Create(oclass, FilterOut(attributes, cmdInfoEnable, cmdInfoSet), options);
+            ICollection<ConnectorAttribute> adAttributes = FilterOut(attributes, cmdInfoEnable, cmdInfoSet);
+            Uid uid = base.Create(oclass, adAttributes, options);
 
             if (rcptType == RcptTypeUser)
             {
@@ -520,9 +550,13 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="configuration">Connector configuration</param>
         public override void Init(Configuration configuration)
         {
+            Trace.TraceInformation("ExchangeConnector.Init: entry");
+            IList<string> unused = PSExchangeConnector.CommandInfo.EnableMailbox.Parameters;        // initializing CommandInfo - if done lazily, it throws StackOverflowException (when constructing XmlSerializer) for no obvious reason
+
             this.configuration = (ExchangeConfiguration)configuration;
             base.Init(configuration);            
             this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, this.configuration.ExchangeUri, configuration.ConnectorMessages);
+            Trace.TraceInformation("ExchangeConnector.Init: exit");
         }
 
         /// <summary>
@@ -616,6 +650,9 @@ namespace Org.IdentityConnectors.Exchange
                 classInfoBuilder.AddAttributeInfo(AttInfoDatabase);
                 classInfoBuilder.AddAttributeInfo(AttInfoRecipientType);
                 classInfoBuilder.AddAttributeInfo(AttInfoExternalMail);
+                classInfoBuilder.AddAttributeInfo(AttInfoAlias);
+                classInfoBuilder.AddAttributeInfo(AttInfoEmailAddresses);
+                classInfoBuilder.AddAttributeInfo(AttInfoHiddenFromAddressListsEnabled);
                 oinfo = classInfoBuilder.Build();
             }
 
@@ -633,7 +670,7 @@ namespace Org.IdentityConnectors.Exchange
         /// </returns>
         private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
         {
-            IList<string> attsToRemove = new List<string> { AttRecipientType, AttDatabase, AttExternalMail };
+            IList<string> attsToRemove = new List<string> { AttRecipientType, AttDatabase, AttExternalMail, AttAlias, AttEmailAddresses, AttHiddenFromAddressListsEnabled };
             if (cmdInfos != null)
             {
                 foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
@@ -644,7 +681,6 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
             }
-
             return ExchangeUtility.FilterOut(attributes, attsToRemove);
         }
 

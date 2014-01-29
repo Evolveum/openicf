@@ -142,6 +142,8 @@
     <EmbeddedResource Include="Messages.zh-TW.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="ObjectClasses.xml" />
+    <EmbeddedResource Include="ObjectClasses.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

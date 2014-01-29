@@ -37,6 +37,8 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Spi;
+    using System.Text.RegularExpressions;
+    using Microsoft.Exchange.Data;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -210,6 +212,8 @@ namespace Org.IdentityConnectors.Exchange
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             Assertions.NullCheck(attributes, "attributes");
 
+            Trace.TraceInformation("GetCommand: cmdInfo name = {0}", cmdInfo.Name);
+
             // create command
             Command cmd = new Command(cmdInfo.Name);
 
@@ -223,13 +227,63 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
+            bool emailAddressesPresent = GetAttValues(ExchangeConnector.AttEmailAddresses, attributes) != null;
+
             foreach (string attName in cmdInfo.Parameters)
             {
-                object val = GetAttValue(attName, attributes);
-                if (val == null && attName.Equals("DomainController"))
+                object val = null;
+
+                //Trace.TraceInformation("GetCommand: processing cmdInfo parameter {0}", attName);
+
+                if (attName.Equals(ExchangeConnector.AttPrimarySmtpAddress) && emailAddressesPresent)
+                {   
+                    // in this case we take care of primary smtp address within email addresses
+                }
+                else if (attName.Equals(ExchangeConnector.AttEmailAddresses))
                 {
-                    // add domain controller if not provided
-                    val = ActiveDirectoryUtils.GetDomainControllerName(config);
+                    IList<object> vals = GetAttValues(attName, attributes);
+                    if (vals != null)
+                    {
+                        string primarySmtpAddress = (string)GetAttValue(ExchangeConnector.AttPrimarySmtpAddress, attributes);
+                        bool primarySmtpAddressPresent = !String.IsNullOrEmpty(primarySmtpAddress);
+                        bool primarySmtpAddressFoundInList = false;
+
+                        Microsoft.Exchange.Data.ProxyAddressCollection addresses = new Microsoft.Exchange.Data.ProxyAddressCollection();
+                        //Trace.TraceInformation("GetCommand: email addresses = {0}", CollectionUtil.Dump(vals));
+                        foreach (object addressAsObject in vals)
+                        {
+                            //Trace.TraceInformation("GetCommand: addressAsObject = {0}", addressAsObject);
+                            string addressAsString = addressAsObject.ToString();
+                            bool isPrimary;
+                            if (primarySmtpAddressPresent && addressAsString.Equals(primarySmtpAddress))
+                            {
+                                primarySmtpAddressFoundInList = true;
+                                isPrimary = true;
+                            }
+                            else
+                            {
+                                isPrimary = false;
+                            }
+                            addAddress(addressAsString, isPrimary, addresses);
+                        }
+
+                        if (primarySmtpAddressPresent && !primarySmtpAddressFoundInList)
+                        {
+                            Trace.TraceInformation("Primary SMTP address of {0} was not found in the address list, adding it.");
+                            addresses.Add(new SmtpProxyAddress(primarySmtpAddress, true));
+                        }
+
+                        val = addresses; 
+                    }
+                }
+                else
+                {
+                    val = GetAttValue(attName, attributes);
+                    if (val == null && attName.Equals("DomainController"))
+                    {
+                        // add domain controller if not provided
+                        val = ActiveDirectoryUtils.GetDomainControllerName(config);
+                    }
                 }
 
                 if (val != null)
@@ -238,8 +292,41 @@ namespace Org.IdentityConnectors.Exchange
                 }                  
             }
 
+            Trace.TraceInformation("GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
             return cmd;
         }
+
+        private static string removeSmtpPrefix(string addressAsString)
+        {
+            return Regex.Replace(addressAsString, "smtp:", "", RegexOptions.IgnoreCase);
+        }
+
+        private static void addAddress(String address, bool isPrimary, Microsoft.Exchange.Data.ProxyAddressCollection addresses)
+        {
+            if (ProxyAddressBase.IsAddressStringValid(address))
+            {
+                ProxyAddress proxyAddress;
+                if (isPrimary)
+                {
+                    Trace.TraceInformation("adding {0} as primary SMTP proxy address", address);
+                    proxyAddress = new SmtpProxyAddress(removeSmtpPrefix(address), true);
+                }
+                else
+                {
+                    Trace.TraceInformation("adding {0} as non-primary proxy address", address);
+                    proxyAddress = ProxyAddress.Parse(address);
+                }
+                addresses.Add(proxyAddress);
+            }
+            else
+            {
+                throw new ArgumentException(String.Format(
+                    CultureInfo.CurrentCulture,
+                    "Invalid email address: {0}",
+                    address));
+            }
+        }
+
 
         /// <summary>
         /// Helper method: Gets attribute value from the attribute collection
@@ -265,6 +352,31 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
+        /// Helper method: Gets attribute values from the attribute collection
+        /// </summary>
+        /// <param name="attName">attribute name</param>
+        /// <param name="attributes">collection of attribute</param>
+        /// <returns>Attribute value as collection of objects, null if not found</returns>     
+        /// <exception cref="ArgumentNullException">If some of the params is null</exception>
+        internal static IList<object> GetAttValues(string attName, ICollection<ConnectorAttribute> attributes)
+        {
+            Assertions.NullCheck(attName, "attName");
+            Assertions.NullCheck(attributes, "attributes");
+
+            ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
+
+            if (attribute != null)
+            {
+                return attribute.Value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        /// <summary>
         /// Helper method for filtering the specified attributes from collection of attributes
         /// </summary>
         /// <param name="attributes">Collection of attributes</param>
@@ -272,9 +384,12 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Filtered collection of attributes</returns>
         internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, IList<string> names)
         {
+            Trace.TraceInformation("ExchangeUtility.FilterOut entry");
+
             Assertions.NullCheck(attributes, "attributes");
             if (names == null || names.Count == 0)
             {
+                Trace.TraceInformation("ExchangeUtility.FilterOut exit1");
                 return attributes;
             }
            
@@ -286,7 +401,7 @@ namespace Org.IdentityConnectors.Exchange
                     filtered.Add(attribute);
                 }
             }
-
+            Trace.TraceInformation("ExchangeUtility.FilterOut exit2");
             return filtered;
         }
 

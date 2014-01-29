@@ -161,6 +161,7 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
      	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
+      <AttributeInfo name="msExchGenericForwardingAddress" type="String"/>
       <AttributeInfo name="uSNChanged" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
