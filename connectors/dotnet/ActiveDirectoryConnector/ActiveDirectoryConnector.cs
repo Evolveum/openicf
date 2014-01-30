@@ -129,7 +129,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("Create method");
+            Trace.TraceInformation("Create method; attributes:\n{0}", TempConnectorAttributeDump(attributes));
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -142,17 +142,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.ConnectorMessages.Format("ex_OperationalAttributeNull", 
                         "The name operational attribute cannot be null"));
             }
+            Trace.TraceInformation("Name attribute = {0}", nameAttribute.GetDetails());
 
             String ldapContainerPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName,
                 ActiveDirectoryUtils.GetParentDn(nameAttribute.GetNameValue()));
             String ldapEntryPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, 
                 nameAttribute.GetNameValue());
 
+            Trace.TraceInformation("LdapContainerPath = {0}, LdapEntryPath = {1}", ldapContainerPath, ldapEntryPath);
+
             try
             {
                 if (!DirectoryEntry.Exists(ldapContainerPath))
                 {
-                    throw new ConnectorException("Container does not exist");
+                    throw new ConnectorException("Container " + ldapContainerPath + " does not exist");
                 }
 
                 // Get the correct container, and put the new user in it
@@ -246,6 +249,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
             return uid;
+        }
+
+        private string TempConnectorAttributeDump(ICollection<ConnectorAttribute> attributes)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (attributes != null)
+            {
+                foreach (ConnectorAttribute attribute in attributes)
+                {
+                    sb.Append(" - ").Append(attribute.GetDetails()).Append("\n");
+                }
+            }
+            else
+            {
+                sb.Append("(null)");
+            }
+            return sb.ToString();
         }
 
         #endregion
@@ -922,7 +942,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             Uid updatedUid = null;
 
-            Trace.TraceInformation("Update method");
+            Trace.TraceInformation("Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, TempConnectorAttributeDump(attributes));
+
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
