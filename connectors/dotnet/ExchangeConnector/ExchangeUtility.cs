@@ -227,6 +227,12 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             bool emailAddressesPresent = GetAttValues(ExchangeConnector.AttEmailAddresses, attributes) != null;
+            bool primarySmtpAddressPresent = GetAttValues(ExchangeConnector.AttPrimarySmtpAddress, attributes) != null;
+
+            if (emailAddressesPresent && primarySmtpAddressPresent)
+            {
+                throw new ArgumentException(ExchangeConnector.AttEmailAddresses + " and " + ExchangeConnector.AttPrimarySmtpAddress + " cannot be both set.");
+            }
 
             foreach (string attName in cmdInfo.Parameters)
             {
@@ -234,43 +240,16 @@ namespace Org.IdentityConnectors.Exchange
 
                 //Trace.TraceInformation("GetCommand: processing cmdInfo parameter {0}", attName);
 
-                if (attName.Equals(ExchangeConnector.AttPrimarySmtpAddress) && emailAddressesPresent)
-                {   
-                    // in this case we take care of primary smtp address within email addresses
-                }
-                else if (attName.Equals(ExchangeConnector.AttEmailAddresses))
+                if (attName.Equals(ExchangeConnector.AttEmailAddresses))
                 {
                     IList<object> vals = GetAttValues(attName, attributes);
                     if (vals != null)
                     {
                         List<string> addresses = new List<string>();
-
-                        string primarySmtpAddress = (string)GetAttValue(ExchangeConnector.AttPrimarySmtpAddress, attributes);
-                        bool primarySmtpAddressPresent = !String.IsNullOrEmpty(primarySmtpAddress);
-                        bool primarySmtpAddressFoundInList = false;
-
                         foreach (object addressAsObject in vals)
                         {
-                            string addressAsString = removeSmtpPrefix(addressAsObject.ToString());
-                            bool isPrimary;
-                            if (primarySmtpAddressPresent && addressAsString.Equals(primarySmtpAddress))
-                            {
-                                primarySmtpAddressFoundInList = true;
-                                isPrimary = true;
-                            }
-                            else
-                            {
-                                isPrimary = false;
-                            }
-                            addAddress(addressAsString, isPrimary, addresses);
+                            addresses.Add(addressAsObject.ToString());
                         }
-
-                        if (primarySmtpAddressPresent && !primarySmtpAddressFoundInList)
-                        {
-                            Trace.TraceInformation("Primary SMTP address of {0} was not found in the address list, adding it.");
-                            addAddress(primarySmtpAddress, true, addresses);
-                        }
-
                         val = addresses.ToArray(); 
                     }
                 }
@@ -293,17 +272,6 @@ namespace Org.IdentityConnectors.Exchange
             Trace.TraceInformation("GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
             return cmd;
         }
-
-        private static string removeSmtpPrefix(string addressAsString)
-        {
-            return Regex.Replace(addressAsString, "smtp:", "", RegexOptions.IgnoreCase);
-        }
-
-        private static void addAddress(String address, bool isPrimary, IList<string> addresses)
-        {
-            addresses.Add((isPrimary ? "SMTP:" : "smtp:") + address);
-        }
-
 
         /// <summary>
         /// Helper method: Gets attribute value from the attribute collection
