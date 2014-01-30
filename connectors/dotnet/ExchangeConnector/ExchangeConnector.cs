@@ -74,6 +74,7 @@ namespace Org.IdentityConnectors.Exchange
         internal const string AttHiddenFromAddressListsEnabled = "HiddenFromAddressListsEnabled";
         internal const string AttEmailAddresses = "EmailAddresses";
         internal const string AttPrimarySmtpAddress = "PrimarySmtpAddress";
+        internal const string AttEmailAddressPolicyEnabled = "EmailAddressPolicyEnabled";
 
         /// <summary>
         /// External Mail attribute name as in AD
@@ -158,6 +159,12 @@ namespace Org.IdentityConnectors.Exchange
                         AttHiddenFromAddressListsEnabled,
                         typeof(Boolean),
                         0);
+
+        private static readonly ConnectorAttributeInfo AttInfoEmailAddressPolicyEnabled =
+        ConnectorAttributeInfoBuilder.Build(
+                AttEmailAddressPolicyEnabled,
+                typeof(Boolean),
+                0);
 
         /// <summary>
         /// Recipient type attribute for Mailbox
@@ -652,7 +659,9 @@ namespace Org.IdentityConnectors.Exchange
                 classInfoBuilder.AddAttributeInfo(AttInfoExternalMail);
                 classInfoBuilder.AddAttributeInfo(AttInfoAlias);
                 classInfoBuilder.AddAttributeInfo(AttInfoEmailAddresses);
+                classInfoBuilder.AddAttributeInfo(AttInfoPrimarySmtpAddress);
                 classInfoBuilder.AddAttributeInfo(AttInfoHiddenFromAddressListsEnabled);
+                classInfoBuilder.AddAttributeInfo(AttInfoEmailAddressPolicyEnabled);
                 oinfo = classInfoBuilder.Build();
             }
 

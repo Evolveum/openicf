@@ -68,9 +68,6 @@
       <HintPath>$(ConnectorFrameworkDir)\Framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.Exchange.Data">
-      <HintPath>P:\Microsoft.Exchange.Data.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management.Automation">

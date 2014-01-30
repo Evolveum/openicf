@@ -38,7 +38,6 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Spi;
     using System.Text.RegularExpressions;
-    using Microsoft.Exchange.Data;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -244,16 +243,15 @@ namespace Org.IdentityConnectors.Exchange
                     IList<object> vals = GetAttValues(attName, attributes);
                     if (vals != null)
                     {
+                        List<string> addresses = new List<string>();
+
                         string primarySmtpAddress = (string)GetAttValue(ExchangeConnector.AttPrimarySmtpAddress, attributes);
                         bool primarySmtpAddressPresent = !String.IsNullOrEmpty(primarySmtpAddress);
                         bool primarySmtpAddressFoundInList = false;
 
-                        Microsoft.Exchange.Data.ProxyAddressCollection addresses = new Microsoft.Exchange.Data.ProxyAddressCollection();
-                        //Trace.TraceInformation("GetCommand: email addresses = {0}", CollectionUtil.Dump(vals));
                         foreach (object addressAsObject in vals)
                         {
-                            //Trace.TraceInformation("GetCommand: addressAsObject = {0}", addressAsObject);
-                            string addressAsString = addressAsObject.ToString();
+                            string addressAsString = removeSmtpPrefix(addressAsObject.ToString());
                             bool isPrimary;
                             if (primarySmtpAddressPresent && addressAsString.Equals(primarySmtpAddress))
                             {
@@ -270,10 +268,10 @@ namespace Org.IdentityConnectors.Exchange
                         if (primarySmtpAddressPresent && !primarySmtpAddressFoundInList)
                         {
                             Trace.TraceInformation("Primary SMTP address of {0} was not found in the address list, adding it.");
-                            addresses.Add(new SmtpProxyAddress(primarySmtpAddress, true));
+                            addAddress(primarySmtpAddress, true, addresses);
                         }
 
-                        val = addresses; 
+                        val = addresses.ToArray(); 
                     }
                 }
                 else
@@ -301,30 +299,9 @@ namespace Org.IdentityConnectors.Exchange
             return Regex.Replace(addressAsString, "smtp:", "", RegexOptions.IgnoreCase);
         }
 
-        private static void addAddress(String address, bool isPrimary, Microsoft.Exchange.Data.ProxyAddressCollection addresses)
+        private static void addAddress(String address, bool isPrimary, IList<string> addresses)
         {
-            if (ProxyAddressBase.IsAddressStringValid(address))
-            {
-                ProxyAddress proxyAddress;
-                if (isPrimary)
-                {
-                    Trace.TraceInformation("adding {0} as primary SMTP proxy address", address);
-                    proxyAddress = new SmtpProxyAddress(removeSmtpPrefix(address), true);
-                }
-                else
-                {
-                    Trace.TraceInformation("adding {0} as non-primary proxy address", address);
-                    proxyAddress = ProxyAddress.Parse(address);
-                }
-                addresses.Add(proxyAddress);
-            }
-            else
-            {
-                throw new ArgumentException(String.Format(
-                    CultureInfo.CurrentCulture,
-                    "Invalid email address: {0}",
-                    address));
-            }
+            addresses.Add((isPrimary ? "SMTP:" : "smtp:") + address);
         }
 
 
