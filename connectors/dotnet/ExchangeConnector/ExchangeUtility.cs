@@ -226,12 +226,12 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
-            bool emailAddressesPresent = GetAttValues(ExchangeConnector.AttEmailAddresses, attributes) != null;
-            bool primarySmtpAddressPresent = GetAttValues(ExchangeConnector.AttPrimarySmtpAddress, attributes) != null;
+            bool emailAddressesPresent = GetAttValues(ExchangeConnectorAttributes.AttEmailAddresses, attributes) != null;
+            bool primarySmtpAddressPresent = GetAttValues(ExchangeConnectorAttributes.AttPrimarySmtpAddress, attributes) != null;
 
             if (emailAddressesPresent && primarySmtpAddressPresent)
             {
-                throw new ArgumentException(ExchangeConnector.AttEmailAddresses + " and " + ExchangeConnector.AttPrimarySmtpAddress + " cannot be both set.");
+                throw new ArgumentException(ExchangeConnectorAttributes.AttEmailAddresses + " and " + ExchangeConnectorAttributes.AttPrimarySmtpAddress + " cannot be both set.");
             }
 
             foreach (string attName in cmdInfo.Parameters)
@@ -240,7 +240,7 @@ namespace Org.IdentityConnectors.Exchange
 
                 //Trace.TraceInformation("GetCommand: processing cmdInfo parameter {0}", attName);
 
-                if (attName.Equals(ExchangeConnector.AttEmailAddresses))
+                if (attName.Equals(ExchangeConnectorAttributes.AttEmailAddresses))
                 {
                     IList<object> vals = GetAttValues(attName, attributes);
                     if (vals != null)
@@ -414,14 +414,14 @@ namespace Org.IdentityConnectors.Exchange
             foreach (ConnectorAttribute attribute in attributes)
             {
                 string newName;
-                if (attribute.Is(ExchangeConnector.AttMsExchPoliciesExcludedADName))
+                if (attribute.Is(ExchangeConnectorAttributes.AttMsExchPoliciesExcludedADName))
                 {
                     if (attribute.Value != null && attribute.Value.Contains("{26491cfc-9e50-4857-861b-0cb8df22b5d7}"))
                     {
                         emailAddressPolicyEnabled = false;
                     }
                 }
-                else if (ExchangeConnector.AttMapFromAD.TryGetValue(attribute.Name, out newName))
+                else if (ExchangeConnectorAttributes.AttMapFromAD.TryGetValue(attribute.Name, out newName))
                 {
                     var newAttribute = RenameAttribute(attribute, newName);
                     builder.AddAttribute(newAttribute);
@@ -432,31 +432,31 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
-            builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnector.AttEmailAddressPolicyEnabled, emailAddressPolicyEnabled));
+            builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnectorAttributes.AttEmailAddressPolicyEnabled, emailAddressPolicyEnabled));
 
-            copyAttribute(builder, cobject, ExchangeConnector.AttPrimarySmtpAddressADName, ExchangeConnector.AttPrimarySmtpAddress);
+            copyAttribute(builder, cobject, ExchangeConnectorAttributes.AttPrimarySmtpAddressADName, ExchangeConnectorAttributes.AttPrimarySmtpAddress);
 
             // derive recipient type
             long? recipientTypeDetails =
-                ExchangeUtility.GetAttValue(ExchangeConnector.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()) as long?;
+                ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()) as long?;
             String recipientType = null;
             switch (recipientTypeDetails)
             { // see http://blogs.technet.com/b/benw/archive/2007/04/05/exchange-2007-and-recipient-type-details.aspx
 
-                case 1: recipientType = ExchangeConnector.RcptTypeMailBox; break;
-                case 128: recipientType = ExchangeConnector.RcptTypeMailUser; break;
+                case 1: recipientType = ExchangeConnectorAttributes.RcptTypeMailBox; break;
+                case 128: recipientType = ExchangeConnectorAttributes.RcptTypeMailUser; break;
 
                 case null:          // we are dealing with user accounts, so we can assume that an account without Exchange information is an ordinary User
-                case 65536: recipientType = ExchangeConnector.RcptTypeUser; break;
+                case 65536: recipientType = ExchangeConnectorAttributes.RcptTypeUser; break;
             }
             if (recipientType != null)
             {
-                builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnector.AttRecipientType, new string[] { recipientType }));
+                builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnectorAttributes.AttRecipientType, new string[] { recipientType }));
             }
             else
             {
                 Trace.TraceInformation("Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
-                    ExchangeUtility.GetAttValue(ExchangeConnector.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
+                    ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
             }
 
             builder.ObjectClass = cobject.ObjectClass;

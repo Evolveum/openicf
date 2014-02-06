@@ -76,6 +76,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExchangeConnectorAttributes.cs" />
     <Compile Include="Data\SerializableCommandInfo.cs" />
     <Compile Include="Data\PersistenceUtility.cs" />
     <Compile Include="ExchangeConnector.cs" />
