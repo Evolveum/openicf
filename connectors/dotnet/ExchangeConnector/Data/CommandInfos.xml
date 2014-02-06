@@ -123,6 +123,13 @@
       <string>UsePreferMessageFormat</string>
     </Parameters>
   </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Disable-MailUser</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameters>
+      <string>DomainController</string>
+    </Parameters>
+  </SerializableCommandInfo>
   <!-- ************ MAIL USER END ************ -->
   <!-- ************ USER ************ -->
   <SerializableCommandInfo>
@@ -203,6 +210,13 @@
       <string>LinkedCredential</string>
       <string>ManagedFolderMailboxPolicy</string>
       <string>ManagedFolderMailboxPolicyAllowed</string>      
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Disable-Mailbox</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameters>
+      <string>DomainController</string>
     </Parameters>
   </SerializableCommandInfo>
   <SerializableCommandInfo>

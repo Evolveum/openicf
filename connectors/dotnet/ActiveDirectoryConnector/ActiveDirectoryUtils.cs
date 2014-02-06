@@ -778,9 +778,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 forest = Forest.GetForest(context);
             }
 
-            Trace.TraceInformation("Getting schema");
+            Trace.TraceInformation("Getting schema from AD");
             ActiveDirectorySchema ADSchema = forest.Schema;
-            Trace.TraceInformation("Got schema");
+            Trace.TraceInformation("Got schema from AD");
 
             return ADSchema;
         }

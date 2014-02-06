@@ -129,7 +129,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("Create method; attributes:\n{0}", TempConnectorAttributeDump(attributes));
+            Trace.TraceInformation("AD.Create method; attributes:\n{0}", DumpConnectorAttributes(attributes));
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -251,7 +251,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return uid;
         }
 
-        private string TempConnectorAttributeDump(ICollection<ConnectorAttribute> attributes)
+        protected string DumpConnectorAttributes(ICollection<ConnectorAttribute> attributes)
         {
             StringBuilder sb = new StringBuilder();
             if (attributes != null)
@@ -275,7 +275,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of Connector
         public virtual void Init(Configuration configuration)
         {
-            Trace.TraceInformation("Active Directory Init method");
+            Trace.TraceInformation("AD.Init method");
             configuration.Validate();
             _configuration = (ActiveDirectoryConfiguration)configuration;
             _utils = new ActiveDirectoryUtils(_configuration);
@@ -324,15 +324,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region SchemaOp Members
         // implementation of SchemaSpiOp
-        public Schema Schema()
+        public virtual Schema Schema()
         {            
-            Trace.TraceInformation("Schema method");
+            Trace.TraceInformation("AD.Schema method");
             if (_schema != null)
             {
                 Trace.TraceInformation("Returning cached schema");
-                return _schema;
             }
+            else
+            {
+                _schema = BuildSchema();
+            }
+            return _schema;
+        }
 
+        protected Schema BuildSchema()
+        {
             SchemaBuilder schemaBuilder = 
                 new SchemaBuilder(SafeType<Connector>.Get(this));
             AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
@@ -376,10 +383,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
             Trace.TraceInformation("Finished retrieving schema");
-            _schema = schemaBuilder.Build();
-            Trace.TraceInformation("Returning schema");
-
-            return _schema;
+            return schemaBuilder.Build();
         }
 
         /// <summary>
@@ -557,7 +561,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
             string searchRoot, SearchScope searchScope)
         {
-            Trace.TraceInformation("Search: modifying query");
+            Trace.TraceInformation("AD.ExecuteQuery: modifying query");
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
             {
@@ -630,7 +634,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<string> attributesToReturn = null;
                 SearchResultCollection resultSet = null;
                 int count = 0;
-                attributesToReturn = GetAttributesToReturn(oclass, options);
+                attributesToReturn = GetAdAttributesToReturn(oclass, options);
                 try
                 {
                     resultSet = searcher.FindAll();
@@ -753,13 +757,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
     	                        entry = entryGc;
     	                    }
 	
-    	                    Stopwatch attw = new Stopwatch();
-    	                    attw.Start();
+    	                    //Stopwatch attw = new Stopwatch();
+    	                    //attw.Start();
     	                    AddAttributeIfNotNull(builder,
     	                        _utils.GetConnectorAttributeFromADEntry(
     	                        oclass, attributeName, savedResults, entry));
-    	                    attw.Stop();
-							Trace.TraceInformation("after AddAttributeIfNotNull({0}): T={1} ms, this attribute took={2} ticks", attributeName, stopWatch.ElapsedMilliseconds, attw.ElapsedTicks);
+    	                    //attw.Stop();
+							//Trace.TraceInformation("after AddAttributeIfNotNull({0}): T={1} ms, this attribute took={2} ticks", attributeName, stopWatch.ElapsedMilliseconds, attw.ElapsedTicks);
     	                }
                     }
                     finally
@@ -831,7 +835,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return path;
         }
 
-        private ICollection<string> GetAttributesToReturn(ObjectClass oclass, OperationOptions options)
+        // overriden in ExchangeConnector in order to change externally visible (Exchange) attributes to their AD-level counterparts
+        protected virtual ICollection<string> GetAdAttributesToReturn(ObjectClass oclass, OperationOptions options)
         {
             ICollection<string> attributeNames = null;
 
@@ -942,7 +947,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             Uid updatedUid = null;
 
-            Trace.TraceInformation("Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, TempConnectorAttributeDump(attributes));
+            Trace.TraceInformation("AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, DumpConnectorAttributes(attributes));
 
             if (_configuration == null)
             {
@@ -993,6 +998,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of DeleteSpiOp
         public virtual void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
         {
+            Trace.TraceInformation("AD.Delete; uid = {0}", uid != null ? uid.GetUidValue() : "(null)");
             DirectoryEntry de = null;
             try
             {

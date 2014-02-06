@@ -297,6 +297,29 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
+        /// Helper method: Sets attribute value in the attribute collection
+        /// </summary>
+        /// <param name="attName">attribute name</param>
+        /// <param name="attValue">attribute value (if null, we will remove the attribute from the collection)</param>
+        /// <param name="attributes">collection of attribute</param>
+        /// <exception cref="ArgumentNullException">If some of the params is null</exception>
+        internal static void SetAttValue(string attName, object attValue, ICollection<ConnectorAttribute> attributes)
+        {
+            Assertions.NullCheck(attName, "attName");
+            Assertions.NullCheck(attributes, "attributes");
+
+            ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
+            if (attribute != null)
+            {
+                attributes.Remove(attribute);
+            }
+            if (attValue != null)
+            {
+                attributes.Add(ConnectorAttributeBuilder.Build(attName, new object[] { attValue }));
+            }
+        }
+
+        /// <summary>
         /// Helper method: Gets attribute values from the attribute collection
         /// </summary>
         /// <param name="attName">attribute name</param>
@@ -329,12 +352,9 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Filtered collection of attributes</returns>
         internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, IList<string> names)
         {
-            Trace.TraceInformation("ExchangeUtility.FilterOut entry");
-
             Assertions.NullCheck(attributes, "attributes");
             if (names == null || names.Count == 0)
             {
-                Trace.TraceInformation("ExchangeUtility.FilterOut exit1");
                 return attributes;
             }
            
@@ -346,7 +366,6 @@ namespace Org.IdentityConnectors.Exchange
                     filtered.Add(attribute);
                 }
             }
-            Trace.TraceInformation("ExchangeUtility.FilterOut exit2");
             return filtered;
         }
 
@@ -384,35 +403,75 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="map">Replace mapping</param>
         /// <returns>ConnectorObject with replaced attributes</returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, ICollection<string> attsToGet, IDictionary<string, string> map)
+        internal static ConnectorObject ConvertAdAttributesToExchange(ConnectorObject cobject, ICollection<string> attsToGet)
         {
             Assertions.NullCheck(cobject, "cobject");
-            Assertions.NullCheck(map, "map");
-            if (attsToGet == null)
-            {
-                return cobject;
-            }
 
             var attributes = cobject.GetAttributes();
             var builder = new ConnectorObjectBuilder();
+
+            bool emailAddressPolicyEnabled = true;
             foreach (ConnectorAttribute attribute in attributes)
             {
                 string newName;
-                if (map.TryGetValue(attribute.Name, out newName) && attsToGet.Contains(newName))
+                if (attribute.Is(ExchangeConnector.AttMsExchPoliciesExcludedADName))
+                {
+                    if (attribute.Value != null && attribute.Value.Contains("{26491cfc-9e50-4857-861b-0cb8df22b5d7}"))
+                    {
+                        emailAddressPolicyEnabled = false;
+                    }
+                }
+                else if (ExchangeConnector.AttMapFromAD.TryGetValue(attribute.Name, out newName))
                 {
                     var newAttribute = RenameAttribute(attribute, newName);
                     builder.AddAttribute(newAttribute);
-                    break;
                 }
-
-                builder.AddAttribute(attribute);
+                else
+                {
+                    builder.AddAttribute(attribute);
+                }
             }
 
-            builder.AddAttributes(attributes);
+            builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnector.AttEmailAddressPolicyEnabled, emailAddressPolicyEnabled));
+
+            copyAttribute(builder, cobject, ExchangeConnector.AttPrimarySmtpAddressADName, ExchangeConnector.AttPrimarySmtpAddress);
+
+            // derive recipient type
+            long? recipientTypeDetails =
+                ExchangeUtility.GetAttValue(ExchangeConnector.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()) as long?;
+            String recipientType = null;
+            switch (recipientTypeDetails)
+            { // see http://blogs.technet.com/b/benw/archive/2007/04/05/exchange-2007-and-recipient-type-details.aspx
+
+                case 1: recipientType = ExchangeConnector.RcptTypeMailBox; break;
+                case 128: recipientType = ExchangeConnector.RcptTypeMailUser; break;
+
+                case null:          // we are dealing with user accounts, so we can assume that an account without Exchange information is an ordinary User
+                case 65536: recipientType = ExchangeConnector.RcptTypeUser; break;
+            }
+            if (recipientType != null)
+            {
+                builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnector.AttRecipientType, new string[] { recipientType }));
+            }
+            else
+            {
+                Trace.TraceInformation("Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
+                    ExchangeUtility.GetAttValue(ExchangeConnector.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
+            }
+
             builder.ObjectClass = cobject.ObjectClass;
             builder.SetName(cobject.Name);
             builder.SetUid(cobject.Uid);
             return builder.Build();
+        }
+
+        private static void copyAttribute(ConnectorObjectBuilder builder, ConnectorObject cobject, string src, string dest)
+        {
+            ConnectorAttribute srcAttr = cobject.GetAttributeByName(src);
+            if (srcAttr != null)
+            {
+                builder.AddAttribute(RenameAttribute(srcAttr, dest));
+            }
         }
 
         /// <summary>

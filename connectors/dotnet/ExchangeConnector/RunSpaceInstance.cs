@@ -39,6 +39,7 @@ namespace Org.IdentityConnectors.Exchange
 	using Org.IdentityConnectors.Framework.Common.Exceptions;
 	using Org.IdentityConnectors.Framework.Common.Objects;
 	using Org.IdentityConnectors.Common;
+    using System.Threading;
 
 	/// <summary>
 	/// <para>
@@ -112,9 +113,41 @@ namespace Org.IdentityConnectors.Exchange
 			Assertions.NullCheck( messageCatalog, "messageCatalog" );
 			_messageCatalog = messageCatalog;
 
-			// initialize this
-			this.InitRunSpace(snapin, exchangeUri);
+			// initialize this (in separate thread - to avoid obscure StackOverflow exceptions)
+            Initializer initializer = new Initializer(this, snapin, exchangeUri);
+            initializer.InitializeInOtherThread();
 		}
+
+        private class Initializer
+        {
+            private SnapIn snapin;
+            private string exchangeUri;
+            private RunSpaceInstance runSpaceInstance;
+
+            internal Initializer(RunSpaceInstance runSpaceInstance, SnapIn snapin, string exchangeUri)
+            {
+                this.snapin = snapin;
+                this.exchangeUri = exchangeUri;
+                this.runSpaceInstance = runSpaceInstance;
+            }
+
+            public void Initialize()
+            {
+                runSpaceInstance.InitRunSpace(snapin, exchangeUri);
+            }
+
+            public void InitializeInOtherThread()
+            {
+                Thread oThread = new Thread(new ThreadStart(Initialize));
+                oThread.Start();
+                Trace.TraceInformation("Waiting for run space initialization to start (in a separate thread)...");
+                while (!oThread.IsAlive) ;              // wait for thread to become alive
+                Trace.TraceInformation("Waiting for run space initialization to finish (in a separate thread)...");
+                oThread.Join();                         // wait for thread to finish
+                Trace.TraceInformation("Run space initialization finished.");
+            }
+        };
+
 
 		/// <summary>
 		/// Snapin type to load
@@ -405,6 +438,7 @@ namespace Org.IdentityConnectors.Exchange
 			{
 				case SnapIn.Exchange:
 					var serverVersion = GetExchangeServerVersion();
+                    //ExchangeVersion serverVersion = ExchangeVersion.E2010;
 					switch (serverVersion)
 					{
 						case ExchangeVersion.E2007:

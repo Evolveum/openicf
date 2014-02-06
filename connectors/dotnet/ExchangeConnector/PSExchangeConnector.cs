@@ -304,6 +304,11 @@ namespace Org.IdentityConnectors.Exchange
             internal static readonly CommandInfo EnableMailbox = new CommandInfo("Enable-Mailbox");
 
             /// <summary>
+            /// Disable-Mailbox command meta info
+            /// </summary>
+            internal static readonly CommandInfo DisableMailbox = new CommandInfo("Disable-Mailbox");
+
+            /// <summary>
             /// Set-Mailbox command meta info
             /// </summary>
             internal static readonly CommandInfo SetMailbox = new CommandInfo("Set-Mailbox");
@@ -312,6 +317,11 @@ namespace Org.IdentityConnectors.Exchange
             /// Enable-MailUser command meta info
             /// </summary>
             internal static readonly CommandInfo EnableMailUser = new CommandInfo("Enable-MailUser");
+
+            /// <summary>
+            /// Disable-MailUser command meta info
+            /// </summary>
+            internal static readonly CommandInfo DisableMailUser = new CommandInfo("Disable-MailUser");
 
             /// <summary>
             /// Set-MailUser command meta info
@@ -332,6 +342,12 @@ namespace Org.IdentityConnectors.Exchange
             /// Get-Mailbox command meta info
             /// </summary>
             internal static readonly CommandInfo GetMailbox = new CommandInfo("Get-Mailbox");
+
+            /// <summary>
+            /// Set-User command meta info
+            /// </summary>
+            internal static readonly CommandInfo SetUser = new CommandInfo("Set-User");
+
 
             /// <summary>
             /// List of SerializableCommandInfo object - will be read from persistence
@@ -380,6 +396,14 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
+            internal static void InitializeIfNeeded()
+            {
+                if (serCmdInfos == null)
+                {
+                    serCmdInfos = PersistenceUtility.ReadCommandInfo();
+                }
+            }
+
             /// <summary>
             /// Gets SerCmdInfo.
             /// </summary>
@@ -387,11 +411,8 @@ namespace Org.IdentityConnectors.Exchange
             {
                 get
                 {
-                    // lazy init
-                    if (serCmdInfos == null)
-                    {
-                        serCmdInfos = PersistenceUtility.ReadCommandInfo();
-                    }
+                    // lazy init (if not initialized explicitly)
+                    InitializeIfNeeded();
 
                     if (this.serCmdInfo == null)
                     {

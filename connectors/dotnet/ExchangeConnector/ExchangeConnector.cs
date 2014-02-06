@@ -50,64 +50,24 @@ namespace Org.IdentityConnectors.Exchange
     {
         #region Fields Definition
 
+        private static Schema _schema = null;           // cached schema
+
         /// <summary>
         /// Recipient Type attribute name
         /// </summary>
         internal const string AttRecipientType = "RecipientType";
 
         /// <summary>
-        /// External Mail Address attribute name
+        /// msExchRecipientDisplayType attribute - necessary for deriving RecipientType directly from AD
+        /// This AD attribute is visible to clients, therefore we prepare AttInfo for this attribute.
         /// </summary>
-        internal const string AttExternalMail = "ExternalEmailAddress";
+        internal const string AttMsExchRecipientDisplayTypeADName = "msExchRecipientDisplayType";
 
         /// <summary>
-        /// Database attribute name
+        /// msExchRecipientTypeDetails attribute - necessary for deriving RecipientType directly from AD
+        /// This AD attribute is visible to clients, therefore we prepare AttInfo for this attribute.
         /// </summary>
-        internal const string AttDatabase = "Database";
-
-        /// <summary>
-        /// Deleted atrribute name
-        /// </summary>
-        internal const string AttIsDeleted = "isDeleted";
-
-        internal const string AttAlias = "Alias";
-        internal const string AttHiddenFromAddressListsEnabled = "HiddenFromAddressListsEnabled";
-        internal const string AttEmailAddresses = "EmailAddresses";
-        internal const string AttPrimarySmtpAddress = "PrimarySmtpAddress";
-        internal const string AttEmailAddressPolicyEnabled = "EmailAddressPolicyEnabled";
-
-        /// <summary>
-        /// External Mail attribute name as in AD
-        /// </summary>
-        internal const string AttExternalMailADName = "targetAddress";
-
-        /// <summary>
-        /// Database attribute name as in AD
-        /// </summary>
-        internal const string AttDatabaseADName = "homeMDB";
-        
-        /// <summary>
-        /// Attribute mapping constant
-        /// </summary>
-        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string> 
-        {
-        { AttDatabase, AttDatabaseADName },
-        { AttExternalMail, AttExternalMailADName }
-        };
-
-        /// <summary>
-        /// Attribute mapping constant
-        /// </summary>
-        internal static readonly IDictionary<string, string> AttMapFromAD = new Dictionary<string, string> 
-        {
-        { AttDatabaseADName, AttDatabase },
-        { AttExternalMailADName, AttExternalMail }
-        };
-
-        /// <summary>
-        /// ClassName - used for debugging purposes
-        /// </summary>
-        private static readonly string ClassName = typeof(ExchangeConnector).ToString();
+        internal const string AttMsExchRecipientTypeDetailsADName = "msExchRecipientTypeDetails";
 
         /// <summary>
         /// Recipient type attribute info
@@ -118,29 +78,47 @@ namespace Org.IdentityConnectors.Exchange
                         typeof(string),
                         ConnectorAttributeInfo.Flags.REQUIRED);
 
+        private static readonly ConnectorAttributeInfo AttInfoADMsExchRecipientDisplayType =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttMsExchRecipientDisplayTypeADName,
+                        typeof(string),
+                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+
+        private static readonly ConnectorAttributeInfo AttInfoADMsExchRecipientTypeDetails =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttMsExchRecipientTypeDetailsADName,
+                        typeof(string),
+                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+
+        /// <summary>
+        /// External Mail Address attribute name
+        /// The address where e-mail is redirected when the intended recipient is unavailable.
+        /// It has an AD version, but it is hidden, because the mapping between Exchange and AD version is direct.
+        /// </summary>
+        internal const string AttExternalEmailAddress = "ExternalEmailAddress";
+
+        /// <summary>
+        /// External Mail attribute name as in AD
+        /// </summary>
+        internal const string AttExternalEmailAddressADName = "targetAddress";
+
         /// <summary>
         /// External Mail attribute info
         /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoExternalMail =
+        private static readonly ConnectorAttributeInfo AttInfoExternalEmailAddress =
                 ConnectorAttributeInfoBuilder.Build(
-                        AttExternalMail,
+                        AttExternalEmailAddress,
                         typeof(string),
-                        ConnectorAttributeInfo.Flags.MULTIVALUED);
+                        0);
 
         /// <summary>
-        /// Database attribute info
+        /// Email Addresses attribute name
+        /// All proxy addresses
         /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoDatabase =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttDatabase,
-                        typeof(string),
-                        0);
 
-        private static readonly ConnectorAttributeInfo AttInfoAlias =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttAlias,
-                        typeof(string),
-                        0);
+        internal const string AttEmailAddresses = "EmailAddresses";
+
+        internal const string AttEmailAddressesADName = "proxyAddresses";
 
         private static readonly ConnectorAttributeInfo AttInfoEmailAddresses =
                 ConnectorAttributeInfoBuilder.Build(
@@ -148,38 +126,318 @@ namespace Org.IdentityConnectors.Exchange
                         typeof(string),
                         ConnectorAttributeInfo.Flags.MULTIVALUED);
 
+        /// <summary>
+        /// Controlled by recipient policy?
+        /// 
+        /// Mapping is non-trivial but AD version of this attribute is pretty useless 
+        /// in non-windows world, so we won't expose it to outside
+        /// </summary>
+
+        internal const string AttEmailAddressPolicyEnabled = "EmailAddressPolicyEnabled";
+
+        internal const string AttMsExchPoliciesExcludedADName = "msExchPoliciesExcluded";
+
+        private static readonly ConnectorAttributeInfo AttInfoEmailAddressPolicyEnabled =
+            ConnectorAttributeInfoBuilder.Build(
+                AttEmailAddressPolicyEnabled,
+                typeof(Boolean),
+                0);
+
+        // private static readonly ConnectorAttributeInfo AttInfoADMsExchPoliciesExcluded =
+        //    ConnectorAttributeInfoBuilder.Build(
+        //        AttMsExchPoliciesExcludedADName,
+        //        typeof(string),
+        //        ConnectorAttributeInfo.Flags.MULTIVALUED | ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+
+        /// <summary>
+        /// Primary SMTP e-mail address
+        /// Its counterpart (mail) is already in AD ObjectClasses.xml file.
+        /// </summary>
+
+        internal const string AttPrimarySmtpAddress = "PrimarySmtpAddress";
+
+        internal const string AttPrimarySmtpAddressADName = "mail";
+
         private static readonly ConnectorAttributeInfo AttInfoPrimarySmtpAddress =
                 ConnectorAttributeInfoBuilder.Build(
                         AttPrimarySmtpAddress,
                         typeof(string),
                         0);
 
+        /// <summary>
+        /// Nickname (alias)
+        /// </summary>
+
+        internal const string AttAlias = "Alias";
+
+        internal const string AttAliasADName = "mailNickname";
+
+        private static readonly ConnectorAttributeInfo AttInfoAlias =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttAlias,
+                        typeof(string),
+                        0);
+
+        /// <summary>
+        /// Hide object from GAL
+        /// </summary>
+
+        internal const string AttHiddenFromAddressListsEnabled = "HiddenFromAddressListsEnabled";
+
+        internal const string AttHiddenFromAddressListsEnabledADName = "msExchHideFromAddressLists";
+        
         private static readonly ConnectorAttributeInfo AttInfoHiddenFromAddressListsEnabled =
                 ConnectorAttributeInfoBuilder.Build(
                         AttHiddenFromAddressListsEnabled,
                         typeof(Boolean),
                         0);
 
-        private static readonly ConnectorAttributeInfo AttInfoEmailAddressPolicyEnabled =
-        ConnectorAttributeInfoBuilder.Build(
+        /// <summary>
+        /// Database attribute name
+        /// </summary>
+        internal const string AttDatabase = "Database";
+
+        /// <summary>
+        /// Database attribute name as in AD
+        /// </summary>
+        internal const string AttDatabaseADName = "homeMDB";
+
+        /// <summary>
+        /// Database attribute info.
+        /// This attribute can be obtained only using PowerShell connection
+        /// (i.e. not directly from AD), so we make it not returnable by default.
+        /// If needed, one can use homeMDB AD attribute that seems to contain
+        /// DN of the database, and derive common name (which is probably what is 
+        /// being put into Database attribute). We plan to deal with this
+        /// conversion in the future.
+        /// </summary>
+        private static readonly ConnectorAttributeInfo AttInfoDatabase =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttDatabase,
+                        typeof(string),
+                        ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+
+        /// <summary>
+        /// Database attribute info (AD version)
+        /// </summary>
+        private static readonly ConnectorAttributeInfo AttInfoADDatabase =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttDatabaseADName,
+                        typeof(string),
+                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+
+        /// <summary>
+        /// DeliverToMailboxAndForward
+        /// </summary>
+        internal const string AttDeliverToMailboxAndForward = "DeliverToMailboxAndForward";
+
+        /// <summary>
+        /// DeliverToMailboxAndForward attribute name as in AD
+        /// 
+        /// Please note that the mapping of DeliverToMailboxAndForward to deliverAndRedirect is the following:
+        ///   TRUE maps to TRUE
+        ///   FALSE maps to NOT-SET
+        /// (as of Exchange 2010)
+        /// </summary>
+        internal const string AttDeliverToMailboxAndForwardADName = "deliverAndRedirect";
+
+        /// <summary>
+        /// External Mail attribute info
+        /// </summary>
+        private static readonly ConnectorAttributeInfo AttInfoDeliverToMailboxAndForward =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttDeliverToMailboxAndForward,
+                        typeof(bool),
+                        0);
+
+        /// <summary>
+        /// ForwardingSmtpAddress - for more detailed description see e.g. http://ficility.net/tag/forwardingsmtpaddress/
+        /// In the future we could implement here also ForwardingAddress/altRecipient attribute, but working with it
+        /// is more complex, as it points NOT to an SMTP address but to a recipient in AD (e.g. via its DN).
+        /// </summary>
+        internal const string AttForwardingSmtpAddress = "ForwardingSmtpAddress";
+
+        /// <summary>
+        /// ForwardingSmtpAddress attribute name as in AD
+        /// </summary>
+        internal const string AttForwardingSmtpAddressADName = "msExchGenericForwardingAddress";
+
+        /// <summary>
+        /// External Mail attribute info
+        /// </summary>
+        private static readonly ConnectorAttributeInfo AttInfoForwardingSmtpAddress =
+                ConnectorAttributeInfoBuilder.Build(
+                        AttForwardingSmtpAddress,
+                        typeof(string),
+                        0);
+
+        /// <summary>
+        /// Custom attribute name prefix
+        /// </summary>
+        internal const string AttPrefixCustomAttribute = "CustomAttribute";
+        internal const string AttPrefixCustomAttributeADName = "extensionAttribute";
+
+        internal static IList<string> AttCustomAttributes;
+        internal static IList<string> AttCustomAttributesADNames;
+        private static IList<ConnectorAttributeInfo> AttInfoCustomAttributesForSchema;
+
+        internal const int NumberOfCustomAttributes = 15;
+
+        /// <summary>
+        /// Deleted atrribute name
+        /// </summary>
+        internal const string AttIsDeleted = "isDeleted";
+
+        /// <summary>
+        /// Attribute mapping constant
+        /// 
+        /// The interaction between AD and Exchange part of the connector is the following:
+        /// - Exchange speaks in the language of Exchange PowerShell commands (i.e. uses names like "HiddenFromAddressListsEnabled")
+        /// - AD speaks in the language of Exchange AD attributes (i.e. uses names like "msExchHideFromAddressLists")
+        /// 
+        /// This has significant implications. Namely,
+        /// 
+        /// (1) When getting data from the resource (Search and Sync operations), the conversion
+        ///     from AD to Exchange attributes takes place. Most of conversions consist of only
+        ///     renaming the respective attribute; however, there is a couple of more complicated
+        ///     ones (e.g. msExchPoliciesExcluded to EmailAddressPolicyEnabled). 
+        ///     See ConvertAdAttributesToExchange method.
+        ///     
+        /// (2) When converting search filter, one has to convert Exchange conditions
+        ///     to their AD counterparts (where such a mapping exists).
+        ///     See LegacyExchangeConnectorFilterTranslator class.
+        ///     
+        /// (3) Before executing a query, one has to deal with "attributesToGet" option.
+        ///     Currently, the only thing that has to be done here is to remove attributes
+        ///     that are not understood by AD connector (namely, Database attribute).
+        ///     All other attributes are returned by default, so there's no need to include
+        ///     them in attributesToGet option. (TODO fix this - because a client can
+        ///     include any attribute in this option).
+        /// 
+        /// (4) GetAdAttributesToReturn: This is a list of AD attributes that AD connector
+        ///     fetches from the AD and passes to a client (or to Exchange connector).
+        ///     Here should be all Exchange-related AD attributes.
+        ///     
+        /// (5) When creating ObjectClassInfo - ManualExchangeAttInfosForSchema,
+        ///     custom attributes (programatically generated), and ExchangeRelatedADAttInfosForSchema
+        ///     are put into externally visible schema.
+        /// 
+        /// </summary>
+        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string> 
+        {
+            { AttAlias, AttAliasADName },
+            { AttEmailAddresses, AttEmailAddressesADName },
+            { AttExternalEmailAddress, AttExternalEmailAddressADName },
+            { AttHiddenFromAddressListsEnabled, AttHiddenFromAddressListsEnabledADName },
+            { AttDeliverToMailboxAndForward, AttDeliverToMailboxAndForwardADName },
+            { AttForwardingSmtpAddress, AttForwardingSmtpAddressADName }
+        };
+
+        // externally-visible Exchange attributes not mentioned in AttMap2AD
+        internal static readonly ISet<string> OtherExchangeAttributes = 
+            new HashSet<string> 
+            { 
+                AttPrimarySmtpAddress,
+                AttRecipientType, 
                 AttEmailAddressPolicyEnabled,
-                typeof(Boolean),
-                0);
+                AttDatabase 
+            };
+
+        // these attributes should be retrieved from AD (but not sent further); note that all AD attributes mentioned in AttMap2AD are retrieved by default
+        internal static readonly ISet<string> HiddenAdAttributesToRetrieve =
+            new HashSet<string> 
+            { 
+                AttMsExchPoliciesExcludedADName
+            };
+
+        // these "manually defined" Exchange attributes should be part of the schema (here are all except custom attributes)
+        internal static readonly ISet<ConnectorAttributeInfo> ManualExchangeAttInfosForSchema =
+            new HashSet<ConnectorAttributeInfo> 
+                {
+                    AttInfoAlias,
+                    AttInfoPrimarySmtpAddress, 
+                    AttInfoEmailAddresses,
+                    AttInfoExternalEmailAddress,
+                    AttInfoHiddenFromAddressListsEnabled,
+                    AttInfoRecipientType, 
+                    AttInfoEmailAddressPolicyEnabled,
+                    AttInfoDatabase,
+                    AttInfoDeliverToMailboxAndForward,
+                    AttInfoForwardingSmtpAddress
+                };
+
+        // these AD attributes should be part of the schema
+        internal static readonly ISet<ConnectorAttributeInfo> ExchangeRelatedADAttInfosForSchema =
+            new HashSet<ConnectorAttributeInfo> 
+                {
+                    AttInfoADMsExchRecipientDisplayType, 
+                    AttInfoADMsExchRecipientTypeDetails,
+                    AttInfoADDatabase 
+                };
+
+        internal static bool IsExchangeAttribute(String attrName)
+        {
+            return AttMap2AD.ContainsKey(attrName) || OtherExchangeAttributes.Contains(attrName);
+        }
+
+        internal static bool IsExchangeAttribute(ConnectorAttribute attr)
+        {
+            return IsExchangeAttribute(attr.Name);
+        }
+
+        /// <summary>
+        /// Attribute mapping constant
+        /// </summary>
+        internal static readonly IDictionary<string, string> AttMapFromAD;
+
+        static ExchangeConnector()
+        {
+            PSExchangeConnector.CommandInfo.InitializeIfNeeded();
+
+            // creating custom attributes
+            AttCustomAttributes = new List<string>(NumberOfCustomAttributes);
+            AttCustomAttributesADNames = new List<string>(NumberOfCustomAttributes);
+            AttInfoCustomAttributesForSchema = new List<ConnectorAttributeInfo>(NumberOfCustomAttributes);
+            for (int i = 1; i <= NumberOfCustomAttributes; i++)
+            {
+                string name = AttPrefixCustomAttribute + i;
+                string adName = AttPrefixCustomAttributeADName + i;
+                AttCustomAttributes.Add(name);
+                AttCustomAttributesADNames.Add(adName);
+                AttInfoCustomAttributesForSchema.Add(ConnectorAttributeInfoBuilder.Build(
+                        name,
+                        typeof(string),
+                        0));
+                AttMap2AD.Add(name, adName);
+            }
+
+            // creating AttMapFromAD from AttMap2AD
+            AttMapFromAD = new Dictionary<string, string>();
+            foreach (var item in AttMap2AD)
+            {
+                AttMapFromAD.Add(item.Value, item.Key);
+            }
+        }
+
+        /// <summary>
+        /// ClassName - used for debugging purposes
+        /// </summary>
+        private static readonly string ClassName = typeof(ExchangeConnector).ToString();
 
         /// <summary>
         /// Recipient type attribute for Mailbox
         /// </summary>
-        private const string RcptTypeMailBox = "UserMailbox";
+        internal const string RcptTypeMailBox = "UserMailbox";
 
         /// <summary>
         /// Recipient type attribute for MailUser
         /// </summary>
-        private const string RcptTypeMailUser = "MailUser";
+        internal const string RcptTypeMailUser = "MailUser";
 
         /// <summary>
         /// Recipient type attribute for AD only User
         /// </summary>
-        private const string RcptTypeUser = "User";
+        internal const string RcptTypeUser = "User";
 
         /// <summary>
         /// Configuration instance
@@ -191,6 +449,23 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         private RunSpaceInstance runspace;
 
+        #endregion
+
+        #region SchemaOp Implementation
+        // implementation of SchemaSpiOp
+        public override Schema Schema()
+        {
+            Trace.TraceInformation("Exchange.Schema method");
+            if (_schema != null)
+            {
+                Trace.TraceInformation("Returning cached schema");
+            }
+            else
+            {
+                _schema = base.BuildSchema();
+            }
+            return _schema;
+        }
         #endregion
 
         #region CreateOp.Create implementation
@@ -207,6 +482,10 @@ namespace Org.IdentityConnectors.Exchange
         {
             ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
+
+            Trace.TraceInformation("Exchange.Create method; attributes:\n{0}", DumpConnectorAttributes(attributes));
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
 
             // we handle accounts only
             if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
@@ -281,11 +560,13 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             Debug.WriteLine(METHOD + ":exit", ClassName);
+            Trace.TraceInformation("Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
             return uid;
         }
 
         #endregion
 
+        #region UpdateOp implementation
         /// <summary>
         /// Implementation of UpdateOp.Update
         /// </summary>
@@ -307,6 +588,10 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
 
+            Trace.TraceInformation("Exchange.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, DumpConnectorAttributes(attributes));
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
             // we handle accounts only
             if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
             {
@@ -326,16 +611,21 @@ namespace Org.IdentityConnectors.Exchange
                 PSExchangeConnector.CommandInfo.SetMailUser);
             Uid uid = base.Update(type, oclass, filtered, options);
 
+            // retrieve Exchange-related information about the user
             ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, AttDatabaseADName));
             attributes.Add(aduser.Name);
-            PSExchangeConnector.CommandInfo cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
+            PSExchangeConnector.CommandInfo cmdInfo;
             if (aduser.GetAttributeByName(AttDatabaseADName) != null)
             {
-                // we can be sure it is user mailbox type
-                cmdInfo = PSExchangeConnector.CommandInfo.GetMailbox;
+                cmdInfo = PSExchangeConnector.CommandInfo.GetMailbox;       // we can be sure it is user mailbox type
             }
-
+            else
+            {
+                cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
+            }
             PSObject psuser = this.GetUser(cmdInfo, attributes);
+
+            // do we change recipient type?
             string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
             if (String.IsNullOrEmpty(rcptType))
             {
@@ -345,9 +635,32 @@ namespace Org.IdentityConnectors.Exchange
             if (rcptType == RcptTypeMailUser)
             {
                 if (type == UpdateType.REPLACE)
-                {                 
+                {
+                    // disabling Mailbox if needed
+                    if (origRcptType == RcptTypeMailBox)
+                    {
+                        Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributes, this.configuration);
+                        cmdDisable.Parameters.Add("Confirm", false);
+                        this.InvokePipeline(cmdDisable);
+                    }
+
+                    // enabling MailUser if needed
                     if (origRcptType != rcptType)
                     {
+                        // Enable-MailUser needs the value of ExternalEmailAddress, so we have to get it
+                        string externalEmailAddress = ExchangeUtility.GetAttValue(AttExternalEmailAddress, attributes) as string;
+                        if (String.IsNullOrEmpty(externalEmailAddress))
+                        {
+                            PSMemberInfo o = psuser.Members[AttExternalEmailAddress];
+                            if (o == null || o.Value == null || String.IsNullOrEmpty(o.Value.ToString()))
+                            {
+                                throw new InvalidOperationException("Missing ExternalEmailAddress value, which is required for a MailUser");
+                            }
+                            externalEmailAddress = o.Value.ToString();
+                            ExchangeUtility.SetAttValue(AttExternalEmailAddress, externalEmailAddress, attributes);
+                        }
+
+                        // now execute the Enable-MailUser command
                         Command cmdEnable = ExchangeUtility.GetCommand(
                                 PSExchangeConnector.CommandInfo.EnableMailUser, attributes, this.configuration);
                         this.InvokePipeline(cmdEnable);
@@ -388,16 +701,53 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes, this.configuration);
-                this.InvokePipeline(cmdSet);
+                if (type == UpdateType.REPLACE)
+                {
+                    Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes, this.configuration);
+                    this.InvokePipeline(cmdSet);
+                }
+                else
+                {
+                    throw new ConnectorException(this.configuration.ConnectorMessages.Format(
+                            "ex_wrong_update_type", "Update type [{0}] not supported", type));
+                }
             }
-            else if (rcptType == RcptTypeUser && origRcptType != rcptType)
+            else if (rcptType == RcptTypeUser)
             {
-                throw new ArgumentException(
-                        this.configuration.ConnectorMessages.Format(
-                        "ex_update_notsupported", "Update of [{0}] to [{1}] is not supported", AttRecipientType, rcptType));
+                if (origRcptType == RcptTypeMailBox)
+                {
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributes, this.configuration);
+                    cmdDisable.Parameters.Add("Confirm", false);
+                    this.InvokePipeline(cmdDisable);
+                }
+                else if (origRcptType == RcptTypeMailUser)
+                {
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, attributes, this.configuration);
+                    cmdDisable.Parameters.Add("Confirm", false);
+                    this.InvokePipeline(cmdDisable);
+                }
+                else if (origRcptType == RcptTypeUser)
+                {
+                    // if orig is User, there is no need to disable anything
+                }
+                else
+                {
+                    throw new InvalidOperationException("Invalid original recipient type: " + origRcptType);
+                }
+
+                if (type == UpdateType.REPLACE)
+                {
+                    Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, attributes, this.configuration);
+                    this.InvokePipeline(cmdSet);
+                }
+                else
+                {
+                    throw new ConnectorException(this.configuration.ConnectorMessages.Format(
+                            "ex_wrong_update_type", "Update type [{0}] not supported", type));
+                }
+
             }
-            else if (rcptType != RcptTypeUser)
+            else
             {
                 // unsupported rcpt type
                 throw new ArgumentException(
@@ -406,8 +756,10 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             Debug.WriteLine(METHOD + ":exit", ClassName);
+            Trace.TraceInformation("Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
             return uid;
         }
+        #endregion
 
         /// <summary>
         /// Tests if the connector is properly configured and ready
@@ -457,9 +809,9 @@ namespace Org.IdentityConnectors.Exchange
                     return handler(delta);
                 }
 
-                // replace the ad attributes with exchange one and add recipient type
-                ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
-                updated = this.AddExchangeAttributes(objClass, updated, attsToGet);
+                // replace the ad attributes with exchange ones and add recipient type and database (if requested)
+                ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object, attsToGet);
+                updated = this.AddExchangeAttributes(objClass, updated, attsToGet); 
                 if (updated != delta.Object)
                 {
                     // build new sync delta, cause we changed the object
@@ -490,7 +842,11 @@ namespace Org.IdentityConnectors.Exchange
         public override void ExecuteQuery(
                 ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
-            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);         
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
+
+            Trace.TraceInformation("Exchange.ExecuteQuery starting");
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
 
             // we handle accounts only
             if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
@@ -508,18 +864,26 @@ namespace Org.IdentityConnectors.Exchange
             // delegate to get the exchange attributes if requested            
             ResultsHandler filter = delegate(ConnectorObject cobject)
                                     {
-                                        ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
-                                                cobject, attsToGet, AttMapFromAD);
+                                        Trace.TraceInformation("Object returned from AD connector: {0}", DumpConnectorAttributes(cobject.GetAttributes()));
+                                        ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
                                         filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
+                                        Trace.TraceInformation("Object as passed from Exchange connector: {0}", DumpConnectorAttributes(filtered.GetAttributes()));
                                         return handler(filtered);
                                     };
 
-            ResultsHandler handler2use = handler;
+            ResultsHandler handler2use = filter;
             OperationOptions options2use = options;
+
+            // mapping AttributesToGet from Exchange to AD "language"
+            // actually, we don't need this code any more, because the only attribute that
+            // is not retrieved by default is Database, and it is NOT retrieved via AD.
+            // Uncomment this code if necessary in the future.
             if (options != null && options.AttributesToGet != null)
             {
-                if (attsToGet.Contains(AttDatabase) || attsToGet.Contains(AttExternalMail)
-                    || attsToGet.Contains(AttRecipientType))
+                /*
+                ISet<string> mappedExchangeAttributesToGet = new HashSet<string>(AttMap2AD.Keys);
+                mappedExchangeAttributesToGet.IntersectWith(options.AttributesToGet);
+                if (mappedExchangeAttributesToGet.Count > 0 || attsToGet.Contains(AttRecipientType))
                 {
                     // replace Exchange attributes with AD names
                     var newAttsToGet = ExchangeUtility.FilterReplace(attsToGet, AttMap2AD);
@@ -533,11 +897,23 @@ namespace Org.IdentityConnectors.Exchange
                     newAttsToGet.CopyTo(attributesToGet, 0);
                     builder.AttributesToGet = attributesToGet;
                     options2use = builder.Build();
-                    handler2use = filter;
+                } */
+
+                if (attsToGet.Contains(AttDatabase))
+                {
+                    attsToGet.Remove(AttDatabase);
+
+                    // build new op options
+                    var builder = new OperationOptionsBuilder(options);
+                    string[] attributesToGet = new string[attsToGet.Count];
+                    attsToGet.CopyTo(attributesToGet, 0);
+                    builder.AttributesToGet = attributesToGet;
+                    options2use = builder.Build();
                 }
             }
 
             base.ExecuteQuery(oclass, query, handler2use, options2use);
+            Trace.TraceInformation("Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -558,11 +934,11 @@ namespace Org.IdentityConnectors.Exchange
         public override void Init(Configuration configuration)
         {
             Trace.TraceInformation("ExchangeConnector.Init: entry");
-            IList<string> unused = PSExchangeConnector.CommandInfo.EnableMailbox.Parameters;        // initializing CommandInfo - if done lazily, it throws StackOverflowException (when constructing XmlSerializer) for no obvious reason
 
             this.configuration = (ExchangeConfiguration)configuration;
             base.Init(configuration);            
             this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, this.configuration.ExchangeUri, configuration.ConnectorMessages);
+
             Trace.TraceInformation("ExchangeConnector.Init: exit");
         }
 
@@ -586,40 +962,58 @@ namespace Org.IdentityConnectors.Exchange
             // normalize the attribute using AD connector first
             // attribute = base.NormalizeAttribute(oclass, attribute);
 
-            // normalize external mail value
-            if (attribute.Name == AttExternalMail && attribute.Value != null)
+            // normalize mail-related attributes
+            if (attribute.Name == AttExternalEmailAddress || attribute.Name == AttForwardingSmtpAddress)
             {
-                IList<object> normAttributes = new List<object>();
-                bool normalized = false;
-                foreach (object val in attribute.Value)
-                {
-                    string strVal = val as string;
-                    if (strVal != null)
-                    {
-                        string[] split = strVal.Split(':');
-                        if (split.Length == 2)
-                        {
-                            // it contains delimiter, use the second part
-                            normAttributes.Add(split[1]);
-                            normalized = true;
-                        }
-                        else
-                        {
-                            // put the original value
-                            normAttributes.Add(val);
-                        }
-                    }
-                }
+                return NormalizeSmtpAddressAttribute(attribute);
+            }
+            else
+            {
+                return attribute;
+            }
 
-                if (normalized)
+            // TODO: what with EmailAddresses? (we should not remove SMTP/smpt prefix, because it carries information on primary/secondary address type)
+            // TODO: and other attributes?
+        }
+
+        private ConnectorAttribute NormalizeSmtpAddressAttribute(ConnectorAttribute attribute)
+        {
+            if (attribute.Value == null)
+            {
+                return attribute;
+            }
+
+            IList<object> normValues = new List<object>();
+            bool normalized = false;
+            foreach (object val in attribute.Value)
+            {
+                string strVal = val as string;
+                if (strVal != null)
                 {
-                    // build the attribute again
-                    return ConnectorAttributeBuilder.Build(attribute.Name, normAttributes);
+                    string[] split = strVal.Split(':');
+                    if (split.Length == 2)
+                    {
+                        // it contains delimiter, use the second part
+                        normValues.Add(split[1]);
+                        normalized = true;
+                    }
+                    else
+                    {
+                        // put the original value
+                        normValues.Add(val);
+                    }
                 }
             }
 
-            // return the original attribute
-            return attribute;
+            if (normalized)
+            {
+                // build the attribute again
+                return ConnectorAttributeBuilder.Build(attribute.Name, normValues);
+            }
+            else
+            {
+                return attribute;
+            }
         }
 
         /// <summary>
@@ -648,25 +1042,55 @@ namespace Org.IdentityConnectors.Exchange
         {
             // get the object class from base
             ObjectClassInfo oinfo = base.GetObjectClassInfo(oc);
+            Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: oinfo for {0} from AD has {1} entries", oc, oinfo.ConnectorAttributeInfos.Count);
 
             // add additional attributes for ACCOUNT
             if (oc.Is(ObjectClass.ACCOUNT_NAME))
             {
                 var classInfoBuilder = new ObjectClassInfoBuilder { IsContainer = oinfo.IsContainer, ObjectType = oinfo.ObjectType };
                 classInfoBuilder.AddAllAttributeInfo(oinfo.ConnectorAttributeInfos);
-                classInfoBuilder.AddAttributeInfo(AttInfoDatabase);
-                classInfoBuilder.AddAttributeInfo(AttInfoRecipientType);
-                classInfoBuilder.AddAttributeInfo(AttInfoExternalMail);
-                classInfoBuilder.AddAttributeInfo(AttInfoAlias);
-                classInfoBuilder.AddAttributeInfo(AttInfoEmailAddresses);
-                classInfoBuilder.AddAttributeInfo(AttInfoPrimarySmtpAddress);
-                classInfoBuilder.AddAttributeInfo(AttInfoHiddenFromAddressListsEnabled);
-                classInfoBuilder.AddAttributeInfo(AttInfoEmailAddressPolicyEnabled);
+                classInfoBuilder.AddAllAttributeInfo(ManualExchangeAttInfosForSchema);
+                classInfoBuilder.AddAllAttributeInfo(AttInfoCustomAttributesForSchema);
+                classInfoBuilder.AddAllAttributeInfo(ExchangeRelatedADAttInfosForSchema);
                 oinfo = classInfoBuilder.Build();
+                Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: newly created oinfo has {0} entries", oinfo.ConnectorAttributeInfos.Count);
             }
 
             // return
             return oinfo;
+        }
+
+        protected override ICollection<string> GetAdAttributesToReturn(ObjectClass oclass, OperationOptions options)
+        {
+            ICollection<string> attNames = base.GetAdAttributesToReturn(oclass, options);
+
+            // In attNames there is a mix of attributes - some AD-only ones (from ObjectClasses.xml),
+            // and some Exchange ones (from the schema) and some AD-only-for-Exchange ones (from the schema).
+            // We should convert Exchange ones to their AD counterparts and add "hidden useful" AD attributes.
+
+            if (oclass.Is(ObjectClass.ACCOUNT_NAME))
+            {
+                ICollection<string> newAttNames = new HashSet<string>();
+                
+                // converting Exchange attributes to AD counterparts, leaving out those that have no AD counterpart
+                foreach (string attName in attNames)
+                {
+                    if (IsExchangeAttribute(attName))
+                    {
+                        if (AttMap2AD.ContainsKey(attName))
+                        {
+                            newAttNames.Add(AttMap2AD[attName]);
+                        }
+                    }
+                    else
+                    {
+                        newAttNames.Add(attName);
+                    }
+                }
+                CollectionUtil.AddAll(newAttNames, HiddenAdAttributesToRetrieve);
+                attNames = newAttNames;
+            }
+            return attNames;
         }
 
         /// <summary>
@@ -679,7 +1103,8 @@ namespace Org.IdentityConnectors.Exchange
         /// </returns>
         private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
         {
-            IList<string> attsToRemove = new List<string> { AttRecipientType, AttDatabase, AttExternalMail, AttAlias, AttEmailAddresses, AttHiddenFromAddressListsEnabled };
+            IList<string> attsToRemove = new List<string> { AttRecipientType };
+            CollectionUtil.AddAll(attsToRemove, AttMap2AD.Keys);
             if (cmdInfos != null)
             {
                 foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
@@ -734,9 +1159,9 @@ namespace Org.IdentityConnectors.Exchange
 
         /// <summary>
         /// Gets Recipient Type/Database from Exchange database, this method can be more general, but it is ok
-        /// for out needs
+        /// for our needs
         /// </summary>
-        /// <param name="oc">object class, currently the moethod works for <see cref="ObjectClass.ACCOUNT"/> only</param>
+        /// <param name="oc">object class, currently the method works for <see cref="ObjectClass.ACCOUNT"/> only</param>
         /// <param name="cobject">connector object to get the recipient type/database for</param>
         /// <param name="attToGet">attributes to get</param>
         /// <returns>Connector Object with recipient type added</returns>
@@ -943,22 +1368,27 @@ namespace Org.IdentityConnectors.Exchange
             /// <returns>Translated string array</returns>
             protected override string[] GetLdapNamesForAttribute(ConnectorAttribute attr)
             {
-                if (attr.Is(AttDatabase))
+                // Exchange attributes with known mappings to AD
+                foreach (string attrNameInExchange in AttMap2AD.Keys)
                 {
-                    return new[] { AttDatabaseADName };
+                    if (attr.Is(attrNameInExchange))
+                    {
+                        return new[] { AttMap2AD[attrNameInExchange] };
+                    }
                 }
 
-                if (attr.Is(AttExternalMail))
-                {
-                    return new[] { AttExternalMailADName };
-                }
-
-                if (attr.Is(AttRecipientType))
+                // Other Exchange attributes have no mapping to AD ones.
+                // This means that some attributes with more complicated mappings,
+                // like RecipientType or EmailAddressPolicyEnabled, cannot be
+                // used in search queries.
+                if (IsExchangeAttribute(attr))
                 {
                     return null;
                 }
-
-                return base.GetLdapNamesForAttribute(attr);
+                else
+                {
+                    return base.GetLdapNamesForAttribute(attr);
+                }
             }
         }
     }
