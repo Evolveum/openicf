@@ -42,7 +42,7 @@ namespace Org.IdentityConnectors.Exchange
     /// <summary>
     /// Description of ExchangeUtility.
     /// </summary>
-    public sealed class ExchangeUtility : CommonUtils
+    public sealed class ExchangeUtility
     {
         /// <summary>
         /// class name, used for logging purposes
@@ -193,7 +193,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Dictionary of object classes</returns>
         internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
         {
-            return GetOCInfo(FileObjectClassDef);
+            return CommonUtils.GetOCInfo(FileObjectClassDef);
         }
 
         /// <summary>

@@ -61,7 +61,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp, 
         AuthenticateOp, PoolableConnector
 	{
-        public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
+        /// <summary>
+        /// Which AD attributes are returned by default (i.e. without client explicitly asking for them).
+        /// </summary>
+        private static IDictionary<ObjectClass, ICollection<string>> _attributesReturnedByDefault = null;
+
+        /// <summary>
+        /// Cached schema.
+        /// </summary>
+        private static Schema _schema = null;
 
         // special attribute names
         public static readonly string ATT_CONTAINER = "ad_container";
@@ -100,13 +108,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
-        private static Schema _schema = null;
         private DirectoryEntry _dirHandler = null;
         //private DirectorySearcher searcher = null;
         public ActiveDirectoryConnector()
         {
-            // populate default attributes and Schema
-            Schema();
         }
 
         #region CreateOp Members
@@ -129,7 +134,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("AD.Create method; attributes:\n{0}", DumpConnectorAttributes(attributes));
+            Trace.TraceInformation("AD.Create method; attributes:\n{0}", CommonUtils.DumpConnectorAttributes(attributes));
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -251,23 +256,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return uid;
         }
 
-        protected string DumpConnectorAttributes(ICollection<ConnectorAttribute> attributes)
-        {
-            StringBuilder sb = new StringBuilder();
-            if (attributes != null)
-            {
-                foreach (ConnectorAttribute attribute in attributes)
-                {
-                    sb.Append(" - ").Append(attribute.GetDetails()).Append("\n");
-                }
-            }
-            else
-            {
-                sb.Append("(null)");
-            }
-            return sb.ToString();
-        }
-
         #endregion
 
         #region Connector Members
@@ -289,6 +277,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             string path = GetSearchContainerPath(useGC, _configuration.LDAPHostName, _configuration.Container);
             Trace.TraceInformation("Search: Getting root node for search");
             _dirHandler = new DirectoryEntry(path,_configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
+            Schema();           // initializes e.g. _attributesReturnedByDefault (used throughout this connector)
+
             //searcher = new DirectorySearcher(_dirHandler);
         }
 
@@ -306,91 +297,36 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #endregion
 
-        protected ICollection<string> GetDefaultAttributeListForObjectClass(
-            ObjectClass oclass, ObjectClassInfo oclassInfo)
-        {
-            ICollection<string> defaultAttributeList = new List<string>();
-
-            foreach (ConnectorAttributeInfo attInfo in oclassInfo.ConnectorAttributeInfos)
-            {
-                if (attInfo.IsReturnedByDefault)
-                {
-                    defaultAttributeList.Add(attInfo.Name);
-                }
-            }
-
-            return defaultAttributeList;
-        }
-
         #region SchemaOp Members
         // implementation of SchemaSpiOp
         public virtual Schema Schema()
         {            
-            Trace.TraceInformation("AD.Schema method");
+            Trace.TraceInformation("AD.Schema method - entry");
             if (_schema != null)
             {
-                Trace.TraceInformation("Returning cached schema");
+                Trace.TraceInformation("AD.Schema method - exit, returning cached schema");
+                return _schema;
             }
             else
             {
-                _schema = BuildSchema();
+                _schema = SchemaUtils.BuildSchema(this,
+                                GetSupportedObjectClasses,
+                                GetObjectClassInfo,
+                                GetSupportedOperations,
+                                GetUnSupportedOperations);
+                _attributesReturnedByDefault = SchemaUtils.GetAttributesReturnedByDefault(
+                                GetSupportedObjectClasses,
+                                GetObjectClassInfo);
+                Trace.TraceInformation("AD.Schema method - exit, returning freshly computed schema");
+                return _schema;
             }
-            return _schema;
-        }
-
-        protected Schema BuildSchema()
-        {
-            SchemaBuilder schemaBuilder = 
-                new SchemaBuilder(SafeType<Connector>.Get(this));
-            AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
-            
-            //iterate through supported object classes
-            foreach(ObjectClass oc in GetSupportedObjectClasses())
-            {
-                ObjectClassInfo ocInfo = GetObjectClassInfo(oc);
-                Assertions.NullCheck(ocInfo, "ocInfo");
-
-                //populate the list of default attributes to get
-                AttributesReturnedByDefault.Add(oc, new HashSet<string>());
-                foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos)
-                {
-                    if( caInfo.IsReturnedByDefault ) {
-                        AttributesReturnedByDefault[oc].Add(caInfo.Name);
-                    }
-                }
-
-                //add object class to schema
-                schemaBuilder.DefineObjectClass(ocInfo);
-
-                //add supported operations
-                IList<SafeType<SPIOperation>> supportedOps = GetSupportedOperations(oc);
-                if (supportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in supportedOps)
-                    {                        
-                        schemaBuilder.AddSupportedObjectClass(op, ocInfo);
-                    }
-                }
-
-                //remove unsupported operatons
-                IList<SafeType<SPIOperation>> unSupportedOps = GetUnSupportedOperations(oc);
-                if (unSupportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in unSupportedOps)
-                    {
-                        schemaBuilder.RemoveSupportedObjectClass(op, ocInfo);
-                    }
-                }
-            }
-            Trace.TraceInformation("Finished retrieving schema");
-            return schemaBuilder.Build();
         }
 
         /// <summary>
         /// Defines the supported object classes by the connector, used for schema building
         /// </summary>
         /// <returns>List of supported object classes</returns>
-        protected virtual ICollection<ObjectClass> GetSupportedObjectClasses()
+        public ICollection<ObjectClass> GetSupportedObjectClasses()
         {
             IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos = 
                     CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
@@ -403,7 +339,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc">ObjectClass to get info for</param>
         /// <returns>ObjectClass' ObjectClassInfo</returns>
-        protected virtual ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
+        public ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
         {
             IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos = 
                     CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
@@ -416,7 +352,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc"></param>
         /// <returns></returns>
-        protected virtual IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc)
+        public IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc)
         {
             return null;
         }
@@ -426,7 +362,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc"></param>
         /// <returns></returns>
-        protected virtual IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
+        public IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
         {
             if (oc.Equals(ActiveDirectoryConnector.groupObjectClass) || oc.Equals(ouObjectClass))
             {
@@ -449,8 +385,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // implementation of SearchSpiOp
-        public virtual void ExecuteQuery(ObjectClass oclass, string query, 
-            ResultsHandler handler, OperationOptions options)
+        public void ExecuteQuery(ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
+        {
+            ExecuteQueryInternal(oclass, query, handler, options, GetAdAttributesToReturn(oclass, options));
+        }
+
+        public void ExecuteQueryInternal(ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options, ICollection<string> adAttributesToReturn)
         {
             try
             {
@@ -491,8 +431,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                 }
 
-                ExecuteQuery(oclass, query, handler, options,
-                    false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope);
+                ExecuteQueryInternal(oclass, query, handler, options,
+                    false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope, adAttributesToReturn);
             }
             catch (DirectoryServicesCOMException e)
             {
@@ -556,12 +496,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         // this is used by the ExecuteQuery method of SearchSpiOp, and
         // by the SyncSpiOp 
-        private void ExecuteQuery(ObjectClass oclass, string query,
+        public void ExecuteQueryInternal(ObjectClass oclass, string query,
             ResultsHandler handler, OperationOptions options, bool includeDeleted,
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
-            string searchRoot, SearchScope searchScope)
+            string searchRoot, SearchScope searchScope, ICollection<string> attributesToReturn)
         {
-            Trace.TraceInformation("AD.ExecuteQuery: modifying query");
+            Trace.TraceInformation("AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}", CollectionUtil.Dump(attributesToReturn));
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
             {
@@ -631,10 +571,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Stopwatch stopWatch = new Stopwatch();
     			stopWatch.Start();
 
-                ICollection<string> attributesToReturn = null;
                 SearchResultCollection resultSet = null;
                 int count = 0;
-                attributesToReturn = GetAdAttributesToReturn(oclass, options);
                 try
                 {
                     resultSet = searcher.FindAll();
@@ -835,8 +773,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return path;
         }
 
-        // overriden in ExchangeConnector in order to change externally visible (Exchange) attributes to their AD-level counterparts
-        protected virtual ICollection<string> GetAdAttributesToReturn(ObjectClass oclass, OperationOptions options)
+        public ICollection<string> GetAdAttributesToReturn(ObjectClass oclass, OperationOptions options)
         {
             ICollection<string> attributeNames = null;
 
@@ -846,7 +783,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
-                attributeNames = AttributesReturnedByDefault[oclass];
+                attributeNames = _attributesReturnedByDefault[oclass];
             }
 
             // Uid and name are always returned
@@ -942,12 +879,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // implementation of AdvancedUpdateSpiOp
-        public virtual Uid Update(UpdateType type, ObjectClass oclass, 
+        public Uid Update(UpdateType type, ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid updatedUid = null;
 
-            Trace.TraceInformation("AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, DumpConnectorAttributes(attributes));
+            Trace.TraceInformation("AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, CommonUtils.DumpConnectorAttributes(attributes));
 
             if (_configuration == null)
             {
@@ -996,7 +933,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region DeleteOp Members
 
         // implementation of DeleteSpiOp
-        public virtual void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
+        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
         {
             Trace.TraceInformation("AD.Delete; uid = {0}", uid != null ? uid.GetUidValue() : "(null)");
             DirectoryEntry de = null;
@@ -1056,7 +993,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         #endregion
-
 
         #region ScriptOnResourceOp Members
 
@@ -1178,8 +1114,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public virtual void Sync(ObjectClass objClass, SyncToken token, 
+        public void Sync(ObjectClass objClass, SyncToken token,
             SyncResultsHandler handler, OperationOptions options)
+        {
+            SyncInternal(objClass, token, handler, options, GetAdAttributesToReturn(objClass, options));
+        }
+
+        public void SyncInternal(ObjectClass objClass, SyncToken token, 
+            SyncResultsHandler handler, OperationOptions options, ICollection<string> attributesToReturn)
         {
             String serverName = GetSyncServerName();
 
@@ -1193,9 +1135,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SyncResults syncResults = new SyncResults(handler, adSyncToken, _configuration);
 
             // find modified usn's
-            ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
+            ExecuteQueryInternal(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
                 false, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), GetADSearchContainerFromOptions(null), SearchScope.Subtree);
+                serverName, UseGlobalCatalog(), GetADSearchContainerFromOptions(null), SearchScope.Subtree, attributesToReturn);
 
             // find deleted usn's
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.DirectoryServer, 
@@ -1210,13 +1152,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 deleteObjectsSearchRoot = ActiveDirectoryUtils.GetDnFromPath(domainDe.Path);
                 domainDe.Dispose();
             }
-            ExecuteQuery(objClass, deletedQuery, syncResults.SyncHandler, builder.Build(),
+            ExecuteQueryInternal(objClass, deletedQuery, syncResults.SyncHandler, builder.Build(),
                 true, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), deleteObjectsSearchRoot, SearchScope.Subtree);
-
+                serverName, UseGlobalCatalog(), deleteObjectsSearchRoot, SearchScope.Subtree, attributesToReturn);
         }
 
-        public virtual SyncToken GetLatestSyncToken(ObjectClass objectClass)
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass)
         {
             string serverName = GetSyncServerName();
             long highestCommittedUsn = 0;

@@ -27,6 +27,7 @@ using System.IO;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Serializer;
+using System.Text;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -36,7 +37,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// reads the object class info definitions from xml
         ///</summary>
         ///<returns>Dictionary of object classes</returns>
-        protected internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
+        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             Stream stream = assembly.GetManifestResourceStream(name);
@@ -69,5 +70,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             return map;
         }
+
+        // TODO find a better place for this method
+        public static string DumpConnectorAttributes(ICollection<ConnectorAttribute> attributes)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (attributes != null)
+            {
+                foreach (ConnectorAttribute attribute in attributes)
+                {
+                    sb.Append(" - ").Append(attribute.GetDetails()).Append("\n");
+                }
+            }
+            else
+            {
+                sb.Append("(null)");
+            }
+            return sb.ToString();
+        }
+
     }
 }

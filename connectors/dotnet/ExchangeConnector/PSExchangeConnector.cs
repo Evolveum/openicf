@@ -83,6 +83,7 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         private IDictionary<ObjectClass, ObjectClassInfo> mapOcInfo;
         
+        /*
         /// <summary>
         /// Implementation of CreateOp.Create
         /// </summary>
@@ -291,6 +292,7 @@ namespace Org.IdentityConnectors.Exchange
             Assertions.NullCheck(ret, "ret");
             return ret;  
         }
+        */
 
         /// <summary>
         /// Command definition object, uses internally <see cref="SerializableCommandInfo"/>,

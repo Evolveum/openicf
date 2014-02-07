@@ -334,6 +334,15 @@ namespace Org.IdentityConnectors.Exchange
                 AttMsExchPoliciesExcludedADName
             };
 
+        // these attributes should be retrieved from AD (and sent further); note that all AD attributes mentioned in AttMap2AD are retrieved by default
+        internal static readonly ISet<string> VisibleAdAttributesToRetrieve =
+            new HashSet<string> 
+            { 
+                AttMsExchRecipientDisplayTypeADName,
+                AttMsExchRecipientTypeDetailsADName,
+                AttDatabaseADName
+            };
+
         // these "manually defined" Exchange attributes should be part of the schema (here are all except custom attributes)
         internal static readonly ISet<ConnectorAttributeInfo> ManualExchangeAttInfosForSchema =
             new HashSet<ConnectorAttributeInfo> 
