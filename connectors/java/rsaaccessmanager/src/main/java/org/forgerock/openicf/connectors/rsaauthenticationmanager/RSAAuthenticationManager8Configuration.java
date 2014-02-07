@@ -65,6 +65,7 @@ public class RSAAuthenticationManager8Configuration extends AbstractConfiguratio
     public static final Integer TOKEN_OP_OPTION_ENABLE = 4;
     public static final String TOKEN_OP_OPTION_ENABLE_NAME = "Enable";
     public static final String TOKEN_OBJECTCLASS = "__TOKEN__";
+    public static final Integer NB_EA_TOKENCODES = 10;
     // Group operations
     public static final Integer GROUP_OP_OPTION_LINK = 1;
     public static final String GROUP_OP_OPTION_LINK_NAME = "Link";
@@ -74,7 +75,15 @@ public class RSAAuthenticationManager8Configuration extends AbstractConfiguratio
     public static final String SEARCH_LIMIT_NAME = "SearchLimit";
     public static final Integer SEARCH_LIMIT_DEFAULT = 100000;
     // CUSTOM Attributes
-    public static final String CUSTOM_ATTR_EMPLOYEE_NB = "Employee Number";
+    // Tokens
+    public static final String TOKEN_SERIALNB_ATTRIB = "TokenSerial";
+    public static final String CUSTOM_ATTR_TEMP_TOKEN_CODES = "TempTokenCodes";
+    public static final String CUSTOM_ATTR_EA_ACCESS_CODE = "EAaccessCode";
+    public static final String CUSTOM_ATTR_TEMP_FIXED_TOKENCODE = "TempFixedTokenCode";
+    public static final String CUSTOM_ATTR_IS_LOST = "isLost";
+    public static final String CUSTOM_ATTR_NB_UNUSED_TOKENCODES = "NbUnusedTokenCodes";
+    // Accounts
+    public static final String CUSTOM_ATTR_EMPLOYEE_NB = "employee number";
     public static final String CUSTOM_ATTR_TOKEN_SN_LIST = "TokensList";
     public static final String CUSTOM_ATTR_GROUP_NAME = "GroupName";
     // For defaultShell use: com.rsa.authmgr.common.AdminResource.AdminResource.DEFAULTSHELL

@@ -1,0 +1,484 @@
+{
+    "connectorRef" : {
+        "connectorHostRef" : "#LOCAL",
+        "connectorName" : "org.forgerock.openicf.connectors.scriptedrest.ScriptedRESTConnector",
+        "bundleName" : "org.forgerock.openicf.connectors.scriptedrest-connector",
+        "bundleVersion" : "1.1.0.0-SNAPSHOT"
+    },
+    "poolConfigOption" : {
+        "maxObjects" : 10,
+        "maxIdle" : 10,
+        "maxWait" : 150000,
+        "minEvictableIdleTimeMillis" : 120000,
+        "minIdle" : 1
+    },
+    "resultsHandlerConfig" : {
+        "enableNormalizingResultsHandler" : true,
+        "enableFilteredResultsHandler" : true,
+        "enableAttributesToGetSearchResultsHandler" : true
+    },
+    "operationTimeout" : {
+        "CREATE" : -1,
+        "UPDATE" : -1,
+        "DELETE" : -1,
+        "TEST" : -1,
+        "SCRIPT_ON_CONNECTOR" : -1,
+        "SCRIPT_ON_RESOURCE" : -1,
+        "GET" : -1,
+        "RESOLVEUSERNAME" : -1,
+        "AUTHENTICATE" : -1,
+        "SEARCH" : -1,
+        "VALIDATE" : -1,
+        "SYNC" : -1,
+        "SCHEMA" : -1
+    },
+    "configurationProperties" : {
+        "authenticateScriptFileName" : null,
+        "defaultAuthMethod" : "BASIC_PREEMPTIVE",
+        "deleteScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/DeleteScript.groovy",
+        "schemaScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/SchemaScript.groovy",
+        "reloadScriptOnExecution" : false,
+        "defaultContentType" : "JSON",
+        "testScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/TestScript.groovy",
+        "basePath" : "/openidm",
+        "updateScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/UpdateScript.groovy",
+        "searchScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/SearchScript.groovy",
+        "endPoint" : "http://localhost:8089",
+        "scriptingLanguage" : "GROOVY",
+        "createScriptFileName" : "/dvlpt/openicf/connectors/java/scriptedrest/src/main/resources/samples/OpenDJ/CreateScript.groovy",
+        "clearTextPasswordToScript" : true,
+        "syncScriptFileName" : null,
+        "login" : "idm",
+        "password" : "password"
+    },
+    "objectTypes" : {
+        "group" : {
+            "$schema" : "http://json-schema.org/draft-03/schema",
+            "id" : "__GROUP__",
+            "type" : "object",
+            "nativeType" : "__GROUP__",
+            "properties" : {
+                "members" : {
+                    "type" : "array",
+                    "items" : {
+                        "type" : "string",
+                        "nativeType" : "string"
+                    },
+                    "nativeName" : "members",
+                    "nativeType" : "string"
+                },
+                "lastModified" : {
+                    "type" : "string",
+                    "nativeName" : "lastModified",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "displayName" : {
+                    "type" : "string",
+                    "nativeName" : "displayName",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "__NAME__" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "__NAME__",
+                    "nativeType" : "string"
+                },
+                "created" : {
+                    "type" : "string",
+                    "nativeName" : "created",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "_id" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "_id",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_UPDATEABLE"
+                    ]
+                }
+            }
+        },
+        "user" : {
+            "$schema" : "http://json-schema.org/draft-03/schema",
+            "id" : "__ACCOUNT__",
+            "type" : "object",
+            "nativeType" : "__ACCOUNT__",
+            "properties" : {
+                "created" : {
+                    "type" : "string",
+                    "nativeName" : "created",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "_id" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "_id",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "managerId" : {
+                    "type" : "string",
+                    "nativeName" : "managerId",
+                    "nativeType" : "string"
+                },
+                "lastModified" : {
+                    "type" : "string",
+                    "nativeName" : "lastModified",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "displayName" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "displayName",
+                    "nativeType" : "string"
+                },
+                "managerDisplayName" : {
+                    "type" : "string",
+                    "nativeName" : "managerDisplayName",
+                    "nativeType" : "string"
+                },
+                "givenName" : {
+                    "type" : "string",
+                    "nativeName" : "givenName",
+                    "nativeType" : "string"
+                },
+                "familyName" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "familyName",
+                    "nativeType" : "string"
+                },
+                "__NAME__" : {
+                    "type" : "string",
+                    "required" : true,
+                    "nativeName" : "__NAME__",
+                    "nativeType" : "string"
+                },
+                "userName" : {
+                    "type" : "string",
+                    "nativeName" : "userName",
+                    "nativeType" : "string",
+                    "flags" : [
+                        "NOT_CREATABLE",
+                        "NOT_UPDATEABLE"
+                    ]
+                },
+                "groups" : {
+                    "type" : "array",
+                    "items" : {
+                        "type" : "string",
+                        "nativeType" : "string"
+                    },
+                    "nativeName" : "groups",
+                    "nativeType" : "string"
+                },
+                "telephoneNumber" : {
+                    "type" : "string",
+                    "nativeName" : "telephoneNumber",
+                    "nativeType" : "string"
+                },
+                "emailAddress" : {
+                    "type" : "string",
+                    "nativeName" : "emailAddress",
+                    "nativeType" : "string"
+                }
+            }
+        }
+    },
+    "operationOptions" : {
+        "CREATE" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "UPDATE" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "DELETE" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "TEST" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "SCRIPT_ON_CONNECTOR" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "SCRIPT_ON_RESOURCE" : {
+            "objectFeatures" : { }
+        },
+        "GET" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "RESOLVEUSERNAME" : {
+            "objectFeatures" : { }
+        },
+        "AUTHENTICATE" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "SEARCH" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "VALIDATE" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "SYNC" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        },
+        "SCHEMA" : {
+            "objectFeatures" : {
+                "__GROUP__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                },
+                "__ACCOUNT__" : {
+                    "denied" : false,
+                    "onDeny" : "DO_NOTHING",
+                    "operationOptionInfo" : {
+                        "$schema" : "http://json-schema.org/draft-03/schema",
+                        "id" : "FIX_ME",
+                        "type" : "object",
+                        "properties" : { }
+                    }
+                }
+            }
+        }
+    },
+    "name" : "RESTLDAP"
+}

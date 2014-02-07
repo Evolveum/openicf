@@ -256,6 +256,15 @@ public class LdapSearch {
                                 builder.addAttribute(AttributeBuilder.buildPasswordExpired(ADUserAccountControl.isPasswordExpired(controls)));
                             }
                             break;
+                        case MSAD_LDS:
+                            if (OperationalAttributeInfos.ENABLE.is(attrName) && entry.getAttributes().get(LdapConstants.MS_DS_USER_ACCOUNT_DISABLED) != null) {
+                                builder.addAttribute(AttributeBuilder.buildEnabled(!Boolean.parseBoolean(entry.getAttributes().get(LdapConstants.MS_DS_USER_ACCOUNT_DISABLED).get().toString())));
+                            } else if (OperationalAttributeInfos.PASSWORD_EXPIRED.is(attrName) && entry.getAttributes().get(LdapConstants.MS_DS_USER_PASSWORD_EXPIRED) != null) {
+                                builder.addAttribute(AttributeBuilder.buildPasswordExpired(Boolean.parseBoolean(entry.getAttributes().get(LdapConstants.MS_DS_USER_PASSWORD_EXPIRED).get().toString())));
+                            } else if (OperationalAttributeInfos.LOCK_OUT.is(attrName) && entry.getAttributes().get(LdapConstants.MS_DS_USER_ACCOUNT_AUTOLOCKED) != null) {
+                                builder.addAttribute(AttributeBuilder.buildLockOut(Boolean.parseBoolean(entry.getAttributes().get(LdapConstants.MS_DS_USER_ACCOUNT_AUTOLOCKED).get().toString())));
+                            }
+                            break;
                         default:
                             log.warn("Special Attribute {0} of object class {1} is not mapped to an LDAP attribute",
                                     attrName, oclass.getObjectClassValue());
@@ -267,7 +276,9 @@ public class LdapSearch {
                 attribute = conn.getSchemaMapping().createAttribute(oclass, attrName, entry, emptyAttrWhenNotFound);
             }
             if (ObjectClass.GROUP.equals(oclass) && conn.getConfiguration().getGroupMemberAttribute().equalsIgnoreCase(attrName)) {
-                if (ServerType.MSAD.equals(conn.getServerType()) || ServerType.MSAD_GC.equals(conn.getServerType())) {
+                if (ServerType.MSAD.equals(conn.getServerType()) || 
+                        ServerType.MSAD_GC.equals(conn.getServerType()) || 
+                        ServerType.MSAD_LDS.equals(conn.getServerType())) {
                     // Make sure we're not hitting AD large group issue
                     // see: http://msdn.microsoft.com/en-us/library/ms817827.aspx
                     if (entry.getAttributes().get("member;range=0-1499") != null) {
@@ -360,21 +371,16 @@ public class LdapSearch {
 
     private LdapSearchStrategy getSearchStrategy() {
         LdapSearchStrategy strategy;
-        if (ObjectClass.ACCOUNT.equals(oclass)) {
-            // Only consider paged strategies for accounts, just as the adapter does.
 
-            boolean useBlocks = conn.getConfiguration().isUseBlocks();
-            boolean usePagedResultsControl = conn.getConfiguration().isUsePagedResultControl();
-            int pageSize = conn.getConfiguration().getBlockSize();
+        boolean useBlocks = conn.getConfiguration().isUseBlocks();
+        boolean usePagedResultsControl = conn.getConfiguration().isUsePagedResultControl();
+        int pageSize = conn.getConfiguration().getBlockSize();
 
-            if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewControl.OID)) {
-                String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
-                strategy = new VlvIndexSearchStrategy(vlvSortAttr, pageSize);
-            } else if (useBlocks && conn.supportsControl(PagedResultsControl.OID)) {
-                strategy = new SimplePagedSearchStrategy(pageSize);
-            } else {
-                strategy = new DefaultSearchStrategy(false);
-            }
+        if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewControl.OID)) {
+            String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
+            strategy = new VlvIndexSearchStrategy(vlvSortAttr, pageSize);
+        } else if (useBlocks && conn.supportsControl(PagedResultsControl.OID)) {
+            strategy = new SimplePagedSearchStrategy(pageSize);
         } else {
             strategy = new DefaultSearchStrategy(false);
         }

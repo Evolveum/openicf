@@ -43,7 +43,7 @@ Usage:
     </parent>
     <groupId>org.forgerock.openicf.connectors</groupId>
     <artifactId>rsaauthenticationmanager-connector</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging> <!-- bundle -->
     <name>RSA Authentication Manager8 Connector</name>
     <description>Connector for RSA Authentication Manager 8</description>
@@ -426,12 +426,12 @@ Usage:
                             <url>${project.url}</url>
                             <ConnectorBundle-FrameworkVersion>1.1</ConnectorBundle-FrameworkVersion>
                             <ConnectorBundle-Name>org.forgerock.openicf.connectors.rsaauthenticationmanager-connector</ConnectorBundle-Name>
-                            <ConnectorBundle-Version>1.1</ConnectorBundle-Version>
+                            <ConnectorBundle-Version>1.2</ConnectorBundle-Version>
                             <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
                             <Bundle-Name>RSA Authentication Manager 8 Connector</Bundle-Name>
                             <Bundle-SymbolicName>org.forgerock.openicf.connectors.rsaauthenticationmanager-connector</Bundle-SymbolicName>
                             <Bundle-Vendor>ForgeRock AS</Bundle-Vendor>
-                            <Bundle-Version>1.1</Bundle-Version>
+                            <Bundle-Version>1.2</Bundle-Version>
                         </manifestEntries>
                     </archive>
                     <!--includes>
