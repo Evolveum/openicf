@@ -271,6 +271,7 @@
       <string>Extensions</string>
       <string>ExternalOofOptions</string>
       <string>ForwardingAddress</string>
+      <string>ForwardingSmtpAddress</string>
       <string>GrantSendOnBehalfTo</string>
       <string>HiddenFromAddressListsEnabled</string>
       <string>IgnoreDefaultScope</string>
