@@ -61,6 +61,11 @@ namespace Org.IdentityConnectors.Exchange
 	/// </summary>
 	internal sealed class RunSpaceInstance : IDisposable
 	{
+        /// <summary>
+        /// How many times to try when runspace state is "Broken".
+        /// </summary>
+        const int MAX_ATTEMPTS = 3;
+
 		/// <summary>
 		/// This class name, used for logging purposes
 		/// </summary>
@@ -100,6 +105,11 @@ namespace Org.IdentityConnectors.Exchange
 		/// The catalog of localized messages.
 		/// </summary>
 		private ConnectorMessages _messageCatalog;
+
+        /// <summary>
+        /// Asynchronous runspace initializer.
+        /// </summary>
+        private Initializer _initializer;
 		
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RunSpaceInstance" /> class.
@@ -114,9 +124,18 @@ namespace Org.IdentityConnectors.Exchange
 			_messageCatalog = messageCatalog;
 
 			// initialize this (in separate thread - to avoid obscure StackOverflow exceptions)
-            Initializer initializer = new Initializer(this, snapin, exchangeUri);
-            initializer.InitializeInOtherThread();
+            _initializer = new Initializer(this, snapin, exchangeUri);
+            _initializer.InitializeInOtherThread();
 		}
+
+        private void ReopenRunspace()
+        {
+            Trace.TraceInformation("Reopening runspace. First closing it.");
+            CloseRunspace();
+            Trace.TraceInformation("Closed. Now opening it again.");
+            _initializer.InitializeInOtherThread();
+            Trace.TraceInformation("Reopening of runspace complete.");
+        }
 
         private class Initializer
         {
@@ -260,6 +279,39 @@ namespace Org.IdentityConnectors.Exchange
 		/// if no command is passed in return null
 		/// if no output from the invoke return an empty collection</returns>
 		public ICollection<PSObject> InvokePipeline(Collection<Command> commands)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    return InvokePipelineInternal(commands);
+                }
+                catch (InvalidRunspaceStateException e)
+                {
+                    RunspaceStateInfo info = this.runSpace.RunspaceStateInfo;
+                    if (info != null)
+                    {
+                        Trace.TraceWarning("Runspace is in wrong state. Exception: {0}, State: {1}, Reason: {2}, Attempt number: {3}",
+                            e, info.State, info.Reason, attempt);
+                    }
+                    else
+                    {
+                        Trace.TraceWarning("Runspace is in wrong state. Exception: {0}, Attempt number: {1}", e, attempt);
+                    }
+                    if (attempt == MAX_ATTEMPTS)
+                    {
+                        Trace.TraceError("Maximum number of attempts achieved, signalling the exception");
+                        throw e;
+                    }
+                    else
+                    {
+                        ReopenRunspace();
+                    }
+                }
+            }
+        }
+
+        public ICollection<PSObject> InvokePipelineInternal(Collection<Command> commands)
 		{
 			const string MethodName = "InvokePipeline";
 			Debug.WriteLine(MethodName + ":entry", ClassName);
@@ -410,20 +462,27 @@ namespace Org.IdentityConnectors.Exchange
 				// clean up the runspace with attached things:
 				// the API docs show that the RunspaceInvoke will call Dispose on
 				// the Runspace which in turn calls Close on the Runspace.
-				if (this.runSpaceInvoke != null)
-				{
-					this.runSpaceInvoke.Dispose();
-				}
-				else
-				{
-					if (this.runSpace != null)
-					{
-						this.runSpace.Dispose();
-					}
-				}
+                CloseRunspace();
 			}
 			_messageCatalog = null;
 		}
+
+        private void CloseRunspace()
+        {
+            if (this.runSpaceInvoke != null)
+            {
+                this.runSpaceInvoke.Dispose();
+                this.runSpaceInvoke = null;
+            }
+            else
+            {
+                if (this.runSpace != null)
+                {
+                    this.runSpace.Dispose();
+                    this.runSpace = null;
+                }
+            }
+        }
 
 		/// <summary>
 		/// main initialisation routine for the <see cref="Runspace"/>
