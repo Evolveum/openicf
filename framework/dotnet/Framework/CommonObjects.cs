@@ -19,10 +19,10 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
 using System.Security;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -34,7 +34,7 @@ using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common.Serializer;
-using Org.IdentityConnectors.Framework.Common.Objects.Filters;
+
 namespace Org.IdentityConnectors.Framework.Common.Objects
 {
     #region NameUtil
@@ -795,6 +795,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             bld.Append(map.ToString());
             return bld.ToString();
         }
+
+        public string GetDetails()
+        {
+            StringBuilder bld = new StringBuilder();
+            bld.Append("ConnectorAttribute: Name='").Append(Name).Append("', Value(s)='").Append(CollectionUtil.Dump(Value)).Append("'");
+            return bld.ToString();
+        }
     }
     #endregion
 
@@ -1195,6 +1202,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 throw new ArgumentException("ObjectClass may not be null");
             }
+            if (ObjectClass.ALL.Equals(objectClass))
+            {
+                throw new System.ArgumentException("Connector object class can not be type of __ALL__");
+            }
             if (attrs == null || attrs.Count == 0)
             {
                 throw new ArgumentException("attrs cannot be empty or null.");
@@ -1266,6 +1277,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     #region ConnectorObjectBuilder
     public sealed class ConnectorObjectBuilder
     {
+        private ObjectClass _objectClass;
         private IDictionary<string, ConnectorAttribute> _attributes;
         public ConnectorObjectBuilder()
         {
@@ -1294,7 +1306,23 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             AddAttribute(name);
         }
 
-        public ObjectClass ObjectClass { get; set; }
+        public ObjectClass ObjectClass
+        {
+            get
+            {
+                return _objectClass;
+            }
+            set
+            {
+                if (ObjectClass.ALL.Equals(value))
+                {
+                    throw new System.ArgumentException("Connector object class can not be type of __ALL__");
+                }
+                _objectClass = value;
+            }
+        }
+
+
 
         // =======================================================================
         // Clone basically..
@@ -2038,8 +2066,22 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     #region ObjectClass
     public sealed class ObjectClass
     {
+        /// <summary>
+        /// This constant defines a specific {@link #getObjectClassValue value
+        /// of ObjectClass} that is reserved for <seealso cref="ObjectClass#ACCOUNT"/>.
+        /// </summary>
         public static readonly String ACCOUNT_NAME = ObjectClassUtil.CreateSpecialName("ACCOUNT");
+
+        /// <summary>
+        /// This constant defines a specific {@link #getObjectClassValue value
+        /// of ObjectClass} that is reserved for <seealso cref="ObjectClass#GROUP"/>.
+        /// </summary>
         public static readonly String GROUP_NAME = ObjectClassUtil.CreateSpecialName("GROUP");
+        /// <summary>
+        /// This constant defines a specific {@link #getObjectClassValue value
+        /// of ObjectClass} that is reserved for <seealso cref="ObjectClass#ALL"/>.
+        /// </summary>
+        public static readonly String ALL_NAME = ObjectClassUtil.CreateSpecialName("ALL");
         /// <summary>
         /// Denotes an account based object.
         /// </summary>
@@ -2048,6 +2090,17 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// Denotes a group based object.
         /// </summary>
         public static readonly ObjectClass GROUP = new ObjectClass(GROUP_NAME);
+        /// <summary>
+        /// Represents all collections that contains any object.
+        /// <para>
+        /// This constant allowed to use in operation
+        /// <seealso cref="org.identityconnectors.framework.spi.operations.SyncOp#getLatestSyncToken(ObjectClass)"/>
+        /// and
+        /// <seealso cref="org.identityconnectors.framework.spi.operations.SyncOp#sync(ObjectClass, SyncToken, SyncResultsHandler, OperationOptions)"/>
+        /// any other operation throws <seealso cref="UnsupportedOperationException"/>
+        /// </para>
+        /// </summary>
+        public static readonly ObjectClass ALL = new ObjectClass(ALL_NAME);
 
         private readonly String _type;
 
@@ -2668,8 +2721,47 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <summary>
         /// Determines the attributes to retrieve during <see cref="SearchApiOp" /> and
         /// <see cref="Org.IdentityConnectors.Framework.Api.Operations.SyncApiOp" />.
+        /// <para>
+        /// This option overrides the default behavior, which is for the connector to
+        /// return exactly the set of attributes that are identified as
+        /// <seealso cref="AttributeInfo#isReturnedByDefault() returned by default"/> in the
+        /// schema for that connector.
+        /// </para>
+        /// <para>
+        /// This option allows a client application to request <i>additional
+        /// attributes</i> that would not otherwise not be returned (generally
+        /// because such attributes are more expensive for a connector to fetch and
+        /// to format) and/or to request only a <i>subset of the attributes</i> that
+        /// would normally be returned.
+        /// </para>
         /// </summary>
         public static readonly string OP_ATTRIBUTES_TO_GET = "ATTRS_TO_GET";
+
+        /// <summary>
+        /// An option to use with <seealso cref="SearchApiOp"/> that specifies an opaque cookie
+        /// which is used by the connector to track its position in the set of query
+        /// results.
+        /// </summary>
+        public static readonly string OP_PAGED_RESULTS_COOKIE = "PAGED_RESULTS_COOKIE";
+
+        /// <summary>
+        /// An option to use with <seealso cref="SearchApiOp"/> that specifies the index within
+        /// the result set of the first result which should be returned.
+        /// </summary>
+        public static readonly string OP_PAGED_RESULTS_OFFSET = "PAGED_RESULTS_OFFSET";
+
+        /// <summary>
+        /// An option to use with <seealso cref="SearchApiOp"/> that specifies the requested
+        /// page results page size.
+        /// </summary>
+        public static readonly string OP_PAGE_SIZE = "PAGE_SIZE";
+
+        /// <summary>
+        /// An option to use with <seealso cref="SearchApiOp"/> that specifies the sort keys
+        /// which should be used for ordering the <seealso cref="ConnectorObject"/> returned by
+        /// search request.
+        /// </summary>
+        public static readonly string OP_SORT_KEYS = "SORT_KEYS";
 
         private readonly IDictionary<String, Object> _operationOptions;
 
@@ -2763,6 +2855,95 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 return (GuardedString)CollectionUtil.GetValue(
                     _operationOptions, OP_RUN_WITH_PASSWORD, null);
+            }
+        }
+
+        /// <summary>
+        /// Returns the opaque cookie which is used by the Connector to track its
+        /// position in the set of query results. Paged results will be enabled if
+        /// and only if the page size is non-zero.
+        /// <para>
+        /// The cookie must be {@code null} in the initial search request sent by the
+        /// client. For subsequent search requests the client must include the cookie
+        /// returned with the previous search result, until the resource provider
+        /// returns a {@code null} cookie indicating that the final page of results
+        /// has been returned.
+        ///     
+        /// </para>
+        /// </summary>
+        /// <returns> The opaque cookie which is used by the Connector to track its
+        ///         position in the set of search results, or {@code null} if paged
+        ///         results are not requested (when the page size is 0), or if the
+        ///         first page of results is being requested (when the page size is
+        ///         non-zero). </returns>
+        /// <seealso cref= #getPageSize() </seealso>
+        /// <seealso cref= #getPagedResultsOffset() </seealso>
+        /// <remarks>Since 1.4</remarks>
+        public string PagedResultsCookie
+        {
+            get
+            {
+                return (string)CollectionUtil.GetValue(
+                        _operationOptions, OP_PAGED_RESULTS_COOKIE, null);
+            }
+        }
+
+        /// <summary>
+        /// Returns the index within the result set of the first result which should
+        /// be returned. Paged results will be enabled if and only if the page size
+        /// is non-zero. If the parameter is not present or a value less than 1 is
+        /// specified then the page following the previous page returned will be
+        /// returned. A value equal to or greater than 1 indicates that a specific
+        /// page should be returned starting from the position specified.
+        /// </summary>
+        /// <returns> The index within the result set of the first result which should
+        ///         be returned. </returns>
+        /// <seealso cref= #getPageSize() </seealso>
+        /// <seealso cref= #getPagedResultsCookie() </seealso>
+        /// <remarks>Since 1.4</remarks>
+        public int? PagedResultsOffset
+        {
+            get
+            {
+                return (int?)CollectionUtil.GetValue(
+                        _operationOptions, OP_PAGED_RESULTS_OFFSET, null);
+            }
+        }
+
+        /// <summary>
+        /// Returns the requested page results page size or {@code 0} if paged
+        /// results are not required. For all paged result requests other than the
+        /// initial request, a cookie should be provided with the search request. See
+        /// <seealso cref="#getPagedResultsCookie()"/> for more information.
+        /// </summary>
+        /// <returns> The requested page results page size or {@code 0} if paged
+        ///         results are not required. </returns>
+        /// <seealso cref= #getPagedResultsCookie() </seealso>
+        /// <seealso cref= #getPagedResultsOffset() </seealso>
+        /// <remarks>Since 1.4</remarks>
+        public int? PageSize
+        {
+            get
+            {
+                return (int?)CollectionUtil.GetValue(
+                        _operationOptions, OP_PAGE_SIZE, null);
+            }
+        }
+
+        /// <summary>
+        /// Returns the sort keys which should be used for ordering the
+        /// <seealso cref="ConnectorObject"/>s returned by this search request.
+        /// </summary>
+        /// <returns> The sort keys which should be used for ordering the
+        ///         <seealso cref="ConnectorObject"/>s returned by this search request (never
+        ///         {@code null}). </returns>
+        /// <remarks>Since 1.4</remarks>
+        public SortKey[] SortKeys
+        {
+            get
+            {
+                return (SortKey[])CollectionUtil.GetValue(
+                        _operationOptions, OP_SORT_KEYS, null);
             }
         }
 
@@ -2911,6 +3092,90 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 Assertions.NullCheck(value, "container");
                 _options[OperationOptions.OP_CONTAINER] = value;
             }
+        }
+
+
+        /// <summary>
+        /// Convenience method to set
+        /// <seealso cref="OperationOptions#OP_PAGED_RESULTS_COOKIE"/>
+        /// </summary>
+        /// <param name="pagedResultsCookie">
+        ///            The pagedResultsCookie. May not be null. </param>
+        /// <returns> A this reference to allow chaining</returns>
+        /// <remarks>Since 1.4</remarks>
+        public string PagedResultsCookie
+        {
+            set
+            {
+                Assertions.NullCheck(value, "pagedResultsCookie");
+                _options[OperationOptions.OP_PAGED_RESULTS_COOKIE] = value;
+            }
+        }
+
+        /// <summary>
+        /// Convenience method to set
+        /// <seealso cref="OperationOptions#OP_PAGED_RESULTS_OFFSET"/>
+        /// </summary>
+        /// <param name="pagedResultsOffset">
+        ///            The pagedResultsOffset. May not be null. </param>
+        /// <returns> A this reference to allow chaining</returns>
+        /// <remarks>Since 1.4</remarks>
+        public int? PagedResultsOffset
+        {
+            set
+            {
+                Assertions.NullCheck(value, "pagedResultsOffset");
+                _options[OperationOptions.OP_PAGED_RESULTS_OFFSET] = value;
+            }
+        }
+
+        /// <summary>
+        /// Convenience method to set <seealso cref="OperationOptions#OP_PAGE_SIZE"/>
+        /// </summary>
+        /// <param name="pageSize">
+        ///            The pageSize. May not be null. </param>
+        /// <returns> A this reference to allow chaining</returns>
+        /// <remarks>Since 1.4</remarks>
+        public int? PageSize
+        {
+            set
+            {
+                Assertions.NullCheck(value, "pageSize");
+                _options[OperationOptions.OP_PAGE_SIZE] = value;
+            }
+        }
+
+        /// <summary>
+        /// Convenience method to set <seealso cref="OperationOptions#OP_SORT_KEYS"/>
+        /// </summary>
+        /// <param name="sortKeys">
+        ///            The sort keys. May not be null. </param>
+        /// <returns> A this reference to allow chaining</returns>
+        /// <remarks>Since 1.4</remarks>
+        public IList<SortKey> SortKeys
+        {
+            set
+            {
+                Assertions.NullCheck(value, "sortKeys");
+                SortKey[] array = new SortKey[((IList<SortKey>)value).Count];
+                ((IList<SortKey>)value).CopyTo(array, 0);
+                _options[OperationOptions.OP_SORT_KEYS] = array;
+            }
+        }
+
+        /// <summary>
+        /// Convenience method to set <seealso cref="OperationOptions#OP_SORT_KEYS"/>
+        /// </summary>
+        /// <param name="sortKeys">
+        ///            The sort keys. May not be null. </param>
+        /// <returns> A this reference to allow chaining</returns>
+        /// <remarks>Since 1.4</remarks>
+        public OperationOptionsBuilder SetSortKeys(params SortKey[] sortKeys)
+        {
+
+            Assertions.NullCheck(sortKeys, "sortKeys");
+            _options[OperationOptions.OP_SORT_KEYS] = sortKeys;
+            return this;
         }
 
     }
@@ -3152,10 +3417,29 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     #endregion
 
     #region ResultsHandler
-    /// <summary>
-    /// Encapsulate the handling of each object returned by the search.
-    /// </summary>
-    public delegate bool ResultsHandler(ConnectorObject obj);
+    public class ResultsHandler
+    {
+        /// <summary>
+        /// Invoked each time a matching <seealso cref="ConnectorObject"/> is returned from a
+        /// query request.
+        /// </summary>
+        /// <param name="connectorObject">
+        ///            The matching ConnectorObject. </param>
+        /// <returns> {@code true} if this handler should continue to be notified of
+        ///         any remaining matching ConnectorObjects, or {@code false} if the
+        ///         remaining ConnectorObjects should be skipped for some reason
+        ///         (e.g. a client side size limit has been reached or the failed to
+        ///         handle the last item). If returns {@code false} the last items
+        ///         should be considers unhandled and in next page request it should
+        ///         be the first item.
+        /// </returns>
+        /// <exception cref="Exception">
+        ///             the implementor should throw a <seealso cref="Exception"/> that
+        ///             wraps any native exception (or that describes any other
+        ///             problem during execution) that is serious enough to stop the
+        ///             iteration. </exception>
+        public Func<ConnectorObject, Boolean> Handle;
+    }
     #endregion
 
     #region Schema
@@ -4100,6 +4384,130 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     }
     #endregion
 
+    #region SearchResult
+    /// <summary>
+    /// The final result of a query request returned after all connector objects
+    /// matching the request have been returned. In addition to indicating that no
+    /// more objects are to be returned by the search, the search result will contain
+    /// page results state information if result paging has been enabled for the
+    /// search.
+    /// </summary>
+    /// <remarks>Since 1.4</remarks>
+    public sealed class SearchResult
+    {
+
+        private readonly string _pagedResultsCookie;
+        private readonly int _remainingPagedResults;
+
+        /// <summary>
+        /// Creates a new search result with a {@code null} paged results cookie and
+        /// no estimate of the total number of remaining results.
+        /// </summary>
+        public SearchResult()
+            : this(null, -1)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new search result with the provided paged results cookie and
+        /// estimate of the total number of remaining results.
+        /// </summary>
+        /// <param name="pagedResultsCookie">
+        ///            The opaque cookie which should be used with the next paged
+        ///            results search request, or {@code null} if paged results were
+        ///            not requested, or if there are not more pages to be returned. </param>
+        /// <param name="remainingPagedResults">
+        ///            An estimate of the total number of remaining results to be
+        ///            returned in subsequent paged results search requests, or
+        ///            {@code -1} if paged results were not requested, or if the
+        ///            total number of remaining results is unknown. </param>
+        public SearchResult(string pagedResultsCookie, int remainingPagedResults)
+        {
+            this._pagedResultsCookie = pagedResultsCookie;
+            this._remainingPagedResults = remainingPagedResults;
+        }
+
+        /// <summary>
+        /// Returns the opaque cookie which should be used with the next paged
+        /// results search request.
+        /// </summary>
+        /// <returns> The opaque cookie which should be used with the next paged
+        ///         results search request, or {@code null} if paged results were not
+        ///         requested, or if there are not more pages to be returned. </returns>
+        public string PagedResultsCookie
+        {
+            get
+            {
+                return _pagedResultsCookie;
+            }
+        }
+
+        /// <summary>
+        /// Returns an estimate of the total number of remaining results to be
+        /// returned in subsequent paged results search requests.
+        /// </summary>
+        /// <returns> An estimate of the total number of remaining results to be
+        ///         returned in subsequent paged results search requests, or
+        ///         {@code -1} if paged results were not requested, or if the total
+        ///         number of remaining results is unknown. </returns>
+        public int RemainingPagedResults
+        {
+            get
+            {
+                return _remainingPagedResults;
+            }
+        }
+
+    }
+    #endregion
+
+    #region SortKey
+    /// <summary>
+    /// A sort key which can be used to specify the order in which connector objects
+    /// should be included in the results of a search request.
+    /// 
+    /// </summary>
+    /// <remarks>Since 1.4</remarks>
+    public sealed class SortKey
+    {
+
+        private readonly string _field;
+        private readonly bool _isAscendingOrder;
+
+        public SortKey(string field, bool isAscendingOrder)
+        {
+            this._field = Assertions.BlankChecked(field, "field");
+            this._isAscendingOrder = isAscendingOrder;
+        }
+
+        /// <summary>
+        /// Returns the sort key field.
+        /// </summary>
+        /// <returns> The sort key field. </returns>
+        public string Field
+        {
+            get
+            {
+                return _field;
+            }
+        }
+
+        /// <summary>
+        /// Returns {@code true} if this sort key is in ascending order, or
+        /// {@code false} if it is in descending order.
+        /// </summary>
+        /// <returns> {@code true} if this sort key is in ascending order, or
+        ///         {@code false} if it is in descending ord)er. </returns>
+        public bool AscendingOrder
+        {
+            get
+            {
+                return _isAscendingOrder;
+            }
+        }
+    }
+    #endregion
+
     #region SyncDelta
     /// <summary>
     /// Represents a change to an object in a resource.
@@ -4507,23 +4915,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     #endregion
 
     #region SyncResultsHandler
-    /// <summary>
-    /// Called to handle a delta in the stream.
-    /// </summary>
-    /// <remarks>
-    /// Will be called multiple times,
-    /// once for each result. Although a callback, this is still invoked
-    /// synchronously. That is, it is guaranteed that following a call to
-    /// <see cref="SyncApiOp.Sync(ObjectClass, SyncToken, SyncResultsHandler, OperationOptions)" /> no
-    /// more invocations to <see cref="Handle(SyncDelta)" /> will be performed.
-    /// </remarks>
-    /// <param name="delta">The change</param>
-    /// <returns>True iff the application wants to continue processing more
-    /// results.</returns>
-    /// <exception cref="Exception">If the application encounters an exception. This will stop
-    /// the interation and the exception will be propogated back to
-    /// the application.</exception>
-    public delegate bool SyncResultsHandler(SyncDelta delta);
+    public class SyncResultsHandler
+    {
+        /// <summary>
+        /// Called to handle a delta in the stream.
+        /// </summary>
+        /// <remarks>
+        /// Will be called multiple times,
+        /// once for each result. Although a callback, this is still invoked
+        /// synchronously. That is, it is guaranteed that following a call to
+        /// <see cref="SyncApiOp.Sync(ObjectClass, SyncToken, SyncResultsHandler, OperationOptions)" /> no
+        /// more invocations to <see cref="Handle(SyncDelta)" /> will be performed.
+        /// </remarks>
+        /// <param name="delta">The change</param>
+        /// <returns>True iff the application wants to continue processing more
+        /// results.</returns>
+        /// <exception cref="Exception">If the application encounters an exception. This will stop
+        /// the interation and the exception will be propogated back to
+        /// the application.</exception>
+        public Func<SyncDelta, Boolean> Handle;
+    }
     #endregion
 
     #region SyncToken
@@ -4601,10 +5012,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
         public static readonly string NAME = ConnectorAttributeUtil.CreateSpecialName("UID");
 
-        public Uid(String val)
-            : base(NAME, CollectionUtil.NewReadOnlyList<object>(Check(val)))
+        private readonly String _revision;
+
+        public Uid(String value)
+            : base(NAME, CollectionUtil.NewReadOnlyList<object>(Check(value)))
         {
+            _revision = null;
         }
+
+        public Uid(String value, string revision)
+            : base(NAME, CollectionUtil.NewReadOnlyList<object>(Check(value)))
+        {
+            if (StringUtil.IsBlank(revision))
+            {
+                throw new System.ArgumentException("Revision value must not be blank!");
+            }
+            this._revision = revision;
+        }
+
+        /// <summary>
+        /// Throws an <seealso cref="IllegalArgumentException"/> if the value passed in blank.
+        /// </summary>
         private static String Check(String value)
         {
             if (StringUtil.IsBlank(value))
@@ -4614,13 +5042,33 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             return value;
         }
+
         /// <summary>
-        /// The single value of the attribute that is the unique id of an object.
+        /// Obtain a string representation of the value of this attribute, which
+        /// value uniquely identifies a <seealso cref="ConnectorObject object"/> on the target
+        /// resource.
         /// </summary>
-        /// <returns>value that identifies an object.</returns>
+        /// <returns> value that uniquely identifies an object. </returns>
         public String GetUidValue()
         {
             return ConnectorAttributeUtil.GetStringValue(this);
+        }
+
+        /// <summary>
+        /// Return the string representation of the revision value of the
+        /// <p/>
+        /// The revision number specifies a given version ot the
+        /// <seealso cref="ConnectorObject object"/> identified by the
+        /// <seealso cref="org.identityconnectors.framework.common.objects.Uid#getUidValue()"/>
+        /// </summary>
+        /// <returns> null if the connector does not support the MVCC and does not set
+        ///         this value otherwise return the revision number of the object. </returns>
+        public string Revision
+        {
+            get
+            {
+                return _revision;
+            }
         }
     }
     #endregion

@@ -19,12 +19,13 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
 using System.Text;
 using System.Collections.Generic;
 using Org.IdentityConnectors.Common;
-using Org.IdentityConnectors.Framework.Common.Objects;
+
 namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
 {
     #region AbstractFilterTranslator
@@ -140,6 +141,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
                 return new List<T>();
             }
             //this must come first
+            filter = EliminateExternallyChainedFilters(filter);
             filter = NormalizeNot(filter);
             filter = SimplifyAndDistribute(filter);
             //might have simplified it to the everything filter
@@ -159,6 +161,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
                 }
             }
             return optimized;
+        }
+
+        private Filter EliminateExternallyChainedFilters(Filter filter)
+        {
+            while (filter is ExternallyChainedFilter)
+            {
+                filter = ((ExternallyChainedFilter)filter).Filter;
+            }
+            return filter;
         }
 
         /// <summary>
@@ -852,7 +863,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
                 // grab this value and the on from the attribute an compare..
                 IComparable o1 = (IComparable)attr.Value[0];
                 IComparable o2 = (IComparable)GetValue();
-                ret = o1.CompareTo(o1);
+                ret = o1.CompareTo(o2);
             }
             return ret;
         }
@@ -1468,4 +1479,39 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         }
     }
     #endregion
+
+    #region ExternallyChainedFilter
+    /// <summary>
+    /// Externally chained filters e.g. the filter implementing case insensitive searches.
+    /// They are removed from translation.
+    /// 
+    /// IMPORTANT: Currently, these filters have to be chained at the beginning of the filter tree.
+    /// 
+    /// </summary>
+    public abstract class ExternallyChainedFilter : Filter
+    {
+        private readonly Filter _filter;
+
+        /// <summary>
+        /// Get the internal filter that is being chained upon.
+        /// </summary>
+        public Filter Filter
+        {
+            get
+            {
+                return _filter;
+            }
+        }
+
+        protected ExternallyChainedFilter(Filter filter)
+        {
+            _filter = filter;
+        }
+
+        public abstract bool Accept(ConnectorObject obj);
+    }
+
+    #endregion
+
+
 }

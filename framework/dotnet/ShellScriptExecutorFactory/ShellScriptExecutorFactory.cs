@@ -19,7 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2012 ForgeRock AS
+ * Portions Copyrighted 2012-2014 ForgeRock AS
  */
 using System;
 using System.IO;
@@ -27,7 +27,6 @@ using System.Security;
 using System.Diagnostics;
 using System.Reflection;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Org.IdentityConnectors.Common.Security;
 using System.Threading;
 
@@ -86,8 +85,9 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                 int exitCode = 1;
                 try
                 {
+                    Trace.TraceInformation("About to execute script: {0}", _script);
                     // if there are any environment varibles set to false..
-                    process.StartInfo.UseShellExecute = arguments.Count == 0;
+                    process.StartInfo.UseShellExecute = false;//arguments.Count == 0;
                     // take out username and password if they're in the options.
                     foreach (KeyValuePair<string, object> kv in arguments)
                     {
@@ -130,7 +130,15 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                         }
                         else
                         {
-                            process.StartInfo.EnvironmentVariables[kv.Key] = kv.Value.ToString();
+                            if (kv.Value == null)
+                            {
+                                Trace.TraceWarning("...parameter {0} has null value, skipping it", kv.Key);
+                            }
+                            else
+                            {
+                                Trace.TraceInformation("...with parameter {0} set to {1}", kv.Key, kv.Value);
+                                process.StartInfo.EnvironmentVariables[kv.Key] = kv.Value.ToString();
+                            }
                         }
                     }
                     // write out the script..
@@ -151,6 +159,7 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                     // execute script..
                     process.Start();
                     string stdout = process.StandardOutput.ReadToEnd();
+                    Trace.TraceInformation("execution started; stdout = {0}", stdout);      // this is quite suspicious...
                     // http://msdn.microsoft.com/en-us/library/system.diagnostics.process.standardoutput.aspx
                     // Use asynchronous read operations on at least one of the streams.
                     AsynchronousReader msr_stderr = new AsynchronousReader(process.StandardError);
@@ -166,6 +175,7 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                     exitCode = process.ExitCode;
                     result.Add("stdout", stdout);
                     result.Add("stderr", msr_stderr.Text);
+                    Trace.TraceInformation("execution finished; stderr = {0}", msr_stderr.Text);
                 }
                 catch (Exception e)
                 {
@@ -186,6 +196,7 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                 {
 
                 }
+                Trace.TraceInformation("exitCode = {0}", exitCode);
                 result.Add("exitCode", exitCode);
                 return result;
             }

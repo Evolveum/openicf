@@ -19,17 +19,15 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2012 ForgeRock AS
+ * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
 using System.Diagnostics;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Pooling;
-using Org.IdentityConnectors.Common.Proxy;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common;
-using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 using Org.IdentityConnectors.Framework.Impl.Api.Remote;
@@ -48,7 +46,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
     #region ConnectorPoolManager
     public class ConnectorPoolManager
     {
-        private class ConnectorPoolKey
+        public class ConnectorPoolKey
         {
             private readonly ConnectorKey _connectorKey;
             private readonly ConfigurationPropertiesImpl _configProperties;
@@ -92,20 +90,55 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         {
             private readonly APIConfigurationImpl _apiConfiguration;
             private readonly LocalConnectorInfoImpl _localInfo;
+            private readonly OperationalContext _context;
+
             public ConnectorPoolHandler(APIConfigurationImpl apiConfiguration,
                     LocalConnectorInfoImpl localInfo)
             {
                 _apiConfiguration = apiConfiguration;
                 _localInfo = localInfo;
+                if (_localInfo.ConfigurationStateless)
+                {
+                    _context = null;
+                }
+                else
+                {
+                    _context = new OperationalContext(localInfo, apiConfiguration);
+                }
             }
-            public PoolableConnector NewObject()
+
+            public ObjectPoolConfiguration Validate(ObjectPoolConfiguration original)
             {
-                Configuration config =
-                    CSharpClassProperties.CreateBean((ConfigurationPropertiesImpl)_apiConfiguration.ConfigurationProperties,
-                        _localInfo.ConnectorConfigurationClass);
-                PoolableConnector connector =
-                    (PoolableConnector)_localInfo.ConnectorClass.CreateInstance();
-                connector.Init(config);
+                ObjectPoolConfiguration configuration = (ObjectPoolConfiguration)SerializerUtil.CloneObject(original);
+                configuration.Validate();
+                return configuration;
+            }
+
+            public PoolableConnector MakeObject()
+            {
+                SafeType<Connector> clazz = _localInfo.ConnectorClass;
+                PoolableConnector connector = null;
+                if (ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector), clazz.RawType))
+                {
+
+                    Configuration config = null;
+                    if (null == _context)
+                    {
+                        config = CSharpClassProperties.CreateBean((ConfigurationPropertiesImpl)_apiConfiguration.ConfigurationProperties,
+                    _localInfo.ConnectorConfigurationClass);
+                    }
+                    else
+                    {
+                        config = _context.GetConfiguration();
+                    }
+
+                    connector = (PoolableConnector)clazz.CreateInstance();
+                    connector.Init(config);
+                }
+                else
+                {
+                    throw new ConnectorException("The Connector is not PoolableConnector: " + _localInfo.ConnectorKey);
+                }
                 return connector;
             }
             public void TestObject(PoolableConnector obj)
@@ -115,6 +148,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             public void DisposeObject(PoolableConnector obj)
             {
                 obj.Dispose();
+            }
+            public void Shutdown()
+            {
+                if (null != _context)
+                {
+                    _context.Dispose();
+                }
             }
         }
 
@@ -128,38 +168,69 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         /// <summary>
         /// Get a object pool for this connector if it supports connector pooling.
         /// </summary>
-        public static ObjectPool<PoolableConnector> GetPool(APIConfigurationImpl impl,
-                LocalConnectorInfoImpl localInfo)
+        public static Pair<ConnectorPoolKey, ObjectPool<PoolableConnector>> GetPool(APIConfigurationImpl impl, LocalConnectorInfoImpl localInfo)
         {
-            ObjectPool<PoolableConnector> pool = null;
+            return GetPool2(impl, localInfo);
+        }
+
+        public static ObjectPool<PoolableConnector> GetPool(ConnectorPoolKey connectorPoolKey)
+        {
+            return _pools[connectorPoolKey];
+        }
+
+        /// <summary>
+        /// Get a object pool for this connector if it supports connector pooling.
+        /// </summary>
+        private static Pair<ConnectorPoolKey, ObjectPool<PoolableConnector>> GetPool2(APIConfigurationImpl impl, LocalConnectorInfoImpl localInfo)
+        {
             // determine if this connector wants generic connector pooling..
             if (impl.IsConnectorPoolingSupported)
             {
-                ConnectorPoolKey key =
-                    new ConnectorPoolKey(
-                            impl.ConnectorInfo.ConnectorKey,
-                            (ConfigurationPropertiesImpl)impl.ConfigurationProperties,
-                            impl.ConnectorPoolConfiguration);
-
+                ConnectorPoolKey key = new ConnectorPoolKey(impl.ConnectorInfo.ConnectorKey,
+                     (ConfigurationPropertiesImpl)impl.ConfigurationProperties, impl.ConnectorPoolConfiguration);
                 lock (_pools)
                 {
                     // get the pool associated..
-                    pool = CollectionUtil.GetValue(_pools, key, null);
+                    ObjectPool<PoolableConnector> pool = CollectionUtil.GetValue(_pools, key, null);
                     // create a new pool if it doesn't exist..
                     if (pool == null)
                     {
-                        Trace.TraceInformation("Creating new pool: " +
-                                impl.ConnectorInfo.ConnectorKey);
+                        Trace.TraceInformation("Creating new pool: {0}", impl.ConnectorInfo.ConnectorKey);
                         // this instance is strictly used for the pool..
-                        pool = new ObjectPool<PoolableConnector>(
-                                new ConnectorPoolHandler(impl, localInfo),
-                                impl.ConnectorPoolConfiguration);
-                        // add back to the map of _pools..
+                        pool = new ObjectPool<PoolableConnector>(new ConnectorPoolHandler(impl, localInfo), impl.ConnectorPoolConfiguration);
+                        // add back to the map of POOLS..
                         _pools[key] = pool;
+                    }
+
+                    return Pair<ConnectorPoolKey, ObjectPool<PoolableConnector>>.Of(key, pool);
+                }
+            }
+            else if (!localInfo.ConfigurationStateless)
+            {
+                return Pair<ConnectorPoolKey, ObjectPool<PoolableConnector>>.Of(new ConnectorPoolKey(impl.ConnectorInfo.ConnectorKey,
+                     (ConfigurationPropertiesImpl)impl.ConfigurationProperties, impl.ConnectorPoolConfiguration), (ObjectPool<PoolableConnector>)null);
+            }
+            return Pair<ConnectorPoolKey, ObjectPool<PoolableConnector>>.Of((ConnectorPoolKey)null, (ObjectPool<PoolableConnector>)null);
+        }
+
+        public static void Dispose(ConnectorPoolKey connectorPoolKey)
+        {
+            lock (_pools)
+            {
+                ObjectPool<PoolableConnector> pool = null;
+                if (_pools.TryGetValue(connectorPoolKey, out pool))
+                {
+                    _pools.Remove(connectorPoolKey);
+                    try
+                    {
+                        pool.Shutdown();
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.TraceWarning("Failed to close pool: {0} Exception: {1}", pool, e);
                     }
                 }
             }
-            return pool;
         }
 
         public static void Dispose()
@@ -175,6 +246,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     }
                     catch (Exception e)
                     {
+                        Trace.TraceWarning("Failed to close pool: {0} {1}", e.Message, pool);
                         TraceUtil.TraceException("Failed to close pool", e);
                     }
                 }
@@ -468,7 +540,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             rv.ConnectorClass = connectorClass;
             rv.ConnectorConfigurationClass = connectorConfigurationClass;
             rv.ConnectorDisplayNameKey = connectorDisplayNameKey;
-            rv.ConnectorCategoryKey = attribute.ConnectorCategoryKey; 
+            rv.ConnectorCategoryKey = attribute.ConnectorCategoryKey;
             rv.ConnectorKey = key;
             rv.DefaultAPIConfiguration = CreateDefaultAPIConfiguration(rv);
             rv.Messages = LoadMessages(assembly, rv, attribute.MessageCatalogPaths);
@@ -620,11 +692,25 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         }
         public SafeType<Connector> ConnectorClass { get; set; }
         public SafeType<Configuration> ConnectorConfigurationClass { get; set; }
+        public bool ConfigurationStateless
+        {
+            get
+            {
+                return !ReflectionUtil.IsParentTypeOf(typeof(StatefulConfiguration), ConnectorConfigurationClass.RawType);
+            }
+        }
+        public bool ConnectorPoolingSupported
+        {
+            get
+            {
+                return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector), ConnectorClass.RawType);
+            }
+        }
     }
     #endregion
 
     #region LocalConnectorFacadeImpl
-    internal class LocalConnectorFacadeImpl : AbstractConnectorFacade
+    public class LocalConnectorFacadeImpl : AbstractConnectorFacade
     {
         // =======================================================================
         // Constants
@@ -686,14 +772,61 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         /// </summary>
         private readonly LocalConnectorInfoImpl connectorInfo;
 
+
+        /// <summary>
+        /// Shared OperationalContext for stateful facades
+        /// </summary>
+        private readonly ConnectorOperationalContext operationalContext;
+
         /// <summary>
         /// Builds up the maps of supported operations and calls.
         /// </summary>
-        public LocalConnectorFacadeImpl(LocalConnectorInfoImpl connectorInfo,
-                APIConfigurationImpl apiConfiguration)
+        public LocalConnectorFacadeImpl(LocalConnectorInfoImpl connectorInfo, APIConfigurationImpl apiConfiguration)
             : base(apiConfiguration)
         {
             this.connectorInfo = connectorInfo;
+            if (connectorInfo.ConfigurationStateless && !connectorInfo.ConnectorPoolingSupported)
+            {
+                operationalContext = null;
+            }
+            else
+            {
+                operationalContext = new ConnectorOperationalContext(connectorInfo, GetAPIConfiguration());
+            }
+        }
+
+        public LocalConnectorFacadeImpl(LocalConnectorInfoImpl connectorInfo, string configuration)
+            : base(configuration, connectorInfo)
+        {
+            this.connectorInfo = connectorInfo;
+            if (connectorInfo.ConfigurationStateless && !connectorInfo.ConnectorPoolingSupported)
+            {
+                operationalContext = null;
+            }
+            else
+            {
+                operationalContext = new ConnectorOperationalContext(connectorInfo, GetAPIConfiguration());
+            }
+        }
+
+        public void Dispose()
+        {
+            if (null != operationalContext)
+            {
+                operationalContext.Dispose();
+            }
+        }
+
+        protected internal ConnectorOperationalContext OperationalContext
+        {
+            get
+            {
+                if (null == operationalContext)
+                {
+                    return new ConnectorOperationalContext(connectorInfo, GetAPIConfiguration());
+                }
+                return operationalContext;
+            }
         }
 
         // =======================================================================
@@ -717,13 +850,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             {
                 ConstructorInfo constructor =
                     API_TO_IMPL[SafeType<APIOperation>.Get<SearchApiOp>()];
-                ConnectorOperationalContext context =
-                new ConnectorOperationalContext(connectorInfo,
-                        GetAPIConfiguration(),
-                        GetPool());
 
                 ConnectorAPIOperationRunnerProxy handler =
-                    new ConnectorAPIOperationRunnerProxy(context, constructor);
+                    new ConnectorAPIOperationRunnerProxy(OperationalContext, constructor);
                 proxy =
                     new GetImpl((SearchApiOp)NewAPIOperationProxy(SafeType<APIOperation>.Get<SearchApiOp>(), handler));
             }
@@ -731,26 +860,18 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             {
                 ConstructorInfo constructor =
                     API_TO_IMPL[api];
-                ConnectorOperationalContext context =
-                new ConnectorOperationalContext(connectorInfo,
-                        GetAPIConfiguration(),
-                        GetPool());
 
                 ConnectorAPIOperationRunnerProxy handler =
-                    new ConnectorAPIOperationRunnerProxy(context, constructor);
+                    new ConnectorAPIOperationRunnerProxy(OperationalContext, constructor);
                 proxy =
                     NewAPIOperationProxy(api, handler);
             }
 
-            //TODO: timeout
-
+            // now wrap the proxy in the appropriate timeout proxy
+            proxy = CreateTimeoutProxy(api, proxy);
             // add logging proxy..
             proxy = CreateLoggingProxy(api, proxy);
             return proxy;
-        }
-        private ObjectPool<PoolableConnector> GetPool()
-        {
-            return ConnectorPoolManager.GetPool(GetAPIConfiguration(), connectorInfo);
         }
     }
     #endregion
@@ -1047,7 +1168,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     else if (_activeObjects.Count < _config.MaxObjects)
                     {
                         pooledConn =
-                            new PooledObject<T>(_handler.NewObject());
+                            new PooledObject<T>(_handler.MakeObject());
                     }
 
                     //if there's an object available, return it
@@ -1096,7 +1217,14 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 //if there are any active objects still
                 //going, leave them alone so they can return
                 //gracefully
-                EvictIdleObjects();
+                try
+                {
+                    EvictIdleObjects();
+                }
+                finally
+                {
+                    _handler.Shutdown();
+                }
                 //wake anyone up who was waiting on an object
                 Monitor.PulseAll(LOCK);
             }
@@ -1194,9 +1322,54 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
     #region ObjectPoolHandler
     public interface ObjectPoolHandler<T> where T : class
     {
-        T NewObject();
+        /// <summary>
+        /// Validates, copies and updates the original
+        /// {@code ObjectPoolConfiguration}.
+        /// <p/>
+        /// This class can validate and if necessary it changes the {@code original}
+        /// configuration.
+        /// </summary>
+        /// <param name="original">
+        ///            custom configured instance. </param>
+        /// <returns> new instance of the {@code original} config. </returns>
+        ObjectPoolConfiguration Validate(ObjectPoolConfiguration original);
+
+        /// <summary>
+        /// Makes a new instance of the pooled object.
+        /// <p/>
+        /// This method is called whenever a new instance is needed.
+        /// </summary>
+        /// <returns> new instance of T. </returns>
+        T MakeObject(); // T NewObject();
+
+        /// <summary>
+        /// Tests the borrowed object.
+        /// <p/>
+        /// This method is invoked on head instances to make sure they can be
+        /// borrowed from the pool.
+        /// </summary>
+        /// <param name="obj">
+        ///            the pooled object. </param>
         void TestObject(T obj);
+
+        /// <summary>
+        /// Disposes the object.
+        /// <p/>
+        /// This method is invoked on every instance when it is being "dropped" from
+        /// the pool (whether due to the response from <seealso cref="#testObject(Object)"/>,
+        /// or for reasons specific to the pool implementation.)
+        /// </summary>
+        /// <param name="obj">
+        ///            The "dropped" object. </param>
         void DisposeObject(T obj);
+
+        /// <summary>
+        /// Releases any allocated resources.
+        /// <p/>
+        /// Existing active objects will remain alive and be allowed to shutdown
+        /// gracefully, but no more objects will be allocated.
+        /// </summary>
+        void Shutdown();
     }
     #endregion
 }

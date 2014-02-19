@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System.Collections.Generic;
 
@@ -43,7 +44,7 @@ namespace Org.IdentityConnectors.Test.Common.Spi
         void FillConfiguration(Configuration config,
                 IDictionary<string, object> configData);
 
-        void Search<T>(SearchOp<T> search,
+        SearchResult Search<T>(SearchOp<T> search,
                 ObjectClass oclass,
                 Filter filter,
                 ResultsHandler handler,

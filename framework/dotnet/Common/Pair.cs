@@ -19,18 +19,46 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
 
 namespace Org.IdentityConnectors.Common
 {
     /// <summary>
-    /// Represents a Pair of objects
+    /// Represents a Pair of objects.
     /// </summary>
     public class Pair<T1, T2>
     {
+
         public Pair()
         {
+        }
+
+        /// <summary>
+        /// <para>
+        /// Obtains an immutable pair of from two objects inferring the generic
+        /// types.
+        /// </para>
+        /// 
+        /// <para>
+        /// This factory allows the pair to be created using inference to obtain the
+        /// generic types.
+        /// </para>
+        /// </summary>
+        /// @param <L>
+        ///            the left element type </param>
+        /// @param <R>
+        ///            the right element type </param>
+        /// <param name="left">
+        ///            the left element, may be null </param>
+        /// <param name="right">
+        ///            the right element, may be null </param>
+        /// <returns> a pair formed from the two parameters, not null </returns>
+        /// <remarks>Since 1.4</remarks>
+        public static Pair<L, R> Of<L, R>(L left, R right)
+        {
+            return new Pair<L, R>(left, right);
         }
 
         public Pair(T1 first, T2 second)
