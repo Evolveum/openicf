@@ -21,12 +21,8 @@
  * ====================
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.DirectoryServices;
-using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 
 namespace Org.IdentityConnectors.ActiveDirectory

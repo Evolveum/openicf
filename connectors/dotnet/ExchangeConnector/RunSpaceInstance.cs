@@ -33,8 +33,6 @@ namespace Org.IdentityConnectors.Exchange
     using System.Management.Automation;
     using System.Management.Automation.Runspaces;
     using System.Text;
-    using System.Linq;
-
     using Org.IdentityConnectors.Framework.Common.Exceptions;
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Common;

@@ -19,13 +19,13 @@
 // enclosed by brackets [] replaced by your own identifying information: 
 // "Portions Copyrighted [year] [name of copyright owner]"
 // ====================
+// Portions Copyrighted 2014 ForgeRock AS.
 // </copyright>
 // <author>Tomas Knappek</author>
 
 namespace Org.IdentityConnectors.Exchange
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Diagnostics;
@@ -79,7 +79,7 @@ namespace Org.IdentityConnectors.Exchange
         /// Database attribute name as in AD
         /// </summary>
         internal const string AttDatabaseADName = "homeMDB";
-        
+
         /// <summary>
         /// Attribute mapping constant
         /// </summary>
@@ -308,7 +308,7 @@ namespace Org.IdentityConnectors.Exchange
             if (rcptType == RcptTypeMailUser)
             {
                 if (type == UpdateType.REPLACE)
-                {                 
+                {
                     if (origRcptType != rcptType)
                     {
                         Command cmdEnable = ExchangeUtility.GetCommand(
@@ -397,7 +397,7 @@ namespace Org.IdentityConnectors.Exchange
         public override void Sync(
                 ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
         {
-            ExchangeUtility.NullCheck(objClass, "oclass", this.configuration);         
+            ExchangeUtility.NullCheck(objClass, "oclass", this.configuration);
 
             // we handle accounts only
             if (!objClass.Is(ObjectClass.ACCOUNT_NAME))
@@ -405,7 +405,7 @@ namespace Org.IdentityConnectors.Exchange
                 base.Sync(objClass, token, handler, options);
                 return;
             }
-            
+
             ICollection<string> attsToGet = null;
             if (options != null && options.AttributesToGet != null)
             {
@@ -413,30 +413,33 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             // delegate to get the exchange attributes if requested            
-            SyncResultsHandler xchangeHandler = delegate(SyncDelta delta)
+            SyncResultsHandler xchangeHandler = new SyncResultsHandler()
             {
-                if (delta.DeltaType == SyncDeltaType.DELETE)
+                Handle = delta =>
                 {
-                    return handler(delta);
-                }
+                    if (delta.DeltaType == SyncDeltaType.DELETE)
+                    {
+                        return handler.Handle(delta);
+                    }
 
-                // replace the ad attributes with exchange one and add recipient type
-                ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
-                updated = this.AddExchangeAttributes(objClass, updated, attsToGet);
-                if (updated != delta.Object)
-                {
-                    // build new sync delta, cause we changed the object
-                    SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
-                                                        {
+                    // replace the ad attributes with exchange one and add recipient type
+                    ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
+                    updated = this.AddExchangeAttributes(objClass, updated, attsToGet);
+                    if (updated != delta.Object)
+                    {
+                        // build new sync delta, cause we changed the object
+                        SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
+                                                            {
                                                                 DeltaType = delta.DeltaType,
                                                                 Token = delta.Token,
                                                                 Uid = delta.Uid,
                                                                 Object = updated
-                                                        };
-                    delta = deltaBuilder.Build();
-                }
+                                                            };
+                        delta = deltaBuilder.Build();
+                    }
 
-                return handler(delta);
+                    return handler.Handle(delta);
+                }
             };
 
             // call AD sync, use xchangeHandler
@@ -453,7 +456,7 @@ namespace Org.IdentityConnectors.Exchange
         public override void ExecuteQuery(
                 ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
-            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);         
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
 
             // we handle accounts only
             if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
@@ -469,13 +472,16 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             // delegate to get the exchange attributes if requested            
-            ResultsHandler filter = delegate(ConnectorObject cobject)
-                                    {
-                                        ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
-                                                cobject, attsToGet, AttMapFromAD);
-                                        filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
-                                        return handler(filtered);
-                                    };
+            ResultsHandler filter = new ResultsHandler()
+            {
+                Handle = cobject =>
+                {
+                    ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
+                            cobject, attsToGet, AttMapFromAD);
+                    filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
+                    return handler.Handle(filtered);
+                }
+            };
 
             ResultsHandler handler2use = handler;
             OperationOptions options2use = options;
@@ -521,7 +527,7 @@ namespace Org.IdentityConnectors.Exchange
         public override void Init(Configuration configuration)
         {
             this.configuration = (ExchangeConfiguration)configuration;
-            base.Init(configuration);            
+            base.Init(configuration);
             this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, configuration.ConnectorMessages);
         }
 
@@ -541,7 +547,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attribute">Attribute to be normalized</param>
         /// <returns>Normalized attribute</returns>
         public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
-            //public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        //public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
             // normalize the attribute using AD connector first
             //attribute = base.NormalizeAttribute(oclass, attribute);
@@ -699,7 +705,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
         /// user is not found we get this exception too)</exception>
         private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IEnumerable<string> attToGet)
-        {            
+        {
             ExchangeUtility.NullCheck(oc, "name", this.configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
 
@@ -736,7 +742,7 @@ namespace Org.IdentityConnectors.Exchange
             cobjBuilder.AddAttributes(cobject.GetAttributes());
 
             PSExchangeConnector.CommandInfo cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
-            
+
             // prepare the connector attribute list to get the command
             ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
 
@@ -749,19 +755,19 @@ namespace Org.IdentityConnectors.Exchange
                 user = GetFirstElement(foundObjects);
                 foreach (var info in user.Properties)
                 {
-                    ConnectorAttribute att = GetAsAttribute(info);                    
+                    ConnectorAttribute att = GetAsAttribute(info);
                     if (att != null && lattToGet.Contains(att.Name))
                     {
                         cobjBuilder.AddAttribute(att);
                         lattToGet.Remove(att.Name);
-                    }                    
+                    }
                 }
 
                 if (lattToGet.Count == 0)
                 {
                     return cobjBuilder.Build();
                 }
-            } 
+            }
 
             if (user == null)
             {
@@ -794,10 +800,10 @@ namespace Org.IdentityConnectors.Exchange
                         lattToGet.Remove(att.Name);
                     }
                 }
-            }            
+            }
 
             return cobjBuilder.Build();
-        }     
+        }
 
         /// <summary>
         /// Invokes command in PowerShell runspace, this method is just helper
@@ -823,7 +829,7 @@ namespace Org.IdentityConnectors.Exchange
             {
                 throw new ConnectorException(this.configuration.ConnectorMessages.Format(
                             "ex_powershell_problem", "Problem while PowerShell execution {0}", e));
-            }            
+            }
         }
 
         /// <summary>
@@ -849,11 +855,14 @@ namespace Org.IdentityConnectors.Exchange
 
             if (queries.Count == 1)
             {
-                ResultsHandler handler = delegate(ConnectorObject cobject)
-                                         {
-                                             ret = cobject;
-                                             return false;
-                                         };
+                ResultsHandler handler = new ResultsHandler()
+                {
+                    Handle = cobject =>
+                    {
+                        ret = cobject;
+                        return false;
+                    }
+                };
                 base.ExecuteQuery(oclass, queries[0], handler, options);
             }
 
@@ -885,7 +894,7 @@ namespace Org.IdentityConnectors.Exchange
             throw new ArgumentException(
                 this.configuration.ConnectorMessages.Format(
                 "ex_bad_username", "Provided User name is not unique or not existing"));
-        }        
+        }
 
         /// <summary>
         /// Filter translator which does MS Exchange specific translation

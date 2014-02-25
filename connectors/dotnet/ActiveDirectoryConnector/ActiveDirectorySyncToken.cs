@@ -21,9 +21,6 @@
  * ====================
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 

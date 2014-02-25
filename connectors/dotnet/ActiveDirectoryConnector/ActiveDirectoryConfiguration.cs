@@ -21,9 +21,7 @@
  * ====================
  */
 using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Diagnostics;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Spi.Operations;
