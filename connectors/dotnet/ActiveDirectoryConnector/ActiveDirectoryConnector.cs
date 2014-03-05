@@ -216,7 +216,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 // have to make sure the new thing gets deleted in 
                 // the case of error
-                Console.WriteLine("caught COM exception:" + exception);
+                Trace.TraceInformation("Caught COM exception: " + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {
@@ -232,7 +232,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception exception)
             {
-                Console.WriteLine("caught general exception:" + exception);
+                //Console.WriteLine("caught general exception:" + exception);
+                Trace.TraceInformation("Caught general exception: " + exception);
                 Trace.TraceError(exception.Message);
                 if (created)
                 {

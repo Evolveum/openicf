@@ -152,7 +152,15 @@ namespace Org.IdentityConnectors.Exchange
 
             public void Initialize()
             {
-                runSpaceInstance.InitRunSpace(snapin, exchangeUri);
+                try
+                {
+                    runSpaceInstance.InitRunSpace(snapin, exchangeUri);
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceError("Error while initializing runspace: {0}", e);
+                    throw;
+                }
             }
 
             public void InitializeInOtherThread()
@@ -201,13 +209,18 @@ namespace Org.IdentityConnectors.Exchange
 			const string MethodName = "Test";
 			Debug.WriteLine(MethodName + ":entry", ClassName);
 
-			// compare the state against the passed in state
-			if (this.runSpace != null
-			    && this.runSpace.RunspaceStateInfo.State == RunspaceState.Opened)
-			{
-				Debug.WriteLine(MethodName + ":exit", ClassName);
-				return;
-			}
+            for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)
+            {
+                // compare the state against the passed in state
+                if (this.runSpace != null
+                    && this.runSpace.RunspaceStateInfo.State == RunspaceState.Opened)
+                {
+                    Debug.WriteLine(MethodName + ":exit", ClassName);
+                    return;
+                }
+
+                ReopenRunspace();
+            }
 
 			throw new InvalidRunspaceStateException("Runspace is not in Opened state");
 		}
@@ -496,8 +509,9 @@ namespace Org.IdentityConnectors.Exchange
 			switch (snapin)
 			{
 				case SnapIn.Exchange:
-					var serverVersion = GetExchangeServerVersion();
-                    //ExchangeVersion serverVersion = ExchangeVersion.E2010;
+					//var serverVersion = GetExchangeServerVersion();
+                    ExchangeVersion serverVersion = ExchangeVersion.E2010;                  // we expect we are working with E2010 or E2013 - temporary solution!
+                                                                                            // TODO: determine this using a config parameter
 					switch (serverVersion)
 					{
 						case ExchangeVersion.E2007:
@@ -534,9 +548,12 @@ namespace Org.IdentityConnectors.Exchange
 			// check snapOutput
 
 			// create the real Runspace and open it for processing
-			
+
+            Trace.TraceInformation("Opening runspace.");
 			this.runSpace.Open();
+            Trace.TraceInformation("Runspace opened.");
 			this.runSpaceInvoke = new RunspaceInvoke(this.runSpace);
+            Trace.TraceInformation("RunspaceInvoke created, initialization done.");
 
 			Debug.WriteLine(MethodName + ":exit", ClassName);
 		}

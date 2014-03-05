@@ -434,8 +434,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // valid group.
                     String groupPath = ActiveDirectoryUtils.GetLDAPPath(
                         _configuration.LDAPHostName, (String)obj);
+                    //Trace.TraceInformation("groupPath = {0}", groupPath);
                     DirectoryEntry groupDe = new DirectoryEntry(groupPath,
                         _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+                    //Trace.TraceInformation("DirectoryEntry for this group created: {0}", groupDe);
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
                     Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, adding {2}",
                         groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
