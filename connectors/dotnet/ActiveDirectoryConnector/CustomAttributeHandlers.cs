@@ -311,9 +311,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (UpdateType.ADD.Equals(type))
                 {
                     // add all groups
-                    foreach (Object value in newValues)
+                    if (newValues != null)
                     {
-                        valuesToAdd.Add(value);
+                        foreach (Object value in newValues)
+                        {
+                            valuesToAdd.Add(value);
+                        }
                     }
                 }
                 else if (UpdateType.REPLACE.Equals(type))
@@ -324,7 +327,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     {
                         foreach (Object value in oldValues)
                         {
-                            if (!newValues.Contains(value))
+                            if (newValues == null || !newValues.Contains(value))
                             {
                                 valuesToRemove.Add(value);
                             }
@@ -333,19 +336,25 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     // look through the values passed in and
                     // add them if they are not existing values
-                    foreach (Object value in newValues)
+                    if (newValues != null)
                     {
-                        if ((oldValues == null) || (!oldValues.Contains(value)))
+                        foreach (Object value in newValues)
                         {
-                            valuesToAdd.Add(value);
+                            if ((oldValues == null) || (!oldValues.Contains(value)))
+                            {
+                                valuesToAdd.Add(value);
+                            }
                         }
                     }
                 }
                 else if (UpdateType.DELETE.Equals(type))
                 {
-                    foreach (Object value in newValues)
+                    if (newValues != null)
                     {
-                        valuesToRemove.Add(value);
+                        foreach (Object value in newValues)
+                        {
+                            valuesToRemove.Add(value);
+                        }
                     }
                 }
         }
