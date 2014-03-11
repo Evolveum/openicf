@@ -1,39 +1,41 @@
 /**
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
- * Copyright (c) 2013 ForgeRock AS. All Rights Reserved
- *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the License). You may not use this file except in
- * compliance with the License.
- *
- * You can obtain a copy of the License at
- * http://forgerock.org/license/CDDLv1.0.html
- * See the License for the specific language governing
- * permission and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * Header Notice in each file and include the License file
- * at http://forgerock.org/license/CDDLv1.0.html
- * If applicable, add the following below the CDDL Header,
- * with the fields enclosed by brackets [] replaced by
- * your own identifying information:
- * "Portions Copyrighted [year] [name of copyright owner]"
- * 
- * @author Gael Allioux <gael.allioux@forgerock.com>
- *
- */
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+*
+* Copyright (c) 2014 ForgeRock AS. All Rights Reserved
+*
+* The contents of this file are subject to the terms
+* of the Common Development and Distribution License
+* (the License). You may not use this file except in
+* compliance with the License.
+*
+* You can obtain a copy of the License at
+* http://forgerock.org/license/CDDLv1.0.html
+* See the License for the specific language governing
+* permission and limitations under the License.
+*
+* When distributing Covered Code, include this CDDL
+* Header Notice in each file and include the License file
+* at http://forgerock.org/license/CDDLv1.0.html
+* If applicable, add the following below the CDDL Header,
+* with the fields enclosed by brackets [] replaced by
+* your own identifying information:
+* " Portions Copyrighted [year] [name of copyright owner]"
+*
+* @author Gael Allioux <gael.allioux@forgerock.com>
+*/
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.Name
 
 // Parameters:
 // The connector sends the following:
-// action: a string describing the action ("SCHEMA" here)
+// connection: handler to the SQL connection
+// configuration : handler to the connector's configuration object
 // log: a handler to the Log facility
+// action: a string describing the action ("SCHEMA" here)
 // builder: SchemaBuilder instance for the connector
 //
 // The connector will make the final call to builder.build()
@@ -54,9 +56,12 @@ accAttrsInfo = new HashSet<AttributeInfo>();
 accAttrsInfo.add(uidAIB.build());
 accAttrsInfo.add(AttributeInfoBuilder.build("firstname", String.class));
 accAttrsInfo.add(AttributeInfoBuilder.build("lastname", String.class));
-accAttrsInfo.add(AttributeInfoBuilder.build("fullname", String.class));
+accAttrsInfo.add(AttributeInfoBuilder.build("displayName", String.class));
 accAttrsInfo.add(AttributeInfoBuilder.build("email", String.class));
-accAttrsInfo.add(AttributeInfoBuilder.build("organization", String.class));
+accAttrsInfo.add(AttributeInfoBuilder.build("employeeNumber", String.class));
+accAttrsInfo.add(AttributeInfoBuilder.build("employeeType", String.class));
+accAttrsInfo.add(AttributeInfoBuilder.build("description", String.class));
+accAttrsInfo.add(AttributeInfoBuilder.build("mobilePhone", String.class));
 // Create the __ACCOUNT__ Object class
 final ObjectClassInfo ociAccount = new ObjectClassInfoBuilder().setType("__ACCOUNT__").addAllAttributeInfo(accAttrsInfo).build();
 builder.defineObjectClass(ociAccount);

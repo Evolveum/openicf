@@ -1,34 +1,35 @@
-/*
- *
- * Copyright (c) 2010 ForgeRock Inc. All Rights Reserved
- *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the License). You may not use this file except in
- * compliance with the License.
- *
- * You can obtain a copy of the License at
- * http://www.opensource.org/licenses/cddl1.php or
- * OpenIDM/legal/CDDLv1.0.txt
- * See the License for the specific language governing
- * permission and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * Header Notice in each file and include the License file
- * at OpenIDM/legal/CDDLv1.0.txt.
- * If applicable, add the following below the CDDL Header,
- * with the fields enclosed by brackets [] replaced by
- * your own identifying information:
- * "Portions Copyrighted 2010 [name of copyright owner]"
- *
- * $Id$
- */
+/**
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+*
+* Copyright (c) 2014 ForgeRock AS. All Rights Reserved
+*
+* The contents of this file are subject to the terms
+* of the Common Development and Distribution License
+* (the License). You may not use this file except in
+* compliance with the License.
+*
+* You can obtain a copy of the License at
+* http://forgerock.org/license/CDDLv1.0.html
+* See the License for the specific language governing
+* permission and limitations under the License.
+*
+* When distributing Covered Code, include this CDDL
+* Header Notice in each file and include the License file
+* at http://forgerock.org/license/CDDLv1.0.html
+* If applicable, add the following below the CDDL Header,
+* with the fields enclosed by brackets [] replaced by
+* your own identifying information:
+* " Portions Copyrighted [year] [name of copyright owner]"
+*
+* @author Gael Allioux <gael.allioux@forgerock.com>
+*/
 import groovy.sql.Sql;
 import groovy.sql.DataSet;
 
 // Parameters:
 // The connector sends the following:
 // connection: handler to the SQL connection
+// configuration : handler to the connector's configuration object
 // objectClass: a String describing the Object class (__ACCOUNT__ / __GROUP__ / other)
 // action: a string describing the action ("SEARCH" here)
 // log: a handler to the Log facility
@@ -90,7 +91,11 @@ if (query != null){
 
 switch ( objectClass ) {
     case "__ACCOUNT__":
-    sql.eachRow("SELECT * FROM Users" + where, {result.add([__UID__:it.uid, __NAME__:it.uid, uid:it.uid, fullname:it.fullname,firstname:it.firstname,lastname:it.lastname,email:it.email,organization:it.organization])} );
+    sql.eachRow("SELECT * FROM Users" + where, {result.add([__UID__:it.uid, __NAME__:it.uid, uid:it.uid, 
+                    displayName:it.displayName,firstname:it.firstname,lastname:it.lastname,email:it.email,
+                    employeeNumber:it.employeeNumber,employeeType:it.employeeType,
+                    description:it.description,mobilePhone:it.mobilePhone])}
+    );
     break
 
     case "__GROUP__":
@@ -98,7 +103,7 @@ switch ( objectClass ) {
     break
 
     case "organization":
-    sql.eachRow("SELECT * FROM Organizations" + where, {result.add([__UID__:it.name, __NAME__:it.name, description:it.description])} );
+    sql.eachRow("SELECT * FROM Organizations" + where, {result.add([__UID__:it.name,__NAME__:it.name, description:it.description])} );
     break
 
     default:

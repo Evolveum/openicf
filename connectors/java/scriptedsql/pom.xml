@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
+ Copyright (c) 2011-2014 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -50,7 +50,7 @@
         <url>http://builds.forgerock.org/job/OpenICF - ScriptedSQL Connector</url>
     </ciManagement>
     <properties>
-        <openicf.osgi.embed>dbcommon</openicf.osgi.embed>
+        <openicf.osgi.embed>dbcommon,scriptedcommon</openicf.osgi.embed>
         <openicf.osgi.dynamic.import>*</openicf.osgi.dynamic.import>
         <connectorPackage>org.forgerock.openicf.connectors.scriptedsql</connectorPackage>
         <connectorClass>ScriptedSQLConnector</connectorClass>
@@ -82,6 +82,11 @@
             <version>1.1.0.0</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.forgerock.openicf.misc</groupId>
+            <artifactId>scriptedcommon</artifactId>
+            <version>1.1.0.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -109,6 +114,11 @@
                     <dependency>
                         <groupId>org.forgerock.openicf.connectors.misc</groupId>
                         <artifactId>dbcommon</artifactId>
+                        <version>1.1.0.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.forgerock.openicf.misc</groupId>
+                        <artifactId>scriptedcommon</artifactId>
                         <version>1.1.0.0</version>
                     </dependency>
                     <dependency>
