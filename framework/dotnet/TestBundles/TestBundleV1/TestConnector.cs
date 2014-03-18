@@ -22,6 +22,7 @@
  * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -208,6 +209,18 @@ namespace org.identityconnectors.testconnector
             {
                 throw new AlreadyExistsException(accessor.GetName().GetNameValue());
             }
+            else if (accessor.HasAttribute("emails"))
+            {
+                object value = ConnectorAttributeUtil.GetSingleValue(accessor.Find("emails"));
+                if (value is IDictionary)
+                {
+                    return new Uid((string)((IDictionary)value)["email"]);
+                }
+                else
+                {
+                    throw new InvalidAttributeValueException("Expecting Map");
+                }
+            }
             return new Uid(_config.Guid.ToString());
         }
 
@@ -367,6 +380,11 @@ namespace org.identityconnectors.testconnector
                 builder.SetUid(Convert.ToString(i));
                 builder.SetName(string.Format("user{0:D3}", i));
                 builder.AddAttribute(ConnectorAttributeBuilder.BuildEnabled(enabled));
+                IDictionary<string, object> mapAttribute = new Dictionary<string, object>();
+                mapAttribute["email"] = "foo@example.com";
+                mapAttribute["primary"] = true;
+                mapAttribute["usage"] = new List<String>() { "home", "work" };
+                builder.AddAttribute("emails", mapAttribute);
                 ConnectorObject co = builder.Build();
                 collection[co.Name.GetNameValue()] = co;
                 enabled = !enabled;

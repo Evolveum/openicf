@@ -918,7 +918,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 // add each value checking to make sure its correct
                 foreach (Object v in values)
                 {
-                    FrameworkUtil.CheckAttributeValue(v);
+                    FrameworkUtil.CheckAttributeValue(Name, v);
                     _value.Add(v);
                 }
             }

@@ -1086,12 +1086,15 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             listener.Start();
             _listener = listener;
 
-            var statusChecker = new FacadeDisposer(new TimeSpan(0, MaxFacadeLifeTime, 0));
-            // Create an inferred delegate that invokes methods for the timer.
-            TimerCallback tcb = statusChecker.Run;
+            if (MaxFacadeLifeTime > 0)
+            {
+                var statusChecker = new FacadeDisposer(new TimeSpan(0, MaxFacadeLifeTime, 0));
+                // Create an inferred delegate that invokes methods for the timer.
+                TimerCallback tcb = statusChecker.Run;
 
-            _timer = new Timer(tcb, null, new TimeSpan(0, MaxFacadeLifeTime, 0),
-                new TimeSpan(0, Math.Min(MaxFacadeLifeTime, 10), 0));
+                _timer = new Timer(tcb, null, new TimeSpan(0, MaxFacadeLifeTime, 0),
+                    new TimeSpan(0, Math.Min(MaxFacadeLifeTime, 10), 0));
+            }
         }
 
         private TcpListener CreateServerSocket()

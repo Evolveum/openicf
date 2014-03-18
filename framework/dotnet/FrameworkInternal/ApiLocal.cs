@@ -547,7 +547,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             return rv;
         }
 
-        private APIConfigurationImpl
+        public static APIConfigurationImpl
         CreateDefaultAPIConfiguration(LocalConnectorInfoImpl localInfo)
         {
             SafeType<Connector> connectorClass =
@@ -574,7 +574,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
-        private CultureInfo[] GetLocalizedCultures(Assembly assembly)
+        private static CultureInfo[] GetLocalizedCultures(Assembly assembly)
         {
             FileInfo assemblyFile =
                new FileInfo(assembly.Location);
@@ -613,7 +613,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             return temp.ToArray();
         }
 
-        private ConnectorMessagesImpl LoadMessages(Assembly assembly,
+        public static ConnectorMessagesImpl LoadMessages(Assembly assembly,
                                                    LocalConnectorInfoImpl info,
                                                    String[] nameBases)
         {

@@ -41,6 +41,9 @@ namespace Org.IdentityConnectors.Test.Common.Spi
         APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config);
 
+        APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
+            PropertyBag configData, string prefix);
+
         void FillConfiguration(Configuration config,
                 IDictionary<string, object> configData);
 
