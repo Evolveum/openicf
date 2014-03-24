@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.box.boxjavalibv2.requests.requestobjects.BoxUserDeleteRequestObject;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -36,21 +37,8 @@ import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
-import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.AttributesAccessor;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.ScriptContext;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
@@ -74,7 +62,7 @@ import com.box.restclientv2.exceptions.BoxRestException;
 
 /**
  * Main implementation of the Box Connector.
- *
+ * 
  */
 @ConnectorClass(displayNameKey = "box.connector.display",
         configurationClass = BoxConfiguration.class)
@@ -87,6 +75,8 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
     protected static final String GROOVY = "Groovy";
     protected static final String CONNECTOR_ARG = "connector";
     protected static final String BOX_CLIENT_ARG = "boxClient";
+    protected static final String FORCE = "force";
+    protected static final String NOTIFY = "notify";
 
     /**
      * Place holder for the {@link Configuration} passed into the init() method
@@ -97,7 +87,7 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
 
     /**
      * Gets the Configuration context for this connector.
-     *
+     * 
      * @return The current {@link Configuration}
      */
     public Configuration getConfiguration() {
@@ -106,7 +96,7 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
 
     /**
      * Callback method to receive the {@link Configuration}.
-     *
+     * 
      * @param configuration
      *            the new {@link Configuration}
      * @see org.identityconnectors.framework.spi.Connector#init(org.identityconnectors.framework.spi.Configuration)
@@ -117,7 +107,7 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
 
     /**
      * Disposes of the {@link BoxConnector}'s resources.
-     *
+     * 
      * @see org.identityconnectors.framework.spi.Connector#dispose()
      */
     public void dispose() {
@@ -126,7 +116,7 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
 
     /******************
      * SPI Operations
-     *
+     * 
      * Implement the following operations using the contract and description
      * found in the Javadoc for these methods.
      ******************/
@@ -193,6 +183,14 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
         return null;
     }
 
+    private <T> T getValueAs(Object source, Class<T> type, T defaultValue) {
+        if (null == source || type.isAssignableFrom(source.getClass()) == false) {
+            return defaultValue;
+        } else {
+            return (T) source;
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -200,19 +198,19 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
         if (ObjectClass.ACCOUNT.equals(objectClass)) {
 
             final IBoxUsersManager manager = configuration.getBoxClient().getUsersManager();
+            boolean force = getValueAs(options.getOptions().get(FORCE), Boolean.TYPE, false);
+            boolean notify = getValueAs(options.getOptions().get(NOTIFY), Boolean.TYPE, false);
 
-            // BoxUserRequestObject request =
-            // BoxUserRequestObject.
-            //
-            // try {
-            // manager.
-            // } catch (BoxRestException e) {
-            // e.printStackTrace();
-            // } catch (BoxServerException e) {
-            // e.printStackTrace();
-            // } catch (AuthFatalFailureException e) {
-            // e.printStackTrace();
-            // }
+            try {
+                manager.deleteEnterpriseUser(uid.getUidValue(), BoxUserDeleteRequestObject
+                        .deleteEnterpriseUserRequestObject(notify, force));
+            } catch (BoxRestException e) {
+                throw ConnectorException.wrap(e);
+            } catch (BoxServerException e) {
+                throw ConnectorException.wrap(e);
+            } catch (AuthFatalFailureException e) {
+                throw ConnectorException.wrap(e);
+            }
 
         } else if (ObjectClass.GROUP.equals(objectClass)) {
             final IBoxGroupsManager manager = configuration.getBoxClient().getGroupsManager();
@@ -351,6 +349,12 @@ public class BoxConnector implements Connector, CreateOp, DeleteOp, SearchOp<Str
                 String.class, EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE)));
 
         builder.defineObjectClass(groupInfo.build());
+
+        // Define Operation Options
+        //builder.defineOperationOption(OperationOptionInfoBuilder.build(NOTIFY, Boolean.TYPE),
+        //        CreateOp.class, UpdateOp.class, DeleteOp.class);
+        //builder.defineOperationOption(OperationOptionInfoBuilder.build(FORCE, Boolean.TYPE),
+        //        DeleteOp.class);
 
         return builder.build();
     }

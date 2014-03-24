@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
 
 /**
  * Attempts to test the {@link BoxConnector} with the framework.
- *
+ * 
  */
 public class BoxConnectorTests {
 
@@ -53,7 +53,6 @@ public class BoxConnectorTests {
     private static final Log logger = Log.getLog(BoxConnectorTests.class);
 
     private ConnectorFacade facade;
-
 
     @Test(enabled = false)
     public void exampleTest1() {
@@ -67,7 +66,7 @@ public class BoxConnectorTests {
         getFacade().schema();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void exampleTest2() {
         logger.info("Running Test 2...");
         Set<Attribute> createAttribute = new HashSet<Attribute>();
@@ -77,7 +76,7 @@ public class BoxConnectorTests {
         Uid uid = getFacade().create(ObjectClass.ACCOUNT, createAttribute, null);
         Assert.assertNotNull(uid);
 
-       // getFacade().delete(ObjectClass.ACCOUNT, uid, null);
+        getFacade().delete(ObjectClass.ACCOUNT, uid, null);
 
         // Another example using TestHelpers
         // List<ConnectorObject> results =

@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import com.box.boxjavalibv2.exceptions.AuthFatalFailureException;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -48,11 +49,12 @@ import org.identityconnectors.framework.spi.StatefulConfiguration;
 import com.box.boxjavalibv2.BoxClient;
 import com.box.boxjavalibv2.authorization.OAuthWebViewData;
 import com.box.boxjavalibv2.dao.BoxOAuthToken;
+import sun.plugin.dom.exception.InvalidStateException;
 
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the Box Connector.
- *
+ * 
  */
 public class BoxConfiguration extends AbstractConfiguration implements StatefulConfiguration {
 
@@ -111,7 +113,7 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
      * {@inheritDoc}
      */
     public void validate() {
-        Assertions.blankCheck(getClientId(),"clientId");
+        Assertions.blankCheck(getClientId(), "clientId");
         Assertions.nullCheck(getClientSecret(), "clientSecret");
         Assertions.nullCheck(getRefreshToken(), "refreshToken");
     }
@@ -138,6 +140,10 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
                         logger.error("Client is NOT authenticated");
                     }
 
+                } catch (AuthFatalFailureException e) {
+                    logger.error(e.getMessage(), e);
+                    throw new IllegalStateException(e.getMessage(), boxClient
+                            .getOAuthDataController().getRefreshFailException());
                 } catch (final Exception e) {
                     logger.error(e, "Cannot get connection to the box service.");
                     return null;
@@ -157,12 +163,8 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
         }
     }
 
-    public static void main(String[] arg) throws Exception {
-
-        if (arg.length == 3) {
-            String[] args =
-                    new String[] { "z7gkfq5vll3pxv1zodiqpwxjrmjzqc3g",
-                        "5jMTNTL0zEXwv0fc0tdoV6HRPE7htl6g", "http://localhost:8088" };
+    public static void main(String[] args) throws Exception {
+        if (args.length == 3) {
 
             BoxClient client = new BoxClient(args[0], args[1], null, null, null);
 
@@ -195,7 +197,7 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
      * Open a browser at the given URL using {@link Desktop} if available, or
      * alternatively output the URL to {@link System#out} for command-line
      * applications.
-     *
+     * 
      * @param uri
      *            URL to browse
      */
@@ -254,5 +256,6 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
         return "";
     }
 
-    private static final String HTML_PAGE = "<!DOCTYPE html> <head> <title>OpenICF Box Connector OAuth2 Code | Box</title> <link rel=\"stylesheet\" href=\"https://e1.boxcdn.net/_assets/css/section_templ_login_views_components_center_container-aXC4sq.css\" media=\"screen\"> </head> <body id=\"site_body\"> <div id=\"envelope-background\"> <div class=\"center_container single-width\"> <div class=\"container_body\"> <div class=\"container_header ptl\"> <div class=\"title-logo sprite_signup_login_box_logo\"> </div> <div class=\"title_text\">OAuth2 Code %s</div> <div class=\"title_subtext small pts\"><strong>%s</strong></div> <div class=\"title_subtext small pts\">Now return to command line to see the output of the Box.com Connector Configuration.</div> </div> </div> </div> </div> </body></html>";
+    private static final String HTML_PAGE =
+            "<!DOCTYPE html> <head> <title>OpenICF Box Connector OAuth2 Code | Box</title> <link rel=\"stylesheet\" href=\"https://e1.boxcdn.net/_assets/css/section_templ_login_views_components_center_container-aXC4sq.css\" media=\"screen\"> </head> <body id=\"site_body\"> <div id=\"envelope-background\"> <div class=\"center_container single-width\"> <div class=\"container_body\"> <div class=\"container_header ptl\"> <div class=\"title-logo sprite_signup_login_box_logo\"> </div> <div class=\"title_text\">OAuth2 Code %s</div> <div class=\"title_subtext small pts\"><strong>%s</strong></div> <div class=\"title_subtext small pts\">Now return to command line to see the output of the Box.com Connector Configuration.</div> </div> </div> </div> </div> </body></html>";
 }
