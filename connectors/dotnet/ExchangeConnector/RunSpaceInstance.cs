@@ -24,7 +24,6 @@
 
 namespace Org.IdentityConnectors.Exchange
 {
-<<<<<<< HEAD
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
@@ -35,7 +34,6 @@ namespace Org.IdentityConnectors.Exchange
 	using System.Management.Automation.Runspaces;
 	using System.Management.Automation.Internal;
 	using System.Text;
-	using System.Linq;
 
 	using Org.IdentityConnectors.Framework.Common.Exceptions;
 	using Org.IdentityConnectors.Framework.Common.Objects;
@@ -62,41 +60,6 @@ namespace Org.IdentityConnectors.Exchange
 	/// </summary>
 	internal sealed class RunSpaceInstance : IDisposable
 	{
-=======
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Management.Automation;
-    using System.Management.Automation.Runspaces;
-    using System.Text;
-    using Org.IdentityConnectors.Framework.Common.Exceptions;
-    using Org.IdentityConnectors.Framework.Common.Objects;
-    using Org.IdentityConnectors.Common;
-
-    /// <summary>
-    /// <para>
-    /// The implementation of the run space. This wraps the real run space object 
-    /// from powershell for use in the pool
-    /// First written for the exchange adapter, the snapin is not needed if you do 
-    /// not use it for exchange
-    /// </para>
-    /// <para>
-    /// Two possible ways of executing a command using different access point to
-    /// the Runspace:
-    /// - RunspaceInvoke: simple commands in string form, the command string can
-    ///                   contain multiple commands and is basically the same form
-    ///                   as what you use when typing a command in the exchange 
-    ///                   shell
-    /// - PipelineInvoke: complex (multi) command structured pipelines which also 
-    ///                   allow complex parameters, like objects, to be passed in.
-    /// </para>
-    /// </summary>
-    internal sealed class RunSpaceInstance : IDisposable
-    {
->>>>>>> remotes/trunk
         /// <summary>
         /// How many times to try when runspace state is "Broken".
         /// </summary>

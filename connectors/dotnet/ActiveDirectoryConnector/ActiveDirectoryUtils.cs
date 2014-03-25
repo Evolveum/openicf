@@ -323,11 +323,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         // entry may be null, needs to be get fresh in that case
         internal ConnectorAttribute GetConnectorAttributeFromADEntry(ObjectClass oclass,
-<<<<<<< HEAD
-            String attributeName, SearchResult searchResult, DirectoryEntry entry)
-=======
-            String attributeName, DS.SearchResult searchResult)
->>>>>>> remotes/trunk
+            String attributeName, DS.SearchResult searchResult, DirectoryEntry entry)
         {
         	
         	Boolean ourEntry = false;

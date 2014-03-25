@@ -54,57 +54,6 @@ namespace Org.IdentityConnectors.Exchange
         #region Fields Definition
 
         /// <summary>
-<<<<<<< HEAD
-=======
-        /// Recipient Type attribute name
-        /// </summary>
-        internal const string AttRecipientType = "RecipientType";
-
-        /// <summary>
-        /// External Mail Address attribute name
-        /// </summary>
-        internal const string AttExternalMail = "ExternalEmailAddress";
-
-        /// <summary>
-        /// Database attribute name
-        /// </summary>
-        internal const string AttDatabase = "Database";
-
-        /// <summary>
-        /// Deleted atrribute name
-        /// </summary>
-        internal const string AttIsDeleted = "isDeleted";
-
-        /// <summary>
-        /// External Mail attribute name as in AD
-        /// </summary>
-        internal const string AttExternalMailADName = "targetAddress";
-
-        /// <summary>
-        /// Database attribute name as in AD
-        /// </summary>
-        internal const string AttDatabaseADName = "homeMDB";
-
-        /// <summary>
-        /// Attribute mapping constant
-        /// </summary>
-        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string> 
-        {
-        { AttDatabase, AttDatabaseADName },
-        { AttExternalMail, AttExternalMailADName }
-        };
-
-        /// <summary>
-        /// Attribute mapping constant
-        /// </summary>
-        internal static readonly IDictionary<string, string> AttMapFromAD = new Dictionary<string, string> 
-        {
-        { AttDatabaseADName, AttDatabase },
-        { AttExternalMailADName, AttExternalMail }
-        };
-
-        /// <summary>
->>>>>>> remotes/trunk
         /// ClassName - used for debugging purposes
         /// </summary>
         private static readonly string ClassName = typeof(ExchangeConnector).ToString();
@@ -375,7 +324,6 @@ namespace Org.IdentityConnectors.Exchange
 
             if (rcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
             {
-<<<<<<< HEAD
                 // disabling Mailbox if needed
                 if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
                 {
@@ -390,11 +338,6 @@ namespace Org.IdentityConnectors.Exchange
                     // Enable-MailUser needs the value of ExternalEmailAddress, so we have to get it
                     string externalEmailAddress = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, attributes) as string;
                     if (String.IsNullOrEmpty(externalEmailAddress))
-=======
-                if (type == UpdateType.REPLACE)
-                {
-                    if (origRcptType != rcptType)
->>>>>>> remotes/trunk
                     {
                         PSMemberInfo o = psuser.Members[ExchangeConnectorAttributes.AttExternalEmailAddress];
                         if (o == null || o.Value == null || String.IsNullOrEmpty(o.Value.ToString()))
@@ -516,11 +459,7 @@ namespace Org.IdentityConnectors.Exchange
         public void Sync(
                 ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
         {
-<<<<<<< HEAD
             ExchangeUtility.NullCheck(objClass, "oclass", this._configuration);         
-=======
-            ExchangeUtility.NullCheck(objClass, "oclass", this.configuration);
->>>>>>> remotes/trunk
 
             // we handle accounts only
             if (!objClass.Is(ObjectClass.ACCOUNT_NAME))
@@ -545,7 +484,6 @@ namespace Org.IdentityConnectors.Exchange
                         return handler.Handle(delta);
                     }
 
-<<<<<<< HEAD
                 // replace the ad attributes with exchange ones and add recipient type and database (if requested)
                 ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object, attsToGet);
                 updated = this.AddExchangeAttributes(objClass, updated, attsToGet); 
@@ -554,16 +492,6 @@ namespace Org.IdentityConnectors.Exchange
                     // build new sync delta, cause we changed the object
                     SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
                                                         {
-=======
-                    // replace the ad attributes with exchange one and add recipient type
-                    ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
-                    updated = this.AddExchangeAttributes(objClass, updated, attsToGet);
-                    if (updated != delta.Object)
-                    {
-                        // build new sync delta, cause we changed the object
-                        SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
-                                                            {
->>>>>>> remotes/trunk
                                                                 DeltaType = delta.DeltaType,
                                                                 Token = delta.Token,
                                                                 Uid = delta.Uid,
@@ -611,15 +539,11 @@ namespace Org.IdentityConnectors.Exchange
         public void ExecuteQuery(
                 ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
-<<<<<<< HEAD
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
 
             Trace.TraceInformation("Exchange.ExecuteQuery starting");
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
-=======
-            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
->>>>>>> remotes/trunk
 
             // we handle accounts only
             if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
@@ -635,27 +559,17 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             // delegate to get the exchange attributes if requested            
-<<<<<<< HEAD
-            ResultsHandler filter = delegate(ConnectorObject cobject)
-                                    {
-                                        Trace.TraceInformation("Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
-                                        ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
-                                        filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
-                                        Trace.TraceInformation("Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
-                                        return handler(filtered);
-                                    };
-=======
             ResultsHandler filter = new ResultsHandler()
             {
                 Handle = cobject =>
                 {
-                    ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
-                            cobject, attsToGet, AttMapFromAD);
+                    Trace.TraceInformation("Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
+                    ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
                     filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
+                    Trace.TraceInformation("Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
                     return handler.Handle(filtered);
                 }
             };
->>>>>>> remotes/trunk
 
             ResultsHandler handler2use = filter;
             OperationOptions options2use = options;
@@ -713,29 +627,6 @@ namespace Org.IdentityConnectors.Exchange
             return new LegacyExchangeConnectorFilterTranslator();
         }
 
-<<<<<<< HEAD
-=======
-        /// <summary>
-        /// Inits the connector with configuration injected
-        /// </summary>
-        /// <param name="configuration">Connector configuration</param>
-        public override void Init(Configuration configuration)
-        {
-            this.configuration = (ExchangeConfiguration)configuration;
-            base.Init(configuration);
-            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, configuration.ConnectorMessages);
-        }
-
-        /// <summary>
-        /// Dispose resources, <see cref="IDisposable"/>
-        /// </summary>
-        public sealed override void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
->>>>>>> remotes/trunk
-
         /// <summary>
         /// Attribute normalizer
         /// </summary>
@@ -743,10 +634,6 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attribute">Attribute to be normalized</param>
         /// <returns>Normalized attribute</returns>
         public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
-<<<<<<< HEAD
-=======
-        //public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
->>>>>>> remotes/trunk
         {
             // normalize the attribute using AD connector first
             // attribute = base.NormalizeAttribute(oclass, attribute);
@@ -882,15 +769,9 @@ namespace Org.IdentityConnectors.Exchange
         /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
         /// user is not found we get this exception too)</exception>
         private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IEnumerable<string> attToGet)
-<<<<<<< HEAD
         {            
             ExchangeUtility.NullCheck(oc, "name", this._configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this._configuration);
-=======
-        {
-            ExchangeUtility.NullCheck(oc, "name", this.configuration);
-            ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
->>>>>>> remotes/trunk
 
             // we support ACCOUNT only or there is nothing to add
             if (!oc.Is(ObjectClass.ACCOUNT_NAME) || attToGet == null)
@@ -1038,14 +919,6 @@ namespace Org.IdentityConnectors.Exchange
 
             if (queries.Count == 1)
             {
-<<<<<<< HEAD
-                ResultsHandler handler = delegate(ConnectorObject cobject)
-                                         {
-                                             ret = cobject;
-                                             return false;
-                                         };
-                _activeDirectoryConnector.ExecuteQuery(oclass, queries[0], handler, options);
-=======
                 ResultsHandler handler = new ResultsHandler()
                 {
                     Handle = cobject =>
@@ -1054,8 +927,7 @@ namespace Org.IdentityConnectors.Exchange
                         return false;
                     }
                 };
-                base.ExecuteQuery(oclass, queries[0], handler, options);
->>>>>>> remotes/trunk
+                _activeDirectoryConnector.ExecuteQuery(oclass, queries[0], handler, options);
             }
 
             return ret;

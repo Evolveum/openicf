@@ -57,21 +57,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp,
         AuthenticateOp, PoolableConnector
-<<<<<<< HEAD
 	{
         /// <summary>
         /// Which AD attributes are returned by default (i.e. without client explicitly asking for them).
         /// </summary>
-        private static IDictionary<ObjectClass, ICollection<string>> _attributesReturnedByDefault = null;
+        public static IDictionary<ObjectClass, ICollection<string>> _attributesReturnedByDefault = null;
 
         /// <summary>
         /// Cached schema.
         /// </summary>
         private static Schema _schema = null;
-=======
-    {
-        public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
->>>>>>> remotes/trunk
 
         // special attribute names
         public static readonly string ATT_CONTAINER = "ad_container";
@@ -279,14 +274,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             string path = GetSearchContainerPath(useGC, _configuration.LDAPHostName, _configuration.Container);
             Trace.TraceInformation("Search: Getting root node for search");
-<<<<<<< HEAD
-            _dirHandler = new DirectoryEntry(path,_configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+            _dirHandler = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
 
             Schema();           // initializes e.g. _attributesReturnedByDefault (used throughout this connector)
 
-=======
-            _dirHandler = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
->>>>>>> remotes/trunk
             //searcher = new DirectorySearcher(_dirHandler);
         }
 
@@ -306,21 +297,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region SchemaOp Members
         // implementation of SchemaSpiOp
-<<<<<<< HEAD
         public virtual Schema Schema()
         {            
             Trace.TraceInformation("AD.Schema method - entry");
-=======
-        public Schema Schema()
-        {
-            Trace.TraceInformation("Schema method");
->>>>>>> remotes/trunk
             if (_schema != null)
             {
                 Trace.TraceInformation("AD.Schema method - exit, returning cached schema");
                 return _schema;
             }
-<<<<<<< HEAD
             else
             {
                 _schema = SchemaUtils.BuildSchema(this,
@@ -333,51 +317,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                                 GetObjectClassInfo);
                 Trace.TraceInformation("AD.Schema method - exit, returning freshly computed schema");
                 return _schema;
-=======
-
-            SchemaBuilder schemaBuilder =
-                new SchemaBuilder(SafeType<Connector>.Get(this));
-            AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
-
-            //iterate through supported object classes
-            foreach (ObjectClass oc in GetSupportedObjectClasses())
-            {
-                ObjectClassInfo ocInfo = GetObjectClassInfo(oc);
-                Assertions.NullCheck(ocInfo, "ocInfo");
-
-                //populate the list of default attributes to get
-                AttributesReturnedByDefault.Add(oc, new HashSet<string>());
-                foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos)
-                {
-                    if (caInfo.IsReturnedByDefault)
-                    {
-                        AttributesReturnedByDefault[oc].Add(caInfo.Name);
-                    }
-                }
-
-                //add object class to schema
-                schemaBuilder.DefineObjectClass(ocInfo);
-
-                //add supported operations
-                IList<SafeType<SPIOperation>> supportedOps = GetSupportedOperations(oc);
-                if (supportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in supportedOps)
-                    {
-                        schemaBuilder.AddSupportedObjectClass(op, ocInfo);
-                    }
-                }
-
-                //remove unsupported operatons
-                IList<SafeType<SPIOperation>> unSupportedOps = GetUnSupportedOperations(oc);
-                if (unSupportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in unSupportedOps)
-                    {
-                        schemaBuilder.RemoveSupportedObjectClass(op, ocInfo);
-                    }
-                }
->>>>>>> remotes/trunk
             }
         }
 
@@ -444,17 +383,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // implementation of SearchSpiOp
-<<<<<<< HEAD
         public void ExecuteQuery(ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
             ExecuteQueryInternal(oclass, query, handler, options, GetAdAttributesToReturn(oclass, options));
         }
 
         public void ExecuteQueryInternal(ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options, ICollection<string> adAttributesToReturn)
-=======
-        public virtual void ExecuteQuery(ObjectClass oclass, string query,
-            ResultsHandler handler, OperationOptions options)
->>>>>>> remotes/trunk
         {
             try
             {
@@ -562,13 +496,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // by the SyncSpiOp 
         public void ExecuteQueryInternal(ObjectClass oclass, string query,
             ResultsHandler handler, OperationOptions options, bool includeDeleted,
-<<<<<<< HEAD
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
             string searchRoot, SearchScope searchScope, ICollection<string> attributesToReturn)
-=======
-            SortOption sortOption, string serverName, bool useGlobalCatalog,
-            string searchRoot, SearchScope searchScope)
->>>>>>> remotes/trunk
         {
             Trace.TraceInformation("AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}", CollectionUtil.Dump(attributesToReturn));
             StringBuilder fullQueryBuilder = new StringBuilder();
@@ -645,17 +574,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     resultSet = searcher.FindAll();
-<<<<<<< HEAD
                     TimeSpan ts = stopWatch.Elapsed;	// Get the elapsed time as a TimeSpan value.
 					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
         				ts.Hours, ts.Minutes, ts.Seconds,
 	        			ts.Milliseconds);
    					Trace.TraceInformation("searcher.FindAll took {0}", elapsedTime);
 
-                    foreach (SearchResult result in resultSet)
-=======
                     foreach (DS.SearchResult result in resultSet)
->>>>>>> remotes/trunk
                     {
                         buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
                         count++;
@@ -754,10 +679,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     try
                     {
-<<<<<<< HEAD
                     	foreach (string attributeName in attributesToReturn)
                     	{
-                        	SearchResult savedResults = savedDcResult;
+                        	DS.SearchResult savedResults = savedDcResult;
 	                        DirectoryEntry entry = entryDc;
     	                    // if we are using the global catalog, we had to get the
     	                    // dc's version of the directory entry, but for usnchanged, 
@@ -786,21 +710,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     	if (entryGc != null) {
                     		entryGc.Dispose();
                     	}
-=======
-                        DS.SearchResult savedResults = savedDcResult;
-                        // if we are using the global catalog, we had to get the
-                        // dc's version of the directory entry, but for usnchanged, 
-                        // we need the gc version of it
-                        if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
-                            StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            savedResults = savedGcResult;
-                        }
-
-                        AddAttributeIfNotNull(builder,
-                            _utils.GetConnectorAttributeFromADEntry(
-                            oclass, attributeName, savedResults));
->>>>>>> remotes/trunk
                     }
                 }
                 else
@@ -971,11 +880,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // implementation of AdvancedUpdateSpiOp
-<<<<<<< HEAD
         public Uid Update(UpdateType type, ObjectClass oclass, 
-=======
-        public virtual Uid Update(UpdateType type, ObjectClass oclass,
->>>>>>> remotes/trunk
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid updatedUid = null;
@@ -998,12 +903,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry updateEntry =
                 ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, updatedUid,
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-<<<<<<< HEAD
-=======
-
-            _utils.UpdateADObject(oclass, updateEntry,
-                attributes, type, _configuration);
->>>>>>> remotes/trunk
 
             try
             {
@@ -1228,11 +1127,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-<<<<<<< HEAD
         public void Sync(ObjectClass objClass, SyncToken token,
-=======
-        public virtual void Sync(ObjectClass objClass, SyncToken token,
->>>>>>> remotes/trunk
             SyncResultsHandler handler, OperationOptions options)
         {
             SyncInternal(objClass, token, handler, options, GetAdAttributesToReturn(objClass, options));
