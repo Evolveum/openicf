@@ -19,19 +19,16 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
-using System.Text;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Server;
 
@@ -44,6 +41,7 @@ namespace Org.IdentityConnectors.Framework.Service
         private const string PROP_CERTSTORE = "connectorserver.certificatestorename";
         private const string PROP_IFADDRESS = "connectorserver.ifaddress";
         public const string PROP_KEY = "connectorserver.key";
+        public const string PROP_FACADE_LIFETIME = "connectorserver.maxFacadeLifeTime";
 	    
 	    private ConnectorServer _server;
 	    
@@ -145,6 +143,11 @@ namespace Org.IdentityConnectors.Framework.Service
     		        _server.IfAddress =
     		            IOUtil.GetIPAddress(ifaddress);
     		    }
+                String facedeLifeTimeStr = settings.Get(PROP_FACADE_LIFETIME);
+		        if (facedeLifeTimeStr != null)
+		        {
+		            _server.MaxFacadeLifeTime = Int32.Parse(facedeLifeTimeStr);
+		        }
     		    _server.Start();
     		    Trace.TraceInformation("Started connector server");
 		    }

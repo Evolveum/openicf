@@ -19,19 +19,16 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * 
- * Portions Copyrighted 2012-2013 ForgeRock Inc.
+ * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using System.DirectoryServices;
+using DS = System.DirectoryServices;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using System.Diagnostics;
-using Org.IdentityConnectors.Framework.Common;
-using Org.IdentityConnectors.Framework.Spi.Operations;
 using System.Security;
 using ActiveDs;
 using Org.IdentityConnectors.Common.Security;
@@ -326,7 +323,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         // entry may be null, needs to be get fresh in that case
         internal ConnectorAttribute GetConnectorAttributeFromADEntry(ObjectClass oclass,
+<<<<<<< HEAD
             String attributeName, SearchResult searchResult, DirectoryEntry entry)
+=======
+            String attributeName, DS.SearchResult searchResult)
+>>>>>>> remotes/trunk
         {
         	
         	Boolean ourEntry = false;

@@ -19,13 +19,17 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2010-2013 ForgeRock AS.
+ * Portions Copyrighted 2010-2014 ForgeRock AS.
  */
 
 package org.identityconnectors.framework.server.impl;
 
 import java.net.ServerSocket;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.KeyManager;
@@ -36,12 +40,14 @@ import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.api.ConnectorInfoManagerFactory;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.impl.api.ConnectorInfoManagerFactoryImpl;
+import org.identityconnectors.framework.impl.api.ManagedConnectorFacadeFactoryImpl;
 import org.identityconnectors.framework.server.ConnectorServer;
 
 public class ConnectorServerImpl extends ConnectorServer {
 
     private ConnectionListener listener;
     private CountDownLatch stopLatch;
+    private Timer timer = null;
     private Long startDate = null;
 
     @Override
@@ -76,6 +82,15 @@ public class ConnectorServerImpl extends ConnectorServer {
         stopLatch = new CountDownLatch(1);
         startDate = System.currentTimeMillis();
         this.listener = listener;
+
+        // Create an inferred delegate that invokes methods for the timer.
+        if (getMaxFacadeLifeTime() > 0) {
+            FacadeDisposer statusChecker =
+                    new FacadeDisposer(getMaxFacadeLifeTime(), TimeUnit.MINUTES);
+            timer = new Timer();
+            timer.scheduleAtFixedRate(statusChecker, new Date(), TimeUnit.MINUTES.toMillis(Math
+                    .min(getMaxFacadeLifeTime(), 10)));
+        }
     }
 
     private ServerSocket createServerSocket() {
@@ -126,12 +141,36 @@ public class ConnectorServerImpl extends ConnectorServer {
             startDate = null;
             listener = null;
         }
+        if (null != timer) {
+            timer.cancel();
+            timer = null;
+        }
         ConnectorFacadeFactory.getManagedInstance().dispose();
     }
 
     @Override
     public void awaitStop() throws InterruptedException {
         stopLatch.await();
+    }
+
+    private class FacadeDisposer extends TimerTask {
+        private final long delay;
+        private final TimeUnit unit;
+
+        public FacadeDisposer(long time, TimeUnit unit) {
+            this.delay = time;
+            this.unit = unit;
+
+        }
+
+        @Override
+        public void run() {
+            logger.ok("Invoking Managed ConnectorFacade Disposer");
+            ConnectorFacadeFactory factory = ConnectorFacadeFactory.getManagedInstance();
+            if (factory instanceof ManagedConnectorFacadeFactoryImpl) {
+                ((ManagedConnectorFacadeFactoryImpl) factory).evictIdle(delay, unit);
+            }
+        }
     }
 
 }

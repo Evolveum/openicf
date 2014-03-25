@@ -19,7 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2010-2013 ForgeRock AS.
+ * Portions Copyrighted 2010-2014 ForgeRock AS.
  */
 package org.identityconnectors.framework.impl.api.local;
 
@@ -270,8 +270,6 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
                     final LocalConnectorInfoImpl info = new LocalConnectorInfoImpl();
                     info.setConnectorClass(connectorClass.asSubclass(Connector.class));
                     info.setConnectorConfigurationClass(options.configurationClass());
-                    info.setConfigurationStateless(!StatefulConfiguration.class
-                            .isAssignableFrom(options.configurationClass()));
                     info.setConnectorDisplayNameKey(options.displayNameKey());
                     info.setConnectorCategoryKey(options.categoryKey());
                     info.setConnectorKey(new ConnectorKey(bundleInfo.getManifest().getBundleName(),
@@ -292,7 +290,7 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
      * Create an instance of the {@link APIConfiguration} object to setup the
      * framework etc..
      */
-    private static APIConfigurationImpl createDefaultAPIConfiguration(
+    public static APIConfigurationImpl createDefaultAPIConfiguration(
             final LocalConnectorInfoImpl localInfo) {
         // setup classloader since we are going to construct the config bean
         ThreadClassLoaderManager.getInstance().pushClassLoader(
@@ -314,7 +312,7 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
         }
     }
 
-    private static ConnectorMessagesImpl loadMessageCatalog(final Set<String> bundleContents,
+    public static ConnectorMessagesImpl loadMessageCatalog(final Set<String> bundleContents,
             final ClassLoader loader, final Class<? extends Connector> connector)
             throws ConfigurationException {
         try {

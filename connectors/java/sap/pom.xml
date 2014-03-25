@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  ~
+  ~ Copyright (c) 2012. ForgeRock Inc. All rights reserved.
+  ~
+  ~ The contents of this file are subject to the terms
+  ~ of the Common Development and Distribution License
+  ~ (the License). You may not use this file except in
+  ~ compliance with the License.
+  ~
+  ~ You can obtain a copy of the License at
+  ~ http://forgerock.org/license/CDDLv1.0.html
+  ~ See the License for the specific language governing
+  ~ permission and limitations under the License.
+  ~
+  ~ When distributing Covered Code, include this CDDL
+  ~ Header Notice in each file and include the License file
+  ~ at http://forgerock.org/license/CDDLv1.0.html
+  ~ If applicable, add the following below the CDDL Header,
+  ~ with the fields enclosed by brackets [] replaced by
+  ~ your own identifying information:
+  ~ "Portions Copyrighted [year] [name of copyright owner]"
+  ~
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.forgerock.openicf.connectors</groupId>
+        <artifactId>connectors-parent</artifactId>
+        <version>1.1.1.0</version>
+    </parent>
+    <groupId>org.forgerock.openicf.connectors</groupId>
+    <artifactId>sap-connector</artifactId>
+    <version>1.1.0.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <name>SAP Connector</name>
+    <description>Connector for SAP</description>
+    <url>https://openicf.forgerock.org/connectors/sap-connector</url>
+    <issueManagement>
+        <system>jira</system>
+        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10210</url>
+    </issueManagement>
+    <scm>
+        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/sap</connection>
+        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/sap</developerConnection>
+        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/sap</url>
+    </scm>
+    <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <connectorPackage>org.forgerock.openicf.connectors.sap</connectorPackage>
+        <connectorClass>SAPConnector</connectorClass>
+        <jira.componentIds>10210</jira.componentIds>
+        <jira.versionPrefix>${project.artifactId}</jira.versionPrefix>
+        <jira.fixVersionIds>10221</jira.fixVersionIds>
+    </properties>
+    <repositories>
+        <repository>
+            <id>forgerock-staging-repository</id>
+            <name>ForgeRock Release Repository</name>
+            <url>http://maven.forgerock.org/repo/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>forgerock-snapshots-repository</id>
+            <name>ForgeRock Snapshot Repository</name>
+            <url>http://maven.forgerock.org/repo/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
+    <build>
+        <plugins>
+	<plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.sap.conn.jco</groupId>
+            <artifactId>sapjco</artifactId>
+            <version>3.0.9</version>
+        </dependency>
+    </dependencies>
+</project>

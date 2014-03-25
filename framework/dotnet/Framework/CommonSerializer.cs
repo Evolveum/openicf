@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2012 ForgeRock AS.
  */
 using System;
 using System.IO;
@@ -201,6 +202,18 @@ namespace Org.IdentityConnectors.Framework.Common.Serializer
         }
 
         /// <summary>
+        /// Serializes the given object to Base64 string
+        /// </summary>
+        /// <param name="object">The object to serialize</param>
+        /// <returns>The Base64 string</returns>
+        /// <seealso cref="Org.IdentityConnectors.Framework.Common.Serializer.ObjectSerializerFactory" />
+        /// <remarks>Since 1.4</remarks>
+        public static string SerializeBase64Object(object obj)
+        {
+            return Convert.ToBase64String(SerializeBinaryObject(obj));
+        }
+
+        /// <summary>
         /// Deserializes the given object from bytes
         /// </summary>
         /// <param name="bytes">The bytes to deserialize</param>
@@ -213,6 +226,18 @@ namespace Org.IdentityConnectors.Framework.Common.Serializer
             BinaryObjectDeserializer des = fact.NewBinaryDeserializer(mem);
             return des.ReadObject();
         }
+
+        /// <summary>
+        /// Deserializes the given object from Base64 string
+        /// </summary>
+        /// <param name="encdata">The string to deserialize</param>
+        /// <returns>The object</returns>
+        /// <remarks>Since 1.4</remarks>
+        public static object DeserializeBase64Object(string encdata)
+        {
+            return DeserializeBinaryObject(Convert.FromBase64String(encdata));
+        }
+
 
         /// <summary>
         /// Serializes the given object to xml

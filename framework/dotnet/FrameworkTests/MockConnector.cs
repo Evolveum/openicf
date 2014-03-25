@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 
 using System;
@@ -125,7 +126,7 @@ namespace FrameworkTests
 
     public class MockAllOpsConnector : MockConnector, CreateOp,
             DeleteOp, UpdateOp, SearchOp<string>, UpdateAttributeValuesOp, AuthenticateOp,
-            ResolveUsernameOp, TestOp, ScriptOnConnectorOp, ScriptOnResourceOp
+            ResolveUsernameOp, TestOp, ScriptOnConnectorOp, ScriptOnResourceOp, SyncOp
     {
 
         public object RunScriptOnConnector(ScriptContext request,
@@ -224,6 +225,22 @@ namespace FrameworkTests
         {
             AddCall("Test");
         }
+
+        public void Sync(ObjectClass objectClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
+        {
+            Assert.IsNotNull(objectClass);
+            Assert.IsNotNull(token);
+            Assert.IsNotNull(handler);
+            Assert.IsNotNull(options);
+            AddCall("Sync", objectClass, token, handler, options);
+        }
+
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass)
+        {
+            Assert.IsNotNull(objectClass);
+            AddCall("GetLatestSyncToken", objectClass);
+            return new SyncToken(0);
+        }
     }
 
     public class MockUpdateConnector : Connector, UpdateOp, SearchOp<string>
@@ -294,7 +311,7 @@ namespace FrameworkTests
         {
             foreach (ConnectorObject obj in objects)
             {
-                if (!handler(obj))
+                if (!handler.Handle(obj))
                 {
                     break;
                 }

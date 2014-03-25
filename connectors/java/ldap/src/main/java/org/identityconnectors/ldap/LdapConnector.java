@@ -145,7 +145,11 @@ public class LdapConnector implements TestOp, PoolableConnector, SchemaOp, Searc
     }
 
     public void executeQuery(ObjectClass oclass, LdapFilter query, ResultsHandler handler, OperationOptions options) {
-        new LdapSearch(conn, oclass, query, options).execute(handler);
+        if ((conn.getConfiguration().getServerInformationObjectClass() != null) && oclass.is(conn.getConfiguration().getServerInformationObjectClass())) {
+            LdapUtil.getServerInfo(conn, handler);
+        } else {
+            new LdapSearch(conn, oclass, query, options).execute(handler);
+        }
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
@@ -175,14 +179,14 @@ public class LdapConnector implements TestOp, PoolableConnector, SchemaOp, Searc
         } else {
             switch (conn.getServerType()) {
                 case UNKNOWN:
+                case OPENLDAP:
+                case MSAD_GC:
                     return new TimestampsSyncStrategy(conn, oclass).getLatestSyncToken();
                 case IBM:
                     return new IBMDSChangeLogSyncStrategy(conn, oclass).getLatestSyncToken();
                 case MSAD:
                 case MSAD_LDS:
                     return new ActiveDirectoryChangeLogSyncStrategy(conn, oclass).getLatestSyncToken();
-                case MSAD_GC:
-                    return new TimestampsSyncStrategy(conn, oclass).getLatestSyncToken();
                 default:
                     return new SunDSChangeLogSyncStrategy(conn, oclass).getLatestSyncToken();
             }
@@ -195,6 +199,8 @@ public class LdapConnector implements TestOp, PoolableConnector, SchemaOp, Searc
         } else {
             switch (conn.getServerType()) {
                 case UNKNOWN:
+                case OPENLDAP:
+                case MSAD_GC:
                     new TimestampsSyncStrategy(conn, oclass).sync(token, handler, options);
                     break;
                 case IBM:
@@ -203,9 +209,6 @@ public class LdapConnector implements TestOp, PoolableConnector, SchemaOp, Searc
                 case MSAD:
                 case MSAD_LDS:
                     new ActiveDirectoryChangeLogSyncStrategy(conn, oclass).sync(token, handler, options);
-                    break;
-                case MSAD_GC:
-                    new TimestampsSyncStrategy(conn, oclass).sync(token, handler, options);
                     break;
                 default:
                     new SunDSChangeLogSyncStrategy(conn, oclass).sync(token, handler, options);

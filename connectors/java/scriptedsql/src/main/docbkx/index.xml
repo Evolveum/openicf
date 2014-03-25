@@ -20,7 +20,7 @@
   !
   ! CCPL HEADER END
   !
-  !      Copyright 2011-2012 ForgeRock AS
+  !      Copyright 2011-2014 ForgeRock AS
   !
 -->
 <book xml:id='integrators-guide'
@@ -32,21 +32,20 @@
  <info>
   <title>OpenICF ScriptedSQL Connector <?eval ${project.version}?> Reference Guide</title>
   <abstract>
-   <para>Guide to configurating and integrating OpenIDM into identity
-   management solutions. The OpenIDM project offers flexible, open source
-   services for automating management of the identity life cycle.</para>
+   <para>Guide to configurating and integrating OpenICF ScriptedSQL Connector.
+   </para>
   </abstract>
   <copyright>
-   <year>2011-2012</year>
+   <year>2011-2013</year>
    <holder>ForgeRock AS</holder>
   </copyright>
-  <!--authorgroup>
+  <authorgroup>
    <author>
     <personname>
-     <firstname>John</firstname><surname>Doe</surname>
+     <firstname>Gael</firstname><surname>Allioux</surname>
     </personname>
    </author>
-  </authorgroup-->
+  </authorgroup>
   <xinclude:include href="legal.xml" />
   <date><?dbtimestamp format="B d, Y"?></date>
   <pubdate>Publication date: <?dbtimestamp format="B d, Y"?></pubdate>

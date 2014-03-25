@@ -29,7 +29,11 @@
         <FrameworkDistDir>$(MSBuildProjectDirectory)\..\Dist</FrameworkDistDir>
         <!--FrameworkRootDir>$(MSBuildProjectDirectory)\..\..\</FrameworkRootDir-->
         <FrameworkRootDir>$(MSBuildProjectDirectory)</FrameworkRootDir>
+<<<<<<< HEAD
         <!--<REVISION>0</REVISION>-->
+=======
+        <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
+>>>>>>> remotes/trunk
     </PropertyGroup>
 
     <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
@@ -69,7 +73,9 @@
         <CreateItem Include="$(OutputPath)\*Tests.dll">
             <Output TaskParameter="Include" ItemName="TestAssembly" />
         </CreateItem>
-        <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="$(OutputPath)\NUnitResults_$(Configuration).xml" />
+        <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" Assemblies="@(TestAssembly)" ExcludeCategory="LongRunning" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="$(OutputPath)\NUnitResults_$(Configuration).xml" ShowLabels="True">
+            <Output TaskParameter="ExitCode" PropertyName="NUnitResult" />
+        </MSBuild.Community.Tasks.NUnit>
     </Target>
 
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

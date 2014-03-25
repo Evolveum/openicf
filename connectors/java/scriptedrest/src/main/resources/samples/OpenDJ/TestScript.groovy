@@ -27,6 +27,7 @@
 // The connector sends the following:
 // connection: handler to the REST Client 
 // (see: http://groovy.codehaus.org/modules/http-builder/apidocs/groovyx/net/http/RESTClient.html)
+// configuration : handler to the connector's configuration object
 // action: a string describing the action ("TEST" here)
 // log: a handler to the Log facility
 

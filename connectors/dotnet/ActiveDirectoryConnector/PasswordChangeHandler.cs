@@ -21,19 +21,12 @@
  * ====================
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.DirectoryServices.Protocols;
-using System.Linq;
-using System.Net;
 using System.Security.Permissions;
-using System.Text;
 using System.DirectoryServices;
 using Org.IdentityConnectors.Common.Security;
 using ActiveDs;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
-using System.DirectoryServices.AccountManagement;
-using System.DirectoryServices.ActiveDirectory;
 using System.Threading;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using System.Security.Principal;

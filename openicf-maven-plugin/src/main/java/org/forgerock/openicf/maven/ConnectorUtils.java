@@ -1,7 +1,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2012-2014 ForgeRock AS. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -27,6 +27,7 @@ package org.forgerock.openicf.maven;
 import java.lang.reflect.Array;
 import java.util.Locale;
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConfigurationProperty;
 import org.identityconnectors.framework.api.ConnectorInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -34,14 +35,14 @@ import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 /**
  * A ConnectorUtils class provide helper methods to use in the Velocity
  * template.
- * 
+ *
  * @author Laszlo Hordos
  */
 public class ConnectorUtils {
 
     /**
      * Convert the encapsulated value of the {@code property}.
-     * 
+     *
      * @param property
      *            source ConfigurationProperty.
      * @return non null string representing the property value.
@@ -58,7 +59,10 @@ public class ConnectorUtils {
                     sb.append(",\n");
                 }
                 Object item = Array.get(property.getValue(), i);
-                sb.append("'").append(item.toString()).append("'");
+                if (item instanceof GuardedString || item instanceof GuardedString) {
+                    item = "*****";
+                }
+                sb.append("'").append(String.valueOf(item)).append("'");
             }
             value = sb.append("]").toString();
         } else {
@@ -69,7 +73,7 @@ public class ConnectorUtils {
 
     /**
      * Convenience method to build the display name key for an object class.
-     * 
+     *
      * @return The display name key.
      */
     public static String getDisplayName(ConnectorInfo ci, ObjectClassInfo info, String dfl) {

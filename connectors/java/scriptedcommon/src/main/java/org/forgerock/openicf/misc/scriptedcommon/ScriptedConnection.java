@@ -1,7 +1,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2013-2014 ForgeRock AS. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -28,23 +28,23 @@ package org.forgerock.openicf.misc.scriptedcommon;
  * @author Gael Allioux <gael.allioux@forgerock.com>
  */
 public interface ScriptedConnection {
-    
+
     /**
      * Release internal resources.
      */
     public void dispose();
-    
+
     /**
      * If internal connection is not usable, throw IllegalStateException.
      */
     public void test();
-    
+
     /**
      * The connection needs to provide a generic handler object
      * that will be used by every scripts to connect to the remote system
-     * 
+     *
      * @return the connection handler generic Object
      */
     public Object getConnectionHandler();
-    
+
 }

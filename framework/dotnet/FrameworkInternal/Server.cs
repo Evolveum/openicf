@@ -19,7 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2012 ForgeRock AS
+ * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
 using System.Collections.Generic;
@@ -27,7 +27,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Security;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Sockets;
 using System.IO;
@@ -42,13 +41,11 @@ using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
-using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 using Org.IdentityConnectors.Framework.Server;
 using Org.IdentityConnectors.Framework.Impl.Api;
 using Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages;
 using Org.IdentityConnectors.Framework.Impl.Api.Local;
-using Org.IdentityConnectors.Framework.Impl.Api.Local.Operations;
 using Org.IdentityConnectors.Framework.Impl.Api.Remote;
 
 namespace Org.IdentityConnectors.Framework.Server
@@ -61,6 +58,8 @@ namespace Org.IdentityConnectors.Framework.Server
         // At some point we might make this pluggable, but for now, hard-code
         private const String IMPL_NAME
          = "Org.IdentityConnectors.Framework.Impl.Server.ConnectorServerImpl";
+
+        protected internal static readonly TraceSource logger = new TraceSource("ConnectorServer");
 
         /// <summary>
         /// The port to listen on;
@@ -87,6 +86,11 @@ namespace Org.IdentityConnectors.Framework.Server
         /// The maximum number of worker threads
         /// </summary>
         private int _maxWorkers = 100;
+
+        /// <summary>
+        /// The maximum time in minutes a facade can be inactive.
+        /// </summary>
+        private int _maxFacadeLifeTime = 60;
 
         /// <summary>
         /// The network interface address to use.
@@ -191,6 +195,26 @@ namespace Org.IdentityConnectors.Framework.Server
         }
 
         /// <summary>
+        /// Returns the max inactive lifetime of
+        /// <seealso cref="Org.IdentityConnectors.Framework.Api.ConnectorFacade"/> to allow.
+        /// </summary>
+        /// <returns> The max inactive lifetime of
+        ///         <seealso cref="Org.IdentityConnectors.Framework.Api.ConnectorFacade"/> to
+        ///         allow. </returns>
+        public virtual int MaxFacadeLifeTime
+        {
+            get
+            {
+                return _maxFacadeLifeTime;
+            }
+            set
+            {
+                AssertNotStarted();
+                _maxFacadeLifeTime = value;
+            }
+        }
+
+        /// <summary>
         /// Returns the network interface address to bind to.
         /// </summary>
         /// <remarks>
@@ -211,9 +235,9 @@ namespace Org.IdentityConnectors.Framework.Server
         }
 
         /// <summary>
-        /// Returns true iff we are to use SSL.
+        /// Returns true if we are to use SSL.
         /// </summary>
-        /// <returns>true iff we are to use SSL.</returns>
+        /// <returns>true if we are to use SSL.</returns>
         public bool UseSSL
         {
             get
@@ -295,20 +319,22 @@ namespace Org.IdentityConnectors.Framework.Server
         abstract public void Stop();
 
         /// <summary>
-        /// Return true iff the server is started.
+        /// Return true if the server is started.
         /// </summary>
         /// <remarks>
         /// Note that started is a
         /// logical state (start method has been called). It does not necessarily
         /// reflect the health of the server
         /// </remarks>
-        /// <returns>true iff the server is started.</returns>
+        /// <returns>true if the server is started.</returns>
         abstract public bool IsStarted();
     }
 }
 
 namespace Org.IdentityConnectors.Framework.Impl.Server
 {
+
+    #region ConnectionProcessor
     public class ConnectionProcessor
     {
         private class RemoteResultsHandler : ObjectStreamHandler
@@ -345,10 +371,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 catch (IOException e)
                 {
                     throw new BrokenConnectionException(e);
-                }
-                catch (Exception)
-                {
-                    throw;
                 }
             }
         }
@@ -709,14 +731,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 throw new Exception("No such connector: "
                                     + request.ConnectorKey);
             }
-            APIConfigurationImpl config =
-                request.Configuration;
-
-            //re-wire the configuration with its connector info
-            config.ConnectorInfo = (AbstractConnectorInfo)info;
+            String connectorFacadeKey = request.ConnectorFacadeKey;
 
             ConnectorFacade facade =
-                ConnectorFacadeFactory.GetInstance().NewInstance(config);
+                ConnectorFacadeFactory.GetManagedInstance().NewInstance(info, connectorFacadeKey);
 
             return facade.GetOperation(request.Operation);
         }
@@ -737,7 +755,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
         }
 
     }
+    #endregion
 
+    #region ConnectionListener
     class ConnectionListener
     {
         /// <summary>
@@ -908,7 +928,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             }
         }
     }
+    #endregion
 
+    #region RequestStats
     internal class RequestStats
     {
         public RequestStats()
@@ -918,7 +940,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
         public long StartTimeMillis { get; set; }
         public long RequestID { get; set; }
     }
+    #endregion
 
+    #region ConnectorServerImpl
     public class ConnectorServerImpl : ConnectorServer
     {
 
@@ -926,6 +950,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             _pendingRequests = CollectionUtil.NewIdentityDictionary<Thread, RequestStats>();
         private ConnectionListener _listener;
         private Object COUNT_LOCK = new Object();
+        private Timer _timer = null;
         private long _startDate = 0;
         private long _requestCount = 0;
 
@@ -1060,6 +1085,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             ConnectionListener listener = new ConnectionListener(this, socket);
             listener.Start();
             _listener = listener;
+
+            if (MaxFacadeLifeTime > 0)
+            {
+                var statusChecker = new FacadeDisposer(new TimeSpan(0, MaxFacadeLifeTime, 0));
+                // Create an inferred delegate that invokes methods for the timer.
+                TimerCallback tcb = statusChecker.Run;
+
+                _timer = new Timer(tcb, null, new TimeSpan(0, MaxFacadeLifeTime, 0),
+                    new TimeSpan(0, Math.Min(MaxFacadeLifeTime, 10), 0));
+            }
         }
 
         private TcpListener CreateServerSocket()
@@ -1085,7 +1120,35 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 _listener = null;
             }
             _startDate = 0;
-            ConnectorFacadeFactory.GetInstance().Dispose();
+            if (null != _timer)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
+            ConnectorFacadeFactory.GetManagedInstance().Dispose();
+        }
+
+        internal class FacadeDisposer
+        {
+            private readonly TimeSpan _delay;
+            private int _sequence = 0;
+
+            public FacadeDisposer(TimeSpan unit)
+            {
+                this._delay = unit;
+            }
+
+            public void Run(Object stateInfo)
+            {
+                logger.TraceEvent(TraceEventType.Verbose, _sequence++,
+                    "Invoking Managed ConnectorFacade Disposer : {0:yyyy/MM/dd H:mm:ss zzz}", DateTime.Now);
+                ConnectorFacadeFactory factory = ConnectorFacadeFactory.GetManagedInstance();
+                if (factory is ManagedConnectorFacadeFactoryImpl)
+                {
+                    ((ManagedConnectorFacadeFactoryImpl)factory).EvictIdle(_delay);
+                }
+            }
         }
     }
+    #endregion
 }

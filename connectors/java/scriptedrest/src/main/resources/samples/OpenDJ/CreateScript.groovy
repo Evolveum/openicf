@@ -28,6 +28,7 @@
 // The connector sends us the following:
 // connection : handler to the REST Client
 // (see: http://groovy.codehaus.org/modules/http-builder/apidocs/groovyx/net/http/RESTClient.html)
+// configuration : handler to the connector's configuration object
 // action: String correponding to the action ("CREATE" here)
 // log: a handler to the Log facility
 // objectClass: a String describing the Object class (__ACCOUNT__ / __GROUP__ / other)

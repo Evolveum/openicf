@@ -19,15 +19,14 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Xml;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
@@ -50,17 +49,27 @@ namespace Org.IdentityConnectors.Test.Common
     {
         private IList<ConnectorObject> _objects
             = new List<ConnectorObject>();
-        public bool Handle(ConnectorObject obj)
-        {
-            _objects.Add(obj);
-            return true;
-        }
 
         public IList<ConnectorObject> Objects
         {
             get
             {
                 return _objects;
+            }
+        }
+
+        public ResultsHandler ResultsHandler
+        {
+            get
+            {
+                return new ResultsHandler
+                {
+                    Handle = obj =>
+                    {
+                        _objects.Add(obj);
+                        return true;
+                    }
+                };
             }
         }
     }
@@ -82,6 +91,15 @@ namespace Org.IdentityConnectors.Test.Common
                 Configuration config)
         {
             return GetSpi().CreateTestConfiguration(clazz, config);
+        }
+
+        /// <summary>
+        /// Method for convenient testing of local connectors.
+        /// </summary>
+        public static APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
+            PropertyBag configData, string prefix)
+        {
+            return GetSpi().CreateTestConfiguration(clazz, configData, prefix);
         }
 
         /// <summary>
@@ -129,7 +147,7 @@ namespace Org.IdentityConnectors.Test.Common
         {
             ToListResultsHandler handler = new
                  ToListResultsHandler();
-            search.Search(oclass, filter, handler.Handle, options);
+            search.Search(oclass, filter, handler.ResultsHandler, options);
             return handler.Objects;
         }
         /// <summary>
@@ -171,7 +189,7 @@ namespace Org.IdentityConnectors.Test.Common
         {
             ToListResultsHandler handler = new
                  ToListResultsHandler();
-            Search(search, oclass, filter, handler.Handle, options);
+            Search(search, oclass, filter, handler.ResultsHandler, options);
             return handler.Objects;
         }
 

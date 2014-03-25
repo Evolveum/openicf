@@ -20,10 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Test.Common;
 

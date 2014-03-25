@@ -2,7 +2,7 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2010-2013 ForgeRock AS. All rights reserved.
+ Copyright (c) 2010-2014 ForgeRock AS. All rights reserved.
 
  The contents of this file are subject to the terms
  of the Common Development and Distribution License
@@ -90,7 +90,7 @@
         <openicf.osgi.import.additional/>
 
         <openicf.osgi.import.pkg>
-            org.identityconnectors.*;${openicf.osgi.import.strict.version},
+            org.identityconnectors.*;${openicf.osgi.import.framework.version},
             ${openicf.osgi.import.before.defaults},
             ${openicf.osgi.import.defaults},
             ${openicf.osgi.import.additional},
@@ -337,7 +337,7 @@
                 <plugin>
                     <groupId>org.forgerock.maven.plugins</groupId>
                     <artifactId>openicf-maven-plugin</artifactId>
-                    <version>1.0.0</version>
+                    <version>1.1.0-SNAPSHOT</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -347,7 +347,7 @@
             <plugin>
                 <groupId>org.forgerock.maven.plugins</groupId>
                 <artifactId>openicf-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0-SNAPSHOT</version>
             </plugin>
         </plugins>
     </reporting>
@@ -396,7 +396,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.15</version>
+                        <version>2.16</version>
                         <executions>
                             <execution>
                                 <id>integration-test</id>
@@ -409,8 +409,10 @@
                                         <suiteXmlFile>${basedir}/src/test/resources/it-testng.xml</suiteXmlFile>
                                     </suiteXmlFiles>
                                     <!--test>${contract.suiteName}</test-->
-                                    <testSourceDirectory>${project.build.directory}/contractSources</testSourceDirectory>
-                                    <testClassesDirectory>${project.build.directory}/contractClasses</testClassesDirectory>
+                                    <testSourceDirectory>${project.build.directory}/contractSources
+                                    </testSourceDirectory>
+                                    <testClassesDirectory>${project.build.directory}/contractClasses
+                                    </testClassesDirectory>
                                     <additionalClasspathElements>
                                         <additionalClasspathElement>
                                             ${project.build.testOutputDirectory}
@@ -441,7 +443,8 @@
                                 </goals>
                                 <configuration>
                                     <testFailureIgnore>true</testFailureIgnore>
-                                    <reportsDirectory>${project.build.directory}/site/failsafe-reports</reportsDirectory>
+                                    <reportsDirectory>${project.build.directory}/site/failsafe-reports
+                                    </reportsDirectory>
                                     <!--summaryFiles>
                                         <summaryFile>target/failsafe-reports/failsafe-summary-default.xml</summaryFile>
                                         <summaryFile>target/failsafe-reports/failsafe-summary-other.xml</summaryFile>
@@ -491,10 +494,31 @@
                         <configuration>
                             <projectName>OpenICF</projectName>
                             <googleAnalyticsId>${googleAnalyticsAccountId}</googleAnalyticsId>
-                            <useGeneratedSources>false</useGeneratedSources>
+                            <useGeneratedSources>true</useGeneratedSources>
                             <docbkxSourceDirectory>${project.build.directory}/openicf-docbkx</docbkxSourceDirectory>
                         </configuration>
                         <executions>
+                            <execution>
+                                <id>copy-common</id>
+                                <phase>pre-site</phase>
+                                <goals>
+                                    <goal>boilerplate</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>filter-sources</id>
+                                <phase>pre-site</phase>
+                                <goals>
+                                    <goal>filter</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>prepare-sources</id>
+                                <phase>pre-site</phase>
+                                <goals>
+                                    <goal>prepare</goal>
+                                </goals>
+                            </execution>
                             <execution>
                                 <id>build-doc</id>
                                 <phase>pre-site</phase>
