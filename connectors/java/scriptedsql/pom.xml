@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.forgerock.openicf.misc</groupId>
             <artifactId>scriptedcommon</artifactId>
-            <version>1.1.0.0</version>
+            <version>1.1.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
