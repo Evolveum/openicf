@@ -3734,7 +3734,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// the Connector.
         /// </remarks>
         /// <param name="info"></param>
-        /// <exception cref="IllegalStateException">If already defined</exception>
+        /// <exception cref="InvalidOperationException">If already defined</exception>
         public void DefineObjectClass(ObjectClassInfo info)
         {
             Assertions.NullCheck(info, "info");
@@ -3755,6 +3755,48 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     _supportedObjectClassesByOperation[op] = oclasses;
                 }
                 oclasses.Add(info);
+            }
+        }
+        /// <summary>
+        /// Adds another ObjectClassInfo to the schema.
+        /// 
+        /// Also, adds this to the set of supported classes for every operation
+        /// defined by the Connector.
+        /// </summary>
+        /// <param name="info"> </param>
+        /// <param name="operations">
+        ///            The SPI operation which use supports this
+        ///            {@code objectClassInfo}
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///             If already defined </exception>
+        public void DefineObjectClass(ObjectClassInfo info, params SafeType<SPIOperation>[] operations)
+        {
+            if (operations.Length > 0)
+            {
+                Assertions.NullCheck(info, "objectClassInfo");
+                if (_declaredObjectClasses.Contains(info))
+                {
+                    throw new InvalidOperationException("ObjectClass already defined: " + info.ObjectType);
+                }
+                _declaredObjectClasses.Add(info);
+                foreach (SafeType<SPIOperation> spi in operations)
+                {
+                    foreach (SafeType<APIOperation> op in FrameworkUtil.Spi2Apis(spi))
+                    {
+                        ICollection<ObjectClassInfo> oclasses = CollectionUtil.GetValue(_supportedObjectClassesByOperation, op, null);
+                        if (oclasses == null)
+                        {
+                            oclasses = new HashSet<ObjectClassInfo>();
+                            _supportedObjectClassesByOperation[op] = oclasses;
+                        }
+                        oclasses.Add(info);
+                    }
+                }
+            }
+            else
+            {
+                DefineObjectClass(info);
             }
         }
         /// <summary>
@@ -3785,6 +3827,45 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     _supportedOptionsByOperation[op] = oclasses;
                 }
                 oclasses.Add(info);
+            }
+        }
+        /// <summary>
+        /// Adds another OperationOptionInfo to the schema. Also, adds this to the
+        /// set of supported options for operation defined.
+        /// </summary>
+        /// <param name="info"> </param>
+        /// <param name="operations">
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///             If already defined </exception>
+        public void DefineOperationOption(OperationOptionInfo info, params SafeType<SPIOperation>[] operations)
+        {
+            if (operations.Length > 0)
+            {
+                Assertions.NullCheck(info, "info");
+                if (_declaredOperationOptions.Contains(info))
+                {
+                    throw new InvalidOperationException("OperationOption already defined: " + info.Name);
+                }
+                _declaredOperationOptions.Add(info);
+                foreach (SafeType<SPIOperation> spi in operations)
+                {
+                    foreach (SafeType<APIOperation> op in FrameworkUtil.GetDefaultSupportedOperations(_connectorClass))
+                    {
+                        ICollection<OperationOptionInfo> oclasses =
+                    CollectionUtil.GetValue(_supportedOptionsByOperation, op, null);
+                        if (oclasses == null)
+                        {
+                            oclasses = new HashSet<OperationOptionInfo>();
+                            _supportedOptionsByOperation[op] = oclasses;
+                        }
+                        oclasses.Add(info);
+                    }
+                }
+            }
+            else
+            {
+                DefineOperationOption(info);
             }
         }
 
