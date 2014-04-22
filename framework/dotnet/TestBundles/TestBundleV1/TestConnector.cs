@@ -120,7 +120,7 @@ namespace org.identityconnectors.testconnector
                 {
                     object v1 = vs1[0];
                     object v2 = vs2[0];
-                    return sortKey.AscendingOrder ? CompareValues(v1, v2) : -CompareValues(v1, v2);
+                    return sortKey.IsAscendingOrder() ? CompareValues(v1, v2) : -CompareValues(v1, v2);
                 }
             }
 

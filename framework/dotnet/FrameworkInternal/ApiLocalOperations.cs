@@ -1522,8 +1522,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             else
             {
                 //eliminate dups if more than one
-                bool eliminateDups =
-                    queries.Count > 1;
+                bool eliminateDups = queries.Count > 1;
                 DuplicateFilteringResultsHandler dups = null;
                 if (eliminateDups)
                 {

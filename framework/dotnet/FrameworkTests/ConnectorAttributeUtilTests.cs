@@ -73,7 +73,7 @@ namespace FrameworkTests
 
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public virtual void TestDictionaryShortAttribute()
+        public void TestDictionaryShortAttribute()
         {
             Dictionary<object, object> map1 = new Dictionary<object, object>();
             map1["string"] = "NOK";
@@ -92,7 +92,7 @@ namespace FrameworkTests
         }
 
         [Test]
-        public virtual void TestDictionaryAttribute()
+        public void TestDictionaryAttribute()
         {
             Dictionary<object, object> map1 = new Dictionary<object, object>();
             map1["string"] = "OK";

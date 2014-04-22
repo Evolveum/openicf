@@ -3329,6 +3329,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         {
             return Build(OperationOptions.OP_CONTAINER, typeof(QualifiedUid));
         }
+
+        public static OperationOptionInfo BuildPagedResultsCookie()
+        {
+            return Build(OperationOptions.OP_PAGED_RESULTS_COOKIE);
+        }
+
+        public static OperationOptionInfo BuildPagedResultsOffset()
+        {
+            return Build(OperationOptions.OP_PAGED_RESULTS_OFFSET, typeof(int?));
+        }
+
+        public static OperationOptionInfo BuildPageSize()
+        {
+            return Build(OperationOptions.OP_PAGE_SIZE, typeof(int?));
+        }
+
+        public static OperationOptionInfo BuildSortKeys()
+        {
+            return Build(OperationOptions.OP_SORT_KEYS, typeof(SortKey));
+        }
     }
     #endregion
 
@@ -4574,17 +4594,59 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
-        /// Returns {@code true} if this sort key is in ascending order, or
-        /// {@code false} if it is in descending order.
+        ///     Returns {@code true} if this sort key is in ascending order, or
+        ///     {@code false} if it is in descending order.
         /// </summary>
-        /// <returns> {@code true} if this sort key is in ascending order, or
-        ///         {@code false} if it is in descending ord)er. </returns>
-        public bool AscendingOrder
+        /// <returns>
+        ///     {@code true} if this sort key is in ascending order, or
+        ///     {@code false} if it is in descending ord)er.
+        /// </returns>
+        public bool IsAscendingOrder()
         {
-            get
-            {
-                return _isAscendingOrder;
-            }
+            return _isAscendingOrder;
+        }
+
+        /// <summary>
+        ///     Creates a new ascending-order sort key for the provided field.
+        /// </summary>
+        /// <param name="field">
+        ///     The sort key field.
+        /// </param>
+        /// <returns> A new ascending-order sort key. </returns>
+        /// <exception cref="ArgumentException">
+        ///     If {@code field} is not a valid attribute name.
+        /// </exception>
+        public static SortKey AscendingOrder(string field)
+        {
+            return new SortKey(field, true);
+        }
+
+        /// <summary>
+        ///     Creates a new descending-order sort key for the provided field.
+        /// </summary>
+        /// <param name="field">
+        ///     The sort key field.
+        /// </param>
+        /// <returns> A new descending-order sort key. </returns>
+        /// <exception cref="ArgumentException">
+        ///     If {@code field} is not a valid attribute name.
+        /// </exception>
+        public static SortKey DescendingOrder(string field)
+        {
+            return new SortKey(field, false);
+        }
+
+        /// <summary>
+        ///     Creates a new sort key having the same field as the provided key, but in
+        ///     reverse sort order.
+        /// </summary>
+        /// <param name="key">
+        ///     The sort key to be reversed.
+        /// </param>
+        /// <returns> The reversed sort key. </returns>
+        public static SortKey ReverseOrder(SortKey key)
+        {
+            return new SortKey(key._field, !key._isAscendingOrder);
         }
     }
     #endregion
