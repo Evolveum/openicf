@@ -22,6 +22,7 @@
  * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Org.IdentityConnectors.Framework.Common.Objects;
