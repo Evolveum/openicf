@@ -391,6 +391,20 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             IDictionary<string, PropertyInfo> rv =
                 new Dictionary<string, PropertyInfo>();
             PropertyInfo[] descriptors = config.RawType.GetProperties();
+            SortedSet<string> excludes = new SortedSet<string>();
+            // exclude connectorMessages since its part of the interface.
+            excludes.Add("ConnectorMessages");
+
+            bool filterUnsupported = false;
+            ConfigurationClassAttribute options = GetConfigurationOptions(config);
+            if (null != options)
+            {
+                foreach (string s in options.Ignore)
+                {
+                    excludes.Add(s);
+                }
+                filterUnsupported = options.SkipUnsupported;
+            }
             foreach (PropertyInfo descriptor in descriptors)
             {
                 String propName = descriptor.Name;
@@ -399,8 +413,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     //if there's no setter, ignore it
                     continue;
                 }
-                if ("ConnectorMessages".Equals(propName))
+                if (excludes.Contains(propName))
                 {
+                    continue;
+                }
+                if (filterUnsupported && !FrameworkUtil.IsSupportedConfigurationType(descriptor.PropertyType))
+                {
+                    //Silently ignore if the property type is not supported
                     continue;
                 }
                 if (!descriptor.CanRead)
@@ -431,6 +450,25 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             else
             {
                 return (ConfigurationPropertyAttribute)objs[0];
+            }
+        }
+
+        /// <summary>
+        /// Get the option from the property.
+        /// </summary>
+        private static ConfigurationClassAttribute GetConfigurationOptions(
+                SafeType<Configuration> configClass)
+        {
+            Object[] objs =
+                configClass.RawType.GetCustomAttributes(
+                    typeof(ConfigurationClassAttribute), true);
+            if (objs.Length == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return (ConfigurationClassAttribute)objs[0];
             }
         }
 
