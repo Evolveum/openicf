@@ -754,7 +754,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
 
             public R Accept<R, P>(FilterVisitor<R, P> v, P p)
             {
-                return v.VisitExtendedFilter(p, null, this, null);
+                return v.VisitExtendedFilter(p, this);
             }
         }
     }
@@ -1051,7 +1051,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
 
         public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
         {
-            return v.VisitExtendedFilter(p, null, this, null);
+            return v.VisitExtendedFilter(p, this);
         }
 
         public override string ToString()

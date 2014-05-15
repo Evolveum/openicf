@@ -22,6 +22,7 @@
  * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
+using System.Linq;
 using System.Security;
 using System.Collections.Generic;
 using System.Globalization;
@@ -3723,7 +3724,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     /// </summary>
     public sealed class SchemaBuilder
     {
-        private readonly SafeType<Connector> _connectorClass;
         private readonly ICollection<ObjectClassInfo> _declaredObjectClasses
         = new HashSet<ObjectClassInfo>();
         private readonly ICollection<OperationOptionInfo> _declaredOperationOptions
@@ -3736,13 +3736,48 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             _supportedOptionsByOperation =
                 new Dictionary<SafeType<APIOperation>, ICollection<OperationOptionInfo>>();
 
+        private readonly ICollection<SafeType<APIOperation>> _defaultSupportedOperations;
 
         /// <summary>
         /// </summary>
         public SchemaBuilder(SafeType<Connector> connectorClass)
         {
             Assertions.NullCheck(connectorClass, "connectorClass");
-            _connectorClass = connectorClass;
+            _defaultSupportedOperations = FrameworkUtil.GetDefaultSupportedOperations(connectorClass);
+        }
+
+        private bool ObjectClassOperation(SafeType<APIOperation> op)
+        {
+            if (typeof(AuthenticationApiOp) == op.RawType ||
+                typeof(CreateApiOp) == op.RawType ||
+                typeof(DeleteApiOp) == op.RawType ||
+                typeof(GetApiOp) == op.RawType ||
+                typeof(ResolveUsernameApiOp) == op.RawType ||
+                typeof(SearchApiOp) == op.RawType ||
+                typeof(SyncApiOp) == op.RawType ||
+                typeof(UpdateApiOp) == op.RawType)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool OperationOptionOperation(SafeType<APIOperation> op)
+        {
+            if (typeof(AuthenticationApiOp) == op.RawType ||
+                typeof(CreateApiOp) == op.RawType ||
+                typeof(DeleteApiOp) == op.RawType ||
+                typeof(GetApiOp) == op.RawType ||
+                typeof(ResolveUsernameApiOp) == op.RawType ||
+                typeof(ScriptOnConnectorApiOp) == op.RawType ||
+                typeof(ScriptOnResourceApiOp) == op.RawType ||
+                typeof(SearchApiOp) == op.RawType ||
+                typeof(SyncApiOp) == op.RawType ||
+                typeof(UpdateApiOp) == op.RawType)
+            {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -3764,17 +3799,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                         info.ObjectType);
             }
             _declaredObjectClasses.Add(info);
-            foreach (SafeType<APIOperation> op in
-                FrameworkUtil.GetDefaultSupportedOperations(_connectorClass))
+            foreach (SafeType<APIOperation> op in _defaultSupportedOperations)
             {
-                ICollection<ObjectClassInfo> oclasses =
-                    CollectionUtil.GetValue(_supportedObjectClassesByOperation, op, null);
-                if (oclasses == null)
+                if (ObjectClassOperation(op))
                 {
-                    oclasses = new HashSet<ObjectClassInfo>();
-                    _supportedObjectClassesByOperation[op] = oclasses;
+                    ICollection<ObjectClassInfo> oclasses =
+                        CollectionUtil.GetValue(_supportedObjectClassesByOperation, op, null);
+                    if (oclasses == null)
+                    {
+                        oclasses = new HashSet<ObjectClassInfo>();
+                        _supportedObjectClassesByOperation[op] = oclasses;
+                    }
+                    oclasses.Add(info);
                 }
-                oclasses.Add(info);
             }
         }
         /// <summary>
@@ -3786,7 +3823,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="info"> </param>
         /// <param name="operations">
         ///            The SPI operation which use supports this
-        ///            {@code objectClassInfo}
+        ///            <c>objectClassInfo</c>
         /// </param>
         /// <exception cref="InvalidOperationException">
         ///             If already defined </exception>
@@ -3802,15 +3839,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 _declaredObjectClasses.Add(info);
                 foreach (SafeType<SPIOperation> spi in operations)
                 {
-                    foreach (SafeType<APIOperation> op in FrameworkUtil.Spi2Apis(spi))
+                    if (typeof(SchemaOp) == spi.RawType ||
+                        typeof(ScriptOnConnectorOp) == spi.RawType ||
+                        typeof(ScriptOnResourceOp) == spi.RawType ||
+                        typeof(TestOp) == spi.RawType)
                     {
-                        ICollection<ObjectClassInfo> oclasses = CollectionUtil.GetValue(_supportedObjectClassesByOperation, op, null);
-                        if (oclasses == null)
+                        continue;
+                    }
+                    IEnumerable<SafeType<APIOperation>> apiOperations = FrameworkUtil.Spi2Apis(spi).Intersect(_defaultSupportedOperations);
+                    foreach (SafeType<APIOperation> op in apiOperations)
+                    {
+                        if (ObjectClassOperation(op))
                         {
-                            oclasses = new HashSet<ObjectClassInfo>();
-                            _supportedObjectClassesByOperation[op] = oclasses;
+                            ICollection<ObjectClassInfo> oclasses =
+                                CollectionUtil.GetValue(_supportedObjectClassesByOperation, op, null);
+                            if (oclasses == null)
+                            {
+                                oclasses = new HashSet<ObjectClassInfo>();
+                                _supportedObjectClassesByOperation[op] = oclasses;
+                            }
+                            oclasses.Add(info);
                         }
-                        oclasses.Add(info);
                     }
                 }
             }
@@ -3836,17 +3885,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                         info.Name);
             }
             _declaredOperationOptions.Add(info);
-            foreach (SafeType<APIOperation> op in
-                FrameworkUtil.GetDefaultSupportedOperations(_connectorClass))
+            foreach (SafeType<APIOperation> op in _defaultSupportedOperations)
             {
-                ICollection<OperationOptionInfo> oclasses =
-                    CollectionUtil.GetValue(_supportedOptionsByOperation, op, null);
-                if (oclasses == null)
+                if (OperationOptionOperation(op))
                 {
-                    oclasses = new HashSet<OperationOptionInfo>();
-                    _supportedOptionsByOperation[op] = oclasses;
+                    ICollection<OperationOptionInfo> oclasses =
+                        CollectionUtil.GetValue(_supportedOptionsByOperation, op, null);
+                    if (oclasses == null)
+                    {
+                        oclasses = new HashSet<OperationOptionInfo>();
+                        _supportedOptionsByOperation[op] = oclasses;
+                    }
+                    oclasses.Add(info);
                 }
-                oclasses.Add(info);
             }
         }
         /// <summary>
@@ -3870,16 +3921,24 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 _declaredOperationOptions.Add(info);
                 foreach (SafeType<SPIOperation> spi in operations)
                 {
-                    foreach (SafeType<APIOperation> op in FrameworkUtil.GetDefaultSupportedOperations(_connectorClass))
+                    if (typeof(SchemaOp) == spi.RawType ||
+                       typeof(TestOp) == spi.RawType)
                     {
-                        ICollection<OperationOptionInfo> oclasses =
-                    CollectionUtil.GetValue(_supportedOptionsByOperation, op, null);
-                        if (oclasses == null)
+                        continue;
+                    }
+                    foreach (SafeType<APIOperation> op in _defaultSupportedOperations)
+                    {
+                        if (OperationOptionOperation(op))
                         {
-                            oclasses = new HashSet<OperationOptionInfo>();
-                            _supportedOptionsByOperation[op] = oclasses;
+                            ICollection<OperationOptionInfo> oclasses =
+                                CollectionUtil.GetValue(_supportedOptionsByOperation, op, null);
+                            if (oclasses == null)
+                            {
+                                oclasses = new HashSet<OperationOptionInfo>();
+                                _supportedOptionsByOperation[op] = oclasses;
+                            }
+                            oclasses.Add(info);
                         }
-                        oclasses.Add(info);
                     }
                 }
             }
@@ -3897,7 +3956,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// to the set of supported classes for every operation defined by
         /// the Connector.
         /// </remarks>
-        /// <exception cref="IllegalStateException">If already defined</exception>
+        /// <exception cref="InvalidOperationException">If already defined</exception>
         public void DefineObjectClass(String type, ICollection<ConnectorAttributeInfo> attrInfo)
         {
             ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
@@ -3915,7 +3974,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// to the set of supported options for every operation defined by
         /// the Connector.
         /// </remarks>
-        /// <exception cref="IllegalStateException">If already defined</exception>
+        /// <exception cref="InvalidOperationException">If already defined</exception>
         public void DefineOperationOption(String optionName, Type type)
         {
             OperationOptionInfoBuilder bld = new OperationOptionInfoBuilder();
@@ -3938,8 +3997,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<SafeType<APIOperation>> apis =
-                FrameworkUtil.Spi2Apis(op);
+            IEnumerable<SafeType<APIOperation>> apis =
+                FrameworkUtil.Spi2Apis(op).Intersect(_defaultSupportedOperations);
             if (!_declaredObjectClasses.Contains(def))
             {
                 throw new ArgumentException("ObjectClass " + def.ObjectType +
@@ -3947,19 +4006,22 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             foreach (SafeType<APIOperation> api in apis)
             {
-                ICollection<ObjectClassInfo> infos =
-                    CollectionUtil.GetValue(_supportedObjectClassesByOperation, api, null);
-                if (infos == null)
+                if (ObjectClassOperation(api))
                 {
-                    throw new ArgumentException("Operation " + op +
-                            " not implement by connector.");
+                    ICollection<ObjectClassInfo> infos =
+                        CollectionUtil.GetValue(_supportedObjectClassesByOperation, api, null);
+                    if (infos == null)
+                    {
+                        throw new ArgumentException("Operation " + op +
+                                                    " not implement by connector.");
+                    }
+                    if (infos.Contains(def))
+                    {
+                        throw new ArgumentException("ObjectClass " + def.ObjectType +
+                                                    " already supported for operation " + op);
+                    }
+                    infos.Add(def);
                 }
-                if (infos.Contains(def))
-                {
-                    throw new ArgumentException("ObjectClass " + def.ObjectType +
-                            " already supported for operation " + op);
-                }
-                infos.Add(def);
             }
         }
 
@@ -3985,19 +4047,25 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             foreach (SafeType<APIOperation> api in apis)
             {
-                ICollection<ObjectClassInfo> infos =
-                    CollectionUtil.GetValue(_supportedObjectClassesByOperation, api, null);
-                if (infos == null)
+                if (ObjectClassOperation(api))
                 {
-                    throw new ArgumentException("Operation " + op +
-                            " not implement by connector.");
+                    if (_defaultSupportedOperations.Contains(api))
+                    {
+                        ICollection<ObjectClassInfo> infos =
+                        CollectionUtil.GetValue(_supportedObjectClassesByOperation, api, null);
+                        if (infos == null || !infos.Contains(def))
+                        {
+                            throw new ArgumentException("ObjectClass " + def.ObjectType
+                                                        + " already removed for operation " + op);
+                        }
+                        infos.Remove(def);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Operation " + op +
+                                                       " not implement by connector.");
+                    }
                 }
-                if (!infos.Contains(def))
-                {
-                    throw new ArgumentException("ObjectClass " + def.ObjectType
-                            + " already removed for operation " + op);
-                }
-                infos.Remove(def);
             }
         }
         /// <summary>
@@ -4013,8 +4081,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<SafeType<APIOperation>> apis =
-                FrameworkUtil.Spi2Apis(op);
+            IEnumerable<SafeType<APIOperation>> apis =
+                FrameworkUtil.Spi2Apis(op).Intersect(_defaultSupportedOperations);
             if (!_declaredOperationOptions.Contains(def))
             {
                 throw new ArgumentException("OperationOption " + def.Name +
@@ -4022,19 +4090,22 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             foreach (SafeType<APIOperation> api in apis)
             {
-                ICollection<OperationOptionInfo> infos =
-                    CollectionUtil.GetValue(_supportedOptionsByOperation, api, null);
-                if (infos == null)
+                if (OperationOptionOperation(api))
                 {
-                    throw new ArgumentException("Operation " + op +
-                            " not implement by connector.");
+                    ICollection<OperationOptionInfo> infos =
+                        CollectionUtil.GetValue(_supportedOptionsByOperation, api, null);
+                    if (infos == null)
+                    {
+                        throw new ArgumentException("Operation " + op +
+                                                    " not implement by connector.");
+                    }
+                    if (infos.Contains(def))
+                    {
+                        throw new ArgumentException("OperationOption " + def.Name +
+                                                    " already supported for operation " + op);
+                    }
+                    infos.Add(def);
                 }
-                if (infos.Contains(def))
-                {
-                    throw new ArgumentException("OperationOption " + def.Name +
-                            " already supported for operation " + op);
-                }
-                infos.Add(def);
             }
         }
 
@@ -4060,19 +4131,25 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             foreach (SafeType<APIOperation> api in apis)
             {
-                ICollection<OperationOptionInfo> infos =
-                    CollectionUtil.GetValue(_supportedOptionsByOperation, api, null);
-                if (infos == null)
+                if (OperationOptionOperation(api))
                 {
-                    throw new ArgumentException("Operation " + op +
-                            " not implement by connector.");
+                    if (_defaultSupportedOperations.Contains(api))
+                    {
+                        ICollection<OperationOptionInfo> infos =
+                        CollectionUtil.GetValue(_supportedOptionsByOperation, api, null);
+                        if (infos == null || !infos.Contains(def))
+                        {
+                            throw new ArgumentException("OperationOption " + def.Name +
+                                                        " already removed for operation " + op);
+                        }
+                        infos.Remove(def);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Operation " + op +
+                                                        " not implement by connector.");
+                    }
                 }
-                if (!infos.Contains(def))
-                {
-                    throw new ArgumentException("OperationOption " + def.Name +
-                            " already removed for operation " + op);
-                }
-                infos.Remove(def);
             }
         }
 
@@ -4278,11 +4355,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 IDictionary<String, Object> scriptArguments)
         {
 
-            if (scriptLanguage == null)
+            if (StringUtil.IsBlank(scriptLanguage))
             {
                 throw new ArgumentException("Argument 'scriptLanguage' must be specified");
             }
-            if (scriptText == null)
+            if (StringUtil.IsBlank(ScriptText))
             {
                 throw new ArgumentException("Argument 'scriptText' must be specified");
             }
