@@ -751,6 +751,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             {
                 return true;
             }
+
+            public R Accept<R, P>(FilterVisitor<R, P> v, P p)
+            {
+                return v.VisitExtendedFilter(p, this);
+            }
         }
     }
     #endregion
@@ -1042,6 +1047,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             bool result = Filter.Accept(_normalizationFacade.NormalizeObject(obj));
             //            Trace.TraceInformation("NormalizingFilter.Accept returns {0} for {1}", result, obj.GetAttributeByName("__NAME__"));
             return result;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitExtendedFilter(p, this);
         }
 
         public override string ToString()
@@ -1626,8 +1636,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             else
             {
                 //eliminate dups if more than one
-                bool eliminateDups =
-                    queries.Count > 1;
+                bool eliminateDups = queries.Count > 1;
                 DuplicateFilteringResultsHandler dups = null;
                 if (eliminateDups)
                 {

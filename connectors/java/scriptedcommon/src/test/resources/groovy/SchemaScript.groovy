@@ -23,16 +23,21 @@
  */
 
 
-import org.identityconnectors.common.logging.Log
 import org.forgerock.openicf.misc.scriptedcommon.OperationType
 import org.forgerock.openicf.misc.scriptedcommon.ScriptedConfiguration
+import org.identityconnectors.common.logging.Log
 import org.identityconnectors.common.security.GuardedByteArray
 import org.identityconnectors.common.security.GuardedString
-import org.identityconnectors.framework.common.objects.AttributeInfo
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
 import org.identityconnectors.framework.common.objects.ObjectClass
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos
 import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos
+import org.identityconnectors.framework.spi.operations.AuthenticateOp
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp
+import org.identityconnectors.framework.spi.operations.SchemaOp
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp
+import org.identityconnectors.framework.spi.operations.SyncOp
+import org.identityconnectors.framework.spi.operations.TestOp
 
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.MULTIVALUED
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.NOT_CREATABLE
@@ -50,17 +55,23 @@ builder.schema({
         type ObjectClass.ACCOUNT_NAME
         attribute OperationalAttributeInfos.CURRENT_PASSWORD
         attribute PredefinedAttributeInfos.DESCRIPTION
-        attribute 'createDate', Integer.class
         attribute 'groups', String.class, EnumSet.of(MULTIVALUED)
         attributes {
-            username String.class, REQUIRED
+            userName String.class, REQUIRED
             email REQUIRED, MULTIVALUED
-            active Boolean.class, NOT_UPDATEABLE
+            active Boolean.class
+            createDate Integer.class, NOT_CREATABLE, NOT_UPDATEABLE
             lastModified NOT_UPDATEABLE, NOT_CREATABLE, NOT_RETURNED_BY_DEFAULT
             sureName()
-            passwordHistory String.class, MULTIVALUED, NOT_READABLE, NOT_RETURNED_BY_DEFAULT
+            passwordHistory String.class, MULTIVALUED, NOT_UPDATEABLE, NOT_RETURNED_BY_DEFAULT
         }
 
+    }
+    objectClass {
+        type ObjectClass.GROUP_NAME
+        attribute PredefinedAttributeInfos.DESCRIPTION
+        attributes {
+        }
     }
     objectClass {
         type '__TEST__'
@@ -72,8 +83,8 @@ builder.schema({
             attributeString String.class
             attributeStringMultivalue String.class, MULTIVALUED
 
-            attributelong Long.TYPE
-            attributelongMultivalue Long.TYPE, MULTIVALUED
+            attributelongp Long.TYPE
+            attributelongpMultivalue Long.TYPE, MULTIVALUED
 
             attributeLong Long.class
             attributeLongMultivalue Long.class, MULTIVALUED
@@ -84,14 +95,14 @@ builder.schema({
             attributeCharacter Character.class
             attributeCharacterMultivalue Character.class, MULTIVALUED
 
-            attributedouble Double.TYPE
-            attributedoubleMultivalue Double.TYPE, MULTIVALUED
+            attributedoublep Double.TYPE
+            attributedoublepMultivalue Double.TYPE, MULTIVALUED
 
             attributeDouble Double.class
             attributeDoubleMultivalue Double.class, MULTIVALUED
 
-            attributefloat Float.TYPE
-            attributefloatMultivalue Float.TYPE, MULTIVALUED
+            attributefloatp Float.TYPE
+            attributefloatpMultivalue Float.TYPE, MULTIVALUED
 
             attributeFloat Float.class
             attributeFloatMultivalue Float.class, MULTIVALUED
@@ -102,14 +113,14 @@ builder.schema({
             attributeInteger Integer.class
             attributeIntegerMultivalue Integer.class, MULTIVALUED
 
-            attributeboolean Boolean.TYPE
-            attributebooleanMultivalue Boolean.TYPE, MULTIVALUED
+            attributebooleanp Boolean.TYPE
+            attributebooleanpMultivalue Boolean.TYPE, MULTIVALUED
 
             attributeBoolean Boolean.class
             attributeBooleanMultivalue Boolean.class, MULTIVALUED
 
-            attribute Byte.TYPE
-            attributeByteMultivalue Byte.TYPE, MULTIVALUED
+            attributebytep Byte.TYPE
+            attributebytepMultivalue Byte.TYPE, MULTIVALUED
 
             attributeByte Byte.class
             attributeByteMultivalued Byte.class, MULTIVALUED
@@ -133,6 +144,14 @@ builder.schema({
             attributeMapMultivalue Map.class, MULTIVALUED
 
         }
+    }
+    operationOption {
+        name "notify"
+        disable AuthenticateOp, ResolveUsernameOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp, SyncOp, TestOp
+    }
+    operationOption {
+        name "force"
+        type Boolean
     }
 }
 )

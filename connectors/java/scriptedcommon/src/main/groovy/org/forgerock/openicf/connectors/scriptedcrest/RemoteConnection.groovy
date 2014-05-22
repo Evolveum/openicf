@@ -33,6 +33,7 @@ import org.apache.http.concurrent.FutureCallback
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer
 import org.forgerock.json.fluent.JsonValue
 import org.forgerock.json.resource.BadRequestException
+import org.forgerock.json.resource.Context
 import org.forgerock.json.resource.InternalServerErrorException
 import org.forgerock.json.resource.QueryResult
 import org.forgerock.json.resource.QueryResultHandler
@@ -44,7 +45,6 @@ import org.forgerock.openicf.misc.crest.AbstractRemoteConnection.HttpResponseRes
 import java.util.concurrent.Future
 
 /**
- *
  *
  * @author Laszlo Hordos
  */
@@ -62,8 +62,8 @@ class RemoteConnection extends AbstractRemoteConnection {
         return configuration.isClosed();
     }
 
-    def <T> Future<T> execute(HttpUriRequest request, HttpAsyncResponseConsumer<T> responseConsumer, FutureCallback<T> callback) {
-        return configuration.execute(request, responseConsumer, callback)
+    def <T> Future<T> execute(Context context, HttpUriRequest request, HttpAsyncResponseConsumer<T> responseConsumer, FutureCallback<T> callback) {
+        return configuration.execute(context, request, responseConsumer, callback)
     }
 
 
@@ -128,7 +128,7 @@ class RemoteConnection extends AbstractRemoteConnection {
             boolean hasTrailingGarbage;
 
             def content = parser.parse(entity, {
-                handler.handleResource(getAsResource(it));
+                handler.handleResource(getAsResource(new JsonValue(it)));
             }, { lexer, object ->
                 try {
                     hasTrailingGarbage = lexer.nextToken() != null;
