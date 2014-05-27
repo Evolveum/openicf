@@ -298,7 +298,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     }
                     if (!StringUtil.IsBlank(options.GroupMessageKey))
                     {
-                        displKey = options.GroupMessageKey;
+                        grpKey = options.GroupMessageKey;
                     }
                     // determine the order..
                     order = options.Order;
