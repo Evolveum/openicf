@@ -111,6 +111,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_OpAtt_Accounts);
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.GROUPS_NAME,
                 UpdateDeFromCa_OpAtt_Groups);
+            UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_MEMBER,
+                UpdateDeFromCa_OpAtt_Member);
             UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_HOME_DIRECTORY,
                 UpdateDeFromCa_Att_HomeDirectory);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_NAME,
@@ -270,7 +272,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else
             {
                 // if none of the above, call the generic handler
-                UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, attribute);
+                UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, attribute, false);
             }
         }
 
@@ -384,7 +386,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return sb.ToString();
         }
 
-
         internal void UpdateDeFromCa_OpAtt_Groups(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry,
             ConnectorAttribute attribute)
@@ -467,6 +468,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        internal void UpdateDeFromCa_OpAtt_Member(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            if (ActiveDirectoryConnector.groupObjectClass.Equals(oclass))
+            {
+                UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, attribute, true);
+            }
+            else
+            {
+                throw new ConnectorException(
+                    String.Format("'{0}' is an invalid attribute for object class '{1}'",
+                        ActiveDirectoryConnector.ATT_MEMBER, oclass.GetObjectClassValue()));
+            }
+        }
+
         internal void UpdateDeFromCa_OpAtt_Accounts(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry, 
             ConnectorAttribute attribute) 
@@ -477,7 +494,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // generic version
                 ConnectorAttribute newAttribute = ConnectorAttributeBuilder.Build(
                     ActiveDirectoryConnector.ATT_MEMBER, attribute.Value);
-                UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, newAttribute);
+                UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, newAttribute, true);
             }
             else
             {
@@ -498,7 +515,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (type == UpdateType.REPLACE)
                 {
                     // first set the attribute
-                    UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, attribute);
+                    UpdateDeFromCa_Att_Generic(oclass, type, directoryEntry, attribute, true);
                     
                     // now create attribute if needed/possible
                     if (_configuration.CreateHomeDirectory)
@@ -801,7 +818,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         internal void UpdateDeFromCa_Att_Generic(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry,
-            ConnectorAttribute attribute)
+            ConnectorAttribute attribute, Boolean caseInsensitive)
         {
 
             // null out the values if we are replacing attributes.
@@ -861,9 +878,43 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     foreach (Object valueObject in attribute.Value)
                     {
-                        if (pvc.Contains(valueObject))
+                        bool foundAndRemoved = false;
+                        if (caseInsensitive && valueObject is string)
                         {
-                            pvc.Remove(valueObject);
+                            // strings have to be compared in case-insensitive way (TODO: do some normalization for DNs as well...)
+                            foreach (object existing in pvc)
+                            {
+                                bool equals;
+                                if (existing is string)
+                                {
+                                    equals = (valueObject as string).Equals(existing as string, StringComparison.CurrentCultureIgnoreCase);
+                                }
+                                else
+                                {
+                                    // TODO remove this trace
+                                    Trace.TraceInformation("existing value is not a string, it is: {0}", existing.GetType());
+                                    equals = valueObject.Equals(existing);
+                                }
+                                if (equals)
+                                {
+                                    pvc.Remove(existing);
+                                    foundAndRemoved = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (pvc.Contains(valueObject))
+                            {
+                                pvc.Remove(valueObject);
+                                foundAndRemoved = true;
+                            }
+                        }
+
+                        if (!foundAndRemoved)
+                        {
+                            Trace.TraceWarning("Removing non-existing value {0} from {1}. Current values = {2}", valueObject, attribute.Name, DumpPVC(pvc));
                         }
                     }                
                 }
