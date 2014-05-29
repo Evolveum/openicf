@@ -1896,6 +1896,20 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Sets the unique name of the <see cref="ConnectorAttributeInfo" /> object.
+        /// </summary>
+        /// <param name="name">unique name of the <see cref="ConnectorAttributeInfo" /> object.</param>
+        public ConnectorAttributeInfoBuilder SetName(string name)
+        {
+            if (StringUtil.IsBlank(name))
+            {
+                throw new ArgumentException("Argument must not be blank.");
+            }
+            _name = name;
+            return this;
+        }
+
+        /// <summary>
         /// Please see <see cref="FrameworkUtil.CheckAttributeType(Type)" /> for the
         /// definitive list of supported types.
         /// </summary>
@@ -1911,6 +1925,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Please see <see cref="FrameworkUtil.CheckAttributeType(Type)" /> for the
+        /// definitive list of supported types.
+        /// </summary>
+        /// <param name="type">type for an <see cref="ConnectorAttribute" />'s value.</param>
+        /// <exception cref="ArgumentException">if the Class is not a supported type.</exception>
+        public ConnectorAttributeInfoBuilder SetValueType(Type type)
+        {
+            FrameworkUtil.CheckAttributeType(type);
+            _type = type;
+            return this;
+        }
+
+        /// <summary>
         /// Determines if the attribute is readable.
         /// </summary>
         public bool Readable
@@ -1919,6 +1946,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 SetFlag(ConnectorAttributeInfo.Flags.NOT_READABLE, !value);
             }
+        }
+
+        /// <summary>
+        /// Determines if the attribute is readable.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetReadable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_READABLE, !value);
+            return this;
         }
 
         /// <summary>
@@ -1933,6 +1969,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Determines if the attribute is writable.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetCreatable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_CREATABLE, !value);
+            return this;
+        }
+
+        /// <summary>
         /// Determines if this attribute is required.
         /// </summary>
         public bool Required
@@ -1941,6 +1986,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 SetFlag(ConnectorAttributeInfo.Flags.REQUIRED, value);
             }
+        }
+
+        /// <summary>
+        /// Determines if this attribute is required.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetRequired(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.REQUIRED, value);
+            return this;
         }
 
         /// <summary>
@@ -1955,6 +2009,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Determines if this attribute supports multivalue.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetMultiValue(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.MULTIVALUED, value);
+            return this;
+        }
+
+        /// <summary>
         /// Determines if this attribute writable during update.
         /// </summary>
         public bool Updateable
@@ -1965,12 +2028,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         }
 
+        /// <summary>
+        /// Determines if this attribute writable during update.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetUpdateable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_UPDATEABLE, !value);
+            return this;
+        }
+
         public bool ReturnedByDefault
         {
             set
             {
                 SetFlag(ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT, !value);
             }
+        }
+
+        public ConnectorAttributeInfoBuilder SetReturnedByDefault(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT, !value);
+            return this;
         }
 
         /// <summary>
@@ -2057,7 +2135,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </remarks>
         /// <param name="name">The name of the attribute</param>
         /// <param name="type">The type of the attribute</param>
-        /// <param name="flags">The flags for the attribute</param>
         /// <returns>The attribute info</returns>
         public static ConnectorAttributeInfo Build(String name, Type type)
         {
@@ -2078,6 +2155,36 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static ConnectorAttributeInfo Build(String name)
         {
             return Build(name, typeof(String));
+        }
+
+        /// <summary>
+        /// Convenience method to create a new AttributeInfoBuilder.
+        /// 
+        /// Equivalent to: <code>new AttributeInfoBuilder(name, String.class)</code>
+        /// </summary>
+        /// <param name="name">
+        ///            The name of the attribute </param>
+        /// <returns> The attribute info builder with predefined name and type value.</returns>
+        /// <remarks>Since 1.4</remarks>
+        public static ConnectorAttributeInfoBuilder Define(string name)
+        {
+            return new ConnectorAttributeInfoBuilder(name, typeof(string));
+        }
+
+        /// <summary>
+        /// Convenience method to create a new AttributeInfoBuilder.
+        /// 
+        /// Equivalent to: <code>new AttributeInfoBuilder(name, type)</code>
+        /// </summary>
+        /// <param name="name">
+        ///            The name of the attribute </param>
+        /// <param name="type">
+        ///            The type of the attribute </param>
+        /// <returns> The attribute info builder with predefined name and type value.</returns>
+        /// <remarks>Since 1.4</remarks>
+        public static ConnectorAttributeInfoBuilder Define(string name, Type type)
+        {
+            return new ConnectorAttributeInfoBuilder(name, type);
         }
     }
     #endregion
@@ -2256,6 +2363,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return _type;
         }
 
+        public String Type
+        {
+            get { return _type; }
+        }
+
         /// <summary>
         /// Convenience method to build the display name key for
         /// an object class.
@@ -2299,7 +2411,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
 
             // test that the exact class matches
-            if (!(GetType().Equals(obj.GetType())))
+            if (!(GetType() == obj.GetType()))
             {
                 return false;
             }
@@ -3452,7 +3564,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
         public static OperationOptionInfo BuildRunWithPassword()
         {
-            return Build(OperationOptions.OP_RUN_WITH_PASSWORD);
+            return Build(OperationOptions.OP_RUN_WITH_PASSWORD, typeof(GuardedString));
         }
 
         public static OperationOptionInfo BuildRunAsUser()
@@ -4064,7 +4176,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     {
                         continue;
                     }
-                    foreach (SafeType<APIOperation> op in _defaultSupportedOperations)
+                    IEnumerable<SafeType<APIOperation>> apiOperations = FrameworkUtil.Spi2Apis(spi).Intersect(_defaultSupportedOperations);
+                    foreach (SafeType<APIOperation> op in apiOperations)
                     {
                         if (OperationOptionOperation(op))
                         {
@@ -5545,9 +5658,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// Get the <seealso cref="Uid"/> attribute from the set of attributes.
         /// </summary>
         /// <returns> the <seealso cref="Uid"/> attribute in the set. </returns>
-        public  Uid GetUid()
+        public Uid GetUid()
         {
-            return (Uid)Find(Uid.NAME);           
+            return (Uid)Find(Uid.NAME);
         }
 
         /// <summary>
@@ -5625,7 +5738,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         ///         has access to.
         /// </returns>
         /// <remarks>Since 1.4</remarks>
-        public  ICollection<string> ListAttributeNames()
+        public ICollection<string> ListAttributeNames()
         {
             //ICollection<string> names = CollectionUtil.NewCaseInsensitiveSet();
             //CollectionUtil.AddAll(names, _attrMap.Keys);
