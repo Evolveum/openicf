@@ -26,7 +26,9 @@ package org.forgerock.openicf.maven;
 
 import java.lang.reflect.Array;
 import java.util.Locale;
+import java.util.Stack;
 
+import org.identityconnectors.common.security.GuardedByteArray;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConfigurationProperty;
 import org.identityconnectors.framework.api.ConnectorInfo;
@@ -59,7 +61,7 @@ public class ConnectorUtils {
                     sb.append(",\n");
                 }
                 Object item = Array.get(property.getValue(), i);
-                if (item instanceof GuardedString || item instanceof GuardedString) {
+                if (item instanceof GuardedString || item instanceof GuardedByteArray) {
                     item = "*****";
                 }
                 sb.append("'").append(String.valueOf(item)).append("'");
@@ -69,6 +71,11 @@ public class ConnectorUtils {
             value = property.getValue().toString();
         }
         return value;
+    }
+
+
+    public static String safeNCName(String value){
+        return value.toLowerCase(Locale.US).replaceAll("\\s+","-");
     }
 
     /**

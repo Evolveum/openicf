@@ -22,6 +22,7 @@
  * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Org.IdentityConnectors.Framework.Common.Objects;
@@ -34,6 +35,7 @@ using ActiveDs;
 using Org.IdentityConnectors.Common.Security;
 using System.DirectoryServices.ActiveDirectory;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -554,8 +556,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns></returns>
         public static String NormalizeLdapString(String ldapString)
         {
+            /// (?<!\\)    Matches if the preceding character is not a backslash
+            /// (?:\\\\)*  Matches any number of occurrences of two backslashes
+            /// ,          Matches a comma
+            var regexObj = new Regex(@"(?<!\\)(?:\\\\)*,");
+            String[] parts = regexObj.Split(ldapString).ToArray();
+
             StringBuilder normalPath = new StringBuilder();
-            String[] parts = ldapString.Split(',');
             for (int i = 0; i < parts.Length; i++)
             {
                 normalPath.Append(parts[i].Trim());

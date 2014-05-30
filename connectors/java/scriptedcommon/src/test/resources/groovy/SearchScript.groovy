@@ -22,12 +22,19 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
 
+
 import ObjectCacheLibrary
+import groovy.json.JsonOutput
+import org.forgerock.openicf.misc.crest.CRESTFilterVisitor
+import org.forgerock.openicf.misc.crest.VisitorParameter
+import org.forgerock.openicf.misc.scriptedcommon.ICFObjectBuilder
 import org.forgerock.openicf.misc.scriptedcommon.ICFObjectBuilder as ICF
-import org.identityconnectors.common.logging.Log
+import org.forgerock.openicf.misc.scriptedcommon.MapFilterVisitor
 import org.forgerock.openicf.misc.scriptedcommon.OperationType
 import org.forgerock.openicf.misc.scriptedcommon.ScriptedConfiguration
+import org.identityconnectors.common.logging.Log
 import org.identityconnectors.framework.common.objects.Attribute
+import org.identityconnectors.framework.common.objects.AttributeUtil
 import org.identityconnectors.framework.common.objects.ConnectorObject
 import org.identityconnectors.framework.common.objects.ObjectClass
 import org.identityconnectors.framework.common.objects.OperationOptions
@@ -54,8 +61,8 @@ switch (objectClass) {
             final String pagedResultsCookie = options.getPagedResultsCookie();
             String currentPagedResultsCookie = options.getPagedResultsCookie();
             final Integer pagedResultsOffset =
-                null != options.getPagedResultsOffset() ? Math.max(0, options
-                        .getPagedResultsOffset()) : 0;
+                    null != options.getPagedResultsOffset() ? Math.max(0, options
+                            .getPagedResultsOffset()) : 0;
             final Integer pageSize = options.getPageSize();
 
             int index = 0;
@@ -102,6 +109,53 @@ switch (objectClass) {
         }
 
         break
+    case TestHelper.TEST:
+        Set<String> attributesToGet = null;
+        if (null != options.attributesToGet) {
+            attributesToGet = options.attributesToGet as Set<String>
+        }
+
+        for (i in 0..9) {
+            def co = ICFObjectBuilder.co {
+                uid String.format("UID%02d", i)
+                id String.format("TEST%02d", i)
+                TestHelper.connectorObjectTemplate.each { key, value ->
+                    if (attributesToGet == null || attributesToGet.contains(key)) {
+                        attribute key, value
+                    }
+                }
+            }
+            if (null != filter && filter.accept(co)) {
+                handler(co)
+            } else {
+                handler(co)
+            }
+        }
+        if (null != filter && null != options.options.CREST) {
+            def queryFilter = CRESTFilterVisitor.VISITOR.accept(new VisitorParameter() {
+                String translateName(String name) {
+                    return name;
+                }
+
+                Object convertValue(Attribute attribute) {
+                    if (attribute.value.size() > 1) {
+                        return JsonOutput.toJson(attribute.value)
+                    } else {
+                        Object value = attribute.value[0];
+                        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+                            return value
+                        } else {
+                            return AttributeUtil.getAsStringValue(attribute)
+                        }
+                    }
+                }
+            }, filter)
+            return new SearchResult(queryFilter.toString(), -1);
+        } else if (null != filter) {
+            def map = MapFilterVisitor.INSTANCE.accept(null, filter)
+            return new SearchResult(JsonOutput.toJson(map), -1);
+        }
+        break;
     case TestHelper.SAMPLE:
         handler(
                 ICF.co {
@@ -142,10 +196,10 @@ switch (objectClass) {
             attribute 'NULL'
             attributes(new Attribute('emails', [
                     [
-                            "address": "foo@example.com",
-                            "type": "home",
+                            "address"   : "foo@example.com",
+                            "type"      : "home",
                             "customType": "",
-                            "primary": true]
+                            "primary"   : true]
             ]))
         }
         )

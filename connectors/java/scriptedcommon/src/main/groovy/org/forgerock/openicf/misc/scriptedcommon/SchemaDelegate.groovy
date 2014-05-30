@@ -1,7 +1,7 @@
 /*
- * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2014 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2014 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -22,18 +22,26 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
 
-package org.forgerock.openicf.maven;
+package org.forgerock.openicf.misc.scriptedcommon
 
-import java.util.Comparator;
-
+import org.identityconnectors.framework.common.objects.SchemaBuilder
 
 /**
- * A ClassComparator compares the name (CASE_INSENSITIVE) of {@link Class}.
+ * A NAME does ...
  *
  * @author Laszlo Hordos
  */
-public class ClassComparator implements Comparator<Class> {
-    public int compare(Class o1, Class o2) {
-        return String.CASE_INSENSITIVE_ORDER.compare(o1.getSimpleName(), o2.getSimpleName());
+class SchemaDelegate extends AbstractICFBuilder<SchemaBuilder> {
+    SchemaDelegate(SchemaBuilder builder) {
+        super(builder)
     }
+
+    void objectClass(@DelegatesTo(ObjectClassDelegate) Closure attribute) {
+        delegateToTag(ObjectClassDelegate, attribute)
+    }
+
+    void operationOption(@DelegatesTo(OperationOptionDelegate) Closure options) {
+        delegateToTag(OperationOptionDelegate, options)
+    }
+
 }

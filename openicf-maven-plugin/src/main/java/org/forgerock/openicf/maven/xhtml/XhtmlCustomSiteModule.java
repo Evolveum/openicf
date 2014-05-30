@@ -1,7 +1,7 @@
 /*
- * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2014 ForgeRock AS. All rights reserved.
+ * Copyright (c) 2014 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -22,20 +22,23 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
 
-package org.forgerock.openicf.maven;
+package org.forgerock.openicf.maven.xhtml;
 
-import java.util.Comparator;
-
-import org.identityconnectors.framework.api.ConfigurationProperty;
+import org.apache.maven.doxia.module.site.AbstractSiteModule;
+import org.apache.maven.doxia.module.site.SiteModule;
+import org.codehaus.plexus.component.annotations.Component;
 
 /**
- * A ConfigurationPropertyComparator compares the name (CASE_INSENSITIVE) of
- * {@link ConfigurationProperty}.
+ * An XhtmlCustomSiteModule allows Script content in final HTML.
  *
  * @author Laszlo Hordos
  */
-public class ConfigurationPropertyComparator implements Comparator<ConfigurationProperty> {
-    public int compare(ConfigurationProperty o1, ConfigurationProperty o2) {
-        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
+@Component(role = SiteModule.class, hint = "xhtml-custom")
+public class XhtmlCustomSiteModule extends AbstractSiteModule {
+    /**
+     * Default constructor.
+     */
+    public XhtmlCustomSiteModule() {
+        super("xhtml-custom", "xhtml", "xhtml-custom");
     }
 }

@@ -26,13 +26,12 @@ package org.forgerock.openicf.connectors.docbook;
 import org.identityconnectors.framework.spi.StatefulConfiguration;
 
 /**
- * Class to represent a DocBook Connection
+ * Class to represent a DocBook Configuration
  *
  */
 public class DocBookStatefulConfiguration extends DocBookConfiguration implements
         StatefulConfiguration {
 
     public void release() {
-
     }
 }

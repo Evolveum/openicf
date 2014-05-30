@@ -258,7 +258,7 @@ namespace Org.IdentityConnectors.Framework.Common
         {
             if (value != null)
             {
-                CheckAttributeType(value.GetType());
+                CheckAttributeValue((String)null, value);
             }
         }
         /// <summary>
@@ -634,7 +634,7 @@ namespace Org.IdentityConnectors.Framework.Common
             empty = Empty0;
         }
 
-        public virtual Version Floor
+        public  Version Floor
         {
             get
             {
@@ -642,7 +642,7 @@ namespace Org.IdentityConnectors.Framework.Common
             }
         }
 
-        public virtual bool FloorInclusive
+        public  bool FloorInclusive
         {
             get
             {
@@ -650,7 +650,7 @@ namespace Org.IdentityConnectors.Framework.Common
             }
         }
 
-        public virtual Version Ceiling
+        public  Version Ceiling
         {
             get
             {
@@ -658,7 +658,7 @@ namespace Org.IdentityConnectors.Framework.Common
             }
         }
 
-        public virtual bool CeilingInclusive
+        public bool CeilingInclusive
         {
             get
             {
@@ -666,7 +666,7 @@ namespace Org.IdentityConnectors.Framework.Common
             }
         }
 
-        public virtual bool IsInRange(Version version)
+        public  bool IsInRange(Version version)
         {
             if (empty)
             {
@@ -689,7 +689,7 @@ namespace Org.IdentityConnectors.Framework.Common
         /// </summary>
         /// <returns> {@code true} if this version range contains only a single
         ///         version; {@code false} otherwise. </returns>
-        public virtual bool Exact
+        public  bool Exact
         {
             get
             {
@@ -739,7 +739,7 @@ namespace Org.IdentityConnectors.Framework.Common
         /// </summary>
         /// <returns> {@code true} if this version range is empty; {@code false}
         ///         otherwise. </returns>
-        public virtual bool Empty
+        public  bool Empty
         {
             get
             {

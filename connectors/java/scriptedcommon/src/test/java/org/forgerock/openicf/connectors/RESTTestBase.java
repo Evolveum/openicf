@@ -44,6 +44,9 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.api.operations.CreateApiOp;
+import org.identityconnectors.framework.api.operations.DeleteApiOp;
+import org.identityconnectors.framework.api.operations.UpdateApiOp;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
@@ -99,10 +102,14 @@ public abstract class RESTTestBase {
 
     @BeforeSuite
     public void startServer() throws Exception {
-        System.out.append("Test port: ").println(System.getProperty("jetty.http.port"));
+        String httpPort = System.getProperty("jetty.http.port", "28080");
+        System.out.append("Test port: ").println(httpPort);
         // Create a basic jetty server object that will listen on port 8080.
         // you can programmatically obtain it for use in test cases.
-        server = new Server(8080);
+        server = new Server(Integer.parseInt(httpPort));
+        for (org.eclipse.jetty.server.Connector c : server.getConnectors()) {
+            c.setHost("127.0.0.1");
+        }
 
         // Initializing the security handler
         ServletContextHandler handler =
@@ -171,6 +178,10 @@ public abstract class RESTTestBase {
         impl.getResultsHandlerConfiguration().setEnableCaseInsensitiveFilter(false);
         impl.getResultsHandlerConfiguration().setEnableFilteredResultsHandler(false);
         impl.getResultsHandlerConfiguration().setEnableNormalizingResultsHandler(false);
+
+        impl.setTimeout(CreateApiOp.class, 25000);
+        impl.setTimeout(UpdateApiOp.class, 25000);
+        impl.setTimeout(DeleteApiOp.class, 25000);
 
         return ConnectorFacadeFactory.getInstance().newInstance(impl);
     }
