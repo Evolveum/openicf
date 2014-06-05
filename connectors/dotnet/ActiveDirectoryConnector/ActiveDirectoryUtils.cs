@@ -889,6 +889,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 return originalException;       // here will be something like SchemaException when it will be available
             }
+            else if (originalException.ErrorCode == -2147022651)    // password too weak            {                return new InvalidAttributeValueException(message, originalException);       /* a bit of hack, but ArgumentException is too generic here! see also https://groups.google.com/d/msg/connid-dev/i4-N22CARZ8/S-1Yv-iqWBUJ */
+            }
             else
             {
                 return originalException;

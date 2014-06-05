@@ -204,11 +204,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        internal class SetCurrentPasswordAccessor : GuardedString.Accessor
+        {
+            private PasswordChangeHandler handler;
+            internal SetCurrentPasswordAccessor(PasswordChangeHandler handler)
+            {
+                this.handler = handler;
+            }
+
+            public void Access(UnmanagedArray<char> clearChars)
+            {
+                handler.setCurrentPassword(clearChars);
+            }
+        };
+
+
         /// <summary>
         /// Sets the _newPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setNewPassword(UnmanagedArray<char> clearChars)
+        public void setNewPassword(UnmanagedArray<char> clearChars)
         {
             _newPassword = "";
 
@@ -218,6 +233,21 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 _newPassword += clearChars[i];
             }
         }
+
+        internal class SetNewPasswordAccessor : GuardedString.Accessor
+        {
+            private PasswordChangeHandler handler;
+            internal SetNewPasswordAccessor(PasswordChangeHandler handler)
+            {
+                this.handler = handler;
+            }
+
+            public void Access(UnmanagedArray<char> clearChars)
+            {
+                handler.setNewPassword(clearChars);
+            }
+        };
+            
 
         /// <summary>
         /// Does an administrative password change.  The Directory
@@ -230,7 +260,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsNewPassword)
         {
             // decrypt and save the new password
-            gsNewPassword.Access(setNewPassword);
+            gsNewPassword.Access(new SetNewPasswordAccessor(this));            
 
             // get the native com object as an IADsUser, and set the 
             // password
@@ -249,8 +279,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsCurrentPassword, GuardedString gsNewPassword)
         {
             // decrypt and save the old nad new passwords
-            gsNewPassword.Access(setNewPassword);
-            gsCurrentPassword.Access(setCurrentPassword);
+            gsNewPassword.Access(new SetNewPasswordAccessor(this));
+            gsCurrentPassword.Access(new SetCurrentPasswordAccessor(this));
 
             // get the native com object as an IADsUser, and change the 
             // password
@@ -272,7 +302,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 return authHelper.GetUidFromSamAccountName(username);
             }
-            password.Access(setCurrentPassword);
+            password.Access(new SetCurrentPasswordAccessor(this));
             return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
 

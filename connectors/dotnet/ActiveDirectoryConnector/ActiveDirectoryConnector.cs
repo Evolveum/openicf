@@ -911,11 +911,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (DirectoryServicesCOMException e)
             {
-                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.ToString());
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.GetUidValue());
             }
             catch (UnauthorizedAccessException e)
             {
-                throw new PermissionDeniedException("permission to update " + updatedUid.ToString() + " denied", e);
+                throw new PermissionDeniedException("permission to update " + updatedUid.GetUidValue() + " denied", e);
             }
             catch (Exception e)
             {
@@ -952,7 +952,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 else
                 {
-                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.GetUidValue());
                 }
             }
             catch (UnauthorizedAccessException e)
@@ -981,11 +981,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (UnauthorizedAccessException e)
             {
-                throw new PermissionDeniedException("permission to delete " + uid.ToString() + " denied", e);
+                throw new PermissionDeniedException("permission to delete " + uid.GetUidValue() + " denied", e);
             }
             catch (DirectoryServicesCOMException e)
             {
-                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.GetUidValue());
             }
             finally
             {
