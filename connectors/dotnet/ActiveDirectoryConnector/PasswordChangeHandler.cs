@@ -193,31 +193,32 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// sets the _currentPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setCurrentPassword(UnmanagedArray<char> clearChars)
-        {
-            _currentPassword = "";
+        //internal void setCurrentPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _currentPassword = "";
 
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
-            {
-                _currentPassword += clearChars[i];
-            }
-        }
-
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _currentPassword += clearChars[i];
+        //    }
+        //}
+        // Gael 1.1 legacy
         /// <summary>
         /// Sets the _newPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setNewPassword(UnmanagedArray<char> clearChars)
-        {
-            _newPassword = "";
+        //internal void setNewPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _newPassword = "";
 
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
-            {
-                _newPassword += clearChars[i];
-            }
-        }
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _newPassword += clearChars[i];
+        //    }
+        //}
+        // Gael - 1.1 legacy
 
         /// <summary>
         /// Does an administrative password change.  The Directory
@@ -230,8 +231,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsNewPassword)
         {
             // decrypt and save the new password
-            gsNewPassword.Access(setNewPassword);
-
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            
             // get the native com object as an IADsUser, and set the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -249,9 +250,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsCurrentPassword, GuardedString gsNewPassword)
         {
             // decrypt and save the old nad new passwords
-            gsNewPassword.Access(setNewPassword);
-            gsCurrentPassword.Access(setCurrentPassword);
-
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            _currentPassword = SecurityUtil.Decrypt(gsCurrentPassword);
+            
             // get the native com object as an IADsUser, and change the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -261,18 +262,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <summary>
         ///     Authenticates the user
         /// </summary>
-        /// <param name="directoryEntry"></param>
         /// <param name="username"></param>
         /// <param name="password"></param>
+        /// <param name="returnUidOnly"></param>
         internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
-            Org.IdentityConnectors.Common.Security.GuardedString password, bool returnUidOnly)
+            GuardedString password, bool returnUidOnly)
         {
             AuthenticationHelper authHelper = new AuthenticationHelper(_configuration);
             if(returnUidOnly)
             {
                 return authHelper.GetUidFromSamAccountName(username);
             }
-            password.Access(setCurrentPassword);
+            _currentPassword = SecurityUtil.Decrypt(password);
             return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
 
