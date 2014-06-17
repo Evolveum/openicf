@@ -4,7 +4,7 @@
 /*
  * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2013 ForgeRock Inc. All rights reserved.
+ * Copyright (c) 2014 ForgeRock AS. All rights reserved.
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -12,23 +12,25 @@
  * compliance with the License.
  *
  * You can obtain a copy of the License at
- * http://forgerock.org/license/CDDLv1.0.html
+ * http://opensource.org/licenses/CDDL-1.0
  * See the License for the specific language governing
  * permission and limitations under the License.
  *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
- * at http://forgerock.org/license/CDDLv1.0.html
+ * at http://opensource.org/licenses/CDDL-1.0
  * If applicable, add the following below the CDDL Header,
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
+
 package ${package};
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
@@ -48,8 +50,6 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
  * which will (strictly) reapply all filters specified after the connector does the initial
  * filtering.<p><p>Note: The generic query type is most commonly a String, but does not have to be.
  *
- * @author ${symbol_dollar}author${symbol_dollar}
- * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
 public class ${connectorName}FilterTranslator extends AbstractFilterTranslator<String> {
 
@@ -74,6 +74,14 @@ public class ${connectorName}FilterTranslator extends AbstractFilterTranslator<S
         } else {
             return name + "=*" + value + "*";
         }
+    }
+
+    /**
+    * {@inheritDoc}
+    */
+    @Override
+    protected String createContainsAllValuesExpression(ContainsAllValuesFilter filter, boolean not) {
+        return null;
     }
 
     /**
