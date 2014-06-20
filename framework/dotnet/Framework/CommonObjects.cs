@@ -2011,7 +2011,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <summary>
         /// Determines if this attribute supports multivalue.
         /// </summary>
-        public ConnectorAttributeInfoBuilder SetMultiValue(bool value)
+        public ConnectorAttributeInfoBuilder SetMultiValued(bool value)
         {
             SetFlag(ConnectorAttributeInfo.Flags.MULTIVALUED, value);
             return this;

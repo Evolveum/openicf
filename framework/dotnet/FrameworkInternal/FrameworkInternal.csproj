@@ -110,6 +110,7 @@
   </ItemGroup>
   <Target Name="Clean">
     <CallTarget Targets="FrameworkClean" />
+    <Delete Files="AssemblyInfo.cs;version.txt" />
     <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

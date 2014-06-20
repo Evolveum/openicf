@@ -19,7 +19,7 @@
   enclosed by brackets [] replaced by your own identifying information: 
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
-  Portions Copyrighted 2012 ForgeRock AS
+  Portions Copyrighted 2012-2014 ForgeRock AS
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <!-- DotNet Common build targets -->
@@ -32,20 +32,21 @@
   </PropertyGroup>
 
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-  <Target Name="SetVersion">
+
+  <Target Name="GenerateAssemblyInfo">
     <Version VersionFile="$(VersionFileIn)">
       <Output TaskParameter="Major" PropertyName="Major" />
       <Output TaskParameter="Minor" PropertyName="Minor" />
       <Output TaskParameter="Build" PropertyName="Build" />
       <Output TaskParameter="Revision" PropertyName="Revision" />
     </Version>
-    <SvnVersion LocalPath="." UseLastCommittedRevision="true" Condition=" '$(SVN_REVISION)' == '' And '$(Configuration)'=='Release' ">
-      <Output TaskParameter="Revision" PropertyName="SVN_REVISION" />
-    </SvnVersion>
-    <CreateProperty Value="$(SVN_REVISION)"  Condition=" '$(Configuration)'=='Release' ">
-      <Output TaskParameter="Value" PropertyName="Revision"/>
+    <CreateProperty Value="$(Revision)"  Condition=" '$(SVN_REVISION)'=='' ">
+      <Output TaskParameter="Value" PropertyName="SVNRevision"/>
     </CreateProperty>
-    <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(Revision)"/>
+    <CreateProperty Value="$(SVN_REVISION)"  Condition=" '$(SVN_REVISION)'!='' ">
+      <Output TaskParameter="Value" PropertyName="SVNRevision"/>
+    </CreateProperty>
+    <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(Revision) Revision: $(SVNRevision)"/>
     <!-- need to store the version file if SVN_revision is defined, it is used for running contract tests -->
     <WriteLinesToFile File="$(VersionFileOut)" Lines="$(Major).$(Minor).$(Build).$(Revision)" Overwrite="true"/>
     <AssemblyInfo CodeLanguage="CS"
@@ -55,7 +56,7 @@
               AssemblyCopyright="$(Copyright)"
               AssemblyCompany="$(Company)"
               AssemblyVersion="$(Major).$(Minor).$(Build).$(Revision)"
-              AssemblyFileVersion="$(Major).$(Minor).$(Build).$(Revision)"
+              AssemblyFileVersion="$(Major).$(Minor).$(Build).$(Revision) Revision:$(SVNRevision)"
               InternalsVisibleTo="$(InternalsVisibleTo)" />
   </Target>
   
@@ -94,12 +95,13 @@
     </CleanDependsOn>
   </PropertyGroup>
   <Target Name="CommonBeforeBuild">
-    <CallTarget Targets="SetVersion" />
+    <CallTarget Targets="GenerateAssemblyInfo" />
   </Target>
   <Target Name="CommonAfterBuild">
     <CallTarget Condition=" '$(ZipRelease)'=='true' " Targets="BuildZip" />
   </Target>
   <Target Name="CommonClean">
+    <Delete Files="AssemblyInfo.cs;version.txt" />
     <RemoveDir Directories="bin;obj;$(CommonBuildDir)"/>
   </Target>
 

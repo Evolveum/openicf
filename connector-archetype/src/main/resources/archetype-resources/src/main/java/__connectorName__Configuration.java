@@ -106,8 +106,8 @@ public class ${connectorName}Configuration extends AbstractConfiguration#if($sta
      * {@inheritDoc}
      */
     public void validate() {
-        if (StringUtil.isBlank(remoteUser)) {
-            throw new IllegalArgumentException("Remote User cannot be null or empty.");
+        if (StringUtil.isBlank(host)) {
+            throw new IllegalArgumentException("Host cannot be null or empty.");
         }
 
         Assertions.blankCheck(remoteUser, "remoteUser");

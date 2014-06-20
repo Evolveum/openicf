@@ -157,14 +157,9 @@ mvn archetype:generate \
     [INFO] Parameter: connectorName, Value: Sample
     [INFO] Parameter: OP_SCHEMA, Value: n
     [INFO] Parameter: OP_SCRIPTONRESOURCE, Value: n
-    [WARNING] Don't override file /Users/laszlohordos/Downloads/sample-connector/src/site/site.xml
-    [INFO] project created from Archetype in dir: /Users/laszlohordos/Downloads/sample-connector
+    [INFO] project created from Archetype in dir: /sample-connector
     [INFO] ------------------------------------------------------------------------
     [INFO] BUILD SUCCESS
-    [INFO] ------------------------------------------------------------------------
-    [INFO] Total time: 1:10.681s
-    [INFO] Finished at: Tue Jun 17 12:43:36 CEST 2014
-    [INFO] Final Memory: 8M/265M
     [INFO] ------------------------------------------------------------------------
     $ cd sample
     $ mvn install

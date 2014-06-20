@@ -310,7 +310,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
             groupInfoBuilder.setType(ObjectClass.GROUP_NAME);
             groupInfoBuilder.addAttributeInfo(Name.INFO);
             groupInfoBuilder.addAttributeInfo(PredefinedAttributeInfos.DESCRIPTION);
-            groupInfoBuilder.addAttributeInfo(AttributeInfoBuilder.define("members").setCreateable(
+            groupInfoBuilder.addAttributeInfo(AttributeInfoBuilder.define("members").setCreatable(
                     false).setUpdateable(false).setMultiValued(true).build());
 
             // Only the CRUD operations

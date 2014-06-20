@@ -306,4 +306,7 @@
   <data name="ex_NoSupportedExchangeSnapin" xml:space="preserve">
     <value>There is no supported Exchange PowerShell snap-in registered.</value>
   </data>
+  <data name="MESSAGE_OBJECT_CLASS___ACCOUNT__" xml:space="preserve">
+    <value>User</value>
+  </data>
 </root>

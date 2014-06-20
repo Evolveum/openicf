@@ -314,6 +314,13 @@ public class ${connectorName}ConnectorTests {
         final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
         facade.test();
     }
+
+    @Test
+    public void validateTest() {
+        logger.info("Running Validate Test");
+        final ConnectorFacade facade = createConnectorFacade(BasicConnector.class, null);
+        facade.validate();
+    }
 #end
 
 #if ( $op_update_safe )

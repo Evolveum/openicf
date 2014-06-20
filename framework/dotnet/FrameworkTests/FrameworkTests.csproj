@@ -156,8 +156,8 @@
     <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" WorkingDirectory="bin\$(Configuration)" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="TestResults_$(Configuration).xml" />
   </Target>
   <Target Name="Clean">
-    <RemoveDir Directories="bin;obj">
-    </RemoveDir>
+    <Delete Files="AssemblyInfo.cs;version.txt" />
+    <RemoveDir Directories="obj;bin" />
   </Target>
   <ItemGroup>
     <EmbeddedResource Include="Org.IdentityConnectors.TestConnector.FakeConnector\config\config.xml" />
