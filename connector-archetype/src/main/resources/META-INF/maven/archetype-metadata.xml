@@ -107,12 +107,6 @@
                 <include>**/*.xml</include>
             </includes>
         </fileSet>
-        <fileSet filtered="false" encoding="UTF-8">
-            <directory>src/main/docbkx</directory>
-            <excludes>
-                <exclude>**/*.xml</exclude>
-            </excludes>
-        </fileSet>
         <fileSet filtered="true" packaged="true" encoding="UTF-8">
             <directory>src/test/java</directory>
             <includes>
@@ -134,7 +128,7 @@
         <fileSet filtered="true" encoding="UTF-8">
             <directory>src/site</directory>
             <includes>
-                <include>**/*.xml</include>
+                <include>**/*.vm</include>
             </includes>
         </fileSet>
         <fileSet filtered="true" encoding="UTF-8">

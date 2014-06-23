@@ -73,8 +73,10 @@
 package ${package};
 
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.Set;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -199,7 +201,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
     */
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
         if (AttributeUtil.namesEqual(attribute.getName(), Uid.NAME)) {
-            return new Uid(AttributeUtil.getStringValue(attribute).toLowerCase());
+            return new Uid(AttributeUtil.getStringValue(attribute).toLowerCase(Locale.US));
         }
         return attribute;
     }
@@ -259,7 +261,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
             Name name = AttributeUtil.getNameFromAttributes(createAttributes);
             if (name != null) {
                 // do real create here
-                return new Uid(AttributeUtil.getStringValue(name).toLowerCase());
+                return new Uid(AttributeUtil.getStringValue(name).toLowerCase(Locale.US));
             } else {
                 throw new InvalidAttributeValueException("Name attribute is required");
             }
@@ -310,7 +312,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
             groupInfoBuilder.setType(ObjectClass.GROUP_NAME);
             groupInfoBuilder.addAttributeInfo(Name.INFO);
             groupInfoBuilder.addAttributeInfo(PredefinedAttributeInfos.DESCRIPTION);
-            groupInfoBuilder.addAttributeInfo(AttributeInfoBuilder.define("members").setCreatable(
+            groupInfoBuilder.addAttributeInfo(AttributeInfoBuilder.define("members").setCreateable(
                     false).setUpdateable(false).setMultiValued(true).build());
 
             // Only the CRUD operations
@@ -351,6 +353,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
         if (StringUtil.isNotBlank(options.getRunAsUser())) {
             String password = SecurityUtil.decrypt(options.getRunWithPassword());
             // Use these to execute the script with these credentials
+            Assertions.blankCheck(password, "password");
         }
         try {
             return executor.execute(request.getScriptArguments());
@@ -371,6 +374,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
             if (StringUtil.isNotBlank(options.getRunAsUser())) {
                 String password = SecurityUtil.decrypt(options.getRunWithPassword());
                 // Use these to execute the script with these credentials
+                Assertions.blankCheck(password, "password");
                 return options.getRunAsUser();
             }
             throw new UnknownHostException("Failed to connect to remote SSH");
@@ -483,7 +487,7 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
         if (newName != null) {
             logger.info("Rename the object {0}:{1} to {2}", objectClass.getObjectClassValue(), uid
                     .getUidValue(), newName.getNameValue());
-            uidAfterUpdate = new Uid(newName.getNameValue().toLowerCase());
+            uidAfterUpdate = new Uid(newName.getNameValue().toLowerCase(Locale.US));
         }
 
         if (ObjectClass.ACCOUNT.equals(objectClass)) {
