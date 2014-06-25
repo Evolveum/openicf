@@ -222,6 +222,11 @@
       <AttributeInfo name="__NAME__" type="String">
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
+      <AttributeInfo name="gecos" type="String"></AttributeInfo>
+      <AttributeInfo name="loginShell" type="String"></AttributeInfo>
+      <AttributeInfo name="unixHomeDirectory" type="String"></AttributeInfo>
+      <AttributeInfo name="uidNumber" type="Integer"></AttributeInfo>
+      <AttributeInfo name="gidNumber" type="Integer"></AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>
   <ObjectClassInfo container="false" type="Group">
