@@ -72,7 +72,11 @@ public enum NativeAttribute {
     LOCK,
     
     LAST_PASSWORD_CHANGE,
+    
+    REGISTRY,
 
+    SYSTEM,
+    
     /** USER attribute. */
     ROLES {
         @Override

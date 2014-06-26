@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.mode;
 import java.util.List;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.Schema;
@@ -81,6 +82,14 @@ public abstract class UnixModeDriver {
 
     public abstract Schema buildSchema();
     
+    public Set<String> getRequiredCommands(){
+    	return CollectionUtil.newSet(
+                // user
+                "last", "useradd", "usermod", "userdel", "passwd",
+                // group
+                "groupadd", "groupmod", "groupdel");
+    }
+    
     protected void tweakAccountActivationSchema(Set<AttributeInfo> attributes) {
 		String activationMode = conn.getConfiguration().getActivationMode();
 		if (ActivationMode.EXPIRATION.getConfigString().equals(activationMode) 
@@ -101,5 +110,12 @@ public abstract class UnixModeDriver {
 	abstract public String getRenameDirScript(SolarisEntry entry, String newName);
 	
 	abstract public String formatDate(long daysSinceEpoch);
+	
+	public String buildCreateUserCommand(SolarisEntry entry, String commandSwitches){
+		
+        // useradd command execution
+        String command = conn.buildCommand(true, "useradd", commandSwitches, entry.getName());
+        return command;
+	}
 
 }
