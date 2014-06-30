@@ -73,11 +73,11 @@ final class CreateNativeUser {
 
     private static void createUserImpl(SolarisEntry entry, SolarisConnection conn) {
 
-        // create command line switches construction
+    	// create command line switches construction
         String commandSwitches = formatCreateCommandSwitches(entry, conn);
-
-        // useradd command execution
-        String command = conn.buildCommand(true, "useradd", commandSwitches, entry.getName());
+        
+    	String command = conn.getModeDriver().buildCreateUserCommand(entry, commandSwitches);
+    	
         conn.executeCommand(command, ERRORS_USERADD);
     }
 

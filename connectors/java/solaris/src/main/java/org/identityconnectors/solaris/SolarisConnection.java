@@ -43,6 +43,7 @@ import org.identityconnectors.framework.common.exceptions.ConfigurationException
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
 import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
+import org.identityconnectors.solaris.mode.AixModeDriver;
 import org.identityconnectors.solaris.mode.LinuxModeDriver;
 import org.identityconnectors.solaris.mode.SolarisModeDriver;
 import org.identityconnectors.solaris.mode.UnixModeDriver;
@@ -244,6 +245,8 @@ public class SolarisConnection {
             return new SolarisModeDriver(this);
         } else if (unixMode.equals(LinuxModeDriver.MODE_NAME)) {
             return new LinuxModeDriver(this);
+        } else if (unixMode.equals(AixModeDriver.MODE_NAME)){
+        	return new AixModeDriver(this);
         } else {
             throw new ConfigurationException("Unknown unix mode '" + unixMode + "'");
         }

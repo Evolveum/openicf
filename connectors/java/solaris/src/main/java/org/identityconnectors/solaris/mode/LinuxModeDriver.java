@@ -452,6 +452,7 @@ public class LinuxModeDriver extends UnixModeDriver {
                 case PROFILE:
                     newAttr = null;
                     break;
+                case REGISTRY: 
                 case TIME_LAST_LOGIN:
                     newAttr =
                             AttributeInfoBuilder.build(attrName, String.class, EnumSet.of(
