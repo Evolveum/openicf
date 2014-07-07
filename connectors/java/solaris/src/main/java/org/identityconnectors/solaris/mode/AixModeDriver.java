@@ -436,7 +436,12 @@ public class AixModeDriver extends UnixModeDriver{
 	@Override
 	public String buildCreateUserCommand(SolarisEntry entry,
 			String commandSwitches) {
-		// TODO Auto-generated method stub
+		
+				
+		return conn.buildCommand(true, "mkuser", getAttributes(entry), entry.getName());
+	}
+	
+	private String getAttributes(SolarisEntry entry){
 		Set<Attribute> attributes = entry.getAttributeSet();
 		StringBuilder buildedAttributes = new StringBuilder();
 		for (Attribute attr : attributes){
@@ -467,8 +472,14 @@ public class AixModeDriver extends UnixModeDriver{
 			buildedAttributes.append(valuesBuilder);
 			buildedAttributes.append(" ");
 		}
-				
-		return conn.buildCommand(true, "mkuser", buildedAttributes.toString(), entry.getName());
+		
+		return buildedAttributes.toString();
+	}
+	
+	@Override
+	public String buildUpdateUserCommand(SolarisEntry entry,
+			String commandSwitches) {
+		return conn.buildCommand(true, "chuser", getAttributes(entry), entry.getName());
 	}
 	
 	@Override

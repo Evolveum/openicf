@@ -117,5 +117,9 @@ public abstract class UnixModeDriver {
         String command = conn.buildCommand(true, "useradd", commandSwitches, entry.getName());
         return command;
 	}
+	
+	public String buildUpdateUserCommand(SolarisEntry entry, String commandSwitches){
+		return conn.buildCommand(true, "usermod", commandSwitches, entry.getName());
+	}
 
 }
