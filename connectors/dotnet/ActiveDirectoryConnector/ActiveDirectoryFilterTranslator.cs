@@ -168,9 +168,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         protected override String CreateEqualsExpression(EqualsFilter filter, Boolean not) {
-            // The LDAP equality filter matches any one attribute value,
+            // Note: The LDAP equality filter matches any one attribute value,
             // whereas the connector EqualsFilter matches an attribute and
             // its values exactly.
+
+            return CreateContainsAllValuesExpressionInternal(filter, not);
+        }
+
+        protected override String CreateContainsAllValuesExpression(ContainsAllValuesFilter filter, Boolean not)
+        {
+            return CreateContainsAllValuesExpressionInternal(filter, not);
+        }
+
+        private String CreateContainsAllValuesExpressionInternal(AttributeFilter filter, Boolean not) {
             if (not) {
                 return null;
             }
