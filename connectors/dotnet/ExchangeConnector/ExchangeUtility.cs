@@ -38,6 +38,7 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Spi;
     using System.Text.RegularExpressions;
+    using System.Management.Automation;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -193,24 +194,38 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Dictionary of object classes</returns>
         internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
         {
-            return CommonUtils.GetOCInfo(FileObjectClassDef);
+            return CommonUtils.GetOCInfo(FileObjectClassDef, true);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, null, null, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, Uid uidAttribute, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, null, uidAttribute, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, attributes, ConnectorAttributeUtil.GetUidAttribute(attributes), config);
         }
 
         /// <summary>
         /// Creates command based on the commanf info, reading the calues from attributes
         /// </summary>
         /// <param name="cmdInfo">Command defition</param>
-        /// <param name="attributes">Attribute values</param>
+        /// <param name="attributes">Attribute values - UID in these is ignored! It should be passed as a separate parameter</param>
         /// <param name="config">Configuration object</param>
         /// <returns>
         /// Ready to execute Command
         /// </returns>
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
-        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
-            Assertions.NullCheck(attributes, "attributes");
-
+            
             Trace.TraceInformation("GetCommand: cmdInfo name = {0}", cmdInfo.Name);
 
             // create command
@@ -226,6 +241,25 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
+            if (!string.IsNullOrEmpty(cmdInfo.UidParameter))
+            {
+                if (uidAttribute != null && uidAttribute.GetUidValue() != null)
+                {
+                    cmd.Parameters.Add(cmdInfo.UidParameter, uidAttribute.GetUidValue());
+                }
+            }
+
+            if (cmdInfo.UsesConfirm)
+            {
+                cmd.Parameters.Add("confirm", false);
+            }
+
+            if (cmdInfo.UsesDomainController)
+            {
+                cmd.Parameters.Add("DomainController", ActiveDirectoryUtils.GetDomainControllerName(config));
+            }
+
+            // TODO check this only for user-related operations
             bool emailAddressesPresent = GetAttValues(ExchangeConnectorAttributes.AttEmailAddresses, attributes) != null;
             bool primarySmtpAddressPresent = GetAttValues(ExchangeConnectorAttributes.AttPrimarySmtpAddress, attributes) != null;
 
@@ -256,11 +290,6 @@ namespace Org.IdentityConnectors.Exchange
                 else
                 {
                     val = GetAttValue(attName, attributes);
-                    if (val == null && attName.Equals("DomainController"))
-                    {
-                        // add domain controller if not provided
-                        val = ActiveDirectoryUtils.GetDomainControllerName(config);
-                    }
                 }
 
                 if (val != null)
@@ -283,7 +312,11 @@ namespace Org.IdentityConnectors.Exchange
         internal static object GetAttValue(string attName, ICollection<ConnectorAttribute> attributes)
         {
             Assertions.NullCheck(attName, "attName");
-            Assertions.NullCheck(attributes, "attributes");
+
+            if (attributes == null)
+            {
+                return null;
+            }
 
             object value = null;
             ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
@@ -329,7 +362,11 @@ namespace Org.IdentityConnectors.Exchange
         internal static IList<object> GetAttValues(string attName, ICollection<ConnectorAttribute> attributes)
         {
             Assertions.NullCheck(attName, "attName");
-            Assertions.NullCheck(attributes, "attributes");
+
+            if (attributes == null)
+            {
+                return null;
+            }
 
             ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
 
@@ -532,5 +569,56 @@ namespace Org.IdentityConnectors.Exchange
             optionsBuilder.AttributesToGet = attsToGet.ToArray();
             return optionsBuilder.Build();
         }
+
+        /// <summary>
+        /// helper method to filter out all attributes used in ExchangeConnector only
+        /// </summary>
+        /// <param name="attributes">Connector attributes</param>
+        /// <param name="cmdInfos">CommandInfo whose parameters will be used and filtered out from attributes</param>
+        /// <returns>
+        /// Filtered connector attributes
+        /// </returns>
+        internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
+        {
+            IList<string> attsToRemove = new List<string> { ExchangeConnectorAttributes.AttRecipientType };
+            CollectionUtil.AddAll(attsToRemove, ExchangeConnectorAttributes.AttMap2AD.Keys);
+            if (cmdInfos != null)
+            {
+                foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
+                {
+                    if (cmdInfo != null)
+                    {
+                        CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
+                    }
+                }
+            }
+            return ExchangeUtility.FilterOut(attributes, attsToRemove);
+        }
+
+        /// <summary>
+        /// This method tries to get name and value from <see cref="PSMemberInfo"/> and
+        /// creates <see cref="ConnectorAttribute"/> out of it
+        /// </summary>
+        /// <param name="info">PSMemberInfo to get the data from</param>
+        /// <returns>Created ConnectorAttribute or null if not possible to create it</returns>
+        internal static ConnectorAttribute GetAsAttribute(PSMemberInfo info)
+        {
+            Assertions.NullCheck(info, "param");
+            if (info.Value != null)
+            {
+                string value = info.Value.ToString();
+
+                // TODO: add type recognition, currently only string is supported
+                if (value != info.Value.GetType().ToString() && !string.IsNullOrEmpty(value))
+                {
+                    return ConnectorAttributeBuilder.Build(info.Name, value);
+                }
+            }
+
+            return null;
+        }
+
+
+
     }
 }

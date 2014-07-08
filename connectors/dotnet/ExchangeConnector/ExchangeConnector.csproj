@@ -76,6 +76,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Handlers\AccountHandler.cs" />
+    <Compile Include="Handlers\AcceptedDomainHandler.cs" />
+    <Compile Include="Handlers\AddressListHandler.cs" />
+    <Compile Include="Handlers\AddressBookPolicyHandler.cs" />
+    <Compile Include="Handlers\EmailAddressPolicyHandler.cs" />
+    <Compile Include="Handlers\DistributionGroupHandler.cs" />
+    <Compile Include="Handlers\OfflineAddressBookHandler.cs" />
+    <Compile Include="Handlers\GlobalAddressListHandler.cs" />
+    <Compile Include="Handlers\SimplePowerShellObjectHandler.cs" />
+    <Compile Include="Handlers\IdentityFilterTranslator.cs" />
+    <Compile Include="Handlers\DelegateToActiveDirectoryHandler.cs" />
+    <Compile Include="Handlers\MiscHelper.cs" />
+    <Compile Include="Scripting.cs" />
+    <Compile Include="Data\SerializableScriptingInfo.cs" />
     <Compile Include="ExchangeConnectorAttributes.cs" />
     <Compile Include="Data\SerializableCommandInfo.cs" />
     <Compile Include="Data\PersistenceUtility.cs" />
@@ -84,7 +98,8 @@
     <Compile Include="ExchangeUtility.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PSExchangeConnector.cs" />
-    <Compile Include="RunSpaceInstance.cs" />
+    <Compile Include="PowerShellSupport.cs" />
+    <Compile Include="Handlers\ObjectClassHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActiveDirectoryConnector\ActiveDirectoryConnector.csproj">
@@ -92,9 +107,6 @@
       <Name>ActiveDirectoryConnector</Name>
       <Private>True</Private>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="ObjectClasses.xml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Data\CommandInfos.xml" />
@@ -124,6 +136,9 @@
     <EmbeddedResource Include="Messages.zh-TW.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ObjectClasses.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
 </Project>

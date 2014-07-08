@@ -28,6 +28,7 @@ using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 using System.Text;
+using System.Diagnostics;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -37,10 +38,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// reads the object class info definitions from xml
         ///</summary>
         ///<returns>Dictionary of object classes</returns>
-        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
+        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name, bool fromAssembly)
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            Stream stream = assembly.GetManifestResourceStream(name);
+            Stream stream;
+
+            if (fromAssembly)
+            {
+                Trace.TraceInformation("Reading ObjectClass information from assembly resource {0}", name);
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                stream = assembly.GetManifestResourceStream(name);
+            }
+            else
+            {
+                String fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
+                Trace.TraceInformation("Reading ObjectClass information from file {0}", name);
+                stream = File.Open(fullPath, FileMode.Open);
+            }
 
             Assertions.NullCheck(stream, "stream");
 
@@ -56,6 +69,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 streamReader.Close();
             }
 
+            if (!fromAssembly)
+            {
+                Trace.TraceInformation("XML = {0}", xml);
+            }
+
             //read from xml
             var ret = (ICollection<object>)SerializerUtil.DeserializeXmlObject(xml, true);
 
@@ -69,6 +87,97 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             return map;
+        }
+
+        public static IDictionary<ObjectClass, ObjectClassInfo> MergeOCInfo(IDictionary<ObjectClass, ObjectClassInfo> global, IDictionary<ObjectClass, ObjectClassInfo> local)
+        {
+            var infos = new List<IDictionary<ObjectClass, ObjectClassInfo>>();
+            infos.Add(global);
+            if (local != null)
+            {
+                infos.Add(local);
+            }
+            return MergeOCInfo(infos);
+        }
+
+        // Merges two ObjectClassInfos
+        public static IDictionary<ObjectClass, ObjectClassInfo> MergeOCInfo(IList<IDictionary<ObjectClass, ObjectClassInfo>> infos)
+        {
+            if (infos.Count == 0)
+            {
+                return null;
+            }
+            else if (infos.Count == 1)
+            {
+                return infos[0];
+            }
+            else
+            {
+                IDictionary<ObjectClass, ObjectClassInfo> rv = new Dictionary<ObjectClass, ObjectClassInfo>();
+                foreach (IDictionary<ObjectClass, ObjectClassInfo> info in infos) 
+                {
+                    Merge(rv, info);
+                }
+                return rv;
+            }
+        }
+
+        private static void Merge(IDictionary<ObjectClass, ObjectClassInfo> target, IDictionary<ObjectClass, ObjectClassInfo> source)
+        {
+            foreach (ObjectClass oc in source.Keys)
+            {
+                ObjectClassInfo sourceOCI = source[oc];
+                if (!target.ContainsKey(oc))
+                {
+                    ObjectClassInfoBuilder builder = new ObjectClassInfoBuilder();
+                    builder.ObjectType = sourceOCI.ObjectType;
+                    builder.IsContainer = sourceOCI.IsContainer;
+                    builder.AddAllAttributeInfo(sourceOCI.ConnectorAttributeInfos);
+                    ObjectClassInfo targetOCI = builder.Build();
+                    Trace.TraceInformation("Adding object class info {0}", targetOCI.ObjectType);
+                    target.Add(oc, targetOCI);
+                }
+                else
+                {
+                    ObjectClassInfo targetOCI = target[oc];
+                    if (!targetOCI.ObjectType.Equals(sourceOCI.ObjectType))
+                    {
+                        throw new ArgumentException("Incompatible ObjectType for object class " + oc);
+                    }
+                    if (targetOCI.IsContainer != sourceOCI.IsContainer)
+                    {
+                        throw new ArgumentException("Incompatible Container flag for object class " + oc);
+                    }
+                    ObjectClassInfoBuilder builder = new ObjectClassInfoBuilder();
+                    builder.ObjectType = targetOCI.ObjectType;
+                    builder.IsContainer = targetOCI.IsContainer;
+                    builder.AddAllAttributeInfo(targetOCI.ConnectorAttributeInfos);
+                    foreach (ConnectorAttributeInfo info in sourceOCI.ConnectorAttributeInfos)
+                    {
+                        if (info.Is(Name.NAME))
+                        {
+                            // The __NAME__ attribute is a special one and has to be provided on each object class.
+                            // So, even if we just want to extend an object class with a few attributes, we have to provide
+                            // artificial __NAME__ attribute there. When merging, we simply skip it.
+                            continue;
+                        }
+
+                        foreach (ConnectorAttributeInfo existingInfo in targetOCI.ConnectorAttributeInfos)
+                        {
+                            if (existingInfo.Is(info.Name))
+                            {
+                                throw new ArgumentException("Attempted to redefine attribute " + info.Name);
+                            }
+                        }
+                        Trace.TraceInformation("Adding connector attribute info {0}:{1}", info.Name, info.ValueType);
+                        builder.AddAttributeInfo(info);
+                    }
+                    ObjectClassInfo targetRebuilt = builder.Build();
+                    Trace.TraceInformation("Replacing object class info {0}", targetOCI.ObjectType);
+                    target.Remove(oc);
+                    target.Add(oc, targetRebuilt);
+                }
+            }
         }
 
         // TODO find a better place for this method

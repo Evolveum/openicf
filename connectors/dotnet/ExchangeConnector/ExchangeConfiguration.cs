@@ -37,10 +37,13 @@ namespace Org.IdentityConnectors.Exchange
     /// MS Exchange specific configuration
     /// </summary>
     public class ExchangeConfiguration : ActiveDirectoryConfiguration
-    {             
-    	[ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ExchangeUri", HelpMessageKey = "help_ExchangeUri", Order = 1)]
+    {
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ExchangeVersion", HelpMessageKey = "help_ExchangeVersion", Order = 1)]
+        public string ExchangeVersion
+        { get; set; }
+        
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ExchangeUri", HelpMessageKey = "help_ExchangeUri", Order = 2)]
         public string ExchangeUri
         { get; set; }
-
     }    
 }

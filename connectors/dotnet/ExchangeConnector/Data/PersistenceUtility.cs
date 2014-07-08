@@ -73,6 +73,22 @@ namespace Org.IdentityConnectors.Exchange.Data
                 //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo exit");
                 return commandInfos;
             }            
+        }
+
+        internal static ScriptingInfo ReadScriptingInfo(string filename)
+        {
+            Trace.TraceInformation("Reading scripting info from file {0}", filename);
+
+            Stream stream = File.Open(filename, FileMode.Open);
+            using (TextReader streamReader = new StreamReader(stream))
+            {
+                XmlSerializer ser = new XmlSerializer(typeof(ScriptingInfo));
+                ScriptingInfo scriptingInfo = (ScriptingInfo)ser.Deserialize(streamReader);
+                int count = scriptingInfo != null && scriptingInfo.OperationInfo != null ? scriptingInfo.OperationInfo.Length : 0;
+                Trace.TraceInformation("{0} operation definition(s) read", count);
+                return scriptingInfo;
+            }
         }            
+
     }
 }

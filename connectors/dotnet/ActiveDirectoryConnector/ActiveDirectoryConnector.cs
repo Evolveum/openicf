@@ -61,12 +61,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <summary>
         /// Which AD attributes are returned by default (i.e. without client explicitly asking for them).
         /// </summary>
-        public static IDictionary<ObjectClass, ICollection<string>> _attributesReturnedByDefault = null;
+        public IDictionary<ObjectClass, ICollection<string>> _attributesReturnedByDefault = null;
 
         /// <summary>
         /// Cached schema.
         /// </summary>
-        private static Schema _schema = null;
+        private Schema _schema = null;
+
+        /// <summary>
+        /// Cached object class infos.
+        /// </summary>
+        private IDictionary<ObjectClass, ObjectClassInfo> _objectClassInfos = null;
 
         // special attribute names
         public static readonly string ATT_CONTAINER = "ad_container";
@@ -103,8 +108,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         private static readonly string OLD_SEARCH_FILTER_STRING = "Search Filter String";
         private static readonly string OLD_SEARCH_FILTER = "searchFilter";
 
-        ActiveDirectoryConfiguration _configuration = null;
-        ActiveDirectoryUtils _utils = null;
+        private ActiveDirectoryConfiguration _configuration = null;
+        private ActiveDirectoryUtils _utils = null;
         private DirectoryEntry _dirHandler = null;
         //private DirectorySearcher searcher = null;
         public ActiveDirectoryConnector()
@@ -330,10 +335,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns>List of supported object classes</returns>
         public ICollection<ObjectClass> GetSupportedObjectClasses()
         {
-            IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos =
-                    CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
-
-            return objectClassInfos.Keys;
+            return GetObjectClassInfos().Keys;
         }
 
         /// <summary>
@@ -343,10 +345,32 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns>ObjectClass' ObjectClassInfo</returns>
         public ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
         {
-            IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos =
-                    CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
+            return GetObjectClassInfos()[oc];
+        }
 
-            return objectClassInfos[oc];
+        private IDictionary<ObjectClass, ObjectClassInfo> GetObjectClassInfos()
+        {
+            if (_objectClassInfos == null)
+            {
+                var infos = new List<IDictionary<ObjectClass, ObjectClassInfo>>();
+
+                if (_configuration.ObjectClassesReplacementFile != null)
+                {
+                    infos.Add(CommonUtils.GetOCInfo(_configuration.ObjectClassesReplacementFile, false));
+                }
+                else
+                {
+                    infos.Add(CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml", true));
+                }
+
+                if (_configuration.ObjectClassesExtensionFile != null)
+                {
+                    infos.Add(CommonUtils.GetOCInfo(_configuration.ObjectClassesExtensionFile, false));
+                }
+
+                _objectClassInfos = CommonUtils.MergeOCInfo(infos);
+            }
+            return _objectClassInfos;
         }
 
         /// <summary>
@@ -370,7 +394,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 return new List<SafeType<SPIOperation>> {
                     SafeType<SPIOperation>.Get<AuthenticateOp>(),
-                    SafeType<SPIOperation>.Get<SyncOp>()};
+                    SafeType<SPIOperation>.Get<SyncOp>()};          // TODO why is SyncOp not supported for groups/ou? [med]
             }
 
             return null;
