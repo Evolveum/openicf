@@ -39,6 +39,7 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Spi;
     using System.Text.RegularExpressions;
     using System.Management.Automation;
+    using System.Collections.ObjectModel;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -263,39 +264,32 @@ namespace Org.IdentityConnectors.Exchange
             bool emailAddressesPresent = GetAttValues(ExchangeConnectorAttributes.AttEmailAddresses, attributes) != null;
             bool primarySmtpAddressPresent = GetAttValues(ExchangeConnectorAttributes.AttPrimarySmtpAddress, attributes) != null;
 
-            if (emailAddressesPresent && primarySmtpAddressPresent)
-            {
+            if (emailAddressesPresent && primarySmtpAddressPresent) {
                 throw new ArgumentException(ExchangeConnectorAttributes.AttEmailAddresses + " and " + ExchangeConnectorAttributes.AttPrimarySmtpAddress + " cannot be both set.");
             }
 
-            foreach (string attName in cmdInfo.Parameters)
-            {
-                object val = null;
+            if (attributes != null) {
 
-                //Trace.TraceInformation("GetCommand: processing cmdInfo parameter {0}", attName);
+                foreach (string attName in cmdInfo.Parameters) {
 
-                if (attName.Equals(ExchangeConnectorAttributes.AttEmailAddresses))
-                {
-                    IList<object> vals = GetAttValues(attName, attributes);
-                    if (vals != null)
-                    {
-                        List<string> addresses = new List<string>();
-                        foreach (object addressAsObject in vals)
-                        {
-                            addresses.Add(addressAsObject.ToString());
+                    object valueToSet = null;
+
+                    ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
+                    if (attribute != null) {
+                        if (attribute.Value.Count > 1) {
+                            List<string> stringValues = new List<string>();
+                            foreach (object val in attribute.Value) {
+                                stringValues.Add(val.ToString());
+                            }
+                            valueToSet = stringValues.ToArray();
+                        } else {
+                            valueToSet = ConnectorAttributeUtil.GetSingleValue(attribute);
                         }
-                        val = addresses.ToArray(); 
+                        if (valueToSet != null) {
+                            cmd.Parameters.Add(attName, valueToSet);
+                        }
                     }
                 }
-                else
-                {
-                    val = GetAttValue(attName, attributes);
-                }
-
-                if (val != null)
-                {
-                    cmd.Parameters.Add(attName, val);
-                }                  
             }
 
             Trace.TraceInformation("GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);

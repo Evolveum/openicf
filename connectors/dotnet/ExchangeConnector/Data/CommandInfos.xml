@@ -502,8 +502,6 @@
       <string>DisplayName</string>
       <string>PrimarySmtpAddress</string>
       <string>SamAccountName</string>
-      <string>Type</string>
-      <string>Members</string>
       <string>HiddenFromAddressListsEnabled</string>
       <string>BypassSecurityGroupManagerCheck</string>
       <string>CustomAttribute1</string>

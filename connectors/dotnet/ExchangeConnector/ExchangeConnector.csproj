@@ -109,7 +109,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Data\CommandInfos.xml" />
+    <EmbeddedResource Include="Data\CommandInfos.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Messages.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
