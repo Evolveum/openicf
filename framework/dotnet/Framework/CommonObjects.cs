@@ -78,11 +78,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="attr">ConnectorAttribute to retrieve the string value from.</param>
         /// <returns>null if the value is null otherwise the string value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an string.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an string.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static string GetStringValue(ConnectorAttribute attr)
         {
-            return (string)GetSingleValue(attr);
+            object obj = GetSingleValue(attr);
+            return obj != null ? (string)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the character value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the character value from.</param>
+        /// <returns>null if the value is null otherwise the character value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an string.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static char? GetCharacterValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (char?)obj : null;
         }
 
         /// <summary>
@@ -91,26 +107,50 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="attr">ConnectorAttribute to retrieve the string value from.</param>
         /// <returns>null if the value is null otherwise the string value for the
         /// attribute.</returns>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static string GetAsStringValue(ConnectorAttribute attr)
         {
             object obj = GetSingleValue(attr);
             return obj != null ? obj.ToString() : null;
         }
 
+        /// <summary>
+        /// Gets the guarded string value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the guarded string value from.</param>
+        /// <returns>null if the value is null otherwise the guarded string value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a guarded string.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static GuardedString GetGuardedStringValue(ConnectorAttribute attr)
         {
             object obj = GetSingleValue(attr);
             return obj != null ? (GuardedString)obj : null;
         }
+
+        /// <summary>
+        /// Gets the guarded byte array value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the guarded byte array value from.</param>
+        /// <returns>null if the value is null otherwise the guarded byte array value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a guarded byte array.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static GuardedByteArray GetGuardedByteArrayValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (GuardedByteArray)obj : null;
+        }
+
         /// <summary>
         /// Gets the integer value from the single value attribute.
         /// </summary>
         /// <param name="attr">ConnectorAttribute to retrieve the integer value from.</param>
         /// <returns>null if the value is null otherwise the integer value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an integer.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an integer.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static int? GetIntegerValue(ConnectorAttribute attr)
         {
             object obj = GetSingleValue(attr);
@@ -123,8 +163,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="attr">ConnectorAttribute to retrieve the long value from.</param>
         /// <returns>null if the value is null otherwise the long value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an long.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static long? GetLongValue(ConnectorAttribute attr)
         {
             Object obj = GetSingleValue(attr);
@@ -137,8 +177,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="attr">ConnectorAttribute to retrieve the date value from.</param>
         /// <returns>null if the value is null otherwise the date value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an long.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static DateTime? GetDateTimeValue(ConnectorAttribute attr)
         {
             long? val = GetLongValue(attr);
@@ -150,23 +190,121 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
-        /// Gets the integer value from the single value attribute.
+        /// Gets the double value from the single value attribute.
         /// </summary>
-        /// <param name="attr">ConnectorAttribute to retrieve the integer value from.</param>
-        /// <returns>null if the value is null otherwise the integer value for the
+        /// <param name="attr">ConnectorAttribute to retrieve the double value from.</param>
+        /// <returns>null if the value is null otherwise the double value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an integer.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi valued instead of single valued.</exception>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a double.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static double? GetDoubleValue(ConnectorAttribute attr)
         {
             Object obj = GetSingleValue(attr);
             return obj != null ? (double?)obj : null;
         }
 
+        /// <summary>
+        /// Gets the float value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the float value from.</param>
+        /// <returns>null if the value is null otherwise the float value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a float.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static float? GetFloatValue(ConnectorAttribute attr)
+        {
+            Object obj = GetSingleValue(attr);
+            return obj != null ? (float?)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the byte value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the byte value from.</param>
+        /// <returns>null if the value is null otherwise the byte value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a byte.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static byte? GetByteValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (byte?)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the byte value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the byte value from.</param>
+        /// <returns>null if the value is null otherwise the byte value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a byte.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static byte[] GetByteArrayValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (byte[])obj : null;
+        }
+
+        /// <summary>
+        /// Gets the boolean value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the boolean value from.</param>
+        /// <returns>null if the value is null otherwise the boolean value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a boolean.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
         public static bool? GetBooleanValue(ConnectorAttribute attr)
         {
             object obj = GetSingleValue(attr);
             return obj != null ? (bool?)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the big decimal value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the big decimal value from.</param>
+        /// <returns>null if the value is null otherwise the big decimal value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a big decimal.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static BigDecimal GetBigDecimalValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (BigDecimal)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the big integer value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the big integer value from.</param>
+        /// <returns>null if the value is null otherwise the big integer value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a big integer.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static BigInteger GetBigIntegerValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (BigInteger)obj : null;
+        }
+
+        /// <summary>
+        /// Gets the dictionary value from the single value attribute.
+        /// </summary>
+        /// <param name="attr">ConnectorAttribute to retrieve the dictionary value from.</param>
+        /// <returns>null if the value is null otherwise the dictionary value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a dictionary.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi valued instead of single valued.</exception>
+        /// <remarks>Since 1.4</remarks>
+        public static IDictionary<object, object> GetDictionaryValue(ConnectorAttribute attr)
+        {
+            object obj = GetSingleValue(attr);
+            return obj != null ? (IDictionary<object, object>)obj : null;
         }
 
         /// <summary>
@@ -312,10 +450,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         /// <param name="attr">
         /// <see cref="ConnectorAttribute" /> to test for against.</param>
-        /// <returns>true iff the attribute value is a <see cref="Uid" />,
+        /// <returns>true if the attribute value is a <see cref="Uid" />,
         /// <see cref="ObjectClass" />, <see cref="Password" />, or
         /// <see cref="OperationalAttributes" />.</returns>
-        /// <exception cref="NullReferenceException">iff the attribute parameter is null.</exception>
+        /// <exception cref="NullReferenceException">if the attribute parameter is null.</exception>
         public static bool IsSpecial(ConnectorAttribute attr)
         {
             // note this is dangerous because we need to be consistent
@@ -329,10 +467,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         /// <param name="attr">
         /// <see cref="ConnectorAttribute" /> to test for against.</param>
-        /// <returns>true iff the attribute value is a <see cref="Uid" />,
+        /// <returns>true if the attribute value is a <see cref="Uid" />,
         /// <see cref="ObjectClass" />, <see cref="Password" />, or
         /// <see cref="OperationalAttributes" />.</returns>
-        /// <exception cref="NullReferenceException">iff the attribute parameter is null.</exception>
+        /// <exception cref="NullReferenceException">if the attribute parameter is null.</exception>
         public static bool IsSpecial(ConnectorAttributeInfo attr)
         {
             String name = attr.Name;
@@ -344,7 +482,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// sense of <see cref="ConnectorAttributeUtil.CreateSpecialName"/>.
         /// </summary>
         /// <param name="name">the name of the attribute to test</param>
-        /// <returns>true iff the attribute name is special</returns>
+        /// <returns>true if the attribute name is special</returns>
         public static bool IsSpecialName(String name)
         {
             return NameUtil.IsSpecialName(name);
@@ -365,7 +503,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         /// <param name="name1">the first attribute name</param>
         /// <param name="name2">the second attribute name</param>
-        /// <returns>true iff the two attribute names are equal</returns>
+        /// <returns>true if the two attribute names are equal</returns>
         public static bool NamesEqual(string name1, string name2)
         {
             return NameUtil.NamesEqual(name2, name2);
@@ -436,7 +574,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </remarks>
         /// <param name="obj">
         /// <see cref="ConnectorObject" /> object to inspect.</param>
-        /// <exception cref="NullReferenceException">iff the parameter 'obj' is <code>null</code>.</exception>
+        /// <exception cref="NullReferenceException">if the parameter 'obj' is <code>null</code>.</exception>
         /// <returns>
         /// <code>null</code> if the attribute does not exist otherwise to
         /// value of the <see cref="ConnectorAttribute" />.</returns>
@@ -456,7 +594,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="obj">
         /// <see cref="ConnectorObject" /> object to inspect.</param>
         /// <exception cref="IllegalStateException">if the object does not contain attribute in question.</exception>
-        /// <exception cref="NullReferenceException">iff the parameter 'obj' is <code>null</code>.</exception>
+        /// <exception cref="NullReferenceException">if the parameter 'obj' is <code>null</code>.</exception>
         /// <returns>
         /// <code>null</code> if the attribute does not exist otherwise to
         /// value of the <see cref="ConnectorAttribute" />.</returns>
@@ -472,7 +610,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="obj">
         /// <see cref="ConnectorObject" /> object to inspect.</param>
         /// <exception cref="IllegalStateException">if the object does not contain attribute in question.</exception>
-        /// <exception cref="NullReferenceException">iff the parameter 'obj' is <code>null</code>.</exception>
+        /// <exception cref="NullReferenceException">if the parameter 'obj' is <code>null</code>.</exception>
         /// <returns>
         /// <code>null</code> if the <see cref="ConnectorAttribute" /> does not exist
         /// otherwise the value of the <see cref="ConnectorAttribute" />.</returns>
@@ -550,7 +688,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </remarks>
         /// <param name="attributes">set of AttributeInfo to transform to a map.</param>
         /// <returns>a map of string and AttributeInfo.</returns>
-        /// <exception cref="NullReferenceException">iff the parameter <strong>attributes</strong> is
+        /// <exception cref="NullReferenceException">if the parameter <strong>attributes</strong> is
         /// <strong>null</strong>.</exception>
         public static IDictionary<string, ConnectorAttributeInfo> ToMap(
                 ICollection<ConnectorAttributeInfo> attributes)
@@ -1625,7 +1763,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <see cref="GetApiOp" /> inside a <see cref="ConnectorObject" /> by default. The default
         /// value is <code>true</code>.
         /// </remarks>
-        /// <returns>false iff the attribute should not be returned by default.</returns>
+        /// <returns>false if the attribute should not be returned by default.</returns>
         public bool IsReturnedByDefault
         {
             get
@@ -1785,6 +1923,20 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Sets the unique name of the <see cref="ConnectorAttributeInfo" /> object.
+        /// </summary>
+        /// <param name="name">unique name of the <see cref="ConnectorAttributeInfo" /> object.</param>
+        public ConnectorAttributeInfoBuilder SetName(string name)
+        {
+            if (StringUtil.IsBlank(name))
+            {
+                throw new ArgumentException("Argument must not be blank.");
+            }
+            _name = name;
+            return this;
+        }
+
+        /// <summary>
         /// Please see <see cref="FrameworkUtil.CheckAttributeType(Type)" /> for the
         /// definitive list of supported types.
         /// </summary>
@@ -1800,6 +1952,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Please see <see cref="FrameworkUtil.CheckAttributeType(Type)" /> for the
+        /// definitive list of supported types.
+        /// </summary>
+        /// <param name="type">type for an <see cref="ConnectorAttribute" />'s value.</param>
+        /// <exception cref="ArgumentException">if the Class is not a supported type.</exception>
+        public ConnectorAttributeInfoBuilder SetValueType(Type type)
+        {
+            FrameworkUtil.CheckAttributeType(type);
+            _type = type;
+            return this;
+        }
+
+        /// <summary>
         /// Determines if the attribute is readable.
         /// </summary>
         public bool Readable
@@ -1808,6 +1973,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 SetFlag(ConnectorAttributeInfo.Flags.NOT_READABLE, !value);
             }
+        }
+
+        /// <summary>
+        /// Determines if the attribute is readable.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetReadable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_READABLE, !value);
+            return this;
         }
 
         /// <summary>
@@ -1822,6 +1996,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Determines if the attribute is writable.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetCreatable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_CREATABLE, !value);
+            return this;
+        }
+
+        /// <summary>
         /// Determines if this attribute is required.
         /// </summary>
         public bool Required
@@ -1830,6 +2013,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 SetFlag(ConnectorAttributeInfo.Flags.REQUIRED, value);
             }
+        }
+
+        /// <summary>
+        /// Determines if this attribute is required.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetRequired(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.REQUIRED, value);
+            return this;
         }
 
         /// <summary>
@@ -1844,6 +2036,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Determines if this attribute supports multivalue.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetMultiValue(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.MULTIVALUED, value);
+            return this;
+        }
+
+        /// <summary>
         /// Determines if this attribute writable during update.
         /// </summary>
         public bool Updateable
@@ -1854,12 +2055,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         }
 
+        /// <summary>
+        /// Determines if this attribute writable during update.
+        /// </summary>
+        public ConnectorAttributeInfoBuilder SetUpdateable(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_UPDATEABLE, !value);
+            return this;
+        }
+
         public bool ReturnedByDefault
         {
             set
             {
                 SetFlag(ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT, !value);
             }
+        }
+
+        public ConnectorAttributeInfoBuilder SetReturnedByDefault(bool value)
+        {
+            SetFlag(ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT, !value);
+            return this;
         }
 
         /// <summary>
@@ -1946,7 +2162,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </remarks>
         /// <param name="name">The name of the attribute</param>
         /// <param name="type">The type of the attribute</param>
-        /// <param name="flags">The flags for the attribute</param>
         /// <returns>The attribute info</returns>
         public static ConnectorAttributeInfo Build(String name, Type type)
         {
@@ -1967,6 +2182,36 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static ConnectorAttributeInfo Build(String name)
         {
             return Build(name, typeof(String));
+        }
+
+        /// <summary>
+        /// Convenience method to create a new AttributeInfoBuilder.
+        /// 
+        /// Equivalent to: <code>new AttributeInfoBuilder(name, String.class)</code>
+        /// </summary>
+        /// <param name="name">
+        ///            The name of the attribute </param>
+        /// <returns> The attribute info builder with predefined name and type value.</returns>
+        /// <remarks>Since 1.4</remarks>
+        public static ConnectorAttributeInfoBuilder Define(string name)
+        {
+            return new ConnectorAttributeInfoBuilder(name, typeof(string));
+        }
+
+        /// <summary>
+        /// Convenience method to create a new AttributeInfoBuilder.
+        /// 
+        /// Equivalent to: <code>new AttributeInfoBuilder(name, type)</code>
+        /// </summary>
+        /// <param name="name">
+        ///            The name of the attribute </param>
+        /// <param name="type">
+        ///            The type of the attribute </param>
+        /// <returns> The attribute info builder with predefined name and type value.</returns>
+        /// <remarks>Since 1.4</remarks>
+        public static ConnectorAttributeInfoBuilder Define(string name, Type type)
+        {
+            return new ConnectorAttributeInfoBuilder(name, type);
         }
     }
     #endregion
@@ -2047,7 +2292,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <see cref="ObjectClass.ACCOUNT"/> and <see cref="ObjectClass.GROUP"/>.
         /// </summary>
         /// <param name="oclass">the object class to test</param>
-        /// <returns>true iff the object class is special</returns>
+        /// <returns>true if the object class is special</returns>
         /// <exception cref="NullReferenceException">if the object class parameter is null</exception>
         public static bool IsSpecial(ObjectClass oclass)
         {
@@ -2060,7 +2305,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// sense of <see cref="ObjectClassUtil.CreateSpecialName"/>.
         /// </summary>
         /// <param name="name">the name of the object class to test</param>
-        /// <returns>true iff the object class name is special</returns>
+        /// <returns>true if the object class name is special</returns>
         public static bool IsSpecialName(String name)
         {
             return NameUtil.IsSpecialName(name);
@@ -2083,7 +2328,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         /// <param name="name1">the first object class name</param>
         /// <param name="name2">the second object class name</param>
-        /// <returns>true iff the two object class names are equal</returns>
+        /// <returns>true if the two object class names are equal</returns>
         public static bool NamesEqual(string name1, string name2)
         {
             return NameUtil.NamesEqual(name2, name2);
@@ -2145,6 +2390,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return _type;
         }
 
+        public String Type
+        {
+            get { return _type; }
+        }
+
         /// <summary>
         /// Convenience method to build the display name key for
         /// an object class.
@@ -2188,7 +2438,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
 
             // test that the exact class matches
-            if (!(GetType().Equals(obj.GetType())))
+            if (!(GetType() == obj.GetType()))
             {
                 return false;
             }
@@ -3341,7 +3591,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
         public static OperationOptionInfo BuildRunWithPassword()
         {
-            return Build(OperationOptions.OP_RUN_WITH_PASSWORD);
+            return Build(OperationOptions.OP_RUN_WITH_PASSWORD, typeof(GuardedString));
         }
 
         public static OperationOptionInfo BuildRunAsUser()
@@ -3432,7 +3682,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
-        /// Returns true iff o is a QualifiedUid and the object class and uid match.
+        /// Returns true if o is a QualifiedUid and the object class and uid match.
         /// </summary>
         public override bool Equals(Object o)
         {
@@ -3953,7 +4203,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     {
                         continue;
                     }
-                    foreach (SafeType<APIOperation> op in _defaultSupportedOperations)
+                    IEnumerable<SafeType<APIOperation>> apiOperations = FrameworkUtil.Spi2Apis(spi).Intersect(_defaultSupportedOperations);
+                    foreach (SafeType<APIOperation> op in apiOperations)
                     {
                         if (OperationOptionOperation(op))
                         {
@@ -4386,7 +4637,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             {
                 throw new ArgumentException("Argument 'scriptLanguage' must be specified");
             }
-            if (StringUtil.IsBlank(ScriptText))
+            if (StringUtil.IsBlank(scriptText))
             {
                 throw new ArgumentException("Argument 'scriptText' must be specified");
             }
@@ -5245,7 +5496,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// more invocations to <see cref="Handle(SyncDelta)" /> will be performed.
         /// </remarks>
         /// <param name="delta">The change</param>
-        /// <returns>True iff the application wants to continue processing more
+        /// <returns>True if the application wants to continue processing more
         /// results.</returns>
         /// <exception cref="Exception">If the application encounters an exception. This will stop
         /// the interation and the exception will be propogated back to
@@ -5403,12 +5654,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public class ConnectorAttributesAccessor
     {
 
-        ICollection<ConnectorAttribute> _attrs;
         IDictionary<String, ConnectorAttribute> _attrMap;
 
         public ConnectorAttributesAccessor(ICollection<ConnectorAttribute> attrs)
         {
-            _attrs = attrs;
             _attrMap = ConnectorAttributeUtil.ToMap(attrs);
         }
 
@@ -5430,6 +5679,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public Name GetName()
         {
             return (Name)Find(Name.NAME);
+        }
+
+        /// <summary>
+        /// Get the <seealso cref="Uid"/> attribute from the set of attributes.
+        /// </summary>
+        /// <returns> the <seealso cref="Uid"/> attribute in the set. </returns>
+        public Uid GetUid()
+        {
+            return (Uid)Find(Uid.NAME);
         }
 
         /// <summary>
@@ -5468,7 +5726,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         /// <param name="name">-
         /// name of attribute to search for.</param>
-        /// <returns>The List (generic object) iff it exists otherwise null.</returns>
+        /// <returns>The List (generic object) if it exists otherwise null.</returns>
         public IList<Object> FindList(String name)
         {
             ConnectorAttribute a = Find(name);
@@ -5501,6 +5759,20 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Get the name of attributes this Accessor was created with.
+        /// </summary>
+        /// <returns> new Case Insensitive ReadOnly Set of attribute name the access
+        ///         has access to.
+        /// </returns>
+        /// <remarks>Since 1.4</remarks>
+        public ICollection<string> ListAttributeNames()
+        {
+            //ICollection<string> names = CollectionUtil.NewCaseInsensitiveSet();
+            //CollectionUtil.AddAll(names, _attrMap.Keys);
+            return CollectionUtil.AsReadOnlySet(_attrMap.Keys);
+        }
+
+        /// <summary>
         /// Determines if the set as the attribute specified.
         /// </summary>
         /// <param name="name">attribute name</param>
@@ -5513,11 +5785,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <summary>
         /// Get the string value from the specified (single-valued) attribute.
         /// </summary>
-        /// <param name="name">Attribute from which to retrieve the long value.</param>
-        /// <returns>null if the value is null otherwise the long value for the
+        /// <param name="name">Attribute from which to retrieve the string value.</param>
+        /// <returns>null if the value is null otherwise the string value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a string.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued).</exception>
         public String FindString(String name)
         {
@@ -5526,13 +5798,29 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Get the char value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the char value.</param>
+        /// <returns>null if the value is null otherwise the char value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a char.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued).</exception>
+        /// <remarks>Since 1.4</remarks>
+        public char? FindCharacter(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetCharacterValue(a);
+        }
+
+        /// <summary>
         /// Get the integer value from the specified (single-valued) attribute.
         /// </summary>
         /// <param name="name">Attribute from which to retrieve the long value.</param>
         /// <returns>null if the value is null otherwise the long value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an long.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued).</exception>
         public int? FindInteger(String name)
         {
@@ -5546,8 +5834,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="name">Attribute from which to retrieve the long value.</param>
         /// <returns>null if the value is null otherwise the long value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an long.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued).</exception>
         public long? FindLong(String name)
         {
@@ -5562,8 +5850,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="name">Attribute from which to retrieve the date value.</param>
         /// <returns>null if the value is null otherwise the date value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an long.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an long.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued).</exception>
         public DateTime? FindDateTime(String name)
         {
@@ -5577,8 +5865,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="name">Attribute from which to retrieve the integer value.</param>
         /// <returns>null if the value is null otherwise the integer value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an integer.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an integer.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued)..</exception>
         public double? FindDouble(String name)
         {
@@ -5587,18 +5875,146 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
+        /// Get the float value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the float value.</param>
+        /// <returns>null if the value is null otherwise the float value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a float.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public float? FindFloat(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetFloatValue(a);
+        }
+
+        /// <summary>
+        /// Get the big decimal value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the big decimal value.</param>
+        /// <returns>null if the value is null otherwise the big decimal value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a big decimal.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public BigDecimal FindBigDecimal(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetBigDecimalValue(a);
+        }
+
+        /// <summary>
         /// Get the boolean value from the specified (single-valued) attribute.
         /// </summary>
         /// <param name="name">Attribute from which to retrieve the boolean value.</param>
         /// <returns>null if the value is null otherwise the boolean value for the
         /// attribute.</returns>
-        /// <exception cref="InvalidCastException ">iff the object in the attribute is not an <see cref="Boolean" />.</exception>
-        /// <exception cref="ArgumentException">iff the attribute is a multi-valued (rather than
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not an <see cref="Boolean" />.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
         /// single-valued).</exception>
         public bool? FindBoolean(String name)
         {
             ConnectorAttribute a = Find(name);
             return a == null ? null : ConnectorAttributeUtil.GetBooleanValue(a);
+        }
+
+        /// <summary>
+        /// Get the byte value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the byte value.</param>
+        /// <returns>null if the value is null otherwise the byte value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a byte.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public byte? FindByte(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetByteValue(a);
+        }
+
+        /// <summary>
+        /// Get the byte array value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the byte array value.</param>
+        /// <returns>null if the value is null otherwise the byte array value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a byte array.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public byte[] FindByteArray(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetByteArrayValue(a);
+        }
+
+        /// <summary>
+        /// Get the big integer value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the big integer value.</param>
+        /// <returns>null if the value is null otherwise the big integer value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a big integer.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public BigInteger FindBigInteger(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetBigIntegerValue(a);
+        }
+
+        /// <summary>
+        /// Get the guarded byte array value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the guarded byte array value.</param>
+        /// <returns>null if the value is null otherwise the guarded byte array value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a guarded byte array.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public GuardedByteArray FindGuardedByteArray(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetGuardedByteArrayValue(a);
+        }
+
+        /// <summary>
+        /// Get the guarded string value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the guarded string value.</param>
+        /// <returns>null if the value is null otherwise the guarded string value for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a guarded string.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public GuardedString FindGuardedString(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetGuardedStringValue(a);
+        }
+
+        /// <summary>
+        /// Get the dictionary value from the specified (single-valued) attribute.
+        /// </summary>
+        /// <param name="name">Attribute from which to retrieve the dictionary value.</param>
+        /// <returns>null if the value is null otherwise the byte dictionary for the
+        /// attribute.</returns>
+        /// <exception cref="InvalidCastException ">if the object in the attribute is not a dictionary.</exception>
+        /// <exception cref="ArgumentException">if the attribute is a multi-valued (rather than
+        /// single-valued)..</exception>
+        /// <remarks>Since 1.4</remarks>
+        public IDictionary<object, object> FindDictionary(String name)
+        {
+            ConnectorAttribute a = Find(name);
+            return a == null ? null : ConnectorAttributeUtil.GetDictionaryValue(a);
         }
     }
     #endregion

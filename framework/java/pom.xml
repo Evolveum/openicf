@@ -162,7 +162,7 @@
         <javadocStylesheet>org/forgerock/javadoc/javadoc.css</javadocStylesheet>
 
         <!-- Core documentation properties -->
-        <frDocPluginVersion>2.1.0</frDocPluginVersion>
+        <frDocPluginVersion>2.1.2</frDocPluginVersion>
         <docTargetVersion>${project.version}</docTargetVersion>
         <googleAnalyticsAccountId>UA-23412190-10</googleAnalyticsAccountId>
         <!--
@@ -186,7 +186,7 @@
         <module>connector-test-common</module>
         <module>connector-framework-internal</module>
         <module>connector-framework-osgi</module>
-        <module>connector-framework-contract</module>
+        <!--<module>connector-framework-contract</module>-->
         <module>testcommonv1</module>
         <module>testcommonv2</module>
         <module>testbundlev1</module>

@@ -37,7 +37,7 @@ import org.identityconnectors.framework.common.objects.filter.Filter
 
 import java.sql.Connection
 
-def action = action as OperationType
+def operation = operation as OperationType
 def configuration = configuration as ScriptedSQLConfiguration
 def connection = connection as Connection
 def filter = filter as Filter
@@ -51,7 +51,7 @@ def ORG = new ObjectClass("organization")
 // connection: handler to the SQL connection
 // configuration : handler to the connector's configuration object
 // objectClass: a String describing the Object class (__ACCOUNT__ / __GROUP__ / other)
-// action: a string describing the action ("SEARCH" here)
+// operation: an OperationType describing the operation ("SEARCH" here)
 // log: a handler to the Log facility
 // options: a handler to the OperationOptions Map
 // query: a handler to the Query Map
@@ -76,7 +76,7 @@ def ORG = new ObjectClass("organization")
 // !!!! Each Map must contain a '__UID__' and '__NAME__' attribute.
 // This is required to build a ConnectorObject.
 
-log.info("Entering " + action + " Script");
+log.info("Entering " + operation + " Script");
 
 def sql = new Sql(connection);
 def where = "";
@@ -135,6 +135,7 @@ switch (objectClass) {
             handler {
                 uid row.id as String
                 id row.name
+                delegate.objectClass(objectClass)
                 attribute 'gid', row.gid
                 attribute 'description', row.description
             }
@@ -146,13 +147,14 @@ switch (objectClass) {
             handler {
                 uid row.id as String
                 id row.name
+                setObjectClass objectClass
                 attribute 'description', row.description
             }
         });
         break
 
     default:
-        throw UnsupportedOperationException(action.name() + " operation of type:" + objectClass)
+        throw new UnsupportedOperationException(operation.name() + " operation of type:" + objectClass)
 }
 
 return new SearchResult();
