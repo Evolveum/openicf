@@ -95,7 +95,7 @@ public class ScriptedRESTConfiguration extends ScriptedConfiguration {
     /**
      * Set the REST endpoint
      *
-     * @param value
+     * @param endPoint
      */
     public void setEndPoint(String endPoint) {
         this.endPoint = endPoint;
@@ -117,14 +117,14 @@ public class ScriptedRESTConfiguration extends ScriptedConfiguration {
     /**
      * Set the REST base path
      *
-     * @param basePAth
+     * @param basePath
      */
     public void setBasePath(String basePath) {
         this.basePath = basePath;
     }
     /*
      * default content type
-     * Can be: 
+     * Can be:
      *  ANY
      *  TEXT("text/plain")
      *  JSON("application/json","application/javascript","text/javascript")
