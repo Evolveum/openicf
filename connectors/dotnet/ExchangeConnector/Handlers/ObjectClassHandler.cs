@@ -1,4 +1,5 @@
-﻿using Org.IdentityConnectors.Framework.Common.Objects;
+﻿using Org.IdentityConnectors.ActiveDirectory;
+using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using System;
 using System.Collections.Generic;

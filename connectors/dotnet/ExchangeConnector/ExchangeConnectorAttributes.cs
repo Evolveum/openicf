@@ -263,7 +263,7 @@ namespace Org.IdentityConnectors.Exchange
 
         internal static IList<string> AttCustomAttributes;
         internal static IList<string> AttCustomAttributesADNames;
-        internal static IList<ConnectorAttributeInfo> AttInfoCustomAttributesForSchema;
+        //internal static IList<ConnectorAttributeInfo> AttInfoCustomAttributesForSchema;
 
         internal const int NumberOfCustomAttributes = 15;
 
@@ -344,7 +344,7 @@ namespace Org.IdentityConnectors.Exchange
             };
 
         // these "manually defined" Exchange attributes should be part of the schema (here are all except custom attributes)
-        internal static readonly ISet<ConnectorAttributeInfo> ManualExchangeAttInfosForSchema =
+        /* internal static readonly ISet<ConnectorAttributeInfo> ManualExchangeAttInfosForSchema =
             new HashSet<ConnectorAttributeInfo> 
                 {
                     AttInfoAlias,
@@ -358,16 +358,16 @@ namespace Org.IdentityConnectors.Exchange
                     AttInfoDeliverToMailboxAndForward,
                     AttInfoForwardingSmtpAddress
                 };
-
+        */
         // these AD attributes should be part of the schema
-        internal static readonly ISet<ConnectorAttributeInfo> ExchangeRelatedADAttInfosForSchema =
+        /*internal static readonly ISet<ConnectorAttributeInfo> ExchangeRelatedADAttInfosForSchema =
             new HashSet<ConnectorAttributeInfo> 
                 {
                     AttInfoADMsExchRecipientDisplayType, 
                     AttInfoADMsExchRecipientTypeDetails,
                     AttInfoADDatabase 
                 };
-
+        */
         internal static bool IsExchangeAttribute(String attrName)
         {
             return AttMap2AD.ContainsKey(attrName) || OtherExchangeAttributes.Contains(attrName);
@@ -388,17 +388,17 @@ namespace Org.IdentityConnectors.Exchange
             // creating custom attributes
             AttCustomAttributes = new List<string>(NumberOfCustomAttributes);
             AttCustomAttributesADNames = new List<string>(NumberOfCustomAttributes);
-            AttInfoCustomAttributesForSchema = new List<ConnectorAttributeInfo>(NumberOfCustomAttributes);
+            //AttInfoCustomAttributesForSchema = new List<ConnectorAttributeInfo>(NumberOfCustomAttributes);
             for (int i = 1; i <= NumberOfCustomAttributes; i++)
             {
                 string name = AttPrefixCustomAttribute + i;
                 string adName = AttPrefixCustomAttributeADName + i;
                 AttCustomAttributes.Add(name);
                 AttCustomAttributesADNames.Add(adName);
-                AttInfoCustomAttributesForSchema.Add(ConnectorAttributeInfoBuilder.Build(
+                /*AttInfoCustomAttributesForSchema.Add(ConnectorAttributeInfoBuilder.Build(
                         name,
                         typeof(string),
-                        0));
+                        0));*/
                 AttMap2AD.Add(name, adName);
             }
 

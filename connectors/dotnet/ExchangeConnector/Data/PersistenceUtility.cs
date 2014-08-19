@@ -39,8 +39,7 @@ namespace Org.IdentityConnectors.Exchange.Data
         /// <summary>
         /// Prevents a default instance of the <see cref="PersistenceUtility" /> class from being created. 
         /// </summary>
-        private PersistenceUtility()
-        {
+        private PersistenceUtility() {
         }
 
         /// <summary>
@@ -74,21 +73,5 @@ namespace Org.IdentityConnectors.Exchange.Data
                 return commandInfos;
             }            
         }
-
-        internal static ScriptingInfo ReadScriptingInfo(string filename)
-        {
-            Trace.TraceInformation("Reading scripting info from file {0}", filename);
-
-            Stream stream = File.Open(filename, FileMode.Open);
-            using (TextReader streamReader = new StreamReader(stream))
-            {
-                XmlSerializer ser = new XmlSerializer(typeof(ScriptingInfo));
-                ScriptingInfo scriptingInfo = (ScriptingInfo)ser.Deserialize(streamReader);
-                int count = scriptingInfo != null && scriptingInfo.OperationInfo != null ? scriptingInfo.OperationInfo.Length : 0;
-                Trace.TraceInformation("{0} operation definition(s) read", count);
-                return scriptingInfo;
-            }
-        }            
-
     }
 }

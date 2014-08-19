@@ -21,39 +21,26 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Collection of <see cref="PSObject"/> returned from runspace</returns>
         /// <exception cref="ConnectorException">If some troubles with command execution, 
         /// the exception will be partially localized</exception>
-        internal ICollection<PSObject> InvokePipeline(ExchangeConnector exchangeConnector, Command cmd)
-        {
-            Trace.TraceInformation("PowerShell Command: " + cmd);
-            foreach (CommandParameter parameter in cmd.Parameters)
-            {
-                Trace.TraceInformation("parameter: " + parameter.Name + " value:" + parameter.Value);
-            }
-
+        internal ICollection<PSObject> InvokePipeline(ExchangeConnector exchangeConnector, Command cmd) {
             return exchangeConnector.PowerShellSupport.InvokePipeline(cmd);
         }
 
-
-        internal Uid InvokePipelineAndGetGuid(ExchangeConnector exchangeConnector, Command cmd)
-        {
+        internal Uid InvokePipelineAndGetGuid(ExchangeConnector exchangeConnector, Command cmd) {
             ICollection<PSObject> objects = InvokePipeline(exchangeConnector, cmd);
-            if (objects.Count() != 1)
-            {
+            if (objects.Count() != 1) {
                 throw new ConnectorException("Expected one object returned from 'create' operation, got " + objects.Count() + " instead");
             }
             PSObject psobject = objects.ElementAt(0);
-            if (psobject == null)
-            {
+            if (psobject == null) {
                 throw new ConnectorException("Got 'null' object from 'create' operation");
             }
             PSPropertyInfo guidPropertyInfo = psobject.Properties["guid"];          // TODO catch exception
-            if (guidPropertyInfo == null || guidPropertyInfo.Value == null)
-            {
+            if (guidPropertyInfo == null || guidPropertyInfo.Value == null) {
                 throw new ConnectorException("No 'guid' property on object from 'create' operation");
             }
             Trace.TraceInformation("GUID value = " + guidPropertyInfo.Value);
             return new Uid(guidPropertyInfo.Value.ToString());
         }
-
 
         internal ConnectorObject CreateConnectorObject(ExchangeConnector connector, PSObject psobject, ObjectClass objectClass) {
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();

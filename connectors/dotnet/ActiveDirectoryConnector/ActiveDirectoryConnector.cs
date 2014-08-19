@@ -46,7 +46,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         REPLACE
     }
 
-
     /// <summary>
     /// The Active Directory Connector
     /// </summary>
@@ -285,6 +284,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Trace.TraceInformation("Search: Getting root node for search");
             _dirHandler = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
 
+            _schema = null;
+            _objectClassInfos = null;
             Schema();           // initializes e.g. _attributesReturnedByDefault (used throughout this connector)
 
             //searcher = new DirectorySearcher(_dirHandler);
@@ -333,8 +334,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// Defines the supported object classes by the connector, used for schema building
         /// </summary>
         /// <returns>List of supported object classes</returns>
-        public ICollection<ObjectClass> GetSupportedObjectClasses()
-        {
+        public ICollection<ObjectClass> GetSupportedObjectClasses() {
             return GetObjectClassInfos().Keys;
         }
 
@@ -343,31 +343,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc">ObjectClass to get info for</param>
         /// <returns>ObjectClass' ObjectClassInfo</returns>
-        public ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
-        {
+        public ObjectClassInfo GetObjectClassInfo(ObjectClass oc) {
             return GetObjectClassInfos()[oc];
         }
 
-        private IDictionary<ObjectClass, ObjectClassInfo> GetObjectClassInfos()
-        {
-            if (_objectClassInfos == null)
-            {
+        private IDictionary<ObjectClass, ObjectClassInfo> GetObjectClassInfos() {
+            if (_objectClassInfos == null) {
                 var infos = new List<IDictionary<ObjectClass, ObjectClassInfo>>();
 
-                if (_configuration.ObjectClassesReplacementFile != null)
-                {
-                    infos.Add(CommonUtils.GetOCInfo(_configuration.ObjectClassesReplacementFile, false));
+                if (_configuration.ObjectClassesReplacementFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesReplacementFile));
+                } else {
+                    infos.Add(CommonUtils.GetOCInfoFromExecutingAssembly("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml"));
                 }
-                else
-                {
-                    infos.Add(CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml", true));
+                if (_configuration.ObjectClassesExtensionFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesExtensionFile));
                 }
-
-                if (_configuration.ObjectClassesExtensionFile != null)
-                {
-                    infos.Add(CommonUtils.GetOCInfo(_configuration.ObjectClassesExtensionFile, false));
-                }
-
                 _objectClassInfos = CommonUtils.MergeOCInfo(infos);
             }
             return _objectClassInfos;
@@ -378,8 +369,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc"></param>
         /// <returns></returns>
-        public IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc)
-        {
+        public IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc) {
             return null;
         }
 
@@ -388,15 +378,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oc"></param>
         /// <returns></returns>
-        public IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
-        {
-            if (oc.Equals(ActiveDirectoryConnector.groupObjectClass) || oc.Equals(ouObjectClass))
-            {
+        public IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc) {
+            if (oc.Equals(ActiveDirectoryConnector.groupObjectClass) || oc.Equals(ouObjectClass)) {
                 return new List<SafeType<SPIOperation>> {
                     SafeType<SPIOperation>.Get<AuthenticateOp>(),
                     SafeType<SPIOperation>.Get<SyncOp>()};          // TODO why is SyncOp not supported for groups/ou? [med]
             }
-
             return null;
         }
 

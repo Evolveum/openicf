@@ -56,21 +56,6 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         private const string FileObjectClassDef = "Org.IdentityConnectors.Exchange.ObjectClasses.xml";
 
-        /// <summary>
-        /// Exchange 2007 registry key, used for building the exchange assembly resolver
-        /// </summary>
-        private const string Exchange2007RegKey = "Software\\Microsoft\\Exchange\\v8.0\\Setup\\";
-
-        /// <summary>
-        /// Exchange 2010 registry key, used for building the exchange assembly resolver
-        /// </summary>
-        // private const string Exchange2010RegKey = "Software\\Microsoft\\ExchangeServer\\v14\\Setup\\";
-
-        /// <summary>
-        /// Exchange registry value name, used together with <see cref="Exchange2010RegKey"/> or <see cref="Exchange2007RegKey"/> w.r.t the
-        /// Exchange version to manage.
-        /// </summary>
-        private const string ExchangeRegValueName = "MsiInstallPath";
 
         /// <summary>
         /// Prevents a default instance of the <see cref="ExchangeUtility" /> class from being created. 
@@ -98,105 +83,15 @@ namespace Org.IdentityConnectors.Exchange
 //            return null;
 //        }
 
-        /// <summary>
-        /// Creates Exchange 2007 Assembly Resolver, <see cref="ResolveEventHandler"/>
-        /// </summary>
-        /// <param name="sender">The source of the event</param>
-        /// <param name="args">A <see cref="System.ResolveEventArgs"/> that contains the event data</param>
-        /// <returns>Assembly resolver that resolves Exchange 2007 assemblies</returns>
-        internal static Assembly AssemblyResolver2007(object sender, ResolveEventArgs args)
-        {
-            // Add path for the Exchange 2007 DLLs
-            if (args.Name.Contains("Microsoft.Exchange"))
-            {
-                string installPath = GetRegistryStringValue(Exchange2007RegKey, ExchangeRegValueName);
-                installPath += "\\bin\\" + args.Name.Split(',')[0] + ".dll";
-                return Assembly.LoadFrom(installPath);
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Get registry value, which is expected to be a string
-        /// </summary>
-        /// <param name="keyName">Registry Key Name</param>
-        /// <param name="valName">Registry Value Name</param>
-        /// <returns>Registry value</returns>        
-        /// <exception cref="ArgumentNullException">If <paramref name="valName"/> is null</exception>
-        /// <exception cref="InvalidDataException">If some problem with the registry value</exception>
-        internal static string GetRegistryStringValue(string keyName, string valName)
-        {
-            const string MethodName = "GetRegistryStringValue";
-            Debug.WriteLine(MethodName + "(" + keyName + ", " + valName + ")" + ":entry", ClassName);
-
-            // argument check            
-            if (keyName == null)
-            {
-                keyName = string.Empty;
-            }
-
-            if (valName == null)
-            {
-                throw new ArgumentNullException("valName");
-            }
-
-            RegistryKey regKey = Registry.LocalMachine.OpenSubKey(keyName, false);
-            try
-            {
-                if (regKey != null)
-                {
-                    object val = regKey.GetValue(valName);
-                    if (val != null)
-                    {
-                        RegistryValueKind regType = regKey.GetValueKind(valName);
-                        if (!regType.Equals(RegistryValueKind.String))
-                        {
-                            throw new InvalidDataException(String.Format(
-                                CultureInfo.CurrentCulture,
-                                "Invalid Registry data type, key name: {0} value name: {1} should be String",
-                                keyName,
-                                valName));
-                        }
-
-                        return Convert.ToString(val, CultureInfo.CurrentCulture);
-                    }
-                    else
-                    {
-                        throw new InvalidDataException(String.Format(
-                            CultureInfo.CurrentCulture,
-                            "Missing value for key name: {0} value name: {1}",
-                            keyName,
-                            valName));
-                    }
-                }
-                else
-                {
-                    throw new InvalidDataException(String.Format(
-                        CultureInfo.CurrentCulture,
-                        "Unable to open registry for key: {0}",
-                        keyName));
-                }
-            }
-            finally
-            {
-                if (regKey != null)
-                {
-                    regKey.Close();
-                }
-
-                Debug.WriteLine(MethodName + ":exit", ClassName);
-            }
-        }
 
         /// <summary>
         /// reads the object class info definitions from xml
         /// </summary>
         /// <returns>Dictionary of object classes</returns>
-        internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
-        {
-            return CommonUtils.GetOCInfo(FileObjectClassDef, true);
-        }
+        //internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
+        //{
+            //return CommonUtils.GetOCInfoFromFile(FileObjectClassDef);
+        //}
 
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ExchangeConfiguration config)
         {

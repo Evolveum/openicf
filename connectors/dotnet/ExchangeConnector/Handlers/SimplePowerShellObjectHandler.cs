@@ -42,18 +42,20 @@ namespace Org.IdentityConnectors.Exchange
 
         public void Create(CreateOpContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+
             Command cmdNew = ExchangeUtility.GetCommand(
                 new PSExchangeConnector.CommandInfo(GetNewCommandName()), 
-                context.Attributes, context.Connector.Configuration);
+                context.Attributes, exconn.Configuration);
 
-            context.Uid = _helper.InvokePipelineAndGetGuid(context.Connector, cmdNew);
+            context.Uid = _helper.InvokePipelineAndGetGuid(exconn, cmdNew);
 
             if (ExecuteSetAfterNew()) {
                 Command cmdSet = ExchangeUtility.GetCommand(
                     new PSExchangeConnector.CommandInfo(GetSetCommandName()),
-                    context.Attributes, context.Uid, context.Connector.Configuration);
+                    context.Attributes, context.Uid, exconn.Configuration);
                 try {
-                    _helper.InvokePipeline(context.Connector, cmdSet);
+                    _helper.InvokePipeline(exconn, cmdSet);
                 } catch {
                     // TODO rollback
                     // rethrow original exception
@@ -64,36 +66,42 @@ namespace Org.IdentityConnectors.Exchange
 
         public void Update(UpdateOpContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+
             Command cmdSet = ExchangeUtility.GetCommand(
                 new PSExchangeConnector.CommandInfo(GetSetCommandName()), 
-                context.Attributes, context.Uid, context.Connector.Configuration);
+                context.Attributes, context.Uid, exconn.Configuration);
 
-            _helper.InvokePipeline(context.Connector, cmdSet);
+            _helper.InvokePipeline(exconn, cmdSet);
         }
 
         public void Delete(DeleteOpContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+
             Command cmdRemove = ExchangeUtility.GetCommand(
                 new PSExchangeConnector.CommandInfo(GetRemoveCommandName()), 
-                context.Uid, context.Connector.Configuration);
+                context.Uid, exconn.Configuration);
 
-            _helper.InvokePipeline(context.Connector, cmdRemove);
+            _helper.InvokePipeline(exconn, cmdRemove);
         }
 
         public void ExecuteQuery(ExecuteQueryContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+
             Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: query={0}", context.Query);
 
             Command cmdGet = ExchangeUtility.GetCommand(
-                new PSExchangeConnector.CommandInfo(GetGetCommandName()), context.Connector.Configuration);
+                new PSExchangeConnector.CommandInfo(GetGetCommandName()), exconn.Configuration);
             if (context.Query != null) {
                 cmdGet.Parameters.Add("Identity", context.Query);
             }
-            ICollection<PSObject> objects = _helper.InvokePipeline(context.Connector, cmdGet);
+            ICollection<PSObject> objects = _helper.InvokePipeline(exconn, cmdGet);
             Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: got {0} objects", objects.Count);
             foreach (PSObject psobject in objects) {
                 if (psobject != null) {
-                    context.ResultsHandler.Handle(_helper.CreateConnectorObject(context.Connector, psobject, context.ObjectClass));
+                    context.ResultsHandler.Handle(_helper.CreateConnectorObject(exconn, psobject, context.ObjectClass));
                 }
             }
         }
@@ -105,7 +113,7 @@ namespace Org.IdentityConnectors.Exchange
 
         public ObjectClassInfo GetObjectClassInfo(ExchangeConnector connector, ObjectClass oc)
         {
-            return connector.ActiveDirectoryConnector.GetObjectClassInfo(oc);       // TODO
+            return connector.GetObjectClassInfoGeneric(oc);
         }
 
         public FilterTranslator<string> CreateFilterTranslator(ExchangeConnector connector, ObjectClass oclass, OperationOptions options)

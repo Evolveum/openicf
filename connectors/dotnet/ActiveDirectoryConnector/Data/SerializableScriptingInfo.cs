@@ -16,7 +16,7 @@
 //
 // </copyright>
 // <author>Pavol Mederly</author>
-namespace Org.IdentityConnectors.Exchange.Data
+namespace Org.IdentityConnectors.ActiveDirectory.Data
 {
     using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Objects;

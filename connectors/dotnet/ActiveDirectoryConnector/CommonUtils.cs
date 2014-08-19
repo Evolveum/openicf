@@ -29,48 +29,42 @@ using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 using System.Text;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class CommonUtils
     {
-        ///<summary>
-        /// reads the object class info definitions from xml
-        ///</summary>
-        ///<returns>Dictionary of object classes</returns>
-        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name, bool fromAssembly)
-        {
-            Stream stream;
+        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoFromFile(string fileName) {
+            String fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+            Trace.TraceInformation("Reading ObjectClass information from file {0}", fullPath);
+            var stream = File.Open(fullPath, FileMode.Open);
+            return GetOCInfoInternal(stream, true);
+        }
 
-            if (fromAssembly)
-            {
-                Trace.TraceInformation("Reading ObjectClass information from assembly resource {0}", name);
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                stream = assembly.GetManifestResourceStream(name);
-            }
-            else
-            {
-                String fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
-                Trace.TraceInformation("Reading ObjectClass information from file {0}", name);
-                stream = File.Open(fullPath, FileMode.Open);
-            }
+        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoFromExecutingAssembly(string resourceName) {
+            return GetOCInfoFromAssembly(resourceName, Assembly.GetExecutingAssembly());
+        }
+        
+        public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoFromAssembly(string resourceName, Assembly assembly) {
+            Trace.TraceInformation("Reading ObjectClass information from assembly resource {0}", resourceName);
+            var stream = assembly.GetManifestResourceStream(resourceName);
+            return GetOCInfoInternal(stream, false);
+        }
 
+        private static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoInternal(Stream stream, bool dump) {
             Assertions.NullCheck(stream, "stream");
 
             //we just read
             TextReader streamReader = new StreamReader(stream);
             String xml;
-            try
-            {
+            try {
                 xml = streamReader.ReadToEnd();
-            }
-            finally
-            {
+            } finally {
                 streamReader.Close();
             }
 
-            if (!fromAssembly)
-            {
+            if (dump) {
                 Trace.TraceInformation("XML = {0}", xml);
             }
 
@@ -81,8 +75,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             //create map of object infos
             var map = new Dictionary<ObjectClass, ObjectClassInfo>(ret.Count);
-            foreach (ObjectClassInfo o in ret)
-            {
+            foreach (ObjectClassInfo o in ret) {
                 map.Add(new ObjectClass(o.ObjectType.ToString()), o);
             }
 
@@ -197,6 +190,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             return sb.ToString();
         }
+
+        public static string ReadResource(string filename, Assembly assembly) {
+            if (assembly == null) {
+                assembly = Assembly.GetExecutingAssembly();
+            }
+            Stream stream = assembly.GetManifestResourceStream(filename);
+            if (stream == null) {
+                throw new IOException(
+                        string.Format(CultureInfo.CurrentCulture, "Unable to read the {0} file from Assembly", filename));
+            }
+
+            using (TextReader streamReader = new StreamReader(stream)) {
+                return streamReader.ReadToEnd();
+            }
+        }
+
 
     }
 }

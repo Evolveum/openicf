@@ -21,6 +21,7 @@
 // ====================
 // </copyright>
 // <author>Tomas Knappek</author>
+// <author>Pavol Mederly</author>
 
 namespace Org.IdentityConnectors.Exchange
 {

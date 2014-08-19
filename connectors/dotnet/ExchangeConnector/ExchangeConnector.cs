@@ -20,8 +20,10 @@
 // "Portions Copyrighted [year] [name of copyright owner]"
 // ====================
 // Portions Copyrighted 2014 ForgeRock AS.
+// Portions Copyrighted 2014 Evolveum
 // </copyright>
 // <author>Tomas Knappek</author>
+// <author>Pavol Mederly</author>
 
 namespace Org.IdentityConnectors.Exchange
 {
@@ -39,6 +41,7 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Common.Objects.Filters;
     using Org.IdentityConnectors.Framework.Spi;
     using Org.IdentityConnectors.Framework.Spi.Operations;
+    using System.Reflection;
 
     /// <summary>
     /// MS Exchange connector - build to have the same functionality as Exchange resource adapter
@@ -57,8 +60,11 @@ namespace Org.IdentityConnectors.Exchange
         /// ClassName - used for debugging purposes
         /// </summary>
         private static readonly string ClassName = typeof(ExchangeConnector).ToString();
+        private static readonly string LocalClassName = typeof(ExchangeConnector).Name;
 
-        private DelegateToActiveDirectoryHandler _delegateToActiveDirectoryHandler;
+        private static TraceSource LOGGER = new TraceSource(LocalClassName);
+
+        private const int CAT_DEFAULT = 1;      // default tracing event category
 
         private IDictionary<string, ObjectClassHandler> _handlers;
 
@@ -73,58 +79,52 @@ namespace Org.IdentityConnectors.Exchange
         private static Schema _schema = null;
 
         /// <summary>
+        /// Cached object class infos.
+        /// </summary>
+        private IDictionary<ObjectClass, ObjectClassInfo> _objectClassInfos = null;
+
+        /// <summary>
         /// Configuration instance
         /// </summary>
         private ExchangeConfiguration _configuration;
 
         // TODO do cleanly
-        public ExchangeConfiguration Configuration
-        {
-            get
-            {
+        public ExchangeConfiguration Configuration {
+            get {
                 return _configuration;
             }
         }
 
-        public ActiveDirectoryConnector ActiveDirectoryConnector
-        {
-            get
-            {
+        public ActiveDirectoryConnector ActiveDirectoryConnector {
+            get {
                 return _activeDirectoryConnector;
             }
         }
 
-        public PowerShellSupport PowerShellSupport
-        {
-            get
-            {
+        internal ExchangePowerShellSupport PowerShellSupport {
+            get {
                 return _powershell;
             }
         }
-        /// <summary>
-        /// Runspace instance
-        /// </summary>
-        private PowerShellSupport _powershell;
+        private ExchangePowerShellSupport _powershell;
 
         private Scripting _scripting;
 
         #endregion
 
         #region Constructors
-        static ExchangeConnector()
-        {
+        static ExchangeConnector() {
+            Trace.TraceInformation("Static constructor called.");
             PSExchangeConnector.CommandInfo.InitializeIfNeeded();
         }
 
-        public ExchangeConnector()
-        {
+        public ExchangeConnector() {
+            Trace.TraceInformation("Instance constructor called.");
             _activeDirectoryConnector = new ActiveDirectoryConnector();
-            _delegateToActiveDirectoryHandler = new DelegateToActiveDirectoryHandler();
-            _handlers = new Dictionary<string, ObjectClassHandler>()
-            {
+            _handlers = new Dictionary<string, ObjectClassHandler>() {
                 { ObjectClass.ACCOUNT_NAME, new AccountHandler() },
-                { ActiveDirectoryConnector.OBJECTCLASS_OU, _delegateToActiveDirectoryHandler },
-                { ActiveDirectoryConnector.OBJECTCLASS_GROUP, _delegateToActiveDirectoryHandler },
+                { ActiveDirectoryConnector.OBJECTCLASS_OU, new DelegateToActiveDirectoryHandler() },
+                { ActiveDirectoryConnector.OBJECTCLASS_GROUP, new DelegateToActiveDirectoryHandler() },
                 { AcceptedDomainHandler.OBJECTCLASS_NAME, new AcceptedDomainHandler() },
                 { GlobalAddressListHandler.OBJECTCLASS_NAME, new GlobalAddressListHandler() },
                 { AddressListHandler.OBJECTCLASS_NAME, new AddressListHandler() },
@@ -145,9 +145,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attributes">Object attributes</param>
         /// <param name="options">Operation options</param>
         /// <returns>Uid of the created object</returns>
-        public Uid Create(
-                ObjectClass oclass, ICollection<ConnectorAttribute> attributes, OperationOptions options)
-        {
+        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
             const string operation = "Create";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
@@ -155,19 +153,18 @@ namespace Org.IdentityConnectors.Exchange
 
             Trace.TraceInformation("Exchange.Create method for {0}; attributes:\n{1}", oclass.GetObjectClassValue(), CommonUtils.DumpConnectorAttributes(attributes));
 
-            CreateOpContext context = new CreateOpContext()
-                {
-                    Attributes = attributes,
-                    Connector = this,
-                    ObjectClass = oclass,
-                    OperationName = operation,
-                    Options = options
-                };
+            CreateOpContext context = new CreateOpContext() {
+                Attributes = attributes,
+                Connector = this,
+                ConnectorConfiguration = this._configuration,
+                ObjectClass = oclass,
+                OperationName = operation,
+                Options = options
+            };
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 CreateMain(context);
             }
 
@@ -176,19 +173,26 @@ namespace Org.IdentityConnectors.Exchange
             return context.Uid;
         }
 
-        public void CreateMain(CreateOpContext context)
-        {
+        public void CreateMain(CreateOpContext context) {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(context.ObjectClass.GetObjectClassValue(), out handler))
-            {
-                Trace.TraceInformation("!!! handler = {0}, type = {1} !!!", handler, handler.GetType());
-                handler.Create(context);
-            }
+            GetHandler(context).Create(context);
 
             Trace.TraceInformation("Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+        }
+
+        private ObjectClassHandler GetHandler(Context context) {
+            return GetHandler(context.ObjectClass.GetObjectClassValue());
+        }
+
+        private ObjectClassHandler GetHandler(string objectClassName) {
+            ObjectClassHandler handler;
+            if (_handlers.TryGetValue(objectClassName, out handler)) {
+                return handler;
+            } else {
+                throw new ConnectorException("Unsupported object class " + objectClassName + " (there is no handler for it)");
+            }
         }
 
         #endregion
@@ -202,8 +206,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attributes">Object attributes</param>
         /// <param name="options">Operation options</param>
         /// <returns>Uid of the updated object</returns>
-        public Uid Update(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options)
-        {
+        public Uid Update(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
             const string operation = "Update";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
@@ -212,10 +215,10 @@ namespace Org.IdentityConnectors.Exchange
 
             Trace.TraceInformation("Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
 
-            UpdateOpContext context = new UpdateOpContext()
-            {
+            UpdateOpContext context = new UpdateOpContext() {
                 Attributes = attributes,
                 Connector = this,
+                ConnectorConfiguration = this._configuration,
                 ObjectClass = oclass,
                 OperationName = operation,
                 Options = options,
@@ -224,8 +227,7 @@ namespace Org.IdentityConnectors.Exchange
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 UpdateMain(context);
             }
 
@@ -234,16 +236,11 @@ namespace Org.IdentityConnectors.Exchange
             return context.Uid;
         }
 
-        public void UpdateMain(UpdateOpContext context)
-        {
+        public void UpdateMain(UpdateOpContext context) {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(context.ObjectClass.GetObjectClassValue(), out handler))
-            {
-                handler.Update(context);
-            }
+            GetHandler(context).Update(context);
 
             Trace.TraceInformation("Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
@@ -251,8 +248,7 @@ namespace Org.IdentityConnectors.Exchange
 
         #region DeleteOp Members
 
-        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
-        {
+        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options) {
             const string operation = "Delete";
 
             ExchangeUtility.NullCheck(objClass, "objClass", this._configuration);
@@ -260,9 +256,9 @@ namespace Org.IdentityConnectors.Exchange
 
             Trace.TraceInformation("Exchange.Delete method; uid:\n{0}", uid.GetUidValue());
 
-            DeleteOpContext context = new DeleteOpContext()
-            {
+            DeleteOpContext context = new DeleteOpContext() {
                 Connector = this,
+                ConnectorConfiguration = _configuration,
                 ObjectClass = objClass,
                 OperationName = operation,
                 Uid = uid,
@@ -271,24 +267,18 @@ namespace Org.IdentityConnectors.Exchange
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 DeleteMain(context);
             }
 
             _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
         }
 
-        public void DeleteMain(DeleteOpContext context)
-        {
+        public void DeleteMain(DeleteOpContext context) {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(context.ObjectClass.GetObjectClassValue(), out handler))
-            {
-                handler.Delete(context);
-            }
+            GetHandler(context).Delete(context);
 
             Trace.TraceInformation("Exchange.Delete method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
@@ -303,18 +293,16 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="query">Query to execute</param>
         /// <param name="handler">Results handler</param>
         /// <param name="options">Operation options</param>
-        public void ExecuteQuery(
-                ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
-        {
+        public void ExecuteQuery( ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options) {
             const string operation = "ExecuteQuery";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
 
             Trace.TraceInformation("Exchange.ExecuteQuery method; oclass = {0}, query = {1}", oclass, query);
 
-            ExecuteQueryContext context = new ExecuteQueryContext()
-            {
+            ExecuteQueryContext context = new ExecuteQueryContext() {
                 Connector = this,
+                ConnectorConfiguration = _configuration,
                 ObjectClass = oclass,
                 OperationName = operation,
                 Options = options,
@@ -323,8 +311,7 @@ namespace Org.IdentityConnectors.Exchange
             };
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 ExecuteQueryMain(context);
             }
             _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
@@ -332,17 +319,12 @@ namespace Org.IdentityConnectors.Exchange
             // TODO what about executing a script on each returned item?
         }
 
-        public void ExecuteQueryMain(ExecuteQueryContext context)
-        {
+        public void ExecuteQueryMain(ExecuteQueryContext context) {
             Trace.TraceInformation("Exchange.ExecuteQueryMain starting");
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(context.ObjectClass.GetObjectClassValue(), out handler))
-            {
-                handler.ExecuteQuery(context);
-            }
+            GetHandler(context).ExecuteQuery(context);
 
             Trace.TraceInformation("Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
@@ -350,8 +332,7 @@ namespace Org.IdentityConnectors.Exchange
 
         #region SyncOp Members
 
-        public SyncToken GetLatestSyncToken(ObjectClass objectClass)
-        {
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass) {
             return _activeDirectoryConnector.GetLatestSyncToken(objectClass);
         }
 
@@ -363,17 +344,16 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="handler">Sync results handler</param>
         /// <param name="options">Operation options</param>
         public void Sync(
-                ObjectClass oclass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
-        {
+                ObjectClass oclass, SyncToken token, SyncResultsHandler handler, OperationOptions options) {
             const string operation = "Sync";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
 
             Trace.TraceInformation("Exchange.Sync method; oclass = {0}, token = {1}", oclass, token);
 
-            SyncOpContext context = new SyncOpContext()
-            {
+            SyncOpContext context = new SyncOpContext() {
                 Connector = this,
+                ConnectorConfiguration = _configuration,
                 ObjectClass = oclass,
                 OperationName = operation,
                 Options = options,
@@ -382,8 +362,7 @@ namespace Org.IdentityConnectors.Exchange
             };
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 SyncMain(context);
             }
             _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
@@ -391,17 +370,12 @@ namespace Org.IdentityConnectors.Exchange
             // TODO what about executing a script on each returned item?
         }
 
-        public void SyncMain(SyncOpContext context)
-        {
+        public void SyncMain(SyncOpContext context) {
             Trace.TraceInformation("Exchange.Sync starting");
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(context.ObjectClass.GetObjectClassValue(), out handler))
-            {
-                handler.Sync(context);
-            }
+            GetHandler(context).Sync(context);
 
             Trace.TraceInformation("Exchange.Sync method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
@@ -416,18 +390,15 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns></returns>
         public Schema Schema()
         {
-            Trace.TraceInformation("Exchange.Schema method");
-            if (_schema != null)
-            {
-                Trace.TraceInformation("Returning cached schema");
-            }
-            else
-            {
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Exchange.Schema method");
+            if (_schema != null) {
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Returning cached schema");
+            } else {
                 _schema = SchemaUtils.BuildSchema(this,
-                                _activeDirectoryConnector.GetSupportedObjectClasses,
+                                GetSupportedObjectClasses,
                                 GetObjectClassInfo,
-                                _activeDirectoryConnector.GetSupportedOperations,
-                                _activeDirectoryConnector.GetUnSupportedOperations);
+                                GetSupportedOperations,
+                                GetUnSupportedOperations);
             }
             return _schema;
         }
@@ -441,17 +412,63 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         /// <param name="oc">ObjectClass to get info for</param>
         /// <returns>ObjectClass' ObjectClassInfo</returns>
-        internal ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
-        {
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(oc.GetObjectClassValue(), out handler))
-            {
-                return handler.GetObjectClassInfo(this, oc);
+        internal ObjectClassInfo GetObjectClassInfo(ObjectClass oc) {
+            //return GetHandler(oc.GetObjectClassValue()).GetObjectClassInfo(this, oc);
+            return GetDeclaredObjectClassInfos()[oc];
+        }
+
+        /// <summary>
+        /// Defines the supported object classes by the connector, used for schema building
+        /// </summary>
+        /// <returns>List of supported object classes</returns>
+        public ICollection<ObjectClass> GetSupportedObjectClasses() {
+            return GetDeclaredObjectClassInfos().Keys;
+        }
+
+        /// <summary>
+        /// Gets the object class info for specified object class, used for schema building
+        /// </summary>
+        /// <param name="oc">ObjectClass to get info for</param>
+        /// <returns>ObjectClass' ObjectClassInfo</returns>
+        public ObjectClassInfo GetObjectClassInfoGeneric(ObjectClass oc) {
+            return GetDeclaredObjectClassInfos()[oc];
+        }
+
+        // copied from AD and modified
+        private IDictionary<ObjectClass, ObjectClassInfo> GetDeclaredObjectClassInfos() {
+            if (_objectClassInfos == null) {
+                var infos = new List<IDictionary<ObjectClass, ObjectClassInfo>>();
+
+                if (_configuration.ObjectClassesReplacementFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesReplacementFile));
+                } else {
+                    infos.Add(CommonUtils.GetOCInfoFromExecutingAssembly("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml"));
+                    infos.Add(CommonUtils.GetOCInfoFromAssembly("Org.IdentityConnectors.Exchange.ObjectClasses.xml", Assembly.GetExecutingAssembly()));
+                }
+                if (_configuration.ObjectClassesExtensionFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesExtensionFile));
+                }
+                _objectClassInfos = CommonUtils.MergeOCInfo(infos);
             }
-            else
-            {
-                return ActiveDirectoryConnector.GetObjectClassInfo(oc);       // TODO implement this
-            }
+            return _objectClassInfos;
+        }
+
+        /// <summary>
+        /// Gets the list of supported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        public IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc) {
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the list of UNsupported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        public IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc) {
+            return _activeDirectoryConnector.GetUnSupportedOperations(oc);
         }
 
         #endregion
@@ -471,12 +488,9 @@ namespace Org.IdentityConnectors.Exchange
 
             // normalize mail-related attributes
             //Trace.TraceInformation("NormalizeAttribute called for {0}", attribute.GetDetails());
-            if (attribute.Is(ExchangeConnectorAttributes.AttExternalEmailAddress) || attribute.Is(ExchangeConnectorAttributes.AttForwardingSmtpAddress))
-            {
+            if (attribute.Is(ExchangeConnectorAttributes.AttExternalEmailAddress) || attribute.Is(ExchangeConnectorAttributes.AttForwardingSmtpAddress)) {
                 return NormalizeSmtpAddressAttribute(attribute);
-            }
-            else
-            {
+            } else {
                 return attribute;
             }
 
@@ -484,42 +498,32 @@ namespace Org.IdentityConnectors.Exchange
             // TODO: and other attributes?
         }
 
-        private ConnectorAttribute NormalizeSmtpAddressAttribute(ConnectorAttribute attribute)
-        {
-            if (attribute.Value == null)
-            {
+        private ConnectorAttribute NormalizeSmtpAddressAttribute(ConnectorAttribute attribute) {
+            if (attribute.Value == null) {
                 return attribute;
             }
 
             IList<object> normValues = new List<object>();
             bool normalized = false;
-            foreach (object val in attribute.Value)
-            {
+            foreach (object val in attribute.Value) {
                 string strVal = val as string;
-                if (strVal != null)
-                {
+                if (strVal != null) {
                     string[] split = strVal.Split(':');
-                    if (split.Length == 2)
-                    {
+                    if (split.Length == 2) {
                         // it contains delimiter, use the second part
                         normValues.Add(split[1]);
                         normalized = true;
-                    }
-                    else
-                    {
+                    } else {
                         // put the original value
                         normValues.Add(val);
                     }
                 }
             }
 
-            if (normalized)
-            {
+            if (normalized) {
                 // build the attribute again
                 return ConnectorAttributeBuilder.Build(attribute.Name, normValues);
-            }
-            else
-            {
+            } else {
                 return attribute;
             }
         }
@@ -535,17 +539,8 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="oclass">Object class</param>
         /// <param name="options">Operation options</param>
         /// <returns>Filter translator</returns>
-        public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
-        {
-            ObjectClassHandler handler;
-            if (_handlers.TryGetValue(oclass.GetObjectClassValue(), out handler))
-            {
-                return handler.CreateFilterTranslator(this, oclass, options);
-            }
-            else
-            {
-                return _delegateToActiveDirectoryHandler.CreateFilterTranslator(this, oclass, options);
-            }
+        public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options) {
+            return _handlers[oclass.GetObjectClassValue()].CreateFilterTranslator(this, oclass, options);
         }
 
         #endregion
@@ -557,15 +552,16 @@ namespace Org.IdentityConnectors.Exchange
         /// Inits the connector with configuration injected
         /// </summary>
         /// <param name="configuration">Connector configuration</param>
-        public void Init(Configuration configuration)
-        {
+        public void Init(Configuration configuration) {
             Trace.TraceInformation("ExchangeConnector.Init: entry");
 
             _configuration = (ExchangeConfiguration)configuration;
             _activeDirectoryConnector.Init(configuration);
+            _schema = null;
+            _objectClassInfos = null;
             Schema();
-            _powershell = new PowerShellSupport(PowerShellSupport.SnapIn.Exchange, _configuration.ExchangeUri, 
-                _configuration.ExchangeVersion, _configuration.ConnectorMessages);
+            _powershell = new ExchangePowerShellSupport(_configuration.ExchangeVersion, _configuration.ExchangeUri, 
+                 _configuration.ConnectorMessages);
             _scripting = new Scripting(_configuration.ScriptingConfigurationFile, _powershell);
 
             Trace.TraceInformation("ExchangeConnector.Init: exit");
@@ -576,8 +572,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Dispose resources, <see cref="IDisposable"/>
         /// </summary>
-        public void Dispose()
-        {
+        public void Dispose() {
             this.Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -588,11 +583,9 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="disposing">true if called from <see cref="PSExchangeConnector.Dispose()"/> (?????)</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
-            {
+            if (disposing) {
                 // free managed resources
-                if (this._powershell != null)
-                {
+                if (this._powershell != null) {
                     this._powershell.Dispose();
                     this._powershell = null;
                 }
@@ -602,21 +595,19 @@ namespace Org.IdentityConnectors.Exchange
 
         #region TestOp Members
 
-        public void Test()
-        {
+        public void Test() {
             const string operation = "Test";
 
             Trace.TraceInformation("Exchange.Test method");
 
-            Context context = new Context()
-                {
-                    Connector = this,
-                    OperationName = operation
-                };
+            Context context = new Context() {
+                Connector = this,
+                ConnectorConfiguration = _configuration,
+                OperationName = operation
+            };
 
             _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain))
-            {
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
                 TestMain();
             }
             _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
@@ -633,8 +624,8 @@ namespace Org.IdentityConnectors.Exchange
             // AD validation (includes configuration validation too)
             _activeDirectoryConnector.Test();
 
-            // runspace check
-            _powershell.Test();
+            // runspace check (disabled as it does nothing)
+            //_powershell.Test();
         }
 
         #endregion

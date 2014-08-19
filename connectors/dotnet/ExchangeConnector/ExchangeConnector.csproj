@@ -70,12 +70,16 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Management.Automation">
+    <!--<Reference Include="System.Management.Automation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-    </Reference>
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
+      <Private>False</Private>
+    </Reference>-->
+    <Reference Include="System.Management.Automation" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExchangePowerShellSupport.cs" />
     <Compile Include="Handlers\AccountHandler.cs" />
     <Compile Include="Handlers\AcceptedDomainHandler.cs" />
     <Compile Include="Handlers\AddressListHandler.cs" />
@@ -88,8 +92,6 @@
     <Compile Include="Handlers\IdentityFilterTranslator.cs" />
     <Compile Include="Handlers\DelegateToActiveDirectoryHandler.cs" />
     <Compile Include="Handlers\MiscHelper.cs" />
-    <Compile Include="Scripting.cs" />
-    <Compile Include="Data\SerializableScriptingInfo.cs" />
     <Compile Include="ExchangeConnectorAttributes.cs" />
     <Compile Include="Data\SerializableCommandInfo.cs" />
     <Compile Include="Data\PersistenceUtility.cs" />
@@ -98,7 +100,6 @@
     <Compile Include="ExchangeUtility.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PSExchangeConnector.cs" />
-    <Compile Include="PowerShellSupport.cs" />
     <Compile Include="Handlers\ObjectClassHandler.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +142,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ObjectClasses.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="RemoteInitScript.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
 </Project>

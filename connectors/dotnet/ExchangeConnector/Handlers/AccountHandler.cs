@@ -12,22 +12,21 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text;
 
-namespace Org.IdentityConnectors.Exchange
-{
-    class AccountHandler : ObjectClassHandler
-    {
+namespace Org.IdentityConnectors.Exchange {
+    class AccountHandler : ObjectClassHandler {
         private MiscHelper _helper = new MiscHelper();
 
-        public void Create(CreateOpContext context)
-        {
+        public void Create(CreateOpContext context) {
             Trace.TraceInformation("AccountHandler.Create called...");
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
 
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+            ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
+            
             PSExchangeConnector.CommandInfo cmdInfoEnable = null;
             PSExchangeConnector.CommandInfo cmdInfoSet = null;
-            switch (rcptType)
-            {
+            switch (rcptType) {
                 case ExchangeConnectorAttributes.RcptTypeMailBox:
                     cmdInfoEnable = PSExchangeConnector.CommandInfo.EnableMailbox;
                     cmdInfoSet = PSExchangeConnector.CommandInfo.SetMailbox;
@@ -40,43 +39,36 @@ namespace Org.IdentityConnectors.Exchange
                     break;
                 default:
                     throw new ArgumentException(
-                              context.Connector.Configuration.ConnectorMessages.Format(
+                              context.ConnectorConfiguration.ConnectorMessages.Format(
                               "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
             }
 
             // first create the object in AD
             ICollection<ConnectorAttribute> adAttributes = ExchangeUtility.FilterOut(context.Attributes, cmdInfoEnable, cmdInfoSet);
-            Uid uid = context.Connector.ActiveDirectoryConnector.Create(context.ObjectClass, adAttributes, context.Options);
+            Uid uid = adconn.Create(context.ObjectClass, adAttributes, context.Options);
 
-            if (rcptType == ExchangeConnectorAttributes.RcptTypeUser)
-            {
+            if (rcptType == ExchangeConnectorAttributes.RcptTypeUser) {
                 // AD account only, we do nothing
                 context.Uid = uid;
                 return;
             }
 
             // prepare the command            
-            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, context.Attributes, context.Connector.Configuration);
-            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, context.Attributes, context.Connector.Configuration);
+            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, context.Attributes, (ExchangeConfiguration) context.ConnectorConfiguration);
+            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, context.Attributes, (ExchangeConfiguration) context.ConnectorConfiguration);
 
-            try
-            {
-                _helper.InvokePipeline(context.Connector, cmdEnable);
-                _helper.InvokePipeline(context.Connector, cmdSet);
+            try {
+                _helper.InvokePipeline(exconn, cmdEnable);
+                _helper.InvokePipeline(exconn, cmdSet);
             }
-            catch
-            {
+            catch {
                 Trace.TraceWarning("Rolling back AD create for UID: " + uid.GetUidValue());
 
                 // rollback AD create
-                try
-                {
-                    context.Connector.ActiveDirectoryConnector.Delete(context.ObjectClass, uid, context.Options);
-                }
-                catch
-                {
+                try {
+                    adconn.Delete(context.ObjectClass, uid, context.Options);
+                } catch {
                     Trace.TraceWarning("Not able to rollback AD create for UID: " + uid.GetUidValue());
-
                     // note: this is not perfect, we hide the original exception
                     throw;
                 }
@@ -88,8 +80,11 @@ namespace Org.IdentityConnectors.Exchange
             context.Uid = uid;
         }
 
-        public void Update(UpdateOpContext context)
-        {
+        public void Update(UpdateOpContext context) {
+
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+            ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
+
             // get recipient type and database
             string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
             string database = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttDatabase, context.Attributes) as string;
@@ -101,10 +96,10 @@ namespace Org.IdentityConnectors.Exchange
                 PSExchangeConnector.CommandInfo.EnableMailUser,
                 PSExchangeConnector.CommandInfo.SetMailbox,
                 PSExchangeConnector.CommandInfo.SetMailUser);
-            context.Connector.ActiveDirectoryConnector.Update(context.ObjectClass, context.Uid, filtered, context.Options);
+            adconn.Update(context.ObjectClass, context.Uid, filtered, context.Options);
 
             // retrieve Exchange-related information about the user
-            ConnectorObject aduser = ADSearchByUid(context.Connector, context.Uid, context.ObjectClass, ExchangeUtility.AddAttributeToOptions(context.Options, ExchangeConnectorAttributes.AttDatabaseADName));
+            ConnectorObject aduser = ADSearchByUid(exconn, context.Uid, context.ObjectClass, ExchangeUtility.AddAttributeToOptions(context.Options, ExchangeConnectorAttributes.AttDatabaseADName));
 
             // to get the user information, we have to provide user's name
             context.Attributes = new HashSet<ConnectorAttribute>(context.Attributes);           // to make collection modifiable
@@ -120,7 +115,7 @@ namespace Org.IdentityConnectors.Exchange
             {
                 cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
             }
-            PSObject psuser = GetUser(context.Connector, cmdInfo, context.Attributes);
+            PSObject psuser = GetUser(exconn, cmdInfo, context.Attributes);
 
             // do we change recipient type?
             string origRcptType = psuser.Members[ExchangeConnectorAttributes.AttRecipientType].Value.ToString();
@@ -134,9 +129,9 @@ namespace Org.IdentityConnectors.Exchange
                 // disabling Mailbox if needed
                 if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, context.Connector.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
-                    _helper.InvokePipeline(context.Connector, cmdDisable);
+                    _helper.InvokePipeline(exconn, cmdDisable);
                 }
 
                 // enabling MailUser if needed
@@ -157,12 +152,12 @@ namespace Org.IdentityConnectors.Exchange
 
                     // now execute the Enable-MailUser command
                     Command cmdEnable = ExchangeUtility.GetCommand(
-                            PSExchangeConnector.CommandInfo.EnableMailUser, context.Attributes, context.Connector.Configuration);
-                    _helper.InvokePipeline(context.Connector, cmdEnable);
+                            PSExchangeConnector.CommandInfo.EnableMailUser, context.Attributes, exconn.Configuration);
+                    _helper.InvokePipeline(exconn, cmdEnable);
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, context.Attributes, context.Connector.Configuration);
-                _helper.InvokePipeline(context.Connector, cmdSet);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, context.Attributes, exconn.Configuration);
+                _helper.InvokePipeline(exconn, cmdSet);
             }
             else if (rcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
             {
@@ -176,8 +171,8 @@ namespace Org.IdentityConnectors.Exchange
                 string origDatabase = psuser.Members[ExchangeConnectorAttributes.AttDatabase] != null ? psuser.Members[ExchangeConnectorAttributes.AttDatabase].Value.ToString() : null;
                 if (origRcptType != rcptType)
                 {
-                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, context.Attributes, context.Connector.Configuration);
-                    _helper.InvokePipeline(context.Connector, cmdEnable);
+                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, context.Attributes, exconn.Configuration);
+                    _helper.InvokePipeline(exconn, cmdEnable);
                 }
                 else
                 {
@@ -185,27 +180,27 @@ namespace Org.IdentityConnectors.Exchange
                     if (database != null && database != origDatabase)
                     {
                         throw new ArgumentException(
-                            context.Connector.Configuration.ConnectorMessages.Format(
+                            context.ConnectorConfiguration.ConnectorMessages.Format(
                             "ex_not_updatable", "Update of [{0}] attribute is not supported", ExchangeConnectorAttributes.AttDatabase));
                     }
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, context.Attributes, context.Connector.Configuration);
-                _helper.InvokePipeline(context.Connector, cmdSet);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, context.Attributes, exconn.Configuration);
+                _helper.InvokePipeline(exconn, cmdSet);
             }
             else if (rcptType == ExchangeConnectorAttributes.RcptTypeUser)
             {
                 if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, context.Connector.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
-                    _helper.InvokePipeline(context.Connector, cmdDisable);
+                    _helper.InvokePipeline(exconn, cmdDisable);
                 }
                 else if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, context.Attributes, context.Connector.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, context.Attributes, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
-                    _helper.InvokePipeline(context.Connector, cmdDisable);
+                    _helper.InvokePipeline(exconn, cmdDisable);
                 }
                 else if (origRcptType == ExchangeConnectorAttributes.RcptTypeUser)
                 {
@@ -216,25 +211,31 @@ namespace Org.IdentityConnectors.Exchange
                     throw new InvalidOperationException("Invalid original recipient type: " + origRcptType);
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, context.Attributes, context.Connector.Configuration);
-                _helper.InvokePipeline(context.Connector, cmdSet);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, context.Attributes, exconn.Configuration);
+                _helper.InvokePipeline(exconn, cmdSet);
             }
             else
             {
                 // unsupported rcpt type
                 throw new ArgumentException(
-                            context.Connector.Configuration.ConnectorMessages.Format(
+                            context.ConnectorConfiguration.ConnectorMessages.Format(
                             "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
             }
         }
 
         public void Delete(DeleteOpContext context)
         {
-            context.Connector.ActiveDirectoryConnector.Delete(context.ObjectClass, context.Uid, context.Options);
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+            ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
+
+            adconn.Delete(context.ObjectClass, context.Uid, context.Options);
         }
 
         public void ExecuteQuery(ExecuteQueryContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+            ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
+
             ICollection<string> attsToGet = null;
             if (context.Options != null && context.Options.AttributesToGet != null)
             {
@@ -248,7 +249,7 @@ namespace Org.IdentityConnectors.Exchange
                 {
                     Trace.TraceInformation("Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
                     ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
-                    filtered = AddExchangeAttributes(context.Connector, context.ObjectClass, filtered, attsToGet);
+                    filtered = AddExchangeAttributes(exconn, context.ObjectClass, filtered, attsToGet);
                     Trace.TraceInformation("Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
                     return context.ResultsHandler.Handle(filtered);
                 }
@@ -295,13 +296,16 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
-            context.Connector.ActiveDirectoryConnector.ExecuteQueryInternal(context.ObjectClass, 
+            adconn.ExecuteQueryInternal(context.ObjectClass, 
                 context.Query, handler2use, options2use, 
-                GetAdAttributesToReturn(context.Connector.ActiveDirectoryConnector, context.ObjectClass, context.Options));
+                GetAdAttributesToReturn(adconn, context.ObjectClass, context.Options));
         }
 
         public void Sync(SyncOpContext context)
         {
+            ExchangeConnector exconn = (ExchangeConnector)context.Connector;
+            ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
+
             ICollection<string> attsToGet = null;
             if (context.Options != null && context.Options.AttributesToGet != null)
             {
@@ -320,7 +324,7 @@ namespace Org.IdentityConnectors.Exchange
 
                     // replace the ad attributes with exchange ones and add recipient type and database (if requested)
                     ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object, attsToGet);
-                    updated = this.AddExchangeAttributes(context.Connector, context.ObjectClass, updated, attsToGet);
+                    updated = this.AddExchangeAttributes(exconn, context.ObjectClass, updated, attsToGet);
                     if (updated != delta.Object)
                     {
                         // build new sync delta, cause we changed the object
@@ -339,28 +343,32 @@ namespace Org.IdentityConnectors.Exchange
             };
 
             // call AD sync, use xchangeHandler
-            context.Connector.ActiveDirectoryConnector.SyncInternal(context.ObjectClass, 
+            adconn.SyncInternal(context.ObjectClass, 
                 context.SyncToken, xchangeHandler, context.Options, 
-                GetAdAttributesToReturn(context.Connector.ActiveDirectoryConnector, context.ObjectClass, context.Options));
+                GetAdAttributesToReturn(adconn, context.ObjectClass, context.Options));
         }
 
+        
         public ObjectClassInfo GetObjectClassInfo(ExchangeConnector connector, ObjectClass oc)
         {
-            // get the object class from base
-            ObjectClassInfo oinfo = connector.ActiveDirectoryConnector.GetObjectClassInfo(oc);
-            Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: oinfo for {0} from AD has {1} entries", oc, oinfo.ConnectorAttributeInfos.Count);
+            return connector.GetObjectClassInfoGeneric(oc);
+            /*
+            // get the original object class info
+            ObjectClassInfo oinfo = connector.GetObjectClassInfoGeneric(oc);
+            Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: oinfo for {0} as retrieved has {1} entries", oc, oinfo.ConnectorAttributeInfos.Count);
 
             // add additional attributes for ACCOUNT
             var classInfoBuilder = new ObjectClassInfoBuilder { IsContainer = oinfo.IsContainer, ObjectType = oinfo.ObjectType };
             classInfoBuilder.AddAllAttributeInfo(oinfo.ConnectorAttributeInfos);
-            classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ManualExchangeAttInfosForSchema);
-            classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.AttInfoCustomAttributesForSchema);
-            classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ExchangeRelatedADAttInfosForSchema);
+            //classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ManualExchangeAttInfosForSchema);
+            //classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.AttInfoCustomAttributesForSchema);
+            //classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ExchangeRelatedADAttInfosForSchema);
             oinfo = classInfoBuilder.Build();
             Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: newly created oinfo has {0} entries", oinfo.ConnectorAttributeInfos.Count);
 
             // return
             return oinfo;
+             */
         }
 
 
