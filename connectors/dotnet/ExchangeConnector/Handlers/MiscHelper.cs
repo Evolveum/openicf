@@ -1,7 +1,9 @@
-﻿using Org.IdentityConnectors.Framework.Common;
+﻿using Org.IdentityConnectors.ActiveDirectory;
+using Org.IdentityConnectors.Framework.Common;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -58,22 +60,15 @@ namespace Org.IdentityConnectors.Exchange
             Trace.TraceInformation("Creating object with UID = {0} and Name = {1}", guid, name);
             foreach (ConnectorAttributeInfo cai in ocinfo.ConnectorAttributeInfos) {
                 if (cai.IsReadable && properties.ContainsKey(cai.Name)) {
-                    object value;
-                    if (cai.IsMultiValued) {
-                        value = properties[cai.Name].Value;     // TODO: OK ?
-                    } else {
-                        value = properties[cai.Name].Value;
-                    }
+                    object value = properties[cai.Name].Value;
                     Trace.TraceInformation(" - attribute {0} = {1}", cai.Name, value);
 
-                    // TODO multivalued attributes
-                    if (!FrameworkUtil.IsSupportedAttributeType(value.GetType())) {
-                        Trace.TraceWarning(
-                            "Unsupported attribute type ... calling ToString (Name: \'{0}\' Type: \'{1}\' String Value: \'{2}\'",
-                            cai.Name, value.GetType(), value.ToString());
-                        value = value.ToString();
+                    if (value is PSObject) {
+                        var ps = value as PSObject;
+                        value = ps.BaseObject;
+                        Trace.TraceInformation(" - attribute {0} UNWRAPPED = {1} ({2})", cai.Name, value, value.GetType());
                     }
-                    builder.AddAttribute(cai.Name, value);
+                    builder.AddAttribute(cai.Name, CommonUtils.ConvertToSupportedForm(cai, value));
                 }
             }
             return builder.Build();

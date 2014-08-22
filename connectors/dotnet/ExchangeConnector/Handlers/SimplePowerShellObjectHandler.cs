@@ -72,7 +72,11 @@ namespace Org.IdentityConnectors.Exchange
                 new PSExchangeConnector.CommandInfo(GetSetCommandName()), 
                 context.Attributes, context.Uid, exconn.Configuration);
 
-            _helper.InvokePipeline(exconn, cmdSet);
+            try {
+                _helper.InvokePipeline(exconn, cmdSet);
+            } catch (ObjectNotFoundException e) {
+                throw new UnknownUidException("Object with UID " + context.Uid.GetUidValue() + " couldn't be modified", e);
+            }
         }
 
         public void Delete(DeleteOpContext context)
@@ -83,7 +87,11 @@ namespace Org.IdentityConnectors.Exchange
                 new PSExchangeConnector.CommandInfo(GetRemoveCommandName()), 
                 context.Uid, exconn.Configuration);
 
-            _helper.InvokePipeline(exconn, cmdRemove);
+            try {
+                _helper.InvokePipeline(exconn, cmdRemove);
+            } catch (ObjectNotFoundException e) {
+                throw new UnknownUidException("Object with UID " + context.Uid.GetUidValue() + " couldn't be deleted", e);
+            }
         }
 
         public void ExecuteQuery(ExecuteQueryContext context)
@@ -97,7 +105,13 @@ namespace Org.IdentityConnectors.Exchange
             if (context.Query != null) {
                 cmdGet.Parameters.Add("Identity", context.Query);
             }
-            ICollection<PSObject> objects = _helper.InvokePipeline(exconn, cmdGet);
+            ICollection<PSObject> objects;
+            try {
+                objects = _helper.InvokePipeline(exconn, cmdGet);
+            } catch (ObjectNotFoundException e) {
+                Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: got 'ObjectNotFound' exception ({0}), assuming suitable objects do not exist", e);
+                return;
+            }
             Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: got {0} objects", objects.Count);
             foreach (PSObject psobject in objects) {
                 if (psobject != null) {

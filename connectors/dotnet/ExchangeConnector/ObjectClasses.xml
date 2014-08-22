@@ -147,15 +147,33 @@
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
       <AttributeInfo name="DisplayName" type="String"></AttributeInfo>
-      <AttributeInfo name="Type" type="String"></AttributeInfo>
+      <AttributeInfo name="Type" type="String">
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="RecipientType" type="String">      <!-- Type is used to specify group type when creating it; RecipientType and GroupType to see the actual type -->
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="GroupType" type="String">          <!-- only unparsed, descriptive information; processing original type (GroupTypeFlags) would be more complicated -->
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
       <AttributeInfo name="PrimarySmtpAddress" type="String"></AttributeInfo>
       <AttributeInfo name="Members" type="String">
         <AttributeInfoFlag value="MULTIVALUED"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="OrganizationalUnit" type="String">
       </AttributeInfo>
       <AttributeInfo name="HiddenFromAddressListsEnabled" type="Boolean"></AttributeInfo>
-      <AttributeInfo name="BypassSecurityGroupManagerCheck" type="Boolean"></AttributeInfo>
+      <AttributeInfo name="BypassSecurityGroupManagerCheck" type="Boolean">
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
       <AttributeInfo name="CustomAttribute1" type="String"></AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>

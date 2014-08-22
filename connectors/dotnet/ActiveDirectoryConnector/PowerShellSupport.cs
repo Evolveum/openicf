@@ -363,7 +363,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public delegate void ThrowIcfExceptionDelegate(Exception e, string message);
+        public delegate void ThrowIcfExceptionDelegate(Exception e, ErrorRecord error, string message);
 
 		/// <summary>
 		/// Checks whether errors reader contains some error, if so the errors are concatenated and exception is thrown,
@@ -421,12 +421,25 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             Exception firstException = null;
+            ErrorRecord firstErrorRecord = null;
 
             StringBuilder builder = new StringBuilder();
             foreach (ErrorRecord error in errors) {
                 if (error != null) {
+                    Trace.TraceInformation("ErrorRecord:\n - CategoryInfo: {0}\n - FullyQualifiedErrorId: {1}\n" +
+                        " - ErrorDetails: {2}\n - Exception: {3}\n - InvocationInfo: {4}\n - PipelineIterationInfo: {5}\n - TargetObject: {6}",
+                        error.CategoryInfo, error.FullyQualifiedErrorId, error.ErrorDetails, error.Exception,
+                        error.InvocationInfo, CollectionUtil.Dump(error.PipelineIterationInfo), error.TargetObject);
+
+                    var c = error.CategoryInfo;
+                    Trace.TraceInformation("CategoryInfo details:\n - Category: {0}\n - Activity: {1}\n" +
+                        " - Reason: {2}\n - TargetName: {3}\n - TargetType: {4}", c.Category, c.Activity, c.Reason, c.TargetName, c.TargetType);
+
                     if (firstException == null && error.Exception != null) {
                         firstException = error.Exception;
+                    }
+                    if (firstErrorRecord == null) {
+                        firstErrorRecord = error;
                     }
                     builder.Append(error.ToString());
                     builder.Append("\n");
@@ -434,13 +447,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             if (firstException != null) {
-                throwIcfExceptionDelegate(firstException, builder.ToString());
+                throwIcfExceptionDelegate(firstException, firstErrorRecord, builder.ToString());
             } else if (builder.Length > 0) {
                 throw new ConnectorException(builder.ToString());
             }
         }
 
-        private static void DefaultThrowIcfExceptionImplementation(Exception e, string message) {
+        private static void DefaultThrowIcfExceptionImplementation(Exception e, ErrorRecord error, string message) {
+            Trace.TraceInformation("DefaultThrowIcfExceptionImplementation dealing with {0}, message = {1}", e, message);
+
+            // TODO is this really correct? It is not sure that the object in question is really missing (although it's quite probable).
+            if (error.CategoryInfo != null && error.CategoryInfo.Reason.Equals("ManagementObjectNotFoundException")) {
+                throw new ObjectNotFoundException(message);
+            }
+
             if (e == null) {
                 throw new ConnectorException(message);
             }
@@ -448,12 +468,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 RemoteException remote = (RemoteException)e;
                 PSObject serialized = remote.SerializedRemoteException;
                 if (serialized != null && serialized.BaseObject is Exception) {
-                    DefaultThrowIcfExceptionImplementation((Exception)serialized.BaseObject, message);
+                    DefaultThrowIcfExceptionImplementation((Exception)serialized.BaseObject, error, message);
                 } else {
                     throw new ConnectorException("Remote exception: " + message, e);
                 }
             }
-            Trace.TraceInformation("throwIcfException dealing with {0}, message = {1}", e, message);
             string name = e.GetType().Name;
             switch (name) {
                 case "DuplicateAcceptedDomainException":
@@ -620,4 +639,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
     }
     */
 
+    public class ObjectNotFoundException : ConnectorException {
+        public ObjectNotFoundException() : base() {
+        }
+
+        public ObjectNotFoundException(string message) : base(message) {
+        }
+
+        public ObjectNotFoundException(Exception ex) : base(ex) {
+        }
+
+        public ObjectNotFoundException(string message, Exception ex) : base(message, ex) {
+        }
+
+    }
 }

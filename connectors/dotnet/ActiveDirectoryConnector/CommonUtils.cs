@@ -30,6 +30,8 @@ using Org.IdentityConnectors.Framework.Common.Serializer;
 using System.Text;
 using System.Diagnostics;
 using System.Globalization;
+using System.Collections;
+using Org.IdentityConnectors.Framework.Common;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -206,6 +208,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        /// <summary>
+        /// Converts any value to a form that can be stored into connector attribute.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="isMultivalued"></param>
+        /// <returns></returns>
+        public static ICollection<object> ConvertToSupportedForm(ConnectorAttributeInfo cai, object value) {
+            IList<object> rv = new List<object>();
+            if (cai.IsMultiValued && value is IEnumerable) {
+                foreach (object v in (IEnumerable)value) {
+                    if (v == null) {
+                        continue;
+                    }
+                    if (!IsSupported(cai, v)) {
+                        rv.Add(v.ToString());
+                    } else {
+                        rv.Add(v);
+                    }
+                }
+            } else {
+                if (value != null && !IsSupported(cai, value)) {
+                    rv.Add(value.ToString());
+                } else {
+                    rv.Add(value);
+                }
+            }
+            return rv;
+        }
+
+        private static bool IsSupported(ConnectorAttributeInfo cai, object value) {
+            if (!FrameworkUtil.IsSupportedAttributeType(value.GetType())) {
+                Trace.TraceWarning(
+                    "Unsupported attribute type ... calling ToString (Name: \'{0}\' Type: \'{1}\' String Value: \'{2}\'",
+                    cai.Name, value.GetType(), value.ToString());
+                return false;
+            } else {
+                return true;
+            }
+        }
 
     }
 }
