@@ -456,9 +456,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         private static void DefaultThrowIcfExceptionImplementation(Exception e, ErrorRecord error, string message) {
             Trace.TraceInformation("DefaultThrowIcfExceptionImplementation dealing with {0}, message = {1}", e, message);
 
-            // TODO is this really correct? It is not sure that the object in question is really missing (although it's quite probable).
-            if (error.CategoryInfo != null && error.CategoryInfo.Reason.Equals("ManagementObjectNotFoundException")) {
-                throw new ObjectNotFoundException(message);
+            
+            if (error.CategoryInfo != null) {
+                // TODO is this really correct? It is not sure that the object in question is really missing (although it's quite probable).
+                String reason = error.CategoryInfo.Reason;
+                if ("ManagementObjectNotFoundException".Equals(reason)) {
+                    throw new ObjectNotFoundException(message);
+                } else if ("DuplicateAcceptedDomainException".Equals(reason) || 
+                    "ADObjectAlreadyExistsException".Equals(reason) ||
+                    "ProxyAddressExistsException".Equals(reason)) {             // this one is UGLY HACK -- it actually depicts a conflict in addresses; but it MAY signalize 'already exists' problem
+                                                                                // TODO research and test this further
+                    throw new AlreadyExistsException(message, e);
+                }
             }
 
             if (e == null) {
@@ -475,6 +484,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             string name = e.GetType().Name;
             switch (name) {
+                // not sure if these cases are covered by reason checking above ... to be sure, include them also here (for now)
                 case "DuplicateAcceptedDomainException":
                 case "ADObjectAlreadyExistsException":
                     throw new AlreadyExistsException(message, e);
