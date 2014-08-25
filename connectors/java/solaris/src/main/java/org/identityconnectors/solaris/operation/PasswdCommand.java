@@ -40,7 +40,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 final class PasswdCommand extends CommandSwitches {
 
     private static final Set<String> NEW_PASSWORD_MATCHES = CollectionUtil.newSet("ew Password:",
-    		"ew UNIX password:");
+    		"ew UNIX password:", "password again:");
 
     private final static Set<String> PASSWD_REJECTS = CollectionUtil.newSet("Permission denied",
             "command not found", "not allowed to execute");
@@ -60,8 +60,8 @@ final class PasswdCommand extends CommandSwitches {
 
             conn.sendPassword(password, Collections.<String> emptySet(), NEW_PASSWORD_MATCHES);
 
-            conn.sendPassword(password, Collections.<String> emptySet(), Collections
-                    .<String> emptySet());
+//            conn.sendPassword(password, Collections.<String> emptySet(), NEW_PASSWORD_MATCHES);
+            conn.sendPassword(password, Collections.<String> emptySet(), Collections.<String> emptySet());
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
