@@ -29,6 +29,7 @@ import com.sun.jndi.ldap.ctl.VirtualListViewControl;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+
 import static java.util.Collections.singletonList;
 
 import javax.naming.NamingException;
@@ -38,6 +39,7 @@ import javax.naming.ldap.PagedResultsControl;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.security.GuardedByteArray.Accessor;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -57,14 +59,19 @@ import org.identityconnectors.ldap.LdapConnection;
 import org.identityconnectors.ldap.LdapConstants;
 import org.identityconnectors.ldap.LdapEntry;
 import org.identityconnectors.ldap.schema.LdapSchemaMapping;
+import org.identityconnectors.ldap.sync.sunds.PasswordDecryptor;
+
 import static org.identityconnectors.common.CollectionUtil.newCaseInsensitiveSet;
 import static org.identityconnectors.common.CollectionUtil.newSet;
 import static org.identityconnectors.common.StringUtil.isBlank;
+
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+
 import static org.identityconnectors.ldap.LdapUtil.buildMemberIdAttribute;
 import static org.identityconnectors.ldap.LdapUtil.getStringAttrValues;
 import static org.identityconnectors.ldap.ADLdapUtil.objectGUIDtoString;
 import static org.identityconnectors.ldap.ADLdapUtil.fetchGroupMembersByRange;
+
 import org.identityconnectors.ldap.LdapConnection.ServerType;
 
 
@@ -82,6 +89,7 @@ public class LdapSearch {
     private final OperationOptions options;
     private final GroupHelper groupHelper;
     private final String[] baseDNs;
+    private PasswordDecryptor passwordDecryptor = null;
 
     public static Set<String> getAttributesReturnedByDefault(LdapConnection conn, ObjectClass oclass) {
         if (oclass.equals(LdapSchemaMapping.ANY_OBJECT_CLASS)) {
@@ -238,8 +246,27 @@ public class LdapSearch {
                 Set<String> posixRefAttrs = getStringAttrValues(entry.getAttributes(), GroupHelper.getPosixRefAttribute());
                 List<String> posixGroups = groupHelper.getPosixGroups(posixRefAttrs);
                 attribute = AttributeBuilder.build(LdapConstants.POSIX_GROUPS_NAME, posixGroups);
-            } else if (LdapConstants.PASSWORD.is(attrName)) {
-                attribute = AttributeBuilder.build(attrName, new GuardedString());
+			} else if (LdapConstants.PASSWORD.is(attrName)) {
+				try {
+					String hashAlgorithm = conn.getConfiguration()
+							.getPasswordHashAlgorithm();
+					if (isBlank(hashAlgorithm) || "NONE".equalsIgnoreCase(hashAlgorithm)) {
+						byte[] passwordVal = (byte[]) entry.getAttributes().get(conn.getConfiguration().getPasswordAttribute()).get();
+						String stringPwdValue = new String(passwordVal);
+						if (stringPwdValue.startsWith("{")){
+							PasswordDecryptor decryptor = getPasswordDecryptor();
+							stringPwdValue = decryptor.decryptPassword(passwordVal);
+							log.warn("Could not read password value. Password is in unsupported format.");
+							attribute = AttributeBuilder.build(attrName, new GuardedString());
+						}
+						attribute = AttributeBuilder.buildPassword(stringPwdValue.toCharArray());
+					} else {
+						log.warn("Could not read password value. Password is in unsupported format.");
+						attribute = AttributeBuilder.build(attrName, new GuardedString());
+					}
+				} catch (NamingException e) {
+	                log.error(e, "Can't read password attribute");
+                }
             } else if (LdapConstants.MS_GUID_ATTR.equalsIgnoreCase(attrName)) {
                 attribute = AttributeBuilder.build(LdapConstants.MS_GUID_ATTR, objectGUIDtoString(entry.getAttributes().get(LdapConstants.MS_GUID_ATTR)));
             } else if (oclass.equals(ObjectClass.ACCOUNT) && OperationalAttributes.OPERATIONAL_ATTRIBUTE_NAMES.contains(attrName)) {
@@ -299,6 +326,23 @@ public class LdapSearch {
         return builder.build();
     }
 
+    
+    private PasswordDecryptor getPasswordDecryptor() {
+        if (passwordDecryptor == null) {
+            conn.getConfiguration().getPasswordDecryptionKey().access(new Accessor() {
+                public void access(final byte[] decryptionKey) {
+                    conn.getConfiguration().getPasswordDecryptionInitializationVector().access(new Accessor() {
+                        public void access(byte[] decryptionIV) {
+                            passwordDecryptor = new PasswordDecryptor(decryptionKey, decryptionIV);
+                        }
+                    });
+                }
+            });
+        }
+        assert passwordDecryptor != null;
+        return passwordDecryptor;
+    }
+    
     /**
      * Creates a search filter which will filter to a given {@link ObjectClass}.
      * It will be composed of an optional filter to be applied before the object class filters,
