@@ -17,7 +17,9 @@ namespace Org.IdentityConnectors.Exchange {
         private MiscHelper _helper = new MiscHelper();
 
         public void Create(CreateOpContext context) {
-            Trace.TraceInformation("AccountHandler.Create called...");
+
+            PreprocessAttributes(context);
+
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
 
@@ -81,6 +83,8 @@ namespace Org.IdentityConnectors.Exchange {
         }
 
         public void Update(UpdateOpContext context) {
+
+            PreprocessAttributes(context);
 
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
             ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
@@ -220,6 +224,43 @@ namespace Org.IdentityConnectors.Exchange {
                 throw new ArgumentException(
                             context.ConnectorConfiguration.ConnectorMessages.Format(
                             "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
+            }
+        }
+
+        private void PreprocessAttributes(CreateUpdateOpContext context) {
+            // deduplicate EmailAddresses
+
+            ConnectorAttribute attribute = ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddresses, context.Attributes);
+            if (attribute != null) {
+                if (attribute.Value != null) {
+                    IDictionary<string, string> values = new Dictionary<string, string>();       // normalized->most-recent-original e.g. SMTP:XYZ@AAA.EDU -> SMTP:xyz@aaa.edu (if primary is present)
+                    bool changed = false;
+                    foreach (object v in attribute.Value) {
+                        string address = (string)v;
+                        string normalized = address.ToUpper();
+                        if (values.ContainsKey(normalized)) {
+                            changed = true;
+                            string existing = values[normalized];
+                            if (address.StartsWith("SMTP:") && existing.StartsWith("smtp:")) {
+                                Trace.TraceInformation("Removing redundant address {0}, keeping {1}", existing, address);
+                                values[normalized] = address;
+                            } else {
+                                Trace.TraceInformation("Removing redundant address {0}, keeping {1}", address, existing);
+                            }
+                        } else {
+                            values.Add(normalized, address);
+                        }
+                    }
+                    if (changed) {
+                        ConnectorAttributeBuilder cab = new ConnectorAttributeBuilder();
+                        cab.Name = ExchangeConnectorAttributes.AttEmailAddresses;
+                        foreach (string value in values.Values) {
+                            cab.AddValue(value);
+                        }
+                        context.Attributes.Remove(attribute);
+                        context.Attributes.Add(cab.Build());
+                    }
+                }
             }
         }
 
