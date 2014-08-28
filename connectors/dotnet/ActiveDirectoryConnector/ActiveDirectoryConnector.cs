@@ -919,18 +919,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_UIDNotPresent", "Uid was not present"));
             }
 
-            DirectoryEntry updateEntry =
-                ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, updatedUid,
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
+            DirectoryEntry updateEntry = null;
             try
             {
+                updateEntry = ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, updatedUid,
+                    _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
                 _utils.UpdateADObject(oclass, updateEntry,
                     attributes, type, _configuration);
             }
             catch (DirectoryServicesCOMException e)
             {
-                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.GetUidValue());
+                Exception e1 = ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.GetUidValue());
+                if (e1 is NoSuchAdObjectException && updateEntry == null) {
+                    throw new UnknownUidException(e1.Message, e1);
+                } else {
+                    throw e1;
+                }
             }
             catch (System.Runtime.InteropServices.COMException e)
             {
@@ -947,7 +952,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             finally
             {
-                updateEntry.Dispose();
+                if (updateEntry != null) {
+                    updateEntry.Dispose();
+                }
             }
             return updatedUid;
         }
