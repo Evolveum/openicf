@@ -48,7 +48,36 @@ namespace Org.IdentityConnectors.Exchange
                 new PSExchangeConnector.CommandInfo(GetNewCommandName()), 
                 context.Attributes, exconn.Configuration);
 
-            context.Uid = _helper.InvokePipelineAndGetGuid(exconn, cmdNew);
+            try {
+                context.Uid = _helper.InvokePipelineAndGetGuid(exconn, cmdNew);
+            } catch (ProxyAddressExistsException e) {
+                // This is a tricky exception. Sometimes when creating an object that is already there (e.g. DistributionGroup),
+                // PowerShell reports "ProxyAddressExists" instead of something like "ObjectExists" :(
+                // So we have to distinguish these situations somehow...
+                Name nameAttribute = ConnectorAttributeUtil.GetNameFromAttributes(context.Attributes);
+                if (nameAttribute == null || nameAttribute.Value == null || nameAttribute.Value.Count() != 1) {
+                    Trace.TraceInformation("ProxyAddressExistsException reported; but no single-valued NAME attribute present -- reporting as is");
+                    throw new ConnectorException(e.Message, e);
+                }
+                String name = (String) nameAttribute.Value[0];
+                Trace.TraceInformation("ProxyAddressExistsException reported; trying to see if object named " + name + " exists");
+                Command cmdGet = ExchangeUtility.GetCommand(
+                    new PSExchangeConnector.CommandInfo(GetGetCommandName()), exconn.Configuration);
+                cmdGet.Parameters.Add("Identity", name);
+                ICollection<PSObject> objects;
+                try {
+                    objects = _helper.InvokePipeline(exconn, cmdGet);
+                } catch (ObjectNotFoundException e1) {
+                    objects = null;
+                }
+                if (objects == null || objects.Count == 0) {
+                    Trace.TraceInformation("...it does not -- reporting as is");
+                    throw new ConnectorException(e.Message, e);
+                } else {
+                    Trace.TraceInformation("...it exists -- reporting as AlreadyExistsException");
+                    throw new AlreadyExistsException(e.Message, e);
+                }
+            }
 
             if (ExecuteSetAfterNew()) {
                 Command cmdSet = ExchangeUtility.GetCommand(

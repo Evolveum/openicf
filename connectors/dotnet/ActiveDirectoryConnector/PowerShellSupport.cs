@@ -463,10 +463,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if ("ManagementObjectNotFoundException".Equals(reason)) {
                     throw new ObjectNotFoundException(message);
                 } else if ("DuplicateAcceptedDomainException".Equals(reason) || 
-                    "ADObjectAlreadyExistsException".Equals(reason) ||
-                    "ProxyAddressExistsException".Equals(reason)) {             // this one is UGLY HACK -- it actually depicts a conflict in addresses; but it MAY signalize 'already exists' problem
-                                                                                // TODO research and test this further
+                    "ADObjectAlreadyExistsException".Equals(reason)) {
                     throw new AlreadyExistsException(message, e);
+                } else if ("ProxyAddressExistsException".Equals(reason)) {
+                    throw new ProxyAddressExistsException(message, e);
                 }
             }
 
@@ -661,6 +661,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         public ObjectNotFoundException(string message, Exception ex) : base(message, ex) {
         }
-
     }
+
+    public class ProxyAddressExistsException : ConnectorException {
+        public ProxyAddressExistsException()
+            : base() {
+        }
+
+        public ProxyAddressExistsException(string message)
+            : base(message) {
+        }
+
+        public ProxyAddressExistsException(Exception ex)
+            : base(ex) {
+        }
+
+        public ProxyAddressExistsException(string message, Exception ex)
+            : base(message, ex) {
+        }
+    }
+
 }
