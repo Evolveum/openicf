@@ -91,7 +91,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\Framework.targets" />
   <Target Name="Clean">
-    <RemoveDir Directories="bin;obj">
-    </RemoveDir>
+    <Delete Files="AssemblyInfo.cs;version.txt" />
+    <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

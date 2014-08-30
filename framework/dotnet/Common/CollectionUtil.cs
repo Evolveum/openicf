@@ -1061,7 +1061,7 @@ namespace Org.IdentityConnectors.Common
             }
         }
 
-        public static string Dump(ICollection<object> list)
+        public static string Dump<T>(ICollection<T> list)
         {
             StringBuilder sb = new StringBuilder();
             if (list != null)

@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.box.boxjavalibv2.exceptions.AuthFatalFailureException;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -49,12 +48,12 @@ import org.identityconnectors.framework.spi.StatefulConfiguration;
 import com.box.boxjavalibv2.BoxClient;
 import com.box.boxjavalibv2.authorization.OAuthWebViewData;
 import com.box.boxjavalibv2.dao.BoxOAuthToken;
-import sun.plugin.dom.exception.InvalidStateException;
+import com.box.boxjavalibv2.exceptions.AuthFatalFailureException;
 
 /**
  * Extends the {@link AbstractConfiguration} class to provide all the necessary
  * parameters to initialize the Box Connector.
- * 
+ *
  */
 public class BoxConfiguration extends AbstractConfiguration implements StatefulConfiguration {
 
@@ -197,7 +196,7 @@ public class BoxConfiguration extends AbstractConfiguration implements StatefulC
      * Open a browser at the given URL using {@link Desktop} if available, or
      * alternatively output the URL to {@link System#out} for command-line
      * applications.
-     * 
+     *
      * @param uri
      *            URL to browse
      */

@@ -22,6 +22,8 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  */
 
+
+import groovy.json.JsonOutput
 import org.forgerock.json.resource.Connection
 import org.forgerock.json.resource.QueryRequest
 import org.forgerock.json.resource.QueryResult
@@ -54,12 +56,34 @@ def objectClass = objectClass as ObjectClass
 def options = options as OperationOptions
 def schema = schema as Schema
 
+if (objectClass.objectClassValue == "TEST") {
+    def queryFilter = filter.accept(CRESTFilterVisitor.VISITOR, new VisitorParameter() {
+        String translateName(String name) {
+            return name;
+        }
+
+        Object convertValue(Attribute attribute) {
+            if (attribute.value.size() > 1) {
+                return JsonOutput.toJson(attribute.value)
+            } else {
+                Object value = attribute.value[0];
+                if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+                    return value
+                } else {
+                    return AttributeUtil.getAsStringValue(attribute)
+                }
+            }
+        }
+    })
+    return new SearchResult(queryFilter.toString(), -1);
+}
+
 def objectClassInfo = configuration.propertyBag[objectClass.objectClassValue];
 if (objectClassInfo != null) {
 
     QueryRequest request = Requests.newQueryRequest(objectClassInfo.resourceContainer)
     if (null != filter) {
-        request.queryFilter = CRESTFilterVisitor.VISITOR.accept([
+        request.queryFilter = filter.accept(CRESTFilterVisitor.VISITOR, [
                 translateName: { String name ->
                     if (AttributeUtil.namesEqual(name, Uid.NAME)) {
                         return "_id"
@@ -87,7 +111,7 @@ if (objectClassInfo != null) {
                     } else {
                         return AttributeUtil.getAsStringValue(value)
                     }
-                }] as VisitorParameter, filter);
+                }] as VisitorParameter);
     }
 
     if (null != options.attributesToGet) {
@@ -171,5 +195,6 @@ if (objectClassInfo != null) {
     return new SearchResult(result.pagedResultsCookie, result.remainingPagedResults);
 
 } else {
-    throw new UnsupportedOperationException(operation.name() + " operation of type:" + objectClass)
+    throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+            objectClass.objectClassValue + " is not supported.")
 }

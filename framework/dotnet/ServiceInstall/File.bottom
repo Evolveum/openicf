@@ -1,7 +1,4 @@
-					</Component>
-				</Directory>
-			</Directory>
-                   </Directory>
-		</DirectoryRef>
-	</Fragment>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
 </Wix>

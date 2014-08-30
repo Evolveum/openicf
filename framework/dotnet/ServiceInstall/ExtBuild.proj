@@ -19,11 +19,12 @@
   enclosed by brackets [] replaced by your own identifying information: 
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
-  Portions Copyrighted 2012-2013 ForgeRock AS
+  Portions Copyrighted 2012-2014 ForgeRock AS
 -->
 <Project DefaultTargets="Clean" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ForgeRockLegal>false</ForgeRockLegal>
   </PropertyGroup>
   <Target Name="BeforeBuild">
     <!-- write out the top of the file.. -->
@@ -33,7 +34,7 @@
     <WriteLinesToFile File="Files.wxs" Lines="@(FileTopLines)" Overwrite="true" />
 
     <ItemGroup>
-      <AllFiles Include="..\Service\bin\$(Configuration)\*.*"
+      <AllFiles Include="..\Service\bin\$(Configuration)\*.dll;..\Service\bin\$(Configuration)\*.config"
 		            Exclude="..\Service\bin\$(Configuration)\*.exe"/>
       <EXEFiles Include="..\Service\bin\$(Configuration)\ConnectorServer.exe"/>
       <PowerShellScriptExecutorFactoryFiles  Include="..\PowerShellScriptExecutorFactory\bin\$(Configuration)\*.ScriptExecutorFactory.*"/>
@@ -41,7 +42,7 @@
       <LegalFiles Include="..\legal\*.txt"
                   Exclude="..\legal\ForgeRock*.txt"/>
       <ForgeRockLegalFiles Include="..\legal\ForgeRock*.txt"/>
-      <LegalFiles Include="@(ForgeRockLegalFiles)" Condition=" '$(Configuration)' == 'Release' "/>
+      <LegalFiles Include="@(ForgeRockLegalFiles)" Condition=" '$(ForgeRockLegal)' == 'true' "/>
     </ItemGroup>
         
     <!-- Write out the majority of base files -->
@@ -52,15 +53,20 @@
     <WriteLinesToFile File="Files.wxs"
   			Lines="@(PowerShellScriptExecutorFactoryFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; /&gt;')"/>
     <WriteLinesToFile File="Files.wxs"
-  			Lines="@(ShellScriptExecutorFactoryFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; /&gt;')"/>
+  			Lines="@(ShellScriptExecutorFactoryFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; /&gt;')"/>              
 
+    <!-- Write out the Service Executable (should only be one) -->
+    <WriteLinesToFile File="Files.wxs"
+  			Lines="@(EXEFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; Checksum=&quot;yes&quot; KeyPath=&quot;yes&quot; /&gt;')"/>  
+
+    <WriteLinesToFile File="Files.wxs" Lines="&lt;/Component&gt;"/>
+    <WriteLinesToFile File="Files.wxs" Lines="&lt;/ComponentGroup&gt;"/>          
+    <WriteLinesToFile File="Files.wxs" Lines="&lt;ComponentGroup Id=&quot;LegalFilesComponents&quot; Directory=&quot;LEGALDIR&quot;&gt;"/>
+    <WriteLinesToFile File="Files.wxs" Lines="&lt;Component Id=&quot;LegalNotices&quot; Guid=&quot;84d57160-13d5-11e4-9191-0800200c9a66&quot; DiskId=&quot;1&quot;&gt;"/>   
     <!-- Write out the Legal files -->
     <WriteLinesToFile File="Files.wxs"
   			Lines="@(LegalFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; /&gt;')"/>
-    
-    <!-- Write out the Service Executable (should only be one) -->
-    <WriteLinesToFile File="Files.wxs"
-  			Lines="@(EXEFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; KeyPath=&quot;yes&quot; /&gt;')"/>
+
     <!-- Write out the bottom of the file -->
     <ReadLinesFromFile File="File.bottom" >
       <Output TaskParameter="Lines" ItemName="FileBottomLines"/>
@@ -77,11 +83,13 @@
     <Copy SourceFiles="@(PowerShellScriptExecutorFactoryFiles)" DestinationFolder="bin\$(Configuration)\target" />
     <Copy SourceFiles="@(ShellScriptExecutorFactoryFiles)" DestinationFolder="bin\$(Configuration)\target" />
     <Copy SourceFiles="@(EXEFiles)" DestinationFolder="bin\$(Configuration)\target" />
-    <Copy SourceFiles="..\legal\CDDLv1.txt" DestinationFolder="bin\$(Configuration)\target" />
-    <Copy SourceFiles="..\legal\THIRDPARTYREADME.txt" DestinationFolder="bin\$(Configuration)\target" />
-    <Copy SourceFiles="..\legal\ForgeRock_License.txt" DestinationFolder="bin\$(Configuration)\target" Condition=" '$(Configuration)' == 'Release' "/>
+    <Copy SourceFiles="..\legal\CDDLv1.txt" DestinationFolder="bin\$(Configuration)\target\legal-notices" />
+    <Copy SourceFiles="..\legal\ForgeRock_License.txt" DestinationFolder="bin\$(Configuration)\target\legal-notices" Condition=" '$(ForgeRockLegal)' == 'true' "/>
     <ItemGroup>
-      <ZipFiles Include="bin\$(Configuration)\target\*.*" Exclude="*.zip" />
+      <ZipFiles Include="bin\$(Configuration)\target\**\*.dll;
+            bin\$(Configuration)\target\**\*.exe;
+            bin\$(Configuration)\target\**\*.config;
+            bin\$(Configuration)\target\**\*.txt" Exclude="*.zip;*.pdb" />
     </ItemGroup>
     <Zip Files="@(ZipFiles)" WorkingDirectory="bin\$(Configuration)\target" ZipFileName="bin\$(Configuration)\openicf-$(OpenICFVersion)-dotnet.zip" />
   </Target>

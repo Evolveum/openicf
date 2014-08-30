@@ -28,11 +28,11 @@
     <parent>
         <groupId>org.forgerock.openicf.connectors</groupId>
         <artifactId>connectors-parent</artifactId>
-        <version>1.4.0.0-SNAPSHOT</version>
+        <version>1.4.0.0</version>
     </parent>
     <groupId>org.forgerock.openicf.connectors</groupId>
     <artifactId>groovy-connector</artifactId>
-    <version>1.4.0.0-SNAPSHOT</version>
+    <version>1.4.1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Groovy Connector</name>
     <description>This is a generic bundle that contains base classes and interfaces needed to write a scripted
@@ -50,7 +50,7 @@
     </issueManagement>
     <ciManagement>
         <system>jenkins</system>
-        <url>http://builds.forgerock.org/job/OpenICF - Ldap Connector</url>
+        <url>http://builds.forgerock.org/job/OpenICF - Groovy Connector</url>
     </ciManagement>
     <properties>
         <!-- maven-compiler-plugin -->
@@ -154,7 +154,7 @@
         <dependency>
             <groupId>org.forgerock.commons</groupId>
             <artifactId>json-resource</artifactId>
-            <version>2.3.0</version>
+            <version>2.3.1</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -185,7 +185,7 @@
         <dependency>
             <groupId>org.forgerock.commons</groupId>
             <artifactId>json-resource-servlet</artifactId>
-            <version>2.3.0</version>
+            <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -259,6 +259,18 @@
                         <Require-Bundle>groovy-all</Require-Bundle>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.forgerock.maven.plugins</groupId>
+                <artifactId>openicf-maven-plugin</artifactId>
+                <version>1.2.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>reduce-pom</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

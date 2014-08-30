@@ -31,7 +31,7 @@
     </parent>
     <groupId>org.forgerock.openicf.framework</groupId>
     <artifactId>framework</artifactId>
-    <version>1.4.0.0-SNAPSHOT</version>
+    <version>1.4.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>OpenICF Project</name>
     <description>
@@ -154,7 +154,7 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
         <framework.compatibilityVersion>1.4</framework.compatibilityVersion>
-        <licenseResourceBundle>org.forgerock.openicf:openicf-license:1.1.0</licenseResourceBundle>
+        <licenseResourceBundle>org.forgerock.openicf:openicf-license:1.2.0</licenseResourceBundle>
         <siteDistributionURL>scp://forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>
 
         <!-- forgerock-build-tools stylesheet org/forgerock/javadoc/javadoc.css
@@ -162,7 +162,7 @@
         <javadocStylesheet>org/forgerock/javadoc/javadoc.css</javadocStylesheet>
 
         <!-- Core documentation properties -->
-        <frDocPluginVersion>2.1.2</frDocPluginVersion>
+        <frDocPluginVersion>2.1.4-SNAPSHOT</frDocPluginVersion>
         <docTargetVersion>${project.version}</docTargetVersion>
         <googleAnalyticsAccountId>UA-23412190-10</googleAnalyticsAccountId>
         <!--
@@ -173,7 +173,7 @@
         -->
         <releaseDate/>
         <softwareReleaseDate>${releaseDate}</softwareReleaseDate>
-        <pubDate />
+        <pubDate/>
         <publicationDate>${pubDate}</publicationDate>
         <!--
         <publishedDocBase>http://docs.forgerock.org/en/</publishedDocBase>
@@ -254,29 +254,29 @@
             <dependency>
                 <groupId>org.forgerock.openicf.framework</groupId>
                 <artifactId>connector-framework</artifactId>
-                <version>1.4.0.0-SNAPSHOT</version>
+                <version>1.4.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.forgerock.openicf.framework</groupId>
                 <artifactId>connector-framework-internal</artifactId>
-                <version>1.4.0.0-SNAPSHOT</version>
+                <version>1.4.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.forgerock.openicf.framework</groupId>
                 <artifactId>connector-test-common</artifactId>
-                <version>1.4.0.0-SNAPSHOT</version>
+                <version>1.4.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.forgerock.openicf.framework</groupId>
                 <artifactId>connector-framework-contract</artifactId>
-                <version>1.4.0.0-SNAPSHOT</version>
+                <version>1.4.1.0-SNAPSHOT</version>
             </dependency>
 
             <!-- Provided Dependencies -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-all</artifactId>
-                <version>2.1.9</version>
+                <version>2.2.2</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -284,7 +284,7 @@
             <dependency>
                 <groupId>org.forgerock.openicf.framework</groupId>
                 <artifactId>connector-framework</artifactId>
-                <version>1.4.0.0-SNAPSHOT</version>
+                <version>1.4.1.0-SNAPSHOT</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -392,6 +392,7 @@
                 <version>1.5</version>
                 <executions>
                     <execution>
+                        <id>legal-files</id>
                         <goals>
                             <goal>process</goal>
                         </goals>
@@ -401,6 +402,54 @@
                             </resourceBundles>
                         </configuration>
                     </execution>
+
+                    <!--Build connector config reference-->
+                    <execution>
+                        <id>shared-files</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <resourceBundles>
+                                <resourceBundle>org.forgerock.maven.plugins:openicf-maven-plugin:1.2.0-SNAPSHOT</resourceBundle>
+                            </resourceBundles>
+                            <outputDirectory>${project.build.directory}/docbkx-generated</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>config-reference</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <resourceBundles>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:groovy-connector:1.4.1.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:xml-connector:1.1.1.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:scriptedsql-connector:1.1.2.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:ldap-connector:1.4.0.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:databasetable-connector:1.1.1.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                                <resourceBundle>
+                                    org.forgerock.openicf.connectors:csvfile-connector:1.1.1.0-SNAPSHOT:jar:docbkx
+                                </resourceBundle>
+                            </resourceBundles>
+                            <outputDirectory>${project.build.directory}/docbkx-generated/config-reference</outputDirectory>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
             <plugin>
@@ -421,6 +470,9 @@
                         <goals>
                             <goal>boilerplate</goal>
                         </goals>
+                        <configuration>
+                            <overwriteGeneratedSource>true</overwriteGeneratedSource>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>filter-sources</id>

@@ -59,7 +59,7 @@ namespace Org.IdentityConnectors.Framework.Server
         private const String IMPL_NAME
          = "Org.IdentityConnectors.Framework.Impl.Server.ConnectorServerImpl";
 
-        protected internal static readonly TraceSource logger = new TraceSource("ConnectorServer");
+        protected internal static readonly TraceSource Logger = new TraceSource("ConnectorServer");
 
         /// <summary>
         /// The port to listen on;
@@ -1140,7 +1140,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
 
             public void Run(Object stateInfo)
             {
-                logger.TraceEvent(TraceEventType.Verbose, _sequence++,
+                Logger.TraceEvent(TraceEventType.Verbose, _sequence++,
                     "Invoking Managed ConnectorFacade Disposer : {0:yyyy/MM/dd H:mm:ss zzz}", DateTime.Now);
                 ConnectorFacadeFactory factory = ConnectorFacadeFactory.GetManagedInstance();
                 if (factory is ManagedConnectorFacadeFactoryImpl)

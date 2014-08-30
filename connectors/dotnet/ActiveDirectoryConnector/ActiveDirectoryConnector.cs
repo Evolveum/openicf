@@ -187,10 +187,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if ((ObjectClass.ACCOUNT.Equals(oclass)) &&
                     (ConnectorAttributeUtil.Find(OperationalAttributes.ENABLE_NAME, attributes) == null))
                 {
-                    attributes.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
+                    ICollection<ConnectorAttribute> temp = new HashSet<ConnectorAttribute>(attributes);
+                    temp.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
+                    _utils.UpdateADObject(oclass, newDe, temp, UpdateType.REPLACE, _configuration);
                 }
-                _utils.UpdateADObject(oclass, newDe, attributes,
-                    UpdateType.REPLACE, _configuration);
+                else
+                {
+                    _utils.UpdateADObject(oclass, newDe, attributes, UpdateType.REPLACE, _configuration);
+                }
                 Object guidValue = newDe.Properties["objectGUID"].Value;
                 if (guidValue != null)
                 {

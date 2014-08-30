@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="*"
-		Name="Connector Server"
+		Name="OpenICF Connector Server"
 		Language="1033"
 		Version="!(bind.FileVersion.Framework.dll)"
 		UpgradeCode="2C19FE30-F6A7-482D-A50F-C1E64D34C024"
@@ -24,7 +24,8 @@
 		         Description="Connector Server Service"
 		         Level="1"
 		         ConfigurableDirectory="INSTALLDIR">
-		         <ComponentRef Id="ConnectorServerService"/>
+		         <ComponentGroupRef Id="ConnectorServerComponents" />
+				 <ComponentGroupRef Id="LegalFilesComponents" />
 		</Feature>
 		
 		<!-- 
