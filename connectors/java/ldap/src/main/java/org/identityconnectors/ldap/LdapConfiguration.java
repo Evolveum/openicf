@@ -84,6 +84,11 @@ public class LdapConfiguration extends AbstractConfiguration {
     private boolean ssl;
 
     /**
+     * Whether the use STARTTLS LDAP extension right after the connection.
+     */
+    private boolean startTls;
+    
+    /**
      * LDAP URL's to connect to if the main server specified through the host and port
      * properties is not available.
      */
@@ -405,6 +410,14 @@ public class LdapConfiguration extends AbstractConfiguration {
 
     public void setSsl(boolean ssl) {
         this.ssl = ssl;
+    }
+
+    public boolean isStartTls() {
+        return startTls;
+    }
+
+    public void setStartTls(boolean startTls) {
+        this.startTls = startTls;
     }
 
     public String[] getFailover() {

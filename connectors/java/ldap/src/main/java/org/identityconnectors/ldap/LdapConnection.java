@@ -32,6 +32,7 @@ import static org.identityconnectors.ldap.LdapUtil.getStringAttrValue;
 import static org.identityconnectors.ldap.LdapUtil.getStringAttrValues;
 import static org.identityconnectors.ldap.LdapUtil.nullAsEmpty;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -44,17 +45,21 @@ import javax.naming.directory.Attributes;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.StartTlsRequest;
+import javax.naming.ldap.StartTlsResponse;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.security.GuardedString.Accessor;
+import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
 import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
 import org.identityconnectors.ldap.schema.LdapSchemaMapping;
 
 import com.sun.jndi.ldap.ctl.PasswordExpiredResponseControl;
+
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
 
@@ -140,8 +145,6 @@ public class LdapConnection {
     }
 
     private Pair<AuthenticationResult, LdapContext> createContext(String principal, GuardedString credentials) {
-        final List<Pair<AuthenticationResult, LdapContext>> result = new ArrayList<Pair<AuthenticationResult, LdapContext>>(1);
-
         final Hashtable<Object, Object> env = new Hashtable<Object, Object>();
         env.put("java.naming.ldap.attributes.binary", LdapConstants.MS_GUID_ATTR);
         env.put(Context.INITIAL_CONTEXT_FACTORY, LDAP_CTX_FACTORY);
@@ -151,43 +154,74 @@ public class LdapConnection {
         if (config.isSsl()) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
-
-        String authentication = isNotBlank(principal) ? "simple" : "none";
-        env.put(Context.SECURITY_AUTHENTICATION, authentication);
-
-        if (isNotBlank(principal)) {
-            env.put(Context.SECURITY_PRINCIPAL, principal);
-            if (credentials != null) {
-                credentials.access(new Accessor() {
-                    public void access(char[] clearChars) {
-                        env.put(Context.SECURITY_CREDENTIALS, clearChars);
-                        // Connect while in the accessor, otherwise clearChars will be cleared.
-                        result.add(createContext(env));
-                    }
-                });
-                assert result.size() > 0;
-            } else {
-                result.add(createContext(env));
-            }
-        } else {
-            result.add(createContext(env));
+        
+        InitialLdapContext context;
+        try {
+			context = new InitialLdapContext(env, null);
+		} catch (NamingException e) {
+			// TODO better analysis of the cause and appropriate exception
+			throw new ConnectionFailedException(e.getMessage(), e);
+		}
+        
+        
+        if (config.isStartTls()) {
+	        StartTlsResponse tls;
+			try {
+				tls = (StartTlsResponse) context.extendedOperation(new StartTlsRequest());
+			} catch (NamingException e) {
+				throw new ConnectionFailedException(e.getMessage(), e);
+			}
+	        try {
+				tls.negotiate();
+			} catch (IOException e) {
+				throw new ConnectionFailedException(e.getMessage(), e);
+			}
         }
-
-        return result.get(0);
+        
+        AuthenticationResult authenticationResult = authenticateContext(context, principal, credentials);
+        
+        return new Pair<AuthenticationResult, LdapContext>(authenticationResult, context);
     }
 
-    private Pair<AuthenticationResult, LdapContext> createContext(Hashtable<?, ?> env) {
+    private AuthenticationResult authenticateContext(final InitialLdapContext context, String principal,
+			GuardedString credentials) {
+        
         AuthenticationResult authnResult = null;
-        InitialLdapContext context = null;
-        try {
-            context = new InitialLdapContext(env, null);
-            if (config.isRespectResourcePasswordPolicyChangeAfterReset()) {
-                if (hasPasswordExpiredControl(context.getResponseControls())) {
-                    authnResult = new AuthenticationResult(AuthenticationResultType.PASSWORD_EXPIRED);
-                }
-            }
-            // TODO: process Password Policy control.
-        } catch (AuthenticationException e) {
+    	try {
+
+    		String authentication = isNotBlank(principal) ? "simple" : "none";
+	    	context.addToEnvironment(Context.SECURITY_AUTHENTICATION, authentication);
+	
+	        if (isNotBlank(principal)) {
+	        	context.addToEnvironment(Context.SECURITY_PRINCIPAL, principal);
+	        	try {
+		        	credentials.access(new Accessor() {
+		                public void access(char[] clearChars) {
+		                	try {
+								context.addToEnvironment(Context.SECURITY_CREDENTIALS, clearChars);
+							} catch (NamingException e) {
+								new RuntimeException(e);
+							}
+		                }
+		            });
+	        	} catch (RuntimeException e) {
+	        		// Magic to tunnel NamingException out of the "closure".
+	        		Throwable cause = e.getCause();
+	        		if (cause instanceof NamingException) {
+	        			throw (NamingException)cause;
+	        		} else {
+	        			throw e;
+	        		}
+	        	}
+	        };
+	        
+	        if (config.isRespectResourcePasswordPolicyChangeAfterReset()) {
+	            if (hasPasswordExpiredControl(context.getResponseControls())) {
+	                authnResult = new AuthenticationResult(AuthenticationResultType.PASSWORD_EXPIRED);
+	            }
+	        }
+
+    	} catch (AuthenticationException e) {
             String message = e.getMessage().toLowerCase();
             //SUN_DSEE, OPENDS, OPENDJ, IBM, MSAD, MSAD_LDS, MSAD_GC, NOVELL, UNBOUNDID, OPENLDAP, UNKNOWN
             switch (getServerType()) {
@@ -239,8 +273,9 @@ public class LdapConnection {
             assert context != null;
             authnResult = new AuthenticationResult(AuthenticationResultType.SUCCESS);
         }
-        return new Pair<AuthenticationResult, LdapContext>(authnResult, context);
-    }
+
+        return authnResult;
+	}
 
     private static boolean hasPasswordExpiredControl(Control[] controls) {
         if (controls != null) {
