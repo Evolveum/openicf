@@ -21,6 +21,7 @@
  * ====================
  *
  * Portions Copyrighted 2013-2014 ForgeRock AS
+ * Portions Copyrighted 2014 Evolveum
  */
 package org.identityconnectors.ldap;
 
@@ -143,30 +144,12 @@ public class LdapConnection {
         InitialLdapContext ctx = null;
         return new InitialLdapContext(getDefaultContextEnv(), null);
     }
-    
-    private LdapContext getSaslContext() throws NamingException {
-        // Set up environment for creating initial context
-        final Hashtable env = getDefaultContextEnv();
-        env.put(Context.REFERRAL, config.getReferralsHandling());
-        // Request the use of the "GSSAPI" SASL mechanism
-        // Authenticate by using already established Kerberos credentials
-        env.put(Context.SECURITY_AUTHENTICATION, "GSSAPI");
-        return new InitialLdapContext(env,null);
-    }
-    
+        
     public LdapContext getInitialContext() {
         if (initCtx != null) {
             return initCtx;
         }
-        if (SASL_GSSAPI.equalsIgnoreCase(config.getAuthType())) {
-            try {
-                initCtx = getSaslContext();
-            } catch (NamingException ex) {
-                throw new ConnectionFailedException(ex);
-            }
-        } else {
-            initCtx = connect(config.getPrincipal(), config.getCredentials());
-        }
+        initCtx = connect(config.getPrincipal(), config.getCredentials());
         return initCtx;
     }
 
@@ -224,7 +207,12 @@ public class LdapConnection {
         AuthenticationResult authnResult = null;
     	try {
 
-    		String authentication = isNotBlank(principal) ? "simple" : "none";
+    		String authentication;
+            if (SASL_GSSAPI.equalsIgnoreCase(config.getAuthType())) {
+            	authentication = "GSSAPI";
+            } else {
+            	authentication = isNotBlank(principal) ? "simple" : "none";
+            }            
 	    	context.addToEnvironment(Context.SECURITY_AUTHENTICATION, authentication);
 	
 	        if (isNotBlank(principal)) {
@@ -233,7 +221,7 @@ public class LdapConnection {
 		        	credentials.access(new Accessor() {
 		                public void access(char[] clearChars) {
 		                	try {
-								context.addToEnvironment(Context.SECURITY_CREDENTIALS, clearChars);
+								context.addToEnvironment(Context.SECURITY_CREDENTIALS, new String(clearChars));
 							} catch (NamingException e) {
 								new RuntimeException(e);
 							}

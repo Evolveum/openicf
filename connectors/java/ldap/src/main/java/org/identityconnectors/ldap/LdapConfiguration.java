@@ -21,7 +21,7 @@
  * ====================
  * 
  * Portions Copyrighted 2013-2014 ForgeRock AS
- * Portions Copyrighted 2011 Radovan Semancik (Evolveum)
+ * Portions Copyrighted 2011-2014 Radovan Semancik (Evolveum)
  */
 package org.identityconnectors.ldap;
 
