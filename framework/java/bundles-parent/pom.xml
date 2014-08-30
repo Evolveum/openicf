@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.forgerock.openicf.framework</groupId>
         <artifactId>framework</artifactId>
-        <version>1.4.0.0-SNAPSHOT</version>
+        <version>1.4.1.0-SNAPSHOT</version>
     </parent>
     <groupId>org.forgerock.openicf.connectors</groupId>
     <artifactId>connectors-parent</artifactId>
     <packaging>pom</packaging>
-    <name>OpenICF Connectors Parent</name>
+    <name>OpenICF Connectors</name>
     <description>
         This pom module is the parent for all connector bundles. It defines the dependencies on framework, building the
         connector bundle and common reporting for connectors.
@@ -76,7 +76,7 @@
 
         <!-- OSGi Properties -->
         <openicf.osgi.exclude.dependencies>false</openicf.osgi.exclude.dependencies>
-        <framework.version>1.4.0.0-SNAPSHOT</framework.version>
+        <framework.version>1.4.1.0-SNAPSHOT</framework.version>
 
         <openicf.osgi.import.framework.version>
             version="[$(version;==;${framework.version}),$(version;+;${framework.version}))"
@@ -141,11 +141,11 @@
             <artifactId>connector-test-common</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
+        <!--dependency>
             <groupId>org.forgerock.openicf.framework</groupId>
             <artifactId>connector-framework-contract</artifactId>
             <scope>test</scope>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
@@ -207,6 +207,13 @@
                             ${siteDistributionURL}/connectors/${project.artifactId}-${project.version}
                         </stagingSiteURL>
                     </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.forgerock.maven.plugins</groupId>
+                            <artifactId>openicf-maven-plugin</artifactId>
+                            <version>1.1.0</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -337,7 +344,7 @@
                 <plugin>
                     <groupId>org.forgerock.maven.plugins</groupId>
                     <artifactId>openicf-maven-plugin</artifactId>
-                    <version>1.1.0-SNAPSHOT</version>
+                    <version>1.1.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -347,7 +354,18 @@
             <plugin>
                 <groupId>org.forgerock.maven.plugins</groupId>
                 <artifactId>openicf-maven-plugin</artifactId>
-                <version>1.1.0-SNAPSHOT</version>
+                <version>1.1.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <links>
+                        <link>http://download.oracle.com/javase/6/docs/api/</link>
+                        <link>http://groovy.codehaus.org/api/</link>
+                        <link>http://openicf.forgerock.org/apidocs/</link>
+                    </links>
+                </configuration>
             </plugin>
         </plugins>
     </reporting>
@@ -359,12 +377,12 @@
             <id>contract-test</id>
             <build>
                 <plugins>
-                    <plugin>
+                    <!--plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
 
-                            <!-- Copy classes from contract tests -->
+                            <!- - Copy classes from contract tests - ->
                             <execution>
                                 <id>copy-contractclasses</id>
                                 <phase>pre-integration-test</phase>
@@ -392,7 +410,7 @@
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
+                    </plugin-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
@@ -496,6 +514,7 @@
                             <googleAnalyticsId>${googleAnalyticsAccountId}</googleAnalyticsId>
                             <useGeneratedSources>true</useGeneratedSources>
                             <docbkxSourceDirectory>${project.build.directory}/openicf-docbkx</docbkxSourceDirectory>
+                            <projectVersion>${docTargetVersion}</projectVersion>
                         </configuration>
                         <executions>
                             <execution>

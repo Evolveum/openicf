@@ -272,11 +272,13 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp, Sche
         if (isNis) {
             result.addAll(CollectionUtil.newSet("ypcat", "ypmatch", "yppasswd"));
         } else {
-            result.addAll(CollectionUtil.newSet(
-            // user
-                    "last", "useradd", "usermod", "userdel", "passwd",
-                    // group
-                    "groupadd", "groupmod", "groupdel"));
+        	result.addAll(connection.getModeDriver().getRequiredCommands());
+        	//moved to concrete unix mode drive
+//            result.addAll(CollectionUtil.newSet(
+//            // user
+//                    "last", "useradd", "usermod", "userdel", "passwd",
+//                    // group
+//                    "groupadd", "groupmod", "groupdel"));
         }
         return result;
     }

@@ -86,7 +86,6 @@
     </ProjectReference>
   </ItemGroup>
   <Target Name="Clean">
-    <RemoveDir Directories="bin;obj">
-    </RemoveDir>
+    <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

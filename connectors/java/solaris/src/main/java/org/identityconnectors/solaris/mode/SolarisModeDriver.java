@@ -421,6 +421,7 @@ public class SolarisModeDriver extends UnixModeDriver {
                             AttributeInfoBuilder.build(attrName, String.class, EnumSet.of(
                                     Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
                     break;
+                case REGISTRY: 
                 case TIME_LAST_LOGIN:
                     newAttr =
                             AttributeInfoBuilder.build(attrName, String.class, EnumSet.of(

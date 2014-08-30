@@ -19,13 +19,14 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2010-2013 ForgeRock AS.
+ * Portions Copyrighted 2010-2014 ForgeRock AS.
  */
 package org.identityconnectors.framework.impl.api.local.operations;
 
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.filter.Filter;
+import org.identityconnectors.framework.common.objects.filter.FilterVisitor;
 
 public final class FilteredResultsHandler implements ResultsHandler {
 
@@ -72,6 +73,10 @@ public final class FilteredResultsHandler implements ResultsHandler {
         @Override
         public boolean accept(ConnectorObject obj) {
             return true;
+        }
+
+        public <R, P> R accept(FilterVisitor<R, P> v, P p) {
+            return v.visitExtendedFilter(p, this);
         }
     }
 

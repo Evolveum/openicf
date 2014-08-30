@@ -85,8 +85,11 @@ public enum AccountAttribute implements ConnectorAttribute {
      */
     LOCK(OperationalAttributes.LOCK_OUT_NAME, NativeAttribute.LOCK),
     
-    PASSWD_FORCE_CHANGE("force_change", NativeAttribute.PWSTAT);
+    PASSWD_FORCE_CHANGE("force_change", NativeAttribute.PWSTAT),
     // @formatter:on
+    
+    REGISTRY("registry", NativeAttribute.REGISTRY),
+    SYSTEM("SYSTEM", NativeAttribute.SYSTEM);
 
     private String name;
     private NativeAttribute nativeAttr;

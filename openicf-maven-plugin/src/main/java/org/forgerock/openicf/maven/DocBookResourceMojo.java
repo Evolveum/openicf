@@ -25,12 +25,19 @@
 package org.forgerock.openicf.maven;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.security.CodeSource;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.maven.archiver.MavenArchiveConfiguration;
 import org.apache.maven.archiver.MavenArchiver;
@@ -40,6 +47,7 @@ import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.resources.remote.BundleRemoteResourcesMojo;
@@ -52,6 +60,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.shared.filtering.MavenFileFilter;
+import org.apache.maven.shared.filtering.MavenFilteringException;
+import org.apache.maven.shared.filtering.MavenResourcesExecution;
 import org.apache.velocity.context.Context;
 import org.codehaus.plexus.archiver.Archiver;
 import org.codehaus.plexus.archiver.ArchiverException;
@@ -60,10 +71,11 @@ import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.codehaus.plexus.i18n.I18N;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.velocity.VelocityComponent;
 import org.identityconnectors.common.l10n.CurrentLocale;
-import org.identityconnectors.framework.spi.Connector;
+import org.identityconnectors.framework.api.RemoteFrameworkConnectionInfo;
 
 /**
  * A DocBookResourceMojo generate the DocBook xml.
@@ -72,7 +84,6 @@ import org.identityconnectors.framework.spi.Connector;
  * {@code mvnDebug org.forgerock.maven.plugins:openicf-maven-plugin:docbkx}
  *
  * @author Laszlo Hordos
- * @configurator override
  */
 @Mojo(name = "docbkx", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true,
         requiresDependencyResolution = ResolutionScope.TEST, configurator = "override")
@@ -90,11 +101,6 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
      */
     @Parameter(defaultValue = "${project.artifact}", required = true, readonly = true)
     private Artifact artifact;
-
-    /**
-     */
-    @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
-    private String version;
 
     /**
      * Encoding of the bundle.
@@ -120,6 +126,10 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
      */
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
     private File buildOutputDirectory;
+
+    public File getBuildOutputDirectory() {
+        return buildOutputDirectory;
+    }
 
     /**
      * Directory that contains the template.
@@ -172,6 +182,10 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
     @Parameter
     private String[] includes;
 
+    public String[] getIncludes() {
+        return includes;
+    }
+
     /**
      * A list of files to exclude. Can contain ant-style wildcards and double
      * wildcards.
@@ -179,16 +193,34 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
     @Parameter
     private String[] excludes;
 
+    public String[] getExcludes() {
+        return excludes;
+    }
+
     /**
      * Set this to 'true' to bypass artifact deploy
      *
      * @since 1.0.0
      */
-    @Parameter(property = "maven.remoteresource.skip", defaultValue = "false")
+    @Parameter(property = "maven.openicf.skip", defaultValue = "false")
     private boolean skip;
 
     @Parameter
     private PropertyBag configurationProperties;
+
+    public PropertyBag getConfigurationProperties() {
+        return configurationProperties;
+    }
+
+    @Parameter
+    private RemoteFrameworkConnectionInfo remoteFrameworkConnectionInfo;
+
+    public RemoteFrameworkConnectionInfo getRemoteFrameworkConnectionInfo() {
+        return remoteFrameworkConnectionInfo;
+    }
+
+    @Parameter(defaultValue = "${mojoExecution}")
+    MojoExecution execution;
 
     // ----------------------------------------------------------------------
     // Mojo components
@@ -201,7 +233,7 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
     private MavenProjectHelper projectHelper;
 
     /**
-     * The Jar archiver.
+     * The Jar achiver.
      */
     @Component(role = Archiver.class, hint = "jar")
     private JarArchiver jarArchiver;
@@ -218,19 +250,16 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
     @Component()
     private VelocityComponent velocity;
 
+    @Component()
+    private MavenFileFilter fileFilter;
+
     /**
      * @plexus.requirement
      */
     private I18N i18n;
 
-    // ConnectorMojoBridge
-
     public File getBasedir() {
         return basedir;
-    }
-
-    public File getBuildOutputDirectory() {
-        return buildOutputDirectory;
     }
 
     public String getSourceEncoding() {
@@ -249,54 +278,62 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
         return project;
     }
 
-    public PropertyBag getConfigurationProperties() {
-        return configurationProperties;
-    }
-
-    public void generate(ConnectorDocBuilder builder, Context context,
-            Class<? extends Connector> connectorClass) throws MojoExecutionException {
+    public void generate(ConnectorDocBuilder builder, Context context, String connectorName)
+            throws MojoExecutionException {
         try {
             File rootDirectory =
                     new File(buildDirectory, "openicf-docbkx/" + getTargetDirectoryName());
 
-            File configDoc =
-                    new File(rootDirectory, "sec-config-"
-                            + connectorClass.getSimpleName().toLowerCase() + ".xml");
+            Map<String, String> fileSetDictionary = new LinkedHashMap<String, String>();
+            fileSetDictionary.put("sec-reference.xml.vm", "sec-reference-%s.xml");
+            fileSetDictionary.put("sec-implemented-interfaces.xml.vm",
+                    "sec-implemented-interfaces-%s.xml");
+            fileSetDictionary.put("sec-config-properties.xml.vm", "sec-config-properties-%s.xml");
+            fileSetDictionary.put("sec-schema.xml.vm", "sec-schema-%s.xml");
+            fileSetDictionary.put("chap-config.xml.vm", "chap-config-%s.xml");
 
-            FileUtils.mkdir(configDoc.getParentFile().getAbsolutePath());
-
-            FileWriter writer = new FileWriter(configDoc);
-            builder.processTemplate(velocity.getEngine(), context, "openicf-connector-config.vm",
-                    writer);
-            writer.flush();
-            writer.close();
-
-            if (null != context.get("schema")) {
-
-                File schemaDoc =
-                        new File(rootDirectory, "sec-schema-"
-                                + connectorClass.getSimpleName().toLowerCase() + ".xml");
-
-                writer = new FileWriter(schemaDoc);
-                builder.processTemplate(velocity.getEngine(), context,
-                        "openicf-connector-schema.vm", writer);
-                writer.flush();
-                writer.close();
+            for (Map.Entry<String, String> entry : fileSetDictionary.entrySet()) {
+                generateDocument(builder, context, connectorName, rootDirectory, entry.getKey());
             }
-
         } catch (IOException e) {
             getLog().error(e);
-            throw new MojoExecutionException("Failed to generate docbook", e);
+            throw new MojoExecutionException("Failed to generate DocBook", e);
         }
     }
 
+    protected void generateDocument(ConnectorDocBuilder builder, Context context,
+            String connectorName, File rootDirectory, String templateFile) throws IOException,
+            MojoExecutionException {
+        if (null == context.get("schema") && templateFile.contains("-schema")) {
+            return;
+        }
+        String key =
+                templateFile
+                        .substring(templateFile.lastIndexOf("/") + 1, templateFile.indexOf('.'));
+        String fileName = key + "-" + connectorName + ".xml";
+        File configDoc = new File(rootDirectory, fileName);
+
+        FileUtils.mkdir(configDoc.getParentFile().getAbsolutePath());
+
+        FileWriter writer = new FileWriter(configDoc);
+        builder.processTemplate(velocity.getEngine(), context, templateFile, writer);
+        writer.flush();
+        writer.close();
+        context.put(key, fileName);
+    }
+
     protected String getTargetDirectoryName() {
-        return artifact.getArtifactId() + "-" + version;
+        if (null == execution || execution.getExecutionId().equals("default")) {
+            return artifact.getArtifactId() + "-" + artifact.getVersion();
+        } else {
+            return artifact.getArtifactId() + "-" + artifact.getVersion() + "/"
+                    + execution.getExecutionId();
+        }
     }
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
-            getLog().info("Skipping docbook generation");
+            getLog().info("Skipping DocBook generation");
             return;
         }
 
@@ -313,23 +350,79 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
 
             if (!docbkxDirectory.exists()) {
                 getLog().info(
-                        "Not executing DocBook report as the project does not have docbkx source");
+                        "Not executing DocBook report as the project does not have DocBook source");
                 return;
             }
 
-            String docFolder = getTargetDirectoryName();
-
-            File rootDirectory = new File(buildDirectory, "openicf-docbkx/" + docFolder);
-
+            File rootDirectory =
+                    new File(buildDirectory, "openicf-docbkx/" + artifact.getArtifactId() + "-"
+                            + artifact.getVersion());
             try {
-                // File f = new File(rootDirectory, "index.xml");
-
                 FileUtils.mkdir(rootDirectory.getAbsolutePath());
 
-                FileUtils.copyDirectory(docbkxDirectory, rootDirectory);
+                MavenResourcesExecution mre = new MavenResourcesExecution();
+                mre.setMavenProject(getMavenProject());
+                mre.setEscapeWindowsPaths(true);
+                mre.setMavenSession(session);
+                mre.setInjectProjectBuildFilters(true);
 
+                List<FileUtils.FilterWrapper> filterWrappers = null;
+                try {
+                    filterWrappers = fileFilter.getDefaultFilterWrappers(mre);
+                } catch (MavenFilteringException e) {
+                    filterWrappers = Collections.emptyList();
+                }
+
+                if (docbkxDirectory.exists()) {
+                    List<File> files = FileUtils.getFiles(docbkxDirectory, "**/*.xml", null);
+
+                    for (File file : files) {
+                        try {
+                            fileFilter.copyFile(file, new File(rootDirectory, file.getName()),
+                                    true, filterWrappers, getSourceEncoding());
+                        } catch (MavenFilteringException e) {
+                            throw new MojoExecutionException(e.getMessage(), e);
+                        }
+                    }
+
+                    FileUtils.copyDirectory(docbkxDirectory, rootDirectory, "**", StringUtils.join(
+                            DirectoryScanner.DEFAULTEXCLUDES, ",")
+                            + ",**/*.xml");
+                }
+
+                File sharedRoot = rootDirectory.getParentFile();
+
+                CodeSource src = getClass().getProtectionDomain().getCodeSource();
+                if (src != null) {
+                    final ZipInputStream zip = new ZipInputStream(src.getLocation().openStream());
+                    ZipEntry entry = null;
+                    while ((entry = zip.getNextEntry()) != null) {
+                        String name = entry.getName();
+                        if (entry.getName().startsWith("shared")) {
+
+                            File destination = new File(sharedRoot, name);
+                            if (entry.isDirectory()) {
+                                if (!destination.exists()) {
+                                    destination.mkdirs();
+                                }
+                            } else {
+                                if (!destination.exists()) {
+                                    FileOutputStream output = null;
+                                    try {
+                                        output = new FileOutputStream(destination);
+                                        IOUtil.copy(zip, output);
+                                    } finally {
+                                        IOUtil.close(output);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    zip.closeEntry();
+                    zip.close();
+                }
             } catch (IOException e) {
-                throw new MojoExecutionException("Error copy remote resources manifest.", e);
+                throw new MojoExecutionException("Error copy DocBook resources.", e);
             }
 
             // Generate Config and Schema DocBook Chapter
@@ -344,68 +437,63 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
             // that
             // need to be processed.
 
-            RemoteResourcesBundle remoteResourcesBundle = new RemoteResourcesBundle();
-            remoteResourcesBundle.setSourceEncoding(sourceEncoding);
+            if (attach) {
+                RemoteResourcesBundle remoteResourcesBundle = new RemoteResourcesBundle();
+                remoteResourcesBundle.setSourceEncoding(getSourceEncoding());
 
-            DirectoryScanner scanner = new DirectoryScanner();
-            scanner.setBasedir(new File(buildDirectory, "openicf-docbkx/"));
-            scanner.setIncludes(new String[] { docFolder + "/**" });
-            scanner.addDefaultExcludes();
-            scanner.scan();
-
-            List<String> includedFiles = Arrays.asList(scanner.getIncludedFiles());
-
-            if (skip) {
-                scanner = new DirectoryScanner();
-                scanner.setBasedir(resourcesDirectory);
-                if (includes != null && includes.length != 0) {
-                    scanner.setIncludes(includes);
-                } else {
-                    scanner.setIncludes(DEFAULT_INCLUDES);
-                }
-
-                if (excludes != null && excludes.length != 0) {
-                    scanner.setExcludes(excludes);
-                }
-
+                DirectoryScanner scanner = new DirectoryScanner();
+                scanner.setBasedir(new File(buildDirectory, "openicf-docbkx/"));
+                // scanner.setIncludes(new String[] { docFolder + "/**" });
                 scanner.addDefaultExcludes();
                 scanner.scan();
-                // TODO Copy to new archive
-                includedFiles.addAll(Arrays.asList(scanner.getIncludedFiles()));
-            }
 
-            for (String resource : includedFiles) {
-                remoteResourcesBundle.addRemoteResource(StringUtils.replace(resource, '\\', '/'));
-            }
+                List<String> includedFiles = Arrays.asList(scanner.getIncludedFiles());
 
-            RemoteResourcesBundleXpp3Writer w = new RemoteResourcesBundleXpp3Writer();
+                if (resourcesDirectory.exists()) {
+                    scanner = new DirectoryScanner();
+                    scanner.setBasedir(resourcesDirectory);
+                    if (includes != null && includes.length != 0) {
+                        scanner.setIncludes(includes);
+                    } else {
+                        scanner.setIncludes(DEFAULT_INCLUDES);
+                    }
 
-            try {
-                File f =
-                        new File(buildDirectory, "openicf-docbkx/"
-                                + BundleRemoteResourcesMojo.RESOURCES_MANIFEST);
+                    if (excludes != null && excludes.length != 0) {
+                        scanner.setExcludes(excludes);
+                    }
 
-                FileUtils.mkdir(f.getParentFile().getAbsolutePath());
+                    scanner.addDefaultExcludes();
+                    scanner.scan();
+                    includedFiles.addAll(Arrays.asList(scanner.getIncludedFiles()));
+                }
+                for (String resource : includedFiles) {
+                    remoteResourcesBundle.addRemoteResource(StringUtils
+                            .replace(resource, '\\', '/'));
+                }
 
-                Writer writer = new FileWriter(f);
+                RemoteResourcesBundleXpp3Writer w = new RemoteResourcesBundleXpp3Writer();
 
-                w.write(writer, remoteResourcesBundle);
-            } catch (IOException e) {
-                throw new MojoExecutionException("Error creating remote resources manifest.", e);
-            }
+                try {
+                    File f =
+                            new File(buildDirectory, "openicf-docbkx/"
+                                    + BundleRemoteResourcesMojo.RESOURCES_MANIFEST);
 
-            // executeReport( Locale.getDefault() );
+                    FileUtils.mkdir(f.getParentFile().getAbsolutePath());
 
-            if (rootDirectory.exists()) {
+                    Writer writer = new FileWriter(f);
+
+                    w.write(writer, remoteResourcesBundle);
+                } catch (IOException e) {
+                    throw new MojoExecutionException("Error creating remote resources manifest.", e);
+                }
+
                 File outputFile =
                         generateArchive(new File(buildDirectory, "openicf-docbkx/"), finalName
                                 + "-docbkx.jar");
 
-                if (!attach) {
-                    getLog().info("NOT adding javadoc to attached artifacts list.");
-                } else {
-                    projectHelper.attachArtifact(project, "jar", "docbkx", outputFile);
-                }
+                projectHelper.attachArtifact(project, "jar", "docbkx", outputFile);
+            } else {
+                getLog().info("NOT adding DocBook to attached artifacts list.");
             }
         } catch (ArchiverException e) {
             failOnError("ArchiverException: Error while creating archive", e);
@@ -414,7 +502,6 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
         } catch (RuntimeException e) {
             failOnError("RuntimeException: Error while creating archive", e);
         }
-
     }
 
     /**
@@ -442,11 +529,10 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
         archiver.setArchiver(jarArchiver);
         archiver.setOutputFile(docbkxJar);
 
-        File contentDirectory = docbkxFiles;
-        if (!contentDirectory.exists()) {
+        if (!docbkxFiles.exists()) {
             getLog().warn("JAR will be empty - no content was marked for inclusion!");
         } else {
-            archiver.getArchiver().addDirectory(contentDirectory);
+            archiver.getArchiver().addDirectory(docbkxFiles);
         }
 
         List<Resource> resources = project.getBuild().getResources();
@@ -458,8 +544,6 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
         }
 
         try {
-            // archive.setManifestFile( defaultManifestFile );
-            // we don't want Maven stuff
             archive.setAddMavenDescriptor(false);
             archiver.createArchive(session, project, archive);
         } catch (ManifestException e) {
@@ -471,7 +555,6 @@ public class DocBookResourceMojo extends AbstractMojo implements ConnectorMojoBr
 
         return docbkxJar;
     }
-
 
     protected void failOnError(String prefix, Exception e) throws MojoExecutionException {
         if (failOnError) {

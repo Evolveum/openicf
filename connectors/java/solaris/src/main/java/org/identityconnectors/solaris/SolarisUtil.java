@@ -136,6 +136,7 @@ public final class SolarisUtil {
      */
     public static SolarisEntry convertIcfAttributesToSolarisEntry(String entryName, ObjectClass objectClass,
             Set<Attribute> attributes, SolarisConfiguration config) {
+
         // translate connector attributes to native counterparts
         final SolarisEntry.Builder builder = new SolarisEntry.Builder(entryName);
         

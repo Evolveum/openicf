@@ -186,6 +186,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         /// <summary>
         /// reads the value in-line.
         /// </summary>
+        byte ReadByteContents();
+
+        /// <summary>
+        /// reads the value in-line.
+        /// </summary>
         byte[] ReadByteArrayContents();
 
         /// <summary>
@@ -808,7 +813,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             }
             public override Object Deserialize(ObjectDecoder decoder)
             {
-                return decoder.ReadByteArrayContents();
+                return decoder.ReadByteContents();
             }
 
             public override void Serialize(Object obj, ObjectEncoder encoder)
@@ -1175,7 +1180,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             public override void Serialize(Object obj, ObjectEncoder encoder)
             {
                 GuardedByteArray str = (GuardedByteArray)obj;
-                str.Access(
+                str.Access(new GuardedByteArray.LambdaAccessor(
                      clearBytes =>
                      {
                          byte[] encryptedBytes = null;
@@ -1188,7 +1193,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                          {
                              SecurityUtil.Clear(encryptedBytes);
                          }
-                     });
+                     }));
             }
         }
 
@@ -1233,7 +1238,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             public override void Serialize(Object obj, ObjectEncoder encoder)
             {
                 GuardedString str = (GuardedString)obj;
-                str.Access(
+                str.Access( new GuardedString.LambdaAccessor(
                      clearChars =>
                      {
                          UnmanagedArray<byte> clearBytes = null;
@@ -1252,7 +1257,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                              }
                              SecurityUtil.Clear(encryptedBytes);
                          }
-                     });
+                     }));
             }
         }
     }
@@ -2503,7 +2508,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             {
                 Org.IdentityConnectors.Framework.Common.Objects.SortKey val = (Org.IdentityConnectors.Framework.Common.Objects.SortKey)obj;
                 encoder.WriteStringField("field", val.Field);
-                encoder.WriteBooleanField("isAscending", val.AscendingOrder);
+                encoder.WriteBooleanField("isAscending", val.IsAscendingOrder());
             }
         }
         private class OperationOptionInfoHandler : AbstractObjectSerializationHandler
@@ -2559,6 +2564,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 builder.DeltaType = ((SyncDeltaType)decoder.ReadObjectField("SyncDeltaType", typeof(SyncDeltaType), null));
                 builder.Token = ((SyncToken)decoder.ReadObjectField("SyncToken", typeof(SyncToken), null));
                 builder.PreviousUid = ((Uid)decoder.ReadObjectField("PreviousUid", typeof(Uid), null));
+                builder.ObjectClass = ((ObjectClass)decoder.ReadObjectField("ObjectClass", typeof(ObjectClass), null));
                 builder.Uid = ((Uid)decoder.ReadObjectField("Uid", typeof(Uid), null));
                 builder.Object = ((ConnectorObject)decoder.ReadObjectField("ConnectorObject", typeof(ConnectorObject), null));
                 return builder.Build();
@@ -2570,6 +2576,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteObjectField("SyncDeltaType", val.DeltaType, true);
                 encoder.WriteObjectField("SyncToken", val.Token, true);
                 encoder.WriteObjectField("PreviousUid", val.PreviousUid, true);
+                encoder.WriteObjectField("ObjectClass", val.ObjectClass, true);
                 encoder.WriteObjectField("Uid", val.Uid, true);
                 encoder.WriteObjectField("ConnectorObject", val.Object, true);
             }

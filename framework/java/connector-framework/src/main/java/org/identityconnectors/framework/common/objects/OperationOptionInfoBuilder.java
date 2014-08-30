@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.framework.common.objects;
 
+import org.identityconnectors.common.security.GuardedString;
+
 public final class OperationOptionInfoBuilder {
     private String name;
     private Class<?> type;
@@ -70,7 +72,7 @@ public final class OperationOptionInfoBuilder {
     }
 
     public static OperationOptionInfo buildRunWithPassword() {
-        return build(OperationOptions.OP_RUN_WITH_PASSWORD);
+        return build(OperationOptions.OP_RUN_WITH_PASSWORD, GuardedString.class);
     }
 
     public static OperationOptionInfo buildRunWithUser() {
@@ -83,5 +85,21 @@ public final class OperationOptionInfoBuilder {
 
     public static OperationOptionInfo buildContainer() {
         return build(OperationOptions.OP_CONTAINER, QualifiedUid.class);
+    }
+
+    public static OperationOptionInfo buildPagedResultsCookie() {
+        return build(OperationOptions.OP_PAGED_RESULTS_COOKIE);
+    }
+
+    public static OperationOptionInfo buildPagedResultsOffset() {
+        return build(OperationOptions.OP_PAGED_RESULTS_OFFSET, Integer.class);
+    }
+
+    public static OperationOptionInfo buildPageSize() {
+        return build(OperationOptions.OP_PAGE_SIZE, Integer.class);
+    }
+
+    public static OperationOptionInfo buildSortKeys() {
+        return build(OperationOptions.OP_SORT_KEYS, SortKey.class);
     }
 }

@@ -122,7 +122,7 @@ class UpdateNativeUser extends CommandSwitches {
             conn.executeCommand(groupsScript);
         }
 
-        String cmd = conn.buildCommand(true, "usermod", commandSwitches, entry.getName());
+        String cmd = conn.getModeDriver().buildUpdateUserCommand(entry, commandSwitches);
         conn.executeCommand(cmd, USERMOD_ERRORS);
 
         // If this is a rename operation, check to see if the user's

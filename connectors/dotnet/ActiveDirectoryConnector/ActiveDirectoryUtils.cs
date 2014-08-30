@@ -22,6 +22,7 @@
  * Portions Copyrighted 2012-2014 ForgeRock AS.
  */
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Org.IdentityConnectors.Framework.Common.Objects;
@@ -34,6 +35,7 @@ using ActiveDs;
 using Org.IdentityConnectors.Common.Security;
 using System.DirectoryServices.ActiveDirectory;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -554,8 +556,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns></returns>
         public static String NormalizeLdapString(String ldapString)
         {
+            /// (?<!\\)    Matches if the preceding character is not a backslash
+            /// (?:\\\\)*  Matches any number of occurrences of two backslashes
+            /// ,          Matches a comma
+            var regexObj = new Regex(@"(?<!\\)(?:\\\\)*,");
+            String[] parts = regexObj.Split(ldapString).ToArray();
+
             StringBuilder normalPath = new StringBuilder();
-            String[] parts = ldapString.Split(',');
             for (int i = 0; i < parts.Length; i++)
             {
                 normalPath.Append(parts[i].Trim());
@@ -860,19 +867,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else if (originalException.ErrorCode == -2147217911)  // ADO_PERMISSION_DENIED
             {
-                return new PermissionDeniedException(message, originalException);
+                return new PermissionDeniedException(originalException.Message + ": " + message, originalException);
             }
             else if (originalException.ErrorCode == -2147024891)    // ADS_INSUFFICIENT_RIGHTS
             {
-                return new PermissionDeniedException(message, originalException);
+                return new PermissionDeniedException(originalException.Message + ": " + message, originalException);
             }
             else if (originalException.ErrorCode == -2147023570)    // LDAP_INVALID_CREDENTIALS
             {
-                return new InvalidCredentialException(message, originalException);
+                return new InvalidCredentialException(originalException.Message + ": " + message, originalException);
             }
             else if (originalException.ErrorCode == -2147019886)    // LDAP_ALREADY_EXISTS
             {
-                return new AlreadyExistsException(message, originalException);
+                return new AlreadyExistsException(originalException.Message + ": " + message, originalException);
             }
             else if (originalException.ErrorCode == -2147016691)    // LDAP_ATTRIBUTE_OR_VALUE_EXISTS This error occurs primarily when you try to add members to groups that have been members of this group beforehand.
             {
@@ -881,6 +888,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else if (originalException.ErrorCode == -2147016657)    // LDAP_CONSTRAINT_VIOLATION
             {
                 return originalException;       // here will be something like SchemaException when it will be available
+            }
+            else
+            {
+                return originalException;
+            }
+        }
+
+        /// <summary>
+        /// Converts a System.Runtime.InteropServices.COMException into more meaningful ICF exception (e.g. AlreadyExistsException).
+        /// </summary>
+        /// 
+        /// Actually, it is questionable if the exception mapping can be done in a universal way like this,
+        /// or whether it has to be specific for individual operations (search, create, update, ...). We
+        /// will see.
+        public static Exception OtherComToIcfException(System.Runtime.InteropServices.COMException originalException, String message)
+        {
+            Trace.TraceError("ErrorCode = {0}", originalException.ErrorCode);
+
+            if (originalException.ErrorCode == -2147022651)    // password too weak
+            {
+                return new ArgumentException(originalException.Message + ": " + message, originalException);       /* see also https://groups.google.com/d/msg/connid-dev/i4-N22CARZ8/S-1Yv-iqWBUJ */
             }
             else
             {

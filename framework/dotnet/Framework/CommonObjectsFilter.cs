@@ -22,6 +22,7 @@
  * Portions Copyrighted 2014 ForgeRock AS.
  */
 using System;
+using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using Org.IdentityConnectors.Common;
@@ -762,12 +763,24 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
     #region AndFilter
     public sealed class AndFilter : CompositeFilter
     {
+
+        /// <summary>
+        /// Left side of a composite based filter.
+        /// </summary>
+        private LinkedList<Filter> _subFilters;
+
         /// <summary>
         /// And the the left and right filters.
-        /// </summary>
+        /// </summary>       
         public AndFilter(Filter left, Filter right)
-            : base(left, right)
+            : this(CollectionUtil.NewList(new[] { left, right }))
         {
+        }
+
+        public AndFilter(IEnumerable<Filter> filters)
+            : base(null, null)
+        {
+            _subFilters = new LinkedList<Filter>(filters);
         }
 
         /// <summary>
@@ -776,14 +789,77 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         /// <seealso cref="Filter.Accept(ConnectorObject)" />
         public override bool Accept(ConnectorObject obj)
         {
-            return Left.Accept(obj) && Right.Accept(obj);
+            bool result = true;
+            foreach (Filter subFilter in _subFilters)
+            {
+                result = subFilter.Accept(obj);
+                if (!result)
+                {
+                    break;
+                }
+            }
+            return result;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitAndFilter(p, this);
+        }
+
+        public override Filter Left
+        {
+            get
+            {
+                return _subFilters.First.Value;
+            }
+        }
+
+        public override Filter Right
+        {
+            get
+            {
+                if (_subFilters.Count > 2)
+                {
+                    var right = new LinkedList<Filter>(_subFilters);
+                    right.RemoveFirst();
+                    return new AndFilter(right);
+                }
+                else if (_subFilters.Count == 2)
+                {
+                    return _subFilters.Last.Value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        public override ICollection<Filter> Filters
+        {
+            get
+            {
+                return CollectionUtil.AsReadOnlyList(new List<Filter>(_subFilters));
+            }
         }
 
         public override string ToString()
         {
-            StringBuilder bld = new StringBuilder();
-            bld.Append("AND: ").Append(Left).Append(", ").Append(Right);
-            return bld.ToString();
+            StringBuilder builder = (new StringBuilder()).Append('(');
+            bool isFirst = true;
+            foreach (Filter subFilter in _subFilters)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    builder.Append(" and ");
+                }
+                builder.Append(subFilter);
+            }
+            return builder.Append(')').ToString();
         }
     }
     #endregion
@@ -814,6 +890,17 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         }
 
         /// <summary>
+        /// Name of the attribute to find in the <seealso cref="ConnectorObject"/>.
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                return GetAttribute().Name;
+            }
+        }
+
+        /// <summary>
         /// Determines if the attribute provided is present in the
         /// <see cref="ConnectorObject" />.
         /// </summary>
@@ -822,6 +909,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
             return obj.GetAttributeByName(_attribute.Name) != null;
         }
         public abstract bool Accept(ConnectorObject obj);
+        public abstract R Accept<R, P>(FilterVisitor<R, P> v, P p);
     }
     #endregion
 
@@ -878,16 +966,47 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
     #region CompositeFilter
     public abstract class CompositeFilter : Filter
     {
-        public Filter Left { get; set; }
+        /// <summary>
+        /// Left side of a composite based filter.
+        /// </summary>
+        private Filter _left;
 
-        public Filter Right { get; set; }
+        /// <summary>
+        /// Right side of a composite based filter.
+        /// </summary>
+        private Filter _right;
+
+        public virtual Filter Left
+        {
+            get
+            {
+                return _left;
+            }
+        }
+
+        public virtual Filter Right
+        {
+            get
+            {
+                return _right;
+            }
+        }
+
+        public virtual ICollection<Filter> Filters
+        {
+            get
+            {
+                return CollectionUtil.NewReadOnlyList(Left, Right);
+            }
+        }
 
         internal CompositeFilter(Filter left, Filter right)
         {
-            Left = left;
-            Right = right;
+            _left = left;
+            _right = right;
         }
         public abstract bool Accept(ConnectorObject obj);
+        public abstract R Accept<R, P>(FilterVisitor<R, P> v, P p);
     }
     #endregion
 
@@ -902,6 +1021,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public override bool Accept(String value)
         {
             return value.Contains(GetValue());
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitContainsFilter(p, this);
         }
 
         public override string ToString()
@@ -924,6 +1048,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public override bool Accept(String value)
         {
             return value.EndsWith(GetValue());
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitEndsWithFilter(p, this);
         }
 
         public override string ToString()
@@ -967,6 +1096,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
             return ret;
         }
 
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitEqualsFilter(p, this);
+        }
+
         public override string ToString()
         {
             StringBuilder bld = new StringBuilder();
@@ -980,7 +1114,197 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
     #region Filter
     public interface Filter
     {
+        /// <summary>
+        /// Determines whether the specified <seealso cref="ConnectorObject"/> matches this
+        /// filter.
+        /// </summary>
+        /// <param name="obj">
+        ///            - The specified ConnectorObject. </param>
+        /// <returns> <code>true</code> if the object matches (that is, satisfies all
+        ///         selection criteria of) this filter; otherwise <code>false</code>. </returns>
         bool Accept(ConnectorObject obj);
+
+        /// <summary>
+        /// Applies a <code>FilterVisitor</code> to this <code>Filter</code>.
+        /// </summary>
+        /// <param name="R">
+        ///            The return type of the visitor's methods. </param>
+        /// <param name="P">
+        ///            The type of the additional parameters to the visitor's
+        ///            methods. </param>
+        /// <param name="v">
+        ///            The filter visitor. </param>
+        /// <param name="p">
+        ///            Optional additional visitor parameter. </param>
+        /// <returns> A result as specified by the visitor.
+        /// @since 1.4 </returns>
+        R Accept<R, P>(FilterVisitor<R, P> v, P p);
+    }
+    #endregion
+
+    #region FilterVisitor
+    /// <summary>
+    /// A visitor of <code>Filter</code>s, in the style of the visitor design
+    /// pattern.
+    /// <para>
+    /// Classes implementing this interface can query filters in a type-safe manner.
+    /// When a visitor is passed to a filter's accept method, the corresponding visit
+    /// method most applicable to that filter is invoked.
+    /// 
+    /// </para>
+    /// </summary>
+    /// <param name="R">
+    ///            The return type of this visitor's methods. Use
+    ///            <seealso cref="Void"/> for visitors that do not need to return
+    ///            results. </param>
+    /// <param name="P">
+    ///            The type of the additional parameter to this visitor's methods.
+    ///            Use <seealso cref="Void"/> for visitors that do not need an
+    ///            additional parameter.
+    /// </param>
+    /// <remarks>since 1.4</remarks>
+    public interface FilterVisitor<R, P>
+    {
+
+        /// <summary>
+        /// Visits an <code>and</code> filter.
+        /// <para>
+        /// <b>Implementation note</b>: for the purposes of matching, an empty
+        /// sub-filters should always evaluate to <code>true</code>.
+        ///     
+        /// </para>
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitAndFilter(P p, AndFilter filter);
+
+        /// <summary>
+        /// Visits a <code>contains</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitContainsFilter(P p, ContainsFilter filter);
+
+        /// <summary>
+        /// Visits a <code>containsAll</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitContainsAllValuesFilter(P p, ContainsAllValuesFilter filter);
+
+        /// <summary>
+        /// Visits a <code>equality</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitEqualsFilter(P p, EqualsFilter filter);
+
+        /// <summary>
+        /// Visits a <code>comparison</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitExtendedFilter(P p, Filter filter);
+
+        /// <summary>
+        /// Visits a <code>greater than</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitGreaterThanFilter(P p, GreaterThanFilter filter);
+
+        /// <summary>
+        /// Visits a <code>greater than or equal to</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitGreaterThanOrEqualFilter(P p, GreaterThanOrEqualFilter filter);
+
+        /// <summary>
+        /// Visits a <code>less than</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitLessThanFilter(P p, LessThanFilter filter);
+
+        /// <summary>
+        /// Visits a <code>less than or equal to</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitLessThanOrEqualFilter(P p, LessThanOrEqualFilter filter);
+
+        /// <summary>
+        /// Visits a <code>no</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitNotFilter(P p, NotFilter filter);
+
+        /// <summary>
+        /// Visits an <code>or</code> filter.
+        /// <para>
+        /// <b>Implementation note</b>: for the purposes of matching, an empty
+        /// sub-filters should always evaluate to <code>false</code>.
+        /// 
+        /// </para>
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitOrFilter(P p, OrFilter filter);
+
+        /// <summary>
+        /// Visits a <code>starts with</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitStartsWithFilter(P p, StartsWithFilter filter);
+
+        /// <summary>
+        /// Visits a <code>ends wit</code> filter.
+        /// </summary>
+        /// <param name="p">
+        ///            A visitor specified parameter. </param>
+        /// <param name="filter">
+        ///            The visited filter. </param>
+        /// <returns> Returns a visitor specified result. </returns>
+        R VisitEndsWithFilter(P p, EndsWithFilter filter);
     }
     #endregion
 
@@ -1110,6 +1434,30 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         }
 
         /// <summary>
+        /// Creates a new "AND" filter using the provided list of sub-filters.
+        /// <para>
+        /// Creating a new "AND" filter with a {@code null} or empty list of
+        /// sub-filters is equivalent to calling "alwaysTrue".
+        ///     
+        /// </para>
+        /// </summary>
+        /// <param name="subFilters">
+        ///            The list of sub-filters, may be empty or {@code null}. </param>
+        /// <returns> The newly created "AND" filter. </returns>
+        public static Filter And(ICollection<Filter> subFilters)
+        {
+            switch (subFilters.Count)
+            {
+                case 0:
+                    return null;
+                case 1:
+                    return subFilters.First();
+                default:
+                    return new AndFilter(new List<Filter>(subFilters));
+            }
+        }
+
+        /// <summary>
         /// ORs the two <see cref="Filter" />.
         /// </summary>
         /// <param name="leftOperand">left side operand.</param>
@@ -1118,6 +1466,30 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public static Filter Or(Filter leftOperand, Filter rightOperand)
         {
             return new OrFilter(leftOperand, rightOperand);
+        }
+
+        /// <summary>
+        /// Creates a new "OR" filter using the provided list of sub-filters.
+        /// <para>
+        /// Creating a new "OR" filter with a {@code null} or empty list of
+        /// sub-filters is equivalent to  "alwaysTrue".
+        /// 
+        /// </para>
+        /// </summary>
+        /// <param name="subFilters">
+        ///            The list of sub-filters, may be empty or {@code null}. </param>
+        /// <returns> The newly created {@code or} filter. </returns>
+        public static Filter Or(ICollection<Filter> subFilters)
+        {
+            switch (subFilters.Count)
+            {
+                case 0:
+                    return null;
+                case 1:
+                    return subFilters.First();
+                default:
+                    return new OrFilter(new List<Filter>(subFilters));
+            }
         }
 
         /// <summary>
@@ -1161,6 +1533,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
             return IsPresent(obj) && this.Compare(obj) > 0;
         }
 
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitGreaterThanFilter(p, this);
+        }
+
         public override string ToString()
         {
             StringBuilder bld = new StringBuilder();
@@ -1190,6 +1567,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public override bool Accept(ConnectorObject obj)
         {
             return IsPresent(obj) && this.Compare(obj) >= 0;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitGreaterThanOrEqualFilter(p, this);
         }
 
         public override string ToString()
@@ -1223,6 +1605,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
             return IsPresent(obj) && this.Compare(obj) < 0;
         }
 
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitLessThanFilter(p, this);
+        }
+
         public override string ToString()
         {
             StringBuilder bld = new StringBuilder();
@@ -1252,6 +1639,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public override bool Accept(ConnectorObject obj)
         {
             return IsPresent(obj) && this.Compare(obj) <= 0;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitLessThanOrEqualFilter(p, this);
         }
 
         public override string ToString()
@@ -1299,6 +1691,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
             return !_filter.Accept(obj);
         }
 
+        public R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitNotFilter(p, this);
+        }
+
         public override string ToString()
         {
             StringBuilder bld = new StringBuilder();
@@ -1311,12 +1708,24 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
     #region OrFilter
     public sealed class OrFilter : CompositeFilter
     {
+
         /// <summary>
-        /// Or the left and right filters.
+        /// Left side of a composite based filter.
         /// </summary>
+        private LinkedList<Filter> _subFilters;
+
+        /// <summary>
+        /// Or the the left and right filters.
+        /// </summary>       
         public OrFilter(Filter left, Filter right)
-            : base(left, right)
+            : this(CollectionUtil.NewList(new[] { left, right }))
         {
+        }
+
+        public OrFilter(IEnumerable<Filter> filters)
+            : base(null, null)
+        {
+            _subFilters = new LinkedList<Filter>(filters);
         }
 
         /// <summary>
@@ -1325,14 +1734,74 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         /// <seealso cref="Filter.Accept(ConnectorObject)" />
         public override bool Accept(ConnectorObject obj)
         {
-            return Left.Accept(obj) || Right.Accept(obj);
+            bool result = false;
+            foreach (Filter subFilter in _subFilters)
+            {
+                result = subFilter.Accept(obj);
+                if (result)
+                {
+                    break;
+                }
+            }
+            return result;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitOrFilter(p, this);
+        }
+
+        public override Filter Left
+        {
+            get
+            {
+                return _subFilters.First.Value;
+            }
+        }
+
+        public override Filter Right
+        {
+            get
+            {
+                if (_subFilters.Count > 2)
+                {
+                    var right = new LinkedList<Filter>(_subFilters);
+                    right.RemoveFirst();
+                    return new AndFilter(right);
+                }
+                if (_subFilters.Count == 2)
+                {
+                    return _subFilters.Last.Value;
+                }
+                return null;
+            }
+        }
+
+        public override ICollection<Filter> Filters
+        {
+            get
+            {
+                return CollectionUtil.AsReadOnlyList(new List<Filter>(_subFilters));
+            }
         }
 
         public override string ToString()
         {
-            StringBuilder bld = new StringBuilder();
-            bld.Append("OR: ").Append(Left).Append(", ").Append(Right);
-            return bld.ToString();
+            StringBuilder builder = (new StringBuilder()).Append('(');
+            bool isFirst = true;
+            foreach (Filter subFilter in _subFilters)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    builder.Append(" or ");
+                }
+                builder.Append(subFilter);
+            }
+            return builder.Append(')').ToString();
         }
     }
     #endregion
@@ -1391,6 +1860,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         public override bool Accept(String value)
         {
             return value.StartsWith(GetValue());
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitStartsWithFilter(p, this);
         }
 
         public override string ToString()
@@ -1455,7 +1929,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
     public class ContainsAllValuesFilter : AttributeFilter
     {
         private readonly string _name;
-        private readonly ICollection<object> _values;
+        private readonly IList<object> _values;
 
         public ContainsAllValuesFilter(ConnectorAttribute attr)
             : base(attr)
@@ -1484,6 +1958,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
                 }
             }
             return rv;
+        }
+
+        public override R Accept<R, P>(FilterVisitor<R, P> v, P p)
+        {
+            return v.VisitContainsAllValuesFilter(p, this);
         }
     }
     #endregion
@@ -1517,6 +1996,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects.Filters
         }
 
         public abstract bool Accept(ConnectorObject obj);
+        public abstract R Accept<R, P>(FilterVisitor<R, P> v, P p);
     }
 
     #endregion

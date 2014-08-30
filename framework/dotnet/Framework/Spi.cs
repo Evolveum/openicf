@@ -54,11 +54,11 @@ namespace Org.IdentityConnectors.Framework.Spi
     /// </description>
     /// </item>
     /// <item>
-    /// <description>The attributes passed to <see cref="AdvancedUpdateOp" />.
+    /// <description>The attributes passed to <see cref="UpdateOp" />.
     /// </description>
     /// </item>
     /// <item>
-    /// <description>The <code>Uid</code> returned from <see cref="AdvancedUpdateOp" />.
+    /// <description>The <code>Uid</code> returned from <see cref="UpdateOp" />.
     /// </description>
     /// </item>
     /// <item>
@@ -103,13 +103,13 @@ namespace Org.IdentityConnectors.Framework.Spi
     /// </para>
     /// <para>  
     /// Each property corresponds to two entries in a resource named <code>Messages</code>:
-    /// <code>[Property].display</code> and <code>[Property].help</code>. For example,
-    /// <code>hostname.help</code> and <code>hostname.display</code> would be the keys
+    /// <code>display_[Property]</code> and <code>help_[Property]</code>. For example,
+    /// <code>help_hostname</code> and <code>display_helphostname</code> would be the keys
     /// corresponding to a <code>hostname</code> property. The <code>display</code> message is the display
     /// name of the property and can be used to display the property in a view. The <code>help</code>
     /// message holds the description of the property. The names of the two keys can be overridden
     /// through the <code>ConfigurationProperty</code> annotation.
-    /// <para>
+    /// </para>
     /// </summary>
     public interface Configuration
     {
@@ -217,6 +217,50 @@ namespace Org.IdentityConnectors.Framework.Spi
         /// </summary>
         public string[] MessageCatalogPaths { get; set; }
 
+    }
+    #endregion
+
+    #region ConfigurationrClassAttribute
+    /// <summary>
+    /// The <seealso cref="Org.IdentityConnectors.Framework.Spi.Configuration"/> interface is traversed through reflection. This
+    /// annotation provides a way to override the default "add all property" behaviour.
+    /// 
+    /// @since 1.4
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    public class ConfigurationClassAttribute : System.Attribute
+    {
+
+        private readonly Boolean _skipUnsupported;
+        private readonly String[] _ignore;
+
+        public ConfigurationClassAttribute(Boolean skipUnsupported, String[] ignore)
+        {
+            _skipUnsupported = skipUnsupported;
+            _ignore = ignore ?? new string[]{} ;
+        }
+
+        /// <summary>
+        /// Silently skips properties with unsupported types.
+        /// </summary>
+        public Boolean SkipUnsupported
+        {
+            get
+            {
+                return _skipUnsupported;
+            }
+        }
+
+        /// <summary>
+        /// List of properties which should be excluded from configuration properties..
+        /// </summary>
+        public string[] Ignore
+        {
+            get
+            {
+                return _ignore;
+            }
+        }
     }
     #endregion
 
@@ -365,7 +409,8 @@ namespace Org.IdentityConnectors.Framework.Spi
         /// <para>
         /// This method can be called often. Implementations should do their
         /// best to keep this method fast.
-        /// </para>
+        /// </para>        
+        /// </summary>
         /// <exception cref="System.Exception">if the connector is no longer alive.</exception>
         void CheckAlive();
     }
@@ -379,7 +424,7 @@ namespace Org.IdentityConnectors.Framework.Spi
     /// A search result completion handler may be specified when performing search
     /// requests using a <seealso cref="org.identityconnectors.framework.api.ConnectorFacade"/>
     /// object. The <seealso cref="#handle"/> method is invoked each time a matching
-    /// <seealso cref="org.identityconnectors.framework.common.objects.ConnectorObject"/>
+    /// <seealso cref="Org.identityconnectors.framework.common.objects.ConnectorObject"/>
     /// resource is returned, followed by <seealso cref="#handleResult"/> indicating that no
     /// more ConnectorObject resources will be returned.
     /// </para>

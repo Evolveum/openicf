@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="*"
-		Name="Connector Server"
+		Name="OpenICF Connector Server"
 		Language="1033"
 		Version="!(bind.FileVersion.Framework.dll)"
 		UpgradeCode="2C19FE30-F6A7-482D-A50F-C1E64D34C024"
@@ -24,7 +24,8 @@
 		         Description="Connector Server Service"
 		         Level="1"
 		         ConfigurableDirectory="INSTALLDIR">
-		         <ComponentRef Id="ConnectorServerService"/>
+		         <ComponentGroupRef Id="ConnectorServerComponents" />
+				 <ComponentGroupRef Id="LegalFilesComponents" />
 		</Feature>
 		
 		<!-- 
@@ -98,7 +99,7 @@
                 <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
                 <Control Id="Description" Type="Text" X="135" Y="80" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeDlgDescription)" />
                 <Control Id="SeparationLine" Type="Line" X="135" Y="140" Width="220" Height="0" />
-                <Control Id="Copyright" Type="Text" X="135" Y="150" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="Portions Copyrighted (c) 2011-2013 ForgeRock AS." />
+                <Control Id="Copyright" Type="Text" X="135" Y="150" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="Portions Copyrighted (c) 2011-2014 ForgeRock AS." />
                 <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeDlgTitle)" />
             </Dialog>
             <InstallUISequence>

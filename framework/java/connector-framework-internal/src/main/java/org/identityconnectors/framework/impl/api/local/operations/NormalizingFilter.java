@@ -20,12 +20,14 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * Portions Copyrighted 2013-2014 Evolveum
+ * Portions Copyrighted 2014 ForgeRock AS. 
  */
 package org.identityconnectors.framework.impl.api.local.operations;
 
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.filter.ExternallyChainedFilter;
 import org.identityconnectors.framework.common.objects.filter.Filter;
+import org.identityconnectors.framework.common.objects.filter.FilterVisitor;
 
 /**
  *  Proxy the filter to filter based on object normalized version.
@@ -54,6 +56,10 @@ public class NormalizingFilter extends ExternallyChainedFilter {
      */
     public boolean accept(ConnectorObject obj) {
         return getFilter().accept(normalizerFacade.normalizeObject(obj));
+    }
+
+    public <R, P> R accept(FilterVisitor<R, P> v, P p) {
+        return v.visitExtendedFilter(p, this);
     }
 
     @Override

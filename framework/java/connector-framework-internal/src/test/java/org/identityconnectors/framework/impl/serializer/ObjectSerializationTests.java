@@ -295,6 +295,13 @@ public class ObjectSerializationTests {
     }
 
     @Test
+    public void testByte() throws Exception {
+        Byte  v1 = 51;
+        Byte  v2 = (Byte)cloneObject(v1);
+        assertEquals(v1, v2);
+    }
+
+    @Test
     public void testClasses() throws Exception {
         assertEquals(int.class,
                 cloneObject(int.class));
@@ -1059,6 +1066,19 @@ public class ObjectSerializationTests {
         assertEquals(new Uid("foo"),v2.getObject().getUid());
         assertEquals(new SyncToken("mytoken"),v2.getToken());
         assertEquals(SyncDeltaType.CREATE_OR_UPDATE,v2.getDeltaType());
+        assertEquals(v1,v2);
+
+        builder = new SyncDeltaBuilder();
+        builder.setDeltaType(SyncDeltaType.DELETE);
+        builder.setToken(new SyncToken("mytoken"));
+        builder.setObjectClass(ObjectClass.ACCOUNT);
+        builder.setUid(new Uid("foo"));
+        v1 = builder.build();
+        v2 = (SyncDelta)cloneObject(v1);
+        assertEquals(ObjectClass.ACCOUNT,v2.getObjectClass());
+        assertEquals(new Uid("foo"),v2.getUid());
+        assertEquals(new SyncToken("mytoken"),v2.getToken());
+        assertEquals(SyncDeltaType.DELETE,v2.getDeltaType());
         assertEquals(v1,v2);
     }
 

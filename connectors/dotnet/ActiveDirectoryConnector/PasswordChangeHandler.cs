@@ -193,31 +193,71 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// sets the _currentPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setCurrentPassword(UnmanagedArray<char> clearChars)
+        //internal void setCurrentPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _currentPassword = "";
+
+<<<<<<< HEAD
+        internal class SetCurrentPasswordAccessor : GuardedString.Accessor
         {
-            _currentPassword = "";
-
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
+            private PasswordChangeHandler handler;
+            internal SetCurrentPasswordAccessor(PasswordChangeHandler handler)
             {
-                _currentPassword += clearChars[i];
+                this.handler = handler;
             }
-        }
 
+            public void Access(UnmanagedArray<char> clearChars)
+            {
+                handler.setCurrentPassword(clearChars);
+            }
+        };
+
+
+=======
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _currentPassword += clearChars[i];
+        //    }
+        //}
+        // Gael 1.1 legacy
+>>>>>>> trunk
         /// <summary>
         /// Sets the _newPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setNewPassword(UnmanagedArray<char> clearChars)
+<<<<<<< HEAD
+        public void setNewPassword(UnmanagedArray<char> clearChars)
         {
             _newPassword = "";
+=======
+        //internal void setNewPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _newPassword = "";
+>>>>>>> trunk
 
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _newPassword += clearChars[i];
+        //    }
+        //}
+        // Gael - 1.1 legacy
+
+        internal class SetNewPasswordAccessor : GuardedString.Accessor
+        {
+            private PasswordChangeHandler handler;
+            internal SetNewPasswordAccessor(PasswordChangeHandler handler)
             {
-                _newPassword += clearChars[i];
+                this.handler = handler;
             }
-        }
+
+            public void Access(UnmanagedArray<char> clearChars)
+            {
+                handler.setNewPassword(clearChars);
+            }
+        };
+            
 
         /// <summary>
         /// Does an administrative password change.  The Directory
@@ -230,8 +270,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsNewPassword)
         {
             // decrypt and save the new password
-            gsNewPassword.Access(setNewPassword);
+<<<<<<< HEAD
+            gsNewPassword.Access(new SetNewPasswordAccessor(this));            
 
+=======
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            
+>>>>>>> trunk
             // get the native com object as an IADsUser, and set the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -249,9 +294,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsCurrentPassword, GuardedString gsNewPassword)
         {
             // decrypt and save the old nad new passwords
-            gsNewPassword.Access(setNewPassword);
-            gsCurrentPassword.Access(setCurrentPassword);
+<<<<<<< HEAD
+            gsNewPassword.Access(new SetNewPasswordAccessor(this));
+            gsCurrentPassword.Access(new SetCurrentPasswordAccessor(this));
 
+=======
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            _currentPassword = SecurityUtil.Decrypt(gsCurrentPassword);
+            
+>>>>>>> trunk
             // get the native com object as an IADsUser, and change the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -261,18 +312,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <summary>
         ///     Authenticates the user
         /// </summary>
-        /// <param name="directoryEntry"></param>
         /// <param name="username"></param>
         /// <param name="password"></param>
+        /// <param name="returnUidOnly"></param>
         internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
-            Org.IdentityConnectors.Common.Security.GuardedString password, bool returnUidOnly)
+            GuardedString password, bool returnUidOnly)
         {
             AuthenticationHelper authHelper = new AuthenticationHelper(_configuration);
             if(returnUidOnly)
             {
                 return authHelper.GetUidFromSamAccountName(username);
             }
-            password.Access(setCurrentPassword);
+<<<<<<< HEAD
+            password.Access(new SetCurrentPasswordAccessor(this));
+=======
+            _currentPassword = SecurityUtil.Decrypt(password);
+>>>>>>> trunk
             return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
 

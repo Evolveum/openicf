@@ -25,11 +25,14 @@
 package org.forgerock.openicf.maven;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.security.CodeSource;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.maven.doxia.siterenderer.Renderer;
 import org.apache.maven.doxia.tools.SiteTool;
@@ -46,9 +49,10 @@ import org.apache.velocity.context.Context;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.exception.VelocityException;
 import org.codehaus.plexus.i18n.I18N;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.velocity.VelocityComponent;
 import org.identityconnectors.common.l10n.CurrentLocale;
-import org.identityconnectors.framework.spi.Connector;
+import org.identityconnectors.framework.api.RemoteFrameworkConnectionInfo;
 
 /**
  * Goal generate a Connector Report.
@@ -69,11 +73,19 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
     @Parameter(defaultValue = "${project.build.sourceEncoding}")
     private String sourceEncoding;
 
+    public String getSourceEncoding() {
+        return sourceEncoding;
+    }
+
     /**
      * The current project base directory.
      */
     @Parameter(defaultValue = "${basedir}", readonly = true, required = true)
     protected File basedir;
+
+    public File getBasedir() {
+        return basedir;
+    }
 
     /**
      * The directory which contains the resources you want packaged up in this
@@ -88,6 +100,10 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
     private File buildOutputDirectory;
 
+    public File getBuildOutputDirectory() {
+        return buildOutputDirectory;
+    }
+
     /**
      * Directory where reports will go.
      */
@@ -101,6 +117,10 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
     @Parameter(property = "openicf.templateDirectory", defaultValue = "org/forgerock/openicf/maven")
     private String templateDirectory;
 
+    public String getTemplateDirectory() {
+        return templateDirectory;
+    }
+
     /**
      * The Velocity template used to format the connector report.
      */
@@ -108,20 +128,61 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
     private String templateName;
 
     /**
+     * A list of files to include. Can contain ant-style wildcards and double
+     * wildcards. The default includes are
+     * <code>**&#47;*.txt   **&#47;*.vm</code>
+     */
+    @Parameter
+    private String[] includes;
+
+    public String[] getIncludes() {
+        return includes;
+    }
+
+    /**
+     * A list of files to exclude. Can contain ant-style wildcards and double
+     * wildcards.
+     */
+    @Parameter
+    private String[] excludes;
+
+    public String[] getExcludes() {
+        return excludes;
+    }
+
+    /**
      * Map of custom parameters for the connector. This Map will be passed to
      * the template.
      */
-    //@Parameter
-    //private Map connectorParameters;
+    // @Parameter
+    // private Map connectorParameters;
 
     @Parameter
     private PropertyBag configurationProperties;
+
+    public PropertyBag getConfigurationProperties() {
+        return configurationProperties;
+    }
+
+    @Parameter
+    private RemoteFrameworkConnectionInfo remoteFrameworkConnectionInfo;
+
+    public RemoteFrameworkConnectionInfo getRemoteFrameworkConnectionInfo() {
+        return remoteFrameworkConnectionInfo;
+    }
+
+    @Parameter
+    String reportName;
 
     /**
      * The Maven Project
      */
     @Component
     private MavenProject project;
+
+    public MavenProject getMavenProject() {
+        return project;
+    }
 
     /**
      * Velocity Component.
@@ -134,6 +195,10 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
      */
     private I18N i18n;
 
+    public I18N getI18N() {
+        return i18n;
+    }
+
     /**
      */
     @Component
@@ -144,38 +209,6 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
      */
     @Component
     private SiteTool siteTool;
-
-    // ConnectorMojoBridge
-
-    public File getBasedir() {
-        return basedir;
-    }
-
-    public File getBuildOutputDirectory() {
-        return buildOutputDirectory;
-    }
-
-    public String getSourceEncoding() {
-        return sourceEncoding;
-    }
-
-    public String getTemplateDirectory() {
-        return templateDirectory;
-    }
-
-    public I18N getI18N() {
-        return i18n;
-    }
-
-    public MavenProject getMavenProject() {
-        return project;
-    }
-
-    public PropertyBag getConfigurationProperties() {
-        return configurationProperties;
-    }
-
-    //
 
     /**
      * @return the site renderer used.
@@ -220,7 +253,11 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
      * @return the output name of this report.
      */
     public String getOutputName() {
-        return "openicf-report";
+        if (null == reportName) {
+            return "openicf-report";
+        } else {
+            return "openicf-report-" + reportName;
+        }
     }
 
     /**
@@ -231,7 +268,11 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
      * @return the name of this report.
      */
     public String getName(Locale locale) {
-        return getBundle(locale).getString("report.openicf.name");
+        if (reportName == null) {
+            return getBundle(locale).getString("report.openicf.name");
+        } else {
+            return getBundle(locale).getString("report.openicf.name") + " " + reportName;
+        }
     }
 
     /**
@@ -243,16 +284,19 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
      * @return the description of this report.
      */
     public String getDescription(Locale locale) {
-        return getBundle(locale).getString("report.openicf.description");
+        if (reportName == null) {
+            return getBundle(locale).getString("report.openicf.description");
+        } else {
+            return getBundle(locale).getString("report.openicf.description") + " " + reportName;
+        }
     }
 
     private ResourceBundle getBundle(Locale locale) {
         return ResourceBundle.getBundle("openicf-report", locale, this.getClass().getClassLoader());
     }
 
-    public void generate(ConnectorDocBuilder builder, Context context,
-            Class<? extends Connector> connectorClass) throws MojoExecutionException {
-
+    public void generate(ConnectorDocBuilder builder, Context context, String connectorName)
+            throws MojoExecutionException {
         try {
             StringWriter writer = new StringWriter();
             builder.processTemplate(velocity.getEngine(), context, templateName, writer);
@@ -263,7 +307,6 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
             getLog().error(e);
             throw new MojoExecutionException("Failed to generate report", e);
         }
-
     }
 
     /**
@@ -287,6 +330,41 @@ public class ConnectorInfoReportMojo extends AbstractMavenReport implements Conn
             throw new MavenReportException(ve.toString(), ve);
         } catch (MojoExecutionException e) {
             throw new MavenReportException(e.toString(), e);
+        }
+
+        try {
+            CodeSource src = getClass().getProtectionDomain().getCodeSource();
+            if (src != null) {
+                final ZipInputStream zip = new ZipInputStream(src.getLocation().openStream());
+                File outputDirectory = new File(getOutputDirectory());
+                ZipEntry entry = null;
+                while ((entry = zip.getNextEntry()) != null) {
+                    String name = entry.getName();
+                    if (entry.getName().startsWith("docbkx")) {
+
+                        File destination = new File(outputDirectory, name.substring(7));
+                        if (entry.isDirectory()) {
+                            if (!destination.exists()) {
+                                destination.mkdirs();
+                            }
+                        } else if (!name.endsWith(".xml")) {
+                            if (!destination.exists()) {
+                                FileOutputStream output = null;
+                                try {
+                                    output = new FileOutputStream(destination);
+                                    IOUtil.copy(zip, output);
+                                } finally {
+                                    IOUtil.close(output);
+                                }
+                            }
+                        }
+                    }
+                }
+                zip.closeEntry();
+                zip.close();
+            }
+        } catch (IOException e) {
+            getLog().error(e);
         }
     }
 }

@@ -95,6 +95,7 @@
     <Compile Include="XmlUtil.cs" />
   </ItemGroup>
   <Target Name="Clean">
+    <Delete Files="AssemblyInfo.cs;version.txt" />
     <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

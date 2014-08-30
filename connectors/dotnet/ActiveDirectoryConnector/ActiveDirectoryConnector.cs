@@ -187,10 +187,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if ((ObjectClass.ACCOUNT.Equals(oclass)) &&
                     (ConnectorAttributeUtil.Find(OperationalAttributes.ENABLE_NAME, attributes) == null))
                 {
-                    attributes.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
+                    ICollection<ConnectorAttribute> temp = new HashSet<ConnectorAttribute>(attributes);
+                    temp.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
+                    _utils.UpdateADObject(oclass, newDe, temp, UpdateType.REPLACE, _configuration);
                 }
-                _utils.UpdateADObject(oclass, newDe, attributes,
-                    UpdateType.REPLACE, _configuration);
+                else
+                {
+                    _utils.UpdateADObject(oclass, newDe, attributes, UpdateType.REPLACE, _configuration);
+                }
                 Object guidValue = newDe.Properties["objectGUID"].Value;
                 if (guidValue != null)
                 {
@@ -222,6 +226,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     newDe.DeleteTree();
                 }
                 throw ActiveDirectoryUtils.ComToIcfException(exception, "when creating " + ldapEntryPath);
+            }
+            catch (System.Runtime.InteropServices.COMException e)
+            {
+                throw ActiveDirectoryUtils.OtherComToIcfException(e, "when creating " + ldapEntryPath);
             }
             catch (UnauthorizedAccessException e)
             {
@@ -435,6 +443,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             catch (DirectoryServicesCOMException e)
             {
                 throw ActiveDirectoryUtils.ComToIcfException(e, "");
+            }
+            catch (System.Runtime.InteropServices.COMException e)
+            {
+                throw ActiveDirectoryUtils.OtherComToIcfException(e, "");
             }
             catch (UnauthorizedAccessException e)
             {
@@ -911,11 +923,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (DirectoryServicesCOMException e)
             {
-                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.ToString());
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when updating " + updatedUid.GetUidValue());
+            }
+            catch (System.Runtime.InteropServices.COMException e)
+            {
+                throw ActiveDirectoryUtils.OtherComToIcfException(e, "when updating " + updatedUid.GetUidValue());
             }
             catch (UnauthorizedAccessException e)
             {
-                throw new PermissionDeniedException("permission to update " + updatedUid.ToString() + " denied", e);
+                throw new PermissionDeniedException("permission to update " + updatedUid.GetUidValue() + " denied", e);
             }
             catch (Exception e)
             {
@@ -952,8 +968,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 else
                 {
-                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                    throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.GetUidValue());
                 }
+            }
+            catch (System.Runtime.InteropServices.COMException e)
+            {
+                throw ActiveDirectoryUtils.OtherComToIcfException(e, "when deleting " + uid.GetUidValue());
             }
             catch (UnauthorizedAccessException e)
             {
@@ -981,11 +1001,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (UnauthorizedAccessException e)
             {
-                throw new PermissionDeniedException("permission to delete " + uid.ToString() + " denied", e);
+                throw new PermissionDeniedException("permission to delete " + uid.GetUidValue() + " denied", e);
             }
             catch (DirectoryServicesCOMException e)
             {
-                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.ToString());
+                throw ActiveDirectoryUtils.ComToIcfException(e, "when deleting " + uid.GetUidValue());
+            }
+            catch (System.Runtime.InteropServices.COMException e)
+            {
+                throw ActiveDirectoryUtils.OtherComToIcfException(e, "when deleting " + uid.GetUidValue());
             }
             finally
             {

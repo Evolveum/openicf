@@ -93,6 +93,7 @@
   </ItemGroup>
   <Target Name="Clean">
     <MSBuild Projects="..\Common\Common.csproj" Targets="Clean" />
+    <Delete Files="AssemblyInfo.cs;version.txt" />
     <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

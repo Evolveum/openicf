@@ -280,9 +280,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     GetPropertyOptions(desc);
                 // use the options to set internal properties..
                 int order = 0;
-                String helpKey = name + ".help";
-                String displKey = name + ".display";
-                string grpKey = name + ".group";
+                String helpKey = "help_" + name;
+                String displKey = "display_" +name;
+                string grpKey = "group_" + name;
                 bool confidential = false;
                 bool required = false;
                 if (options != null)
@@ -298,7 +298,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     }
                     if (!StringUtil.IsBlank(options.GroupMessageKey))
                     {
-                        displKey = options.GroupMessageKey;
+                        grpKey = options.GroupMessageKey;
                     }
                     // determine the order..
                     order = options.Order;
@@ -391,6 +391,20 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             IDictionary<string, PropertyInfo> rv =
                 new Dictionary<string, PropertyInfo>();
             PropertyInfo[] descriptors = config.RawType.GetProperties();
+            SortedSet<string> excludes = new SortedSet<string>();
+            // exclude connectorMessages since its part of the interface.
+            excludes.Add("ConnectorMessages");
+
+            bool filterUnsupported = false;
+            ConfigurationClassAttribute options = GetConfigurationOptions(config);
+            if (null != options)
+            {
+                foreach (string s in options.Ignore)
+                {
+                    excludes.Add(s);
+                }
+                filterUnsupported = options.SkipUnsupported;
+            }
             foreach (PropertyInfo descriptor in descriptors)
             {
                 String propName = descriptor.Name;
@@ -399,8 +413,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     //if there's no setter, ignore it
                     continue;
                 }
-                if ("ConnectorMessages".Equals(propName))
+                if (excludes.Contains(propName))
                 {
+                    continue;
+                }
+                if (filterUnsupported && !FrameworkUtil.IsSupportedConfigurationType(descriptor.PropertyType))
+                {
+                    //Silently ignore if the property type is not supported
                     continue;
                 }
                 if (!descriptor.CanRead)
@@ -431,6 +450,25 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             else
             {
                 return (ConfigurationPropertyAttribute)objs[0];
+            }
+        }
+
+        /// <summary>
+        /// Get the option from the property.
+        /// </summary>
+        private static ConfigurationClassAttribute GetConfigurationOptions(
+                SafeType<Configuration> configClass)
+        {
+            Object[] objs =
+                configClass.RawType.GetCustomAttributes(
+                    typeof(ConfigurationClassAttribute), true);
+            if (objs.Length == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return (ConfigurationClassAttribute)objs[0];
             }
         }
 
@@ -495,6 +533,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                         (ConnectorClassAttribute)attributes[0];
                     LocalConnectorInfoImpl info =
                         CreateConnectorInfo(assembly, type, attribute);
+                    UriBuilder uri = new UriBuilder(assembly.CodeBase);
+                    Trace.TraceInformation("Add ConnectorInfo {0} to Local Connector Info Manager from {1}",
+                                info.ConnectorKey, Uri.UnescapeDataString(uri.Path));
+
                     rv.Add(info);
                 }
             }
