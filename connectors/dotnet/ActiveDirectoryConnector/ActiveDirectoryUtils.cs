@@ -863,7 +863,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if (originalException.ErrorCode == -2147463168 ||     // ADS_BAD_PATHNAME
                 originalException.ErrorCode == -2147016656)       // LDAP_NO_SUCH_OBJECT
             {
-                return originalException;                       // ... there's nothing like 'object not found exception'
+                return new NoSuchAdObjectException(originalException.Message + ": " + message, originalException);                       
+                        // not sure if the exception is related to the object as a whole, or to some of its attributes
+                        // therefore we don't return UnknownUidException directly
             }
             else if (originalException.ErrorCode == -2147217911)  // ADO_PERMISSION_DENIED
             {
@@ -916,5 +918,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
     }
+
+    public class NoSuchAdObjectException : ConnectorException {
+        public NoSuchAdObjectException()
+            : base() {
+        }
+
+        public NoSuchAdObjectException(string message)
+            : base(message) {
+        }
+
+        public NoSuchAdObjectException(Exception ex)
+            : base(ex) {
+        }
+
+        public NoSuchAdObjectException(string message, Exception ex)
+            : base(message, ex) {
+        }
+    }
+
 
 }

@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="connector_displayName" xml:space="preserve">
     <value>Windows Active Directory Connector</value>
@@ -287,6 +287,24 @@
   </data>
   <data name="ex_ContainerNotFound" xml:space="preserve">
     <value>Could not find the Container '{0}', the following message was returned from the server: {1}</value>
+  </data>
+  <data name="display_ObjectClassesExtensionFile" xml:space="preserve">
+    <value>Local file that augments (extends) standard definition of object classes supported by this connector instance.</value>
+  </data>
+  <data name="display_ObjectClassesReplacementFile" xml:space="preserve">
+    <value>Local file that serves as an authoritative definition of object classes supported by this connector instance.</value>
+  </data>
+  <data name="help_ObjectClassesExtensionFile" xml:space="preserve">
+    <value>Specify a file that contains additions to definitions of object classes, in the same format as ObjectClasses.xml file in the connector sources. If you specify new ObjectClass(es), they will be added to the definition list. If you specify existing classes, their attributes will be added to the existing definition. (Note that the __NAME__ attribute is obligatory in this case, even if it will not be copied.) Attributes cannot be overriden, they can only be added in this way. The file name is relative to the place where the connector server resides.</value>
+  </data>
+  <data name="help_ObjectClassesReplacementFile" xml:space="preserve">
+    <value>Specify a file that contains definitions of object classes, in the same format as ObjectClasses.xml file in the connector sources. If you specify this file, it replaces (supersedes) definitions from the connector, so use with care. The file name is relative to the place where the connector server resides.</value>
+  </data>
+  <data name="display_ScriptingConfigurationFile" xml:space="preserve">
+    <value>TODO</value>
+  </data>
+  <data name="help_ScriptingConfigurationFile" xml:space="preserve">
+    <value>TODO</value>
   </data>
   <data name="MESSAGE_OBJECT_CLASS___ACCOUNT__" xml:space="preserve">
     <value>User</value>

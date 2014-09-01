@@ -38,6 +38,8 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Spi;
     using System.Text.RegularExpressions;
+    using System.Management.Automation;
+    using System.Collections.ObjectModel;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -54,21 +56,6 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         private const string FileObjectClassDef = "Org.IdentityConnectors.Exchange.ObjectClasses.xml";
 
-        /// <summary>
-        /// Exchange 2007 registry key, used for building the exchange assembly resolver
-        /// </summary>
-        private const string Exchange2007RegKey = "Software\\Microsoft\\Exchange\\v8.0\\Setup\\";
-
-        /// <summary>
-        /// Exchange 2010 registry key, used for building the exchange assembly resolver
-        /// </summary>
-        // private const string Exchange2010RegKey = "Software\\Microsoft\\ExchangeServer\\v14\\Setup\\";
-
-        /// <summary>
-        /// Exchange registry value name, used together with <see cref="Exchange2010RegKey"/> or <see cref="Exchange2007RegKey"/> w.r.t the
-        /// Exchange version to manage.
-        /// </summary>
-        private const string ExchangeRegValueName = "MsiInstallPath";
 
         /// <summary>
         /// Prevents a default instance of the <see cref="ExchangeUtility" /> class from being created. 
@@ -96,121 +83,45 @@ namespace Org.IdentityConnectors.Exchange
 //            return null;
 //        }
 
-        /// <summary>
-        /// Creates Exchange 2007 Assembly Resolver, <see cref="ResolveEventHandler"/>
-        /// </summary>
-        /// <param name="sender">The source of the event</param>
-        /// <param name="args">A <see cref="System.ResolveEventArgs"/> that contains the event data</param>
-        /// <returns>Assembly resolver that resolves Exchange 2007 assemblies</returns>
-        internal static Assembly AssemblyResolver2007(object sender, ResolveEventArgs args)
-        {
-            // Add path for the Exchange 2007 DLLs
-            if (args.Name.Contains("Microsoft.Exchange"))
-            {
-                string installPath = GetRegistryStringValue(Exchange2007RegKey, ExchangeRegValueName);
-                installPath += "\\bin\\" + args.Name.Split(',')[0] + ".dll";
-                return Assembly.LoadFrom(installPath);
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Get registry value, which is expected to be a string
-        /// </summary>
-        /// <param name="keyName">Registry Key Name</param>
-        /// <param name="valName">Registry Value Name</param>
-        /// <returns>Registry value</returns>        
-        /// <exception cref="ArgumentNullException">If <paramref name="valName"/> is null</exception>
-        /// <exception cref="InvalidDataException">If some problem with the registry value</exception>
-        internal static string GetRegistryStringValue(string keyName, string valName)
-        {
-            const string MethodName = "GetRegistryStringValue";
-            Debug.WriteLine(MethodName + "(" + keyName + ", " + valName + ")" + ":entry", ClassName);
-
-            // argument check            
-            if (keyName == null)
-            {
-                keyName = string.Empty;
-            }
-
-            if (valName == null)
-            {
-                throw new ArgumentNullException("valName");
-            }
-
-            RegistryKey regKey = Registry.LocalMachine.OpenSubKey(keyName, false);
-            try
-            {
-                if (regKey != null)
-                {
-                    object val = regKey.GetValue(valName);
-                    if (val != null)
-                    {
-                        RegistryValueKind regType = regKey.GetValueKind(valName);
-                        if (!regType.Equals(RegistryValueKind.String))
-                        {
-                            throw new InvalidDataException(String.Format(
-                                CultureInfo.CurrentCulture,
-                                "Invalid Registry data type, key name: {0} value name: {1} should be String",
-                                keyName,
-                                valName));
-                        }
-
-                        return Convert.ToString(val, CultureInfo.CurrentCulture);
-                    }
-                    else
-                    {
-                        throw new InvalidDataException(String.Format(
-                            CultureInfo.CurrentCulture,
-                            "Missing value for key name: {0} value name: {1}",
-                            keyName,
-                            valName));
-                    }
-                }
-                else
-                {
-                    throw new InvalidDataException(String.Format(
-                        CultureInfo.CurrentCulture,
-                        "Unable to open registry for key: {0}",
-                        keyName));
-                }
-            }
-            finally
-            {
-                if (regKey != null)
-                {
-                    regKey.Close();
-                }
-
-                Debug.WriteLine(MethodName + ":exit", ClassName);
-            }
-        }
 
         /// <summary>
         /// reads the object class info definitions from xml
         /// </summary>
         /// <returns>Dictionary of object classes</returns>
-        internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
+        //internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
+        //{
+            //return CommonUtils.GetOCInfoFromFile(FileObjectClassDef);
+        //}
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ExchangeConfiguration config)
         {
-            return CommonUtils.GetOCInfo(FileObjectClassDef);
+            return GetCommand(cmdInfo, null, null, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, Uid uidAttribute, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, null, uidAttribute, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, attributes, ConnectorAttributeUtil.GetUidAttribute(attributes), config);
         }
 
         /// <summary>
         /// Creates command based on the commanf info, reading the calues from attributes
         /// </summary>
         /// <param name="cmdInfo">Command defition</param>
-        /// <param name="attributes">Attribute values</param>
+        /// <param name="attributes">Attribute values - UID in these is ignored! It should be passed as a separate parameter</param>
         /// <param name="config">Configuration object</param>
         /// <returns>
         /// Ready to execute Command
         /// </returns>
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
-        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
-            Assertions.NullCheck(attributes, "attributes");
-
+            
             Trace.TraceInformation("GetCommand: cmdInfo name = {0}", cmdInfo.Name);
 
             // create command
@@ -226,47 +137,54 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
+            if (!string.IsNullOrEmpty(cmdInfo.UidParameter))
+            {
+                if (uidAttribute != null && uidAttribute.GetUidValue() != null)
+                {
+                    cmd.Parameters.Add(cmdInfo.UidParameter, uidAttribute.GetUidValue());
+                }
+            }
+
+            if (cmdInfo.UsesConfirm)
+            {
+                cmd.Parameters.Add("confirm", false);
+            }
+
+            if (cmdInfo.UsesDomainController)
+            {
+                cmd.Parameters.Add("DomainController", ActiveDirectoryUtils.GetDomainControllerName(config));
+            }
+
+            // TODO check this only for user-related operations
             bool emailAddressesPresent = GetAttValues(ExchangeConnectorAttributes.AttEmailAddresses, attributes) != null;
             bool primarySmtpAddressPresent = GetAttValues(ExchangeConnectorAttributes.AttPrimarySmtpAddress, attributes) != null;
 
-            if (emailAddressesPresent && primarySmtpAddressPresent)
-            {
+            if (emailAddressesPresent && primarySmtpAddressPresent) {
                 throw new ArgumentException(ExchangeConnectorAttributes.AttEmailAddresses + " and " + ExchangeConnectorAttributes.AttPrimarySmtpAddress + " cannot be both set.");
             }
 
-            foreach (string attName in cmdInfo.Parameters)
-            {
-                object val = null;
+            if (attributes != null) {
 
-                //Trace.TraceInformation("GetCommand: processing cmdInfo parameter {0}", attName);
+                foreach (string attName in cmdInfo.Parameters) {
 
-                if (attName.Equals(ExchangeConnectorAttributes.AttEmailAddresses))
-                {
-                    IList<object> vals = GetAttValues(attName, attributes);
-                    if (vals != null)
-                    {
-                        List<string> addresses = new List<string>();
-                        foreach (object addressAsObject in vals)
-                        {
-                            addresses.Add(addressAsObject.ToString());
+                    object valueToSet = null;
+
+                    ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
+                    if (attribute != null) {
+                        if (attribute.Value.Count > 1) {
+                            List<string> stringValues = new List<string>();
+                            foreach (object val in attribute.Value) {
+                                stringValues.Add(val.ToString());
+                            }
+                            valueToSet = stringValues.ToArray();
+                        } else {
+                            valueToSet = ConnectorAttributeUtil.GetSingleValue(attribute);
                         }
-                        val = addresses.ToArray(); 
+                        if (valueToSet != null) {
+                            cmd.Parameters.Add(attName, valueToSet);
+                        }
                     }
                 }
-                else
-                {
-                    val = GetAttValue(attName, attributes);
-                    if (val == null && attName.Equals("DomainController"))
-                    {
-                        // add domain controller if not provided
-                        val = ActiveDirectoryUtils.GetDomainControllerName(config);
-                    }
-                }
-
-                if (val != null)
-                {
-                    cmd.Parameters.Add(attName, val);
-                }                  
             }
 
             Trace.TraceInformation("GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
@@ -283,7 +201,11 @@ namespace Org.IdentityConnectors.Exchange
         internal static object GetAttValue(string attName, ICollection<ConnectorAttribute> attributes)
         {
             Assertions.NullCheck(attName, "attName");
-            Assertions.NullCheck(attributes, "attributes");
+
+            if (attributes == null)
+            {
+                return null;
+            }
 
             object value = null;
             ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
@@ -329,7 +251,11 @@ namespace Org.IdentityConnectors.Exchange
         internal static IList<object> GetAttValues(string attName, ICollection<ConnectorAttribute> attributes)
         {
             Assertions.NullCheck(attName, "attName");
-            Assertions.NullCheck(attributes, "attributes");
+
+            if (attributes == null)
+            {
+                return null;
+            }
 
             ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
 
@@ -532,5 +458,56 @@ namespace Org.IdentityConnectors.Exchange
             optionsBuilder.AttributesToGet = attsToGet.ToArray();
             return optionsBuilder.Build();
         }
+
+        /// <summary>
+        /// helper method to filter out all attributes used in ExchangeConnector only
+        /// </summary>
+        /// <param name="attributes">Connector attributes</param>
+        /// <param name="cmdInfos">CommandInfo whose parameters will be used and filtered out from attributes</param>
+        /// <returns>
+        /// Filtered connector attributes
+        /// </returns>
+        internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
+        {
+            IList<string> attsToRemove = new List<string> { ExchangeConnectorAttributes.AttRecipientType };
+            CollectionUtil.AddAll(attsToRemove, ExchangeConnectorAttributes.AttMap2AD.Keys);
+            if (cmdInfos != null)
+            {
+                foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
+                {
+                    if (cmdInfo != null)
+                    {
+                        CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
+                    }
+                }
+            }
+            return ExchangeUtility.FilterOut(attributes, attsToRemove);
+        }
+
+        /// <summary>
+        /// This method tries to get name and value from <see cref="PSMemberInfo"/> and
+        /// creates <see cref="ConnectorAttribute"/> out of it
+        /// </summary>
+        /// <param name="info">PSMemberInfo to get the data from</param>
+        /// <returns>Created ConnectorAttribute or null if not possible to create it</returns>
+        internal static ConnectorAttribute GetAsAttribute(PSMemberInfo info)
+        {
+            Assertions.NullCheck(info, "param");
+            if (info.Value != null)
+            {
+                string value = info.Value.ToString();
+
+                // TODO: add type recognition, currently only string is supported
+                if (value != info.Value.GetType().ToString() && !string.IsNullOrEmpty(value))
+                {
+                    return ConnectorAttributeBuilder.Build(info.Name, value);
+                }
+            }
+
+            return null;
+        }
+
+
+
     }
 }

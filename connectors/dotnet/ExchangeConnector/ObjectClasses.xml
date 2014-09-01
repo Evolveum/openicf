@@ -22,7 +22,183 @@
 ====================
 -->
 <List>
-  <!-- Mailuser object class -->
+
+  <!-- Account (extra attributes for Exchange) -->
+  <ObjectClassInfo container="false" type="__ACCOUNT__">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="Alias" type="String" />
+      <AttributeInfo name="PrimarySmtpAddress" type="String" />
+      <AttributeInfo name="EmailAddresses" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExternalEmailAddress" type="String" />
+      <AttributeInfo name="RecipientType" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="DeliverToMailboxAndForward" type="Boolean" />
+      <AttributeInfo name="ForwardingSmtpAddress" type="String" />
+      <AttributeInfo name="CustomAttribute1" type="String" />
+      <AttributeInfo name="CustomAttribute2" type="String" />
+      <AttributeInfo name="CustomAttribute3" type="String" />
+      <AttributeInfo name="CustomAttribute4" type="String" />
+      <AttributeInfo name="CustomAttribute5" type="String" />
+      <AttributeInfo name="CustomAttribute6" type="String" />
+      <AttributeInfo name="CustomAttribute7" type="String" />
+      <AttributeInfo name="CustomAttribute8" type="String" />
+      <AttributeInfo name="CustomAttribute9" type="String" />
+      <AttributeInfo name="CustomAttribute10" type="String" />
+      <AttributeInfo name="CustomAttribute11" type="String" />
+      <AttributeInfo name="CustomAttribute12" type="String" />
+      <AttributeInfo name="CustomAttribute13" type="String" />
+      <AttributeInfo name="CustomAttribute14" type="String" />
+      <AttributeInfo name="CustomAttribute15" type="String" />
+      <AttributeInfo name="HiddenFromAddressListsEnabled" type="Boolean" />
+      <AttributeInfo name="EmailAddressPolicyEnabled" type="Boolean" />
+      <AttributeInfo name="msExchRecipientDisplayType" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="msExchRecipientTypeDetails" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="Database" type="String">
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
+      <AttributeInfo name="homeMDB" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+  
+  <!-- AcceptedDomain -->
+  <ObjectClassInfo container="false" type="AcceptedDomain">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="DomainName" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="DomainType" type="String"></AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- GlobalAddressList -->
+  <ObjectClassInfo container="false" type="GlobalAddressList">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="RecipientFilter" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- AddressList -->
+  <ObjectClassInfo container="false" type="AddressList">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="RecipientFilter" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- OfflineAddressBook -->
+  <ObjectClassInfo container="false" type="OfflineAddressBook">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="AddressLists" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- AddressBookPolicy -->
+  <ObjectClassInfo container="false" type="AddressBookPolicy">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="AddressLists" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="GlobalAddressList" type="String"></AttributeInfo>
+      <AttributeInfo name="OfflineAddressBook" type="String"></AttributeInfo>
+      <AttributeInfo name="RoomList" type="String"></AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- DistributionGroup -->
+  <ObjectClassInfo container="false" type="DistributionGroup">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="DisplayName" type="String"></AttributeInfo>
+      <AttributeInfo name="Type" type="String">
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="RecipientType" type="String">      <!-- Type is used to specify group type when creating it; RecipientType and GroupType to see the actual type -->
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="GroupType" type="String">          <!-- only unparsed, descriptive information; processing original type (GroupTypeFlags) would be more complicated -->
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="PrimarySmtpAddress" type="String"></AttributeInfo>
+      <AttributeInfo name="Members" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
+      <AttributeInfo name="OrganizationalUnit" type="String">
+      </AttributeInfo>
+      <AttributeInfo name="HiddenFromAddressListsEnabled" type="Boolean"></AttributeInfo>
+      <AttributeInfo name="BypassSecurityGroupManagerCheck" type="Boolean">
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+      </AttributeInfo>
+      <AttributeInfo name="CustomAttribute1" type="String"></AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- EmailAddressPolicy -->
+  <ObjectClassInfo container="false" type="EmailAddressPolicy">
+    <AttributeInfos>
+      <AttributeInfo name="__NAME__" type="String">
+        <AttributeInfoFlag value="REQUIRED"/>
+      </AttributeInfo>
+      <AttributeInfo name="RecipientContainer" type="String"></AttributeInfo>
+      <AttributeInfo name="IncludedRecipients" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+        <!-- todo verify if it really can be multivalued -->
+      </AttributeInfo>
+      <AttributeInfo name="ConditionalCustomAttribute1" type="String"></AttributeInfo>
+      <!-- todo also other custom attributes -->
+      <AttributeInfo name="EnabledEmailAddressTemplates" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="EnabledPrimarySMTPAddressTemplate" type="String"></AttributeInfo>
+    </AttributeInfos>
+  </ObjectClassInfo>
+
+  <!-- Mailuser object class 
   <ObjectClassInfo container="false" type="mailuser">
     <AttributeInfos>
       <AttributeInfo name="__NAME__" type="String">
@@ -222,8 +398,8 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
     </AttributeInfos>
-  </ObjectClassInfo>
-  <!-- Mailbox object class -->
+  </ObjectClassInfo> -->
+  <!-- Mailbox object class
   <ObjectClassInfo container="false" name="mailbox">
     <AttributeInfos>
       <AttributeInfo name="__NAME__" type="String">
@@ -235,5 +411,5 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
     </AttributeInfos>
-  </ObjectClassInfo>
+  </ObjectClassInfo> -->
 </List>

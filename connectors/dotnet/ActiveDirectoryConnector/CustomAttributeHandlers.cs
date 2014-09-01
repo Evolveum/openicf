@@ -949,6 +949,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
+                // TODO unify with CommonUtils.ConvertToSupportedForm
+                // (requires either finding ConnectorAttributeInfo here or making that method not dependable on such information)
                 for (int i = 0; i < pvc.Count; i++)
                 {
                     Object valueObject = pvc[i];

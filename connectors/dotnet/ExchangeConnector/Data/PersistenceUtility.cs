@@ -39,8 +39,7 @@ namespace Org.IdentityConnectors.Exchange.Data
         /// <summary>
         /// Prevents a default instance of the <see cref="PersistenceUtility" /> class from being created. 
         /// </summary>
-        private PersistenceUtility()
-        {
+        private PersistenceUtility() {
         }
 
         /// <summary>
@@ -73,6 +72,6 @@ namespace Org.IdentityConnectors.Exchange.Data
                 //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo exit");
                 return commandInfos;
             }            
-        }            
+        }
     }
 }
