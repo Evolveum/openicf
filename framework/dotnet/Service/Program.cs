@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://opensource.org/licenses/cddl1.php
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at http://opensource.org/licenses/cddl1.php.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * Portions Copyrighted 2014 ForgeRock AS.
@@ -86,13 +86,12 @@ namespace Org.IdentityConnectors.Framework.Service
         {
             if (args.Length == 0)
             {
-                //no args - start the service
-                ServiceBase.Run(new ServiceBase[] { new Service() });
+                Usage();
             }
             else
             {
                 String cmd = args[0].ToLower();
-                if (cmd.Equals("/setkey"))
+                if (cmd.Equals("/setkey", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (args.Length > 2)
                     {
@@ -109,19 +108,23 @@ namespace Org.IdentityConnectors.Framework.Service
                     //there's a parse error in the options, return
                     return;
                 }
-                if ("/install".Equals(cmd))
+                if ("/install".Equals(cmd, StringComparison.InvariantCultureIgnoreCase))
                 {
                     DoInstall(options);
                 }
-                else if ("/uninstall".Equals(cmd))
+                else if ("/uninstall".Equals(cmd, StringComparison.InvariantCultureIgnoreCase))
                 {
                     DoUninstall(options);
                 }
-                else if ("/run".Equals(cmd))
+                else if ("/run".Equals(cmd, StringComparison.InvariantCultureIgnoreCase))
                 {
                     DoRun(options);
                 }
-                else if ("/storeCertificate".Equals(cmd))
+                else if ("/service".Equals(cmd, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    ServiceBase.Run(new ServiceBase[] { new Service() });
+                }
+                else if ("/storecertificate".Equals(cmd, StringComparison.InvariantCultureIgnoreCase))
                 {
                     DoStoreCertificate(options);
                 }
@@ -227,9 +230,9 @@ namespace Org.IdentityConnectors.Framework.Service
             GuardedString str;
             if (key == null)
             {
-                Console.Write("Enter Key: ");
+                Console.Write("Please enter the new key: ");
                 GuardedString v1 = ReadPassword();
-                Console.Write("Confirm Key: ");
+                Console.Write("Please confirm the new key: ");
                 GuardedString v2 = ReadPassword();
                 if (!v1.Equals(v2))
                 {
@@ -251,7 +254,7 @@ namespace Org.IdentityConnectors.Framework.Service
             config.AppSettings.Settings.Remove(Service.PROP_KEY);
             config.AppSettings.Settings.Add(Service.PROP_KEY, str.GetBase64SHA1Hash());
             config.Save(ConfigurationSaveMode.Modified);
-            Console.WriteLine("Key Updated.");
+            Console.WriteLine("Key has been successfully updated.");
         }
 
         private static void DoStoreCertificate(IDictionary<string, string> options)
