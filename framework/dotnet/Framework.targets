@@ -29,18 +29,11 @@
         <FrameworkDistDir>$(MSBuildProjectDirectory)\..\Dist</FrameworkDistDir>
         <!--FrameworkRootDir>$(MSBuildProjectDirectory)\..\..\</FrameworkRootDir-->
         <FrameworkRootDir>$(MSBuildProjectDirectory)</FrameworkRootDir>
-<<<<<<< HEAD
         <!--<REVISION>0</REVISION>-->
-=======
         <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
->>>>>>> remotes/trunk
     </PropertyGroup>
 
-<<<<<<< HEAD
-    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-=======
     <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />  
->>>>>>> trunk
 
     <Target Name="GenerateAssemblyInfo">
         <Error
