@@ -45,6 +45,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
     /// </summary>
     public class ActiveDirectoryUtils
     {
+        // tracing (uses ActiveDirectoryConnector name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         ActiveDirectoryConfiguration _configuration = null;
         private CustomAttributeHandlers _customHandlers = null;
         private ICollection<String> _knownObjectClasses = new HashSet<String>(StringComparer.CurrentCultureIgnoreCase);
@@ -635,9 +639,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (nameChanged && !containerChanged)           // rename without moving
             {
-                Trace.TraceInformation("Renaming {0} to {1}", oldName, newName);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Renaming {0} to {1}", oldName, newName);
                 directoryEntry.Rename(newName);
-                Trace.TraceInformation("Rename OK");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Rename OK");
                 return;
             }
 
@@ -649,9 +653,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if (nameChanged)
             {
                 temporaryName = oldName + "-" + RandomStr();
-                Trace.TraceInformation("Renaming {0} to a temporary name of {1}", oldName, temporaryName);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Renaming {0} to a temporary name of {1}", oldName, temporaryName);
                 directoryEntry.Rename(temporaryName);
-                Trace.TraceInformation("Rename OK");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Rename OK");
             }
 
             // step 2: do the move
@@ -660,19 +664,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 String newContainerLdapPath = ActiveDirectoryUtils.GetLDAPPath(config.LDAPHostName, newContainer);
                 DirectoryEntry newContainerDe = new DirectoryEntry(newContainerLdapPath, config.DirectoryAdminName, config.DirectoryAdminPassword);
-                Trace.TraceInformation("Moving from {0} to {1} ({2})", oldContainer, newContainer, newContainerLdapPath);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Moving from {0} to {1} ({2})", oldContainer, newContainer, newContainerLdapPath);
                 directoryEntry.MoveTo(newContainerDe);
-                Trace.TraceInformation("Move OK");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Move OK");
                 newContainerDe.Dispose();
             }
             catch (Exception e)
             {
-                Trace.TraceInformation("Exception caught when moving: {0}", e);
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exception caught when moving: {0}", e);
                 if (nameChanged)
                 {
-                    Trace.TraceInformation("Renaming back from temporary name of {0} to {1}", temporaryName, oldName);
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Renaming back from temporary name of {0} to {1}", temporaryName, oldName);
                     directoryEntry.Rename(oldName);
-                    Trace.TraceInformation("Rename OK");
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Rename OK");
                 }
                 throw e;
             }
@@ -680,9 +684,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // step 3: if WITH rename, then rename from temporary name to the new name
             if (nameChanged)
             {
-                Trace.TraceInformation("Renaming from temporary name of {0} to a new name of {1}", temporaryName, newName);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Renaming from temporary name of {0} to a new name of {1}", temporaryName, newName);
                 directoryEntry.Rename(newName);
-                Trace.TraceInformation("Rename OK");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Rename OK");
             }
         }
 
@@ -757,7 +761,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if ((serverName == null) || (serverName.Length == 0))
             {
                 // get the active directory schema
-                Trace.TraceInformation("Trying to lookup Domain controller for domain {0}", 
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Trying to lookup Domain controller for domain {0}", 
                     _configuration.DomainName);
 
                 DirectoryContext context = new DirectoryContext(
@@ -767,10 +771,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         _configuration.DirectoryAdminPassword);
                 
                 DomainController dc = DomainController.FindOne(context);
-                Trace.TraceInformation("Found Domain controller named {0} with ipAddress {1} for domain {2}",
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Found Domain controller named {0} with ipAddress {1} for domain {2}",
                     dc.Name, dc.IPAddress, _configuration.DomainName);
-                forest = dc.Forest;                 
-                Trace.TraceInformation("Found forest");
+                forest = dc.Forest;
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Found forest");
             }
             else
             {
@@ -782,9 +786,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 forest = Forest.GetForest(context);
             }
 
-            Trace.TraceInformation("Getting schema from AD");
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Getting schema from AD");
             ActiveDirectorySchema ADSchema = forest.Schema;
-            Trace.TraceInformation("Got schema from AD");
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Got schema from AD");
 
             return ADSchema;
         }
@@ -857,7 +861,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// will see.
         public static Exception ComToIcfException(DirectoryServicesCOMException originalException, String message)
         {
-            Trace.TraceError("ErrorCode = {0}, ExtendedError = {1}, ExtendedErrorMessage = {2}",
+            LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ErrorCode = {0}, ExtendedError = {1}, ExtendedErrorMessage = {2}",
                 originalException.ErrorCode, originalException.ExtendedError, originalException.ExtendedErrorMessage);
 
             if (originalException.ErrorCode == -2147463168 ||     // ADS_BAD_PATHNAME
@@ -906,7 +910,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// will see.
         public static Exception OtherComToIcfException(System.Runtime.InteropServices.COMException originalException, String message)
         {
-            Trace.TraceError("ErrorCode = {0}", originalException.ErrorCode);
+            LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ErrorCode = {0}", originalException.ErrorCode);
 
             if (originalException.ErrorCode == -2147022651)    // password too weak
             {

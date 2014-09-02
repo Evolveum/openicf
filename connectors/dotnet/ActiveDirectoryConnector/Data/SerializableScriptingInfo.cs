@@ -224,7 +224,7 @@ namespace Org.IdentityConnectors.ActiveDirectory.Data
             {
                 streamReader.Close();
             }
-            Trace.TraceInformation("{0} successfully read", File);
+            ActiveDirectoryConnector.LOGGER.TraceEvent(TraceEventType.Information, ActiveDirectoryConnector.CAT_DEFAULT, "{0} successfully read", File);
         }
     }
 }

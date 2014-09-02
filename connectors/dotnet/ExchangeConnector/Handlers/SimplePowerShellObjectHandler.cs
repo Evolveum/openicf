@@ -16,6 +16,10 @@ namespace Org.IdentityConnectors.Exchange
 {
     abstract class SimplePowerShellObjectHandler : ObjectClassHandler
     {
+        // tracing 
+        private static TraceSource LOGGER = new TraceSource(TraceNames.POWERSHELL);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         private MiscHelper _helper = new MiscHelper();
 
         abstract internal string GetObjectClassName();
@@ -56,11 +60,11 @@ namespace Org.IdentityConnectors.Exchange
                 // So we have to distinguish these situations somehow...
                 Name nameAttribute = ConnectorAttributeUtil.GetNameFromAttributes(context.Attributes);
                 if (nameAttribute == null || nameAttribute.Value == null || nameAttribute.Value.Count() != 1) {
-                    Trace.TraceInformation("ProxyAddressExistsException reported; but no single-valued NAME attribute present -- reporting as is");
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ProxyAddressExistsException reported; but no single-valued NAME attribute present -- reporting as is");
                     throw new ConnectorException(e.Message, e);
                 }
                 String name = (String) nameAttribute.Value[0];
-                Trace.TraceInformation("ProxyAddressExistsException reported; trying to see if object named " + name + " exists");
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ProxyAddressExistsException reported; trying to see if object named " + name + " exists");
                 Command cmdGet = ExchangeUtility.GetCommand(
                     new PSExchangeConnector.CommandInfo(GetGetCommandName()), exconn.Configuration);
                 cmdGet.Parameters.Add("Identity", name);
@@ -71,10 +75,10 @@ namespace Org.IdentityConnectors.Exchange
                     objects = null;
                 }
                 if (objects == null || objects.Count == 0) {
-                    Trace.TraceInformation("...it does not -- reporting as is");
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "...it does not -- reporting as is");
                     throw new ConnectorException(e.Message, e);
                 } else {
-                    Trace.TraceInformation("...it exists -- reporting as AlreadyExistsException");
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "...it exists -- reporting as AlreadyExistsException");
                     throw new AlreadyExistsException(e.Message, e);
                 }
             }
@@ -127,7 +131,7 @@ namespace Org.IdentityConnectors.Exchange
         {
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
 
-            Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: query={0}", context.Query);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "SimplePowerShellObjectHandler: Executing query: query={0}", context.Query);
 
             Command cmdGet = ExchangeUtility.GetCommand(
                 new PSExchangeConnector.CommandInfo(GetGetCommandName()), exconn.Configuration);
@@ -138,10 +142,10 @@ namespace Org.IdentityConnectors.Exchange
             try {
                 objects = _helper.InvokePipeline(exconn, cmdGet);
             } catch (ObjectNotFoundException e) {
-                Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: got 'ObjectNotFound' exception ({0}), assuming suitable objects do not exist", e);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "SimplePowerShellObjectHandler: Executing query: got 'ObjectNotFound' exception ({0}), assuming suitable objects do not exist", e);
                 return;
             }
-            Trace.TraceInformation("SimplePowerShellObjectHandler: Executing query: got {0} objects", objects.Count);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "SimplePowerShellObjectHandler: Executing query: got {0} objects", objects.Count);
             foreach (PSObject psobject in objects) {
                 if (psobject != null) {
                     context.ResultsHandler.Handle(_helper.CreateConnectorObject(exconn, psobject, context.ObjectClass));

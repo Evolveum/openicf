@@ -50,6 +50,11 @@ namespace Org.IdentityConnectors.ActiveDirectory {
     }
 
     public class Scripting {
+
+        // tracing
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.SCRIPTING);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         private IPowerShellSupport _powershell;
         private ScriptingInfo _scriptingInfo;
 
@@ -78,13 +83,13 @@ namespace Org.IdentityConnectors.ActiveDirectory {
                     if (!context.ConnectorConfiguration.CacheScripts) {
                         scriptInfo.ReadFile();
                     }
-                    Trace.TraceInformation("Running script {0}", scriptInfo.File);
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Running script {0}", scriptInfo.File);
                     ICollection<CommandParameter> parameters = new List<CommandParameter>();
                     parameters.Add(new CommandParameter("ctx", context));
                     ICollection<PSObject> result = _powershell.InvokeScript(scriptInfo.Content, parameters);
                     foreach (PSObject outputItem in result) {
                         if (outputItem != null) {
-                            Trace.TraceInformation("Result item: {0}", outputItem);
+                            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Result item: {0}", outputItem);
                         }
                     }
                 }

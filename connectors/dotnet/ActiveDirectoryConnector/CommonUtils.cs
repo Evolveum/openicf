@@ -37,9 +37,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class CommonUtils
     {
+        // tracing (using ActiveDirectoryConnector's name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoFromFile(string fileName) {
             String fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
-            Trace.TraceInformation("Reading ObjectClass information from file {0}", fullPath);
+            LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Reading ObjectClass information from file {0}", fullPath);
             var stream = File.Open(fullPath, FileMode.Open);
             return GetOCInfoInternal(stream, true);
         }
@@ -49,7 +53,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
         
         public static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfoFromAssembly(string resourceName, Assembly assembly) {
-            Trace.TraceInformation("Reading ObjectClass information from assembly resource {0}", resourceName);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Reading ObjectClass information from assembly resource {0}", resourceName);
             var stream = assembly.GetManifestResourceStream(resourceName);
             return GetOCInfoInternal(stream, false);
         }
@@ -67,7 +71,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             if (dump) {
-                Trace.TraceInformation("XML = {0}", xml);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "XML = {0}", xml);
             }
 
             //read from xml
@@ -129,7 +133,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     builder.IsContainer = sourceOCI.IsContainer;
                     builder.AddAllAttributeInfo(sourceOCI.ConnectorAttributeInfos);
                     ObjectClassInfo targetOCI = builder.Build();
-                    Trace.TraceInformation("Adding object class info {0}", targetOCI.ObjectType);
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Adding object class info {0}", targetOCI.ObjectType);
                     target.Add(oc, targetOCI);
                 }
                 else
@@ -164,11 +168,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                                 throw new ArgumentException("Attempted to redefine attribute " + info.Name);
                             }
                         }
-                        Trace.TraceInformation("Adding connector attribute info {0}:{1}", info.Name, info.ValueType);
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Adding connector attribute info {0}:{1}", info.Name, info.ValueType);
                         builder.AddAttributeInfo(info);
                     }
                     ObjectClassInfo targetRebuilt = builder.Build();
-                    Trace.TraceInformation("Replacing object class info {0}", targetOCI.ObjectType);
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Replacing object class info {0}", targetOCI.ObjectType);
                     target.Remove(oc);
                     target.Add(oc, targetRebuilt);
                 }
@@ -239,7 +243,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         private static bool IsSupported(ConnectorAttributeInfo cai, object value) {
             if (!FrameworkUtil.IsSupportedAttributeType(value.GetType())) {
-                Trace.TraceWarning(
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, 
                     "Unsupported attribute type ... calling ToString (Name: \'{0}\' Type: \'{1}\' String Value: \'{2}\'",
                     cai.Name, value.GetType(), value.ToString());
                 return false;

@@ -46,6 +46,10 @@ namespace Org.IdentityConnectors.Exchange
     /// </summary>
     public sealed class ExchangeUtility
     {
+        // tracing
+        private static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         /// <summary>
         /// class name, used for logging purposes
         /// </summary>
@@ -122,7 +126,7 @@ namespace Org.IdentityConnectors.Exchange
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             
-            Trace.TraceInformation("GetCommand: cmdInfo name = {0}", cmdInfo.Name);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand: cmdInfo name = {0}", cmdInfo.Name);
 
             // create command
             Command cmd = new Command(cmdInfo.Name);
@@ -187,7 +191,7 @@ namespace Org.IdentityConnectors.Exchange
                 }
             }
 
-            Trace.TraceInformation("GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
             return cmd;
         }
 
@@ -381,7 +385,7 @@ namespace Org.IdentityConnectors.Exchange
             }
             else
             {
-                Trace.TraceInformation("Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
                     ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
             }
 

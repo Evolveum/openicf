@@ -60,10 +60,9 @@ namespace Org.IdentityConnectors.Exchange
         /// ClassName - used for debugging purposes
         /// </summary>
         private static readonly string ClassName = typeof(ExchangeConnector).ToString();
-        private static readonly string LocalClassName = typeof(ExchangeConnector).Name;
 
-        private static TraceSource LOGGER = new TraceSource(LocalClassName);
-
+        private static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private static TraceSource LOGGER_API = new TraceSource(TraceNames.API);
         private const int CAT_DEFAULT = 1;      // default tracing event category
 
         private IDictionary<string, ObjectClassHandler> _handlers;
@@ -114,12 +113,10 @@ namespace Org.IdentityConnectors.Exchange
 
         #region Constructors
         static ExchangeConnector() {
-            Trace.TraceInformation("Static constructor called.");
             PSExchangeConnector.CommandInfo.InitializeIfNeeded();
         }
 
         public ExchangeConnector() {
-            Trace.TraceInformation("Instance constructor called.");
             _activeDirectoryConnector = new ActiveDirectoryConnector();
             _handlers = new Dictionary<string, ObjectClassHandler>() {
                 { ObjectClass.ACCOUNT_NAME, new AccountHandler() },
@@ -151,7 +148,8 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this._configuration);
 
-            Trace.TraceInformation("Exchange.Create method for {0}; attributes:\n{1}", oclass.GetObjectClassValue(), CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Create method for {0}; attributes:\n{1}", oclass.GetObjectClassValue(), CommonUtils.DumpConnectorAttributes(attributes));
 
             CreateOpContext context = new CreateOpContext() {
                 Attributes = attributes,
@@ -179,7 +177,7 @@ namespace Org.IdentityConnectors.Exchange
 
             GetHandler(context).Create(context);
 
-            Trace.TraceInformation("Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
 
         private ObjectClassHandler GetHandler(Context context) {
@@ -213,7 +211,8 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(uid, "uid", this._configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this._configuration);
 
-            Trace.TraceInformation("Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
 
             UpdateOpContext context = new UpdateOpContext() {
                 Attributes = attributes,
@@ -242,7 +241,8 @@ namespace Org.IdentityConnectors.Exchange
 
             GetHandler(context).Update(context);
 
-            Trace.TraceInformation("Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
         #endregion
 
@@ -254,7 +254,8 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(objClass, "objClass", this._configuration);
             ExchangeUtility.NullCheck(uid, "uid", this._configuration);
 
-            Trace.TraceInformation("Exchange.Delete method; uid:\n{0}", uid.GetUidValue());
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Delete method; uid:\n{0}", uid.GetUidValue());
 
             DeleteOpContext context = new DeleteOpContext() {
                 Connector = this,
@@ -280,7 +281,8 @@ namespace Org.IdentityConnectors.Exchange
 
             GetHandler(context).Delete(context);
 
-            Trace.TraceInformation("Exchange.Delete method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Delete method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
 
         #endregion
@@ -298,7 +300,8 @@ namespace Org.IdentityConnectors.Exchange
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
 
-            Trace.TraceInformation("Exchange.ExecuteQuery method; oclass = {0}, query = {1}", oclass, query);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.ExecuteQuery method; oclass = {0}, query = {1}", oclass, query);
 
             ExecuteQueryContext context = new ExecuteQueryContext() {
                 Connector = this,
@@ -320,13 +323,14 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         public void ExecuteQueryMain(ExecuteQueryContext context) {
-            Trace.TraceInformation("Exchange.ExecuteQueryMain starting");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.ExecuteQueryMain starting");
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
             GetHandler(context).ExecuteQuery(context);
 
-            Trace.TraceInformation("Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
         #endregion
 
@@ -349,7 +353,8 @@ namespace Org.IdentityConnectors.Exchange
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
 
-            Trace.TraceInformation("Exchange.Sync method; oclass = {0}, token = {1}", oclass, token);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Sync method; oclass = {0}, token = {1}", oclass, token);
 
             SyncOpContext context = new SyncOpContext() {
                 Connector = this,
@@ -371,13 +376,13 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         public void SyncMain(SyncOpContext context) {
-            Trace.TraceInformation("Exchange.Sync starting");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Sync starting");
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
             GetHandler(context).Sync(context);
 
-            Trace.TraceInformation("Exchange.Sync method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Sync method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
 
         #endregion
@@ -390,15 +395,16 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns></returns>
         public Schema Schema()
         {
-            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Exchange.Schema method");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Schema method");
             if (_schema != null) {
-                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Returning cached schema");
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning cached schema");
             } else {
                 _schema = SchemaUtils.BuildSchema(this,
                                 GetSupportedObjectClasses,
                                 GetObjectClassInfo,
                                 GetSupportedOperations,
                                 GetUnSupportedOperations);
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning newly created schema");
             }
             return _schema;
         }
@@ -553,7 +559,7 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         /// <param name="configuration">Connector configuration</param>
         public void Init(Configuration configuration) {
-            Trace.TraceInformation("ExchangeConnector.Init: entry");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ExchangeConnector.Init: entry");
 
             _configuration = (ExchangeConfiguration)configuration;
             _activeDirectoryConnector.Init(configuration);
@@ -564,7 +570,7 @@ namespace Org.IdentityConnectors.Exchange
                  _configuration.ConnectorMessages);
             _scripting = new Scripting(_configuration.ScriptingConfigurationFile, _powershell);
 
-            Trace.TraceInformation("ExchangeConnector.Init: exit");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ExchangeConnector.Init: exit");
         }
         #endregion
 
@@ -598,7 +604,7 @@ namespace Org.IdentityConnectors.Exchange
         public void Test() {
             const string operation = "Test";
 
-            Trace.TraceInformation("Exchange.Test method");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Test method");
 
             Context context = new Context() {
                 Connector = this,

@@ -53,6 +53,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
     /// </summary>
     internal class CustomAttributeHandlers
     {
+        // tracing (using ActiveDirectoryConnector's name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         // Max range retrieval to obtain the members of a group
         private static readonly int GRP_MEMBERS_MAXRANGE = 1500;
         // names from active directory attributes to ignore during
@@ -404,13 +408,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<Object> groupsToAdd = new HashSet<Object>();
                 ICollection<Object> groupsToRemove = new HashSet<Object>();
 
-                Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: user = {0}, oldValues = {1}, newValues = {2}, updateType = {3}",
-                    directoryEntry.Name, DumpPVC(oldValues), CollectionUtil.Dump(newValues), type);
+                if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "UpdateDeFromCa_OpAtt_Groups: user = {0}, oldValues = {1}, newValues = {2}, updateType = {3}",
+                        directoryEntry.Name, DumpPVC(oldValues), CollectionUtil.Dump(newValues), type);
+                }
 
                 GetAddsAndDeletes(groupsToAdd, groupsToRemove, oldValues, newValues, type);
 
-                Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: user = {0}, groupsToAdd = {1}, groupsToRemove = {2}",
-                    directoryEntry.Name, CollectionUtil.Dump(groupsToAdd), CollectionUtil.Dump(groupsToRemove));
+                if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "UpdateDeFromCa_OpAtt_Groups: user = {0}, groupsToAdd = {1}, groupsToRemove = {2}",
+                        directoryEntry.Name, CollectionUtil.Dump(groupsToAdd), CollectionUtil.Dump(groupsToRemove));
+                }
                 
                 foreach (Object obj in groupsToRemove)
                 {
@@ -421,8 +429,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     DirectoryEntry groupDe = new DirectoryEntry(groupPath,
                         _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
-                    Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, removing {2}",
+                    if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, removing {2}",
                         groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
+                    }
                     if (groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Contains(distinguishedName))
                     {
                         groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Remove(distinguishedName);
@@ -430,7 +440,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                     else
                     {
-                        Trace.TraceWarning("{0} is NOT a member of {1}, no remove operation is executed", distinguishedName, groupPath);
+                        LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "{0} is NOT a member of {1}, no remove operation is executed", distinguishedName, groupPath);
                     }
                     groupDe.Dispose();
                 }
@@ -446,8 +456,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                     //Trace.TraceInformation("DirectoryEntry for this group created: {0}", groupDe);
                     String distinguishedName = ActiveDirectoryUtils.GetDnFromPath(directoryEntry.Path);
-                    Trace.TraceInformation("UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, adding {2}",
-                        groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
+                    if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "UpdateDeFromCa_OpAtt_Groups: Group: {0}, members before = {1}, adding {2}",
+                            groupPath, DumpPVC(groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER]), distinguishedName);
+                    }
                     if (!groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Contains(distinguishedName))
                     {
                         groupDe.Properties[ActiveDirectoryConnector.ATT_MEMBER].Add(distinguishedName);
@@ -455,7 +467,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                     else
                     {
-                        Trace.TraceWarning("{0} is already a member of {1}, no add operation is executed", distinguishedName, groupPath);
+                        LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "{0} is already a member of {1}, no add operation is executed", distinguishedName, groupPath);
                     }
                     groupDe.Dispose();
                 }
@@ -891,8 +903,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                                 }
                                 else
                                 {
-                                    // TODO remove this trace
-                                    Trace.TraceInformation("existing value is not a string, it is: {0}", existing.GetType());
+                                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "existing value is not a string, it is: {0}", existing.GetType());
                                     equals = valueObject.Equals(existing);
                                 }
                                 if (equals)
@@ -914,7 +925,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                         if (!foundAndRemoved)
                         {
-                            Trace.TraceWarning("Removing non-existing value {0} from {1}. Current values = {2}", valueObject, attribute.Name, DumpPVC(pvc));
+                            LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Removing non-existing value {0} from {1}. Current values = {2}", valueObject, attribute.Name, DumpPVC(pvc));
                         }
                     }                
                 }
@@ -961,9 +972,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                     else
                     {
-                        Trace.TraceWarning(
-                            "Unsupported attribute type ... calling ToString (Name: \'{0}\'({1}) Type: \'{2}\' String Value: \'{3}\'",
-                            attributeName, i, pvc[i].GetType(), pvc[i].ToString());
+                        if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT,
+                                "Unsupported attribute type ... calling ToString (Name: \'{0}\'({1}) Type: \'{2}\' String Value: \'{3}\'",
+                                attributeName, i, pvc[i].GetType(), pvc[i].ToString());
+                        }
                         attributeBuilder.AddValue(pvc[i].ToString());
                     }
                 }
@@ -1084,9 +1097,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                     else
                     {
-                        Trace.TraceWarning(
-                            "Unsupported attribute type ... calling ToString (Name: \'{0}\'({1}) Type: \'{2}\' String Value: \'{3}\'",
-                            attributeName, i, pvc[i].GetType(), pvc[i].ToString());
+                        if (LOGGER.Switch.ShouldTrace(TraceEventType.Verbose)) {
+                            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT,
+                                "Unsupported attribute type ... calling ToString (Name: \'{0}\'({1}) Type: \'{2}\' String Value: \'{3}\'",
+                                attributeName, i, pvc[i].GetType(), pvc[i].ToString());
+                        }
                         attributeBuilder.AddValue(pvc[i].ToString());
                     }
                 }

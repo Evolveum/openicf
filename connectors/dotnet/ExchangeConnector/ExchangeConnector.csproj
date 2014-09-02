@@ -101,6 +101,7 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PSExchangeConnector.cs" />
     <Compile Include="Handlers\ObjectClassHandler.cs" />
+    <Compile Include="TraceNames.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActiveDirectoryConnector\ActiveDirectoryConnector.csproj">

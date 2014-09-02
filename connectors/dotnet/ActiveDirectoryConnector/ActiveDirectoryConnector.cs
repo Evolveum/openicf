@@ -57,6 +57,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp,
         AuthenticateOp, PoolableConnector
 	{
+        // tracing
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private static TraceSource LOGGER_API = new TraceSource(TraceNames.API);
+        internal const int CAT_DEFAULT = 1;      // default tracing event category
+
         /// <summary>
         /// Which AD attributes are returned by default (i.e. without client explicitly asking for them).
         /// </summary>
@@ -135,7 +140,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
-            Trace.TraceInformation("AD.Create method; attributes:\n{0}", CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "AD.Create method starting; oclass: {0}, attributes:\n{1}", 
+                oclass.GetObjectClassValue(),
+                CommonUtils.DumpConnectorAttributes(attributes));
+
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
@@ -148,14 +157,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.ConnectorMessages.Format("ex_OperationalAttributeNull",
                         "The name operational attribute cannot be null"));
             }
-            Trace.TraceInformation("Name attribute = {0}", nameAttribute.GetDetails());
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT,
+                "Name attribute = {0}", nameAttribute.GetDetails());
 
             String ldapContainerPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName,
                 ActiveDirectoryUtils.GetParentDn(nameAttribute.GetNameValue()));
             String ldapEntryPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName,
                 nameAttribute.GetNameValue());
 
-            Trace.TraceInformation("LdapContainerPath = {0}, LdapEntryPath = {1}", ldapContainerPath, ldapEntryPath);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT,
+                "LdapContainerPath = {0}, LdapEntryPath = {1}", ldapContainerPath, ldapEntryPath);
 
             try
             {
@@ -207,12 +218,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(
                         (Byte[])guidValue);
 
-                    Trace.TraceInformation("Created object with uid {0}", guidString);
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, 
+                        "Created object with uid {0}", guidString);
                     uid = new Uid(guidString);
                 }
                 else
                 {
-                    Trace.TraceError("Unable to find uid attribute for newly created object");
+                    LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT,
+                        "Unable to find uid attribute for newly created object");
                 }
 
 
@@ -221,8 +234,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 // have to make sure the new thing gets deleted in 
                 // the case of error
-                Trace.TraceInformation("Caught COM exception: " + exception);
-                Trace.TraceError(exception.Message);
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Caught COM exception: " + exception);
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception: " + exception.Message);
                 if (created)
                 {
                     // In the case of an exception, make sure we
@@ -242,8 +255,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             catch (Exception exception)
             {
                 //Console.WriteLine("caught general exception:" + exception);
-                Trace.TraceInformation("Caught general exception: " + exception);
-                Trace.TraceError(exception.Message);
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Caught general exception: " + exception);
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception: " + exception.Message);
                 if (created)
                 {
                     // In the case of an exception, make sure we
@@ -263,6 +276,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     newDe.Dispose();
                 }
             }
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Create returning UID: {0}", uid.GetUidValue());
             return uid;
         }
 
@@ -273,7 +287,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of Connector
         public virtual void Init(Configuration configuration)
         {
-            Trace.TraceInformation("AD.Init method");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Init method starting");
+
             configuration.Validate();
             _configuration = (ActiveDirectoryConfiguration)configuration;
             _utils = new ActiveDirectoryUtils(_configuration);
@@ -285,7 +300,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 useGC = true;
             }
             string path = GetSearchContainerPath(useGC, _configuration.LDAPHostName, _configuration.Container);
-            Trace.TraceInformation("Search: Getting root node for search");
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: Getting root node for search");
             _dirHandler = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
 
             _schema = null;
@@ -293,6 +308,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Schema();           // initializes e.g. _attributesReturnedByDefault (used throughout this connector)
 
             //searcher = new DirectorySearcher(_dirHandler);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Init method finishing");
         }
 
         #endregion
@@ -312,11 +328,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region SchemaOp Members
         // implementation of SchemaSpiOp
         public virtual Schema Schema()
-        {            
-            Trace.TraceInformation("AD.Schema method - entry");
+        {
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Schema method starting");
             if (_schema != null)
             {
-                Trace.TraceInformation("AD.Schema method - exit, returning cached schema");
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Schema method exiting, returning cached schema");
                 return _schema;
             }
             else
@@ -329,7 +345,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 _attributesReturnedByDefault = SchemaUtils.GetAttributesReturnedByDefault(
                                 GetSupportedObjectClasses,
                                 GetObjectClassInfo);
-                Trace.TraceInformation("AD.Schema method - exit, returning freshly computed schema");
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Schema method exiting, returning freshly computed schema");
                 return _schema;
             }
         }
@@ -404,6 +420,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of SearchSpiOp
         public void ExecuteQuery(ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ExecuteQuery starting, query = {0}", query);
             ExecuteQueryInternal(oclass, query, handler, options, GetAdAttributesToReturn(oclass, options));
         }
 
@@ -440,7 +457,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         if ((oldStyleQuery != null) && (oldStyleQuery is string))
                         {
                             query = (string)oldStyleQuery;
-                            Trace.TraceWarning(_configuration.ConnectorMessages.Format(
+                            LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, 
+                                _configuration.ConnectorMessages.Format(
                                 "warn_CompatibilityModeQuery",
                                 "Using Identity Manger Resource Adapter style query ''{0}''.  This should be updated to use the new connector query syntax.",
                                 ((query != null) && (query.Length > 0)) ? query : ""));
@@ -465,7 +483,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception e)
             {
-                Trace.TraceError(String.Format("Caught Exception: {0}", e));
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Caught Exception: {0}", e);
                 throw;
             }
         }
@@ -522,7 +540,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
             string searchRoot, SearchScope searchScope, ICollection<string> attributesToReturn)
         {
-            Trace.TraceInformation("AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}", CollectionUtil.Dump(attributesToReturn));
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}", 
+                CollectionUtil.Dump(attributesToReturn));
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
             {
@@ -543,7 +562,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (query == null)
             {
-                Trace.TraceInformation("query is null");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "query is null");
             }
             else
             {
@@ -553,7 +572,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     query = String.Format("(&(ObjectCategory=Person){0})", query);
                 }
 
-                Trace.TraceInformation("Setting search string to \'{0}\'", query);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Setting search string to \'{0}\'", query);
             }
 
             DirectorySearcher searcher = null;
@@ -569,7 +588,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // options give a different root context for search, let use a new connection
                     string path;
                     path = GetSearchContainerPath(useGlobalCatalog, serverName, searchRoot);
-                    Trace.TraceInformation("Search: Getting root node for search");
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: Getting root node for search");
                     searchRootEntry = new DirectoryEntry(path, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                     searcher = new DirectorySearcher(searchRootEntry, query);
                 }
@@ -587,7 +606,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     searcher.Sort = sortOption;
                 }
 
-                Trace.TraceInformation("Search: Performing query");
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: Performing query");
                 
                 Stopwatch stopWatch = new Stopwatch();
     			stopWatch.Start();
@@ -601,7 +620,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
         				ts.Hours, ts.Minutes, ts.Seconds,
 	        			ts.Milliseconds);
-   					Trace.TraceInformation("searcher.FindAll took {0}", elapsedTime);
+   					LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "searcher.FindAll took {0}", elapsedTime);
 
                     foreach (DS.SearchResult result in resultSet)
                     {
@@ -614,7 +633,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 	stopWatch.Stop();
                     TimeSpan ts = stopWatch.Elapsed;
 					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
-                    Trace.TraceInformation("Search: found {0} results, took {1}", count, elapsedTime);
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: found {0} results, took {1}", count, elapsedTime);
                     // Important to dispose to avoid memory leak
                     if (resultSet != null)
                     {
@@ -624,7 +643,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception e)
             {
-                Trace.TraceWarning(e.Message);
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Exception message: {0}", e.Message);
             }
             finally
             {
@@ -644,7 +663,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             try
             {
-                Trace.TraceInformation("Found object {0}", result.Path);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Found object {0}", result.Path);
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.ObjectClass = oclass;
 
@@ -681,7 +700,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         DirectorySearcher dcSearcher =
                             new DirectorySearcher(dcSearchRoot, dcSearchQuery);
                         savedDcResult = dcSearcher.FindOne();
-                        Trace.TraceInformation("after dcSearcher.FindOne: T={0} ms", stopWatch.ElapsedMilliseconds);
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "after dcSearcher.FindOne: T={0} ms", stopWatch.ElapsedMilliseconds);
                         if (savedDcResult == null)
                         {
                             // in this case, there is no choice, but to use
@@ -694,7 +713,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         }
                         dcSearcher.Dispose();
                         dcSearchRoot.Dispose();
-                        Trace.TraceInformation("after dcSearchRoot.Dispose: T={0} ms", stopWatch.ElapsedMilliseconds);
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "after dcSearchRoot.Dispose: T={0} ms", stopWatch.ElapsedMilliseconds);
                     }
                     
                     DirectoryEntry entryDc = savedDcResult != null ? savedDcResult.GetDirectoryEntry() : null;
@@ -758,7 +777,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 String msg = String.Format("Returning ''{0}'', in {1} ms",
                     (result.Path != null) ? result.Path : "<path is null>", stopWatch.ElapsedMilliseconds);
-                Trace.TraceInformation(msg);
+                LOGGER_API.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, msg);
                 handler.Handle(builder.Build());
             }
             catch (DirectoryServicesCOMException e)
@@ -766,14 +785,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // there is a chance that we found the result, but
                 // in the mean time, it was deleted.  In that case, 
                 // log an error and continue
-                Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
-                Trace.TraceWarning("Exception details:" + e);
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Exception details: " + e);
             }
             catch (Exception e)
             {
                 // In that case, of any error, try to continue
-                Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.");
-                Trace.TraceWarning("Exception details:" + e);
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Error in creating ConnectorObject from DirectoryEntry.");
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Exception details: " + e);
             }
 			stopWatch.Stop();
         }
@@ -867,7 +886,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (DirectoryServicesCOMException dscex)
             {
-                Trace.TraceError(string.Format(CultureInfo.InvariantCulture,
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, string.Format(CultureInfo.InvariantCulture,
                     "Failed to determine whether the Container '{0}' exists. Exception: {1}", _configuration.Container, dscex));
 
                 throw new ConnectorException(
@@ -908,7 +927,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             Uid updatedUid = null;
 
-            Trace.TraceInformation("AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, CommonUtils.DumpConnectorAttributes(attributes));
 
             if (_configuration == null)
             {
@@ -951,7 +970,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception e)
             {
-                Trace.TraceError("Got exception when updating: {0}", e);
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Got exception when updating: {0}", e);
                 throw;
             }
             finally
@@ -960,6 +979,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     updateEntry.Dispose();
                 }
             }
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method finishing");
             return updatedUid;
         }
 
@@ -970,7 +990,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of DeleteSpiOp
         public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
         {
-            Trace.TraceInformation("AD.Delete; uid = {0}", uid != null ? uid.GetUidValue() : "(null)");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Delete; uid = {0}", uid != null ? uid.GetUidValue() : "(null)");
             DirectoryEntry de = null;
             try
             {
@@ -1033,6 +1053,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 de.Dispose();
             }
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Delete method finishing");
         }
 
         #endregion
@@ -1131,7 +1152,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                                 string msg = _configuration.ConnectorMessages.Format("ex_missingSyncAttribute",
                                     "Attribute {0} is not present in connector object.  Cannot proceed with Synchronization",
                                     ATT_USN_CHANGED);
-                                Trace.TraceError(msg);
+                                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, msg);
                                 throw new ConnectorException(msg);
                             }
                             long tokenUsnValue = (long)ConnectorAttributeUtil.GetSingleValue(tokenAttr);
@@ -1254,7 +1275,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if ((serverName == null) || (serverName.Length == 0))
             {
-                Trace.TraceWarning("No server was configured for synchronization, so picking one.  You should configure a server for best performance.");
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "No server was configured for synchronization, so picking one.  You should configure a server for best performance.");
                 // we have to know which server we are working against,
                 // so find one.
                 if (UseGlobalCatalog())

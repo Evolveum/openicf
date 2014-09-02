@@ -34,9 +34,8 @@ namespace Org.IdentityConnectors.Exchange {
         /// This class name, used for logging purposes
         /// </summary>
         private static readonly string ClassName = typeof(ExchangePowerShellSupport).ToString();
-        private static readonly string LocalClassName = typeof(ExchangePowerShellSupport).Name;
 
-        private static TraceSource LOGGER = new TraceSource(LocalClassName);
+        private static TraceSource LOGGER = new TraceSource(TraceNames.POWERSHELL);
 
         private const int CAT_DEFAULT = 1;      // default tracing event category
 
@@ -67,7 +66,7 @@ namespace Org.IdentityConnectors.Exchange {
         internal ExchangePowerShellSupport(string configuredExchangeVersion, string exchangeUri, ConnectorMessages messageCatalog) {
             
             if (configuredExchangeVersion == null && exchangeUri != null) {
-                Trace.TraceWarning("No configured Exchange version. As auto-detection is not possible in remote mode, using 2010 as a default.");
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "No configured Exchange version. As auto-detection is not possible in remote mode, using 2010 as a default.");
                 _exchangeVersion = ExchangeVersion.E2010;
             } else {
                 _exchangeVersion = GetExchangeServerVersion(configuredExchangeVersion);
@@ -131,7 +130,7 @@ namespace Org.IdentityConnectors.Exchange {
                     RunSpace = _outer.InitRunSpace();
                 } catch (Exception e) {
                     Console.WriteLine("Error in InitRunSpace(): " + e);
-                    Trace.TraceError("Error while initializing runspace: {0}", e);
+                    LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Error while initializing runspace: {0}", e);
                     throw;          // if in separate thread, this causes server to crash
                 }
             }
@@ -220,7 +219,7 @@ namespace Org.IdentityConnectors.Exchange {
                     runspace.Close();
 
                     if ((snapinList == null) || (snapinList.Count == 0)) {
-                        Trace.TraceError("No snap-in returned");
+                        LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "No snap-in returned");
                         throw new ConnectorException(_messageCatalog.Format("ex_NoPowerShellSnapins", "There are no registered PowerShell snap-ins."));
                     }
 

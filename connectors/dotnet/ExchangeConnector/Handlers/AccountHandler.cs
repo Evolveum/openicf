@@ -14,6 +14,11 @@ using System.Text;
 
 namespace Org.IdentityConnectors.Exchange {
     class AccountHandler : ObjectClassHandler {
+
+        // tracing
+        private static TraceSource LOGGER = new TraceSource(TraceNames.ACCOUNT_HANDLER);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         private MiscHelper _helper = new MiscHelper();
 
         public void Create(CreateOpContext context) {
@@ -64,13 +69,13 @@ namespace Org.IdentityConnectors.Exchange {
                 _helper.InvokePipeline(exconn, cmdSet);
             }
             catch {
-                Trace.TraceWarning("Rolling back AD create for UID: " + uid.GetUidValue());
+                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Rolling back AD create for UID: " + uid.GetUidValue());
 
                 // rollback AD create
                 try {
                     adconn.Delete(context.ObjectClass, uid, context.Options);
                 } catch {
-                    Trace.TraceWarning("Not able to rollback AD create for UID: " + uid.GetUidValue());
+                    LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Not able to rollback AD create for UID: " + uid.GetUidValue());
                     // note: this is not perfect, we hide the original exception
                     throw;
                 }
@@ -242,10 +247,10 @@ namespace Org.IdentityConnectors.Exchange {
                             changed = true;
                             string existing = values[normalized];
                             if (address.StartsWith("SMTP:") && existing.StartsWith("smtp:")) {
-                                Trace.TraceInformation("Removing redundant address {0}, keeping {1}", existing, address);
+                                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", existing, address);
                                 values[normalized] = address;
                             } else {
-                                Trace.TraceInformation("Removing redundant address {0}, keeping {1}", address, existing);
+                                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", address, existing);
                             }
                         } else {
                             values.Add(normalized, address);
@@ -288,10 +293,10 @@ namespace Org.IdentityConnectors.Exchange {
             {
                 Handle = cobject =>
                 {
-                    Trace.TraceInformation("Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
                     ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
                     filtered = AddExchangeAttributes(exconn, context.ObjectClass, filtered, attsToGet);
-                    Trace.TraceInformation("Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
                     return context.ResultsHandler.Handle(filtered);
                 }
             };

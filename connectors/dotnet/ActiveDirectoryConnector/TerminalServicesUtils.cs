@@ -32,6 +32,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
      */
     public class TerminalServicesUtils
     {
+        // tracing (using ActiveDirectoryConnector's name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         // used to be 'Terminal Services Initial Program'
         public static string TS_INITIAL_PROGRAM = "TerminalServicesInitialProgram";
 
@@ -100,8 +104,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception e)
             {
-                Trace.TraceWarning("Unable to retrieve property called {0}", name);
-                Trace.TraceWarning(e.Message);
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Unable to retrieve property called {0}", name);
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, e.Message);
             }
             finally
             {
@@ -110,7 +114,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 				string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
         			ts.Hours, ts.Minutes, ts.Seconds,
         			ts.Milliseconds);
-   				Trace.TraceInformation("Getting {0} took {1}, that is {2} ticks", name, elapsedTime, stopWatch.ElapsedTicks);
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Getting {0} took {1}, that is {2} ticks", name, elapsedTime, stopWatch.ElapsedTicks);
             }
 
             // if the name didn't exist, return 'defaultValue'

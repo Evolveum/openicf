@@ -36,6 +36,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 {
     internal class AuthenticationHelper
     {
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         // errors are documented in winerror.h
         internal static readonly int ERROR_PASSWORD_MUST_CHANGE = 1907;
         internal static readonly int ERROR_LOGON_FAILURE = 1326;
@@ -109,7 +112,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         // no idea what could have gone wrong, so log it and throw connector error
                         string errorMessage = string.Format(
                             "Windows returned error number {0} from LogonUser call", lastWindowsError);
-                        Trace.TraceError(errorMessage);
+                        LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, errorMessage);
                         //TODO: Add localization
                         throw new ConnectorException(errorMessage);
                     }
@@ -121,7 +124,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch(Exception e)
             {
-                Trace.TraceError(e.Message);
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, e.Message);
                 throw;
             }
             finally

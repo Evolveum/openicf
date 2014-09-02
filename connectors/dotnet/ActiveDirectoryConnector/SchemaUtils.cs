@@ -11,6 +11,11 @@ using System.Text;
 namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class SchemaUtils {
+
+        // tracing (using ActiveDirectoryConnector's name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         public delegate ICollection<ObjectClass> GetSupportedObjectClassesDelegate();
         public delegate ObjectClassInfo GetObjectClassInfoDelegate(ObjectClass oc);
         public delegate IList<SafeType<SPIOperation>> GetSupportedOperationsDelegate(ObjectClass oc);
@@ -48,7 +53,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                 }
             }
-            Trace.TraceInformation("Finished retrieving schema");
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Finished retrieving schema");
             return schemaBuilder.Build();
         }
 

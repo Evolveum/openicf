@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
@@ -102,6 +102,7 @@
     <Compile Include="SchemaUtils.cs" />
     <Compile Include="Scripting.cs" />
     <Compile Include="TerminalServicesUtils.cs" />
+    <Compile Include="TraceNames.cs" />
     <Compile Include="UserAccountControl.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -15,6 +15,11 @@ namespace Org.IdentityConnectors.Exchange
 {
     class MiscHelper
     {
+        // tracing (using ExchangeConnector trace source)
+        private static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
+
         /// <summary>
         /// Invokes command in PowerShell runspace, this method is just helper
         /// method to do the exception localization
@@ -40,7 +45,7 @@ namespace Org.IdentityConnectors.Exchange
             if (guidPropertyInfo == null || guidPropertyInfo.Value == null) {
                 throw new ConnectorException("No 'guid' property on object from 'create' operation");
             }
-            Trace.TraceInformation("GUID value = " + guidPropertyInfo.Value);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GUID value = {0}", guidPropertyInfo.Value);
             return new Uid(guidPropertyInfo.Value.ToString());
         }
 
@@ -57,16 +62,16 @@ namespace Org.IdentityConnectors.Exchange
 
             IDictionary<string,PSPropertyInfo> properties = psobject.Properties.ToDictionary(psinfo => psinfo.Name);
 
-            Trace.TraceInformation("Creating object with UID = {0} and Name = {1}", guid, name);
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Building connector object with UID = {0} and Name = {1}", guid, name);
             foreach (ConnectorAttributeInfo cai in ocinfo.ConnectorAttributeInfos) {
                 if (cai.IsReadable && properties.ContainsKey(cai.Name)) {
                     object value = properties[cai.Name].Value;
-                    Trace.TraceInformation(" - attribute {0} = {1}", cai.Name, value);
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, " - attribute {0} = {1}", cai.Name, value);
 
                     if (value is PSObject) {
                         var ps = value as PSObject;
                         value = ps.BaseObject;
-                        Trace.TraceInformation(" - attribute {0} UNWRAPPED = {1} ({2})", cai.Name, value, value.GetType());
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, " - attribute {0} UNWRAPPED = {1} ({2})", cai.Name, value, value.GetType());
                     }
                     builder.AddAttribute(cai.Name, CommonUtils.ConvertToSupportedForm(cai, value));
                 }

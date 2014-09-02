@@ -76,12 +76,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
 		/// This class name, used for logging purposes
 		/// </summary>
 		private static readonly string ClassName = typeof(PowerShellSupport).ToString();
-        private static readonly string LocalClassName = typeof(PowerShellSupport).Name;
-
-        static PowerShellSupport() {
-            Console.WriteLine("ClassName = " + ClassName);
-            Console.WriteLine("LocalClassName = " + LocalClassName);
-        }
 
 		/// <summary>
 		/// Pool of available runspaces
@@ -98,9 +92,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         private IList<string> _localSnapinNames;
 
-        internal static TraceSource LOGGER = new TraceSource(LocalClassName);
-        private static TraceSource LOGGER_COMMANDS = new TraceSource(LocalClassName + ".Commands");
-        private static TraceSource LOGGER_PERFORMANCE = new TraceSource(LocalClassName + ".Performance");
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.POWERSHELL);
+        private static TraceSource LOGGER_COMMANDS = new TraceSource(TraceNames.POWERSHELL_COMMANDS);
+        private static TraceSource LOGGER_PERFORMANCE = new TraceSource(TraceNames.POWERSHELL_PERFORMANCE);
 
         private const int CAT_DEFAULT = 1;      // default tracing event category
 
@@ -426,13 +420,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             StringBuilder builder = new StringBuilder();
             foreach (ErrorRecord error in errors) {
                 if (error != null) {
-                    Trace.TraceInformation("ErrorRecord:\n - CategoryInfo: {0}\n - FullyQualifiedErrorId: {1}\n" +
+                    LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "ErrorRecord:\n - CategoryInfo: {0}\n - FullyQualifiedErrorId: {1}\n" +
                         " - ErrorDetails: {2}\n - Exception: {3}\n - InvocationInfo: {4}\n - PipelineIterationInfo: {5}\n - TargetObject: {6}",
                         error.CategoryInfo, error.FullyQualifiedErrorId, error.ErrorDetails, error.Exception,
                         error.InvocationInfo, CollectionUtil.Dump(error.PipelineIterationInfo), error.TargetObject);
 
                     var c = error.CategoryInfo;
-                    Trace.TraceInformation("CategoryInfo details:\n - Category: {0}\n - Activity: {1}\n" +
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "CategoryInfo details:\n - Category: {0}\n - Activity: {1}\n" +
                         " - Reason: {2}\n - TargetName: {3}\n - TargetType: {4}", c.Category, c.Activity, c.Reason, c.TargetName, c.TargetType);
 
                     if (firstException == null && error.Exception != null) {
@@ -454,7 +448,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         private static void DefaultThrowIcfExceptionImplementation(Exception e, ErrorRecord error, string message) {
-            Trace.TraceInformation("DefaultThrowIcfExceptionImplementation dealing with {0}, message = {1}", e, message);
+            LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "DefaultThrowIcfExceptionImplementation dealing with {0}, message = {1}", e, message);
 
             
             if (error.CategoryInfo != null) {
@@ -521,14 +515,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
         internal Runspace acquireRunspace() {
             int id = Thread.CurrentThread.ManagedThreadId;
             if (_usedRunspaces.ContainsKey(id)) {
-                Trace.TraceInformation("Using unreturned runspace for thread {0}", id);
+                PowerShellSupport.LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Using unreturned runspace for thread {0}", id);
                 return _usedRunspaces[id];
             } else {
                 Runspace selectedRunspace;
                 if (_freeRunspaces.Count > 0) {
                     selectedRunspace = _freeRunspaces.Dequeue();
                 } else {
-                    Trace.TraceInformation("No runspace available, creating new one.");
+                    PowerShellSupport.LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "No runspace available, creating new one.");
                     selectedRunspace = _createRunspaceDelegate();
                     if (selectedRunspace.RunspaceStateInfo.State == RunspaceState.BeforeOpen) {
                         PowerShellSupport.LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Opening runspace.");
@@ -575,7 +569,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         internal void Close() {
             foreach (KeyValuePair<int,Runspace> p in _usedRunspaces) {
-                Trace.TraceWarning("Disposing of unreturned runspace (thread {0})", p.Key);
+                PowerShellSupport.LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Disposing of unreturned runspace (thread {0})", p.Key);
                 p.Value.Dispose();
             }
             _usedRunspaces.Clear();
