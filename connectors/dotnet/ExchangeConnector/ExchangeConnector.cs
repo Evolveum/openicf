@@ -219,6 +219,12 @@ namespace Org.IdentityConnectors.Exchange
             LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
                 "Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
 
+            if (attributes == null || attributes.Count == 0) {
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT,
+                    "Returning immediately, as there are no attributes to modify.");
+                return uid;
+            }
+
             UpdateOpContext context = new UpdateOpContext() {
                 Attributes = attributes,
                 Connector = this,

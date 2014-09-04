@@ -124,8 +124,6 @@ namespace Org.IdentityConnectors.Exchange
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
         {
-            bool nonEmptyCommand = false;
-
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             
             LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand: cmdInfo name = {0}", cmdInfo.Name);
@@ -186,21 +184,13 @@ namespace Org.IdentityConnectors.Exchange
                         } else {
                             valueToSet = ConnectorAttributeUtil.GetSingleValue(attribute);
                         }
-                        //if (valueToSet != null) {
                         cmd.Parameters.Add(attName, valueToSet);
-                        //}
-                        nonEmptyCommand = true;
                     }
                 }
             }
 
-            if (nonEmptyCommand || !cmdInfo.Name.StartsWith("Set-")) {
-                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
-                return cmd;
-            } else {
-                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: Set-style command {0} has no real parameters, skipping its execution", cmdInfo.Name);
-                return null;
-            }
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
+            return cmd;
         }
 
         /// <summary>

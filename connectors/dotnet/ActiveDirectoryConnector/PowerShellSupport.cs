@@ -281,10 +281,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
 			// create a new collection and add the command
 			// specifically not a CommandCollection: that will not work here
 
-            if (item == null) {
-                LOGGER_COMMANDS.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Skipping execution of null command");
-                return new Collection<PSObject>();
-            }
+            //if (item == null) {
+            //    LOGGER_COMMANDS.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Skipping execution of null command");
+            //    return new Collection<PSObject>();
+            //}
 			Collection<Command> commands = new Collection<Command>();
 			commands.Add(item);
 			return this.InvokePipeline(commands);
