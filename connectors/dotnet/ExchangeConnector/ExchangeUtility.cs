@@ -124,6 +124,8 @@ namespace Org.IdentityConnectors.Exchange
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
         {
+            bool nonEmptyCommand = false;
+
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             
             LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand: cmdInfo name = {0}", cmdInfo.Name);
@@ -175,7 +177,7 @@ namespace Org.IdentityConnectors.Exchange
 
                     ConnectorAttribute attribute = ConnectorAttributeUtil.Find(attName, attributes);
                     if (attribute != null) {
-                        if (attribute.Value.Count > 1) {
+                        if (attribute.Value != null && attribute.Value.Count > 1) {
                             List<string> stringValues = new List<string>();
                             foreach (object val in attribute.Value) {
                                 stringValues.Add(val.ToString());
@@ -184,15 +186,21 @@ namespace Org.IdentityConnectors.Exchange
                         } else {
                             valueToSet = ConnectorAttributeUtil.GetSingleValue(attribute);
                         }
-                        if (valueToSet != null) {
-                            cmd.Parameters.Add(attName, valueToSet);
-                        }
+                        //if (valueToSet != null) {
+                        cmd.Parameters.Add(attName, valueToSet);
+                        //}
+                        nonEmptyCommand = true;
                     }
                 }
             }
 
-            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
-            return cmd;
+            if (nonEmptyCommand || !cmdInfo.Name.StartsWith("Set-")) {
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: cmdInfo name = {0}", cmdInfo.Name);
+                return cmd;
+            } else {
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand exit: Set-style command {0} has no real parameters, skipping its execution", cmdInfo.Name);
+                return null;
+            }
         }
 
         /// <summary>

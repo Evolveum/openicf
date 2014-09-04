@@ -263,9 +263,16 @@ namespace Org.IdentityConnectors.Exchange
 
         internal static IList<string> AttCustomAttributes;
         internal static IList<string> AttCustomAttributesADNames;
-        //internal static IList<ConnectorAttributeInfo> AttInfoCustomAttributesForSchema;
 
         internal const int NumberOfCustomAttributes = 15;
+
+        internal const string AttPrefixExtCustomAttribute = "ExtensionCustomAttribute";
+        internal const string AttPrefixExtCustomAttributeADName = "msExchExtensionCustomAttribute";
+
+        internal static IList<string> AttExtCustomAttributes;
+        internal static IList<string> AttExtCustomAttributesADNames;
+
+        internal const int NumberOfExtCustomAttributes = 5;
 
         /// <summary>
         /// Deleted atrribute name
@@ -388,17 +395,23 @@ namespace Org.IdentityConnectors.Exchange
             // creating custom attributes
             AttCustomAttributes = new List<string>(NumberOfCustomAttributes);
             AttCustomAttributesADNames = new List<string>(NumberOfCustomAttributes);
-            //AttInfoCustomAttributesForSchema = new List<ConnectorAttributeInfo>(NumberOfCustomAttributes);
             for (int i = 1; i <= NumberOfCustomAttributes; i++)
             {
                 string name = AttPrefixCustomAttribute + i;
                 string adName = AttPrefixCustomAttributeADName + i;
                 AttCustomAttributes.Add(name);
                 AttCustomAttributesADNames.Add(adName);
-                /*AttInfoCustomAttributesForSchema.Add(ConnectorAttributeInfoBuilder.Build(
-                        name,
-                        typeof(string),
-                        0));*/
+                AttMap2AD.Add(name, adName);
+            }
+
+            // creating ext custom attributes
+            AttExtCustomAttributes = new List<string>(NumberOfExtCustomAttributes);
+            AttExtCustomAttributesADNames = new List<string>(NumberOfExtCustomAttributes);
+            for (int i = 1; i <= NumberOfExtCustomAttributes; i++) {
+                string name = AttPrefixExtCustomAttribute + i;
+                string adName = AttPrefixExtCustomAttributeADName + i;
+                AttExtCustomAttributes.Add(name);
+                AttExtCustomAttributesADNames.Add(adName);
                 AttMap2AD.Add(name, adName);
             }
 

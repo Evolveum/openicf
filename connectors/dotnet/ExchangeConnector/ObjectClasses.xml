@@ -31,12 +31,12 @@
       </AttributeInfo>
       <AttributeInfo name="Alias" type="String" />
       <AttributeInfo name="PrimarySmtpAddress" type="String" />
+      <!-- Beware, for AD-only accounts please use 'mail' attribute; for Exchange accounts use PrimarySmtpAddress! -->
       <AttributeInfo name="EmailAddresses" type="String">
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
       <AttributeInfo name="ExternalEmailAddress" type="String" />
       <AttributeInfo name="RecipientType" type="String">
-        <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
       <AttributeInfo name="DeliverToMailboxAndForward" type="Boolean" />
       <AttributeInfo name="ForwardingSmtpAddress" type="String" />
@@ -55,6 +55,21 @@
       <AttributeInfo name="CustomAttribute13" type="String" />
       <AttributeInfo name="CustomAttribute14" type="String" />
       <AttributeInfo name="CustomAttribute15" type="String" />
+      <AttributeInfo name="ExtensionCustomAttribute1" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute2" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute3" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute4" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute5" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
       <AttributeInfo name="HiddenFromAddressListsEnabled" type="Boolean" />
       <AttributeInfo name="EmailAddressPolicyEnabled" type="Boolean" />
       <AttributeInfo name="msExchRecipientDisplayType" type="String">

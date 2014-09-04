@@ -160,15 +160,20 @@ namespace Org.IdentityConnectors.Exchange
                 Options = options
             };
 
-            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
-                CreateMain(context);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    CreateMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+
+                return context.Uid;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Create operation: {0}", e);
+                throw;
             }
-
-            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
-
-            return context.Uid;
         }
 
         public void CreateMain(CreateOpContext context) {
@@ -224,15 +229,20 @@ namespace Org.IdentityConnectors.Exchange
                 Uid = uid
             };
 
-            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
-                UpdateMain(context);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    UpdateMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+
+                return context.Uid;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Update operation: {0}", e);
+                throw;
             }
-
-            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
-
-            return context.Uid;
         }
 
         public void UpdateMain(UpdateOpContext context) {
@@ -266,13 +276,18 @@ namespace Org.IdentityConnectors.Exchange
                 Options = options
             };
 
-            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
 
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
-                DeleteMain(context);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    DeleteMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Delete operation: {0}", e);
+                throw;
             }
-
-            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
         }
 
         public void DeleteMain(DeleteOpContext context) {
@@ -313,11 +328,16 @@ namespace Org.IdentityConnectors.Exchange
                 ResultsHandler = handler
             };
 
-            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
-                ExecuteQueryMain(context);
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    ExecuteQueryMain(context);
+                }
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing ExecuteQuery operation: {0}", e);
+                throw;
             }
-            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
 
             // TODO what about executing a script on each returned item?
         }
@@ -366,11 +386,16 @@ namespace Org.IdentityConnectors.Exchange
                 SyncResultsHandler = handler
             };
 
-            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
-            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
-                SyncMain(context);
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    SyncMain(context);
+                }
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Sync operation: {0}", e);
+                throw;
             }
-            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
 
             // TODO what about executing a script on each returned item?
         }
@@ -395,18 +420,23 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns></returns>
         public Schema Schema()
         {
-            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Schema method");
-            if (_schema != null) {
-                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning cached schema");
-            } else {
-                _schema = SchemaUtils.BuildSchema(this,
+            try {
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Schema method");
+                if (_schema != null) {
+                    LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning cached schema");
+                } else {
+                    _schema = SchemaUtils.BuildSchema(this,
                                 GetSupportedObjectClasses,
                                 GetObjectClassInfo,
                                 GetSupportedOperations,
                                 GetUnSupportedOperations);
-                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning newly created schema");
+                    LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning newly created schema");
+                }
+                return _schema;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Schema operation: {0}", e);
+                throw;
             }
-            return _schema;
         }
 
         internal Schema GetSchema() {

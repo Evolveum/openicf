@@ -67,6 +67,7 @@
     <Copy SourceFiles="$(MSBuildProjectDirectory)\..\legal-notices\ForgeRock_License.txt" DestinationFolder="$(OutputPath)\legal-notices" Condition=" '$(ForgeRockLegal)'=='true' "/>
     <ItemGroup>
       <ZipFiles Include="$(OutputPath)\*.dll" Exclude="*.zip" />
+      <ZipFiles Include="$(OutputPath)\*.pdb" Exclude="*.zip" />      
       <ZipFiles Include="$(OutputPath)\??-??\*.*" Exclude="*.zip" />
       <ZipFiles Include="$(OutputPath)\legal-notices\*.txt" Exclude="*.zip" />
       <ZipFiles Include="$(OutputPath)\legal-notices\*.rtf" Exclude="*.zip" />   

@@ -68,6 +68,11 @@
       <string>CustomAttribute13</string>
       <string>CustomAttribute14</string>
       <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
       <string>DisplayName</string>
       <string>EmailAddresses</string>
       <string>EmailAddressPolicyEnabled</string>
@@ -252,6 +257,11 @@
       <string>CustomAttribute13</string>
       <string>CustomAttribute14</string>
       <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
       <string>DeliverToMailboxAndForward</string>
       <string>DisplayName</string>
       <string>DowngradeHighPriorityMessagesEnabled</string>

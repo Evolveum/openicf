@@ -28,6 +28,10 @@ namespace Org.IdentityConnectors.Exchange {
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
 
+            if (rcptType == null || rcptType.Equals("")) {
+                rcptType = ExchangeConnectorAttributes.RcptTypeUser;
+            }
+
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
             ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
             
@@ -51,7 +55,11 @@ namespace Org.IdentityConnectors.Exchange {
             }
 
             // first create the object in AD
-            ICollection<ConnectorAttribute> adAttributes = ExchangeUtility.FilterOut(context.Attributes, cmdInfoEnable, cmdInfoSet);
+            ICollection<ConnectorAttribute> adAttributes = ExchangeUtility.FilterOut(context.Attributes,
+                PSExchangeConnector.CommandInfo.EnableMailbox, 
+                PSExchangeConnector.CommandInfo.SetMailbox,
+                PSExchangeConnector.CommandInfo.EnableMailUser,
+                PSExchangeConnector.CommandInfo.SetMailUser);
             Uid uid = adconn.Create(context.ObjectClass, adAttributes, context.Options);
 
             if (rcptType == ExchangeConnectorAttributes.RcptTypeUser) {
@@ -60,9 +68,25 @@ namespace Org.IdentityConnectors.Exchange {
                 return;
             }
 
+            // add a empty "EmailAddresses" attribute if needed (address policy is disabled and no addresses are provided)
+            ICollection<ConnectorAttribute> enhancedAttributes;
+            ConnectorAttribute policyEnabledAttribute = ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddressPolicyEnabled, context.Attributes);
+            if (policyEnabledAttribute != null &&
+                ConnectorAttributeUtil.GetBooleanValue(policyEnabledAttribute).HasValue &&
+                ConnectorAttributeUtil.GetBooleanValue(policyEnabledAttribute).Value == false &&
+                ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttPrimarySmtpAddress, context.Attributes) == null &&
+                ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddresses, context.Attributes) == null) {
+
+                enhancedAttributes = new HashSet<ConnectorAttribute>(context.Attributes);
+                enhancedAttributes.Add(ConnectorAttributeBuilder.Build(ExchangeConnectorAttributes.AttEmailAddresses));
+                LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Added empty EmailAddresses attribute because address policy use is disabled and no addresses were provided");
+            } else {
+                enhancedAttributes = context.Attributes;        // no change
+            }
+
             // prepare the command            
-            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, context.Attributes, (ExchangeConfiguration) context.ConnectorConfiguration);
-            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, context.Attributes, (ExchangeConfiguration) context.ConnectorConfiguration);
+            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, enhancedAttributes, (ExchangeConfiguration) context.ConnectorConfiguration);
+            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, enhancedAttributes, (ExchangeConfiguration)context.ConnectorConfiguration);
 
             try {
                 _helper.InvokePipeline(exconn, cmdEnable);
