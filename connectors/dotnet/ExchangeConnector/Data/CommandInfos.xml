@@ -515,6 +515,25 @@
       <string>HiddenFromAddressListsEnabled</string>
       <string>BypassSecurityGroupManagerCheck</string>
       <string>CustomAttribute1</string>
+      <string>CustomAttribute2</string>
+      <string>CustomAttribute3</string>
+      <string>CustomAttribute4</string>
+      <string>CustomAttribute5</string>
+      <string>CustomAttribute6</string>
+      <string>CustomAttribute7</string>
+      <string>CustomAttribute8</string>
+      <string>CustomAttribute9</string>
+      <string>CustomAttribute10</string>
+      <string>CustomAttribute11</string>
+      <string>CustomAttribute12</string>
+      <string>CustomAttribute13</string>
+      <string>CustomAttribute14</string>
+      <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
       <!-- TODO other -->
     </Parameters>
   </SerializableCommandInfo>

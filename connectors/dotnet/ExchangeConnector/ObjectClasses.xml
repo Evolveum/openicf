@@ -190,6 +190,36 @@
         <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="CustomAttribute1" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute2" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute3" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute4" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute5" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute6" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute7" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute8" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute9" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute10" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute11" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute12" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute13" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute14" type="String"></AttributeInfo>
+      <AttributeInfo name="CustomAttribute15" type="String"></AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute1" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute2" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute3" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute4" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+      <AttributeInfo name="ExtensionCustomAttribute5" type="String">
+        <AttributeInfoFlag value="MULTIVALUED"/>
+      </AttributeInfo>
+
     </AttributeInfos>
   </ObjectClassInfo>
 
