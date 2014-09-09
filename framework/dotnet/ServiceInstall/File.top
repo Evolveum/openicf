@@ -17,7 +17,7 @@
         <ServiceInstall Id="ConnectorServerServiceInstall" Name="ConnectorServerService"
           DisplayName="OpenICF Connector Server" Type="ownProcess" Start="auto"
           ErrorControl="normal" Description="OpenICF Connector Server" Account="[SERVICEACCOUNT]"
-          Password="[SERVICEPASSWORD]"> </ServiceInstall>
+          Password="[SERVICEPASSWORD]" Arguments="/service"> </ServiceInstall>
         <ServiceControl Id="StartConnectorServerService" Name="ConnectorServerService"
           Start="install" Wait="no"/>
         <ServiceControl Id="StopConnectorServerService" Name="ConnectorServerService" Stop="both"
