@@ -254,8 +254,6 @@ public class LdapSearch {
 						byte[] passwordVal = (byte[]) entry.getAttributes().get(conn.getConfiguration().getPasswordAttribute()).get();
 						String stringPwdValue = new String(passwordVal);
 						if (stringPwdValue.startsWith("{")){
-							PasswordDecryptor decryptor = getPasswordDecryptor();
-							stringPwdValue = decryptor.decryptPassword(passwordVal);
 							log.warn("Could not read password value. Password is in unsupported format.");
 							attribute = AttributeBuilder.build(attrName, new GuardedString());
 						}
