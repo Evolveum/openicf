@@ -251,13 +251,20 @@ public class LdapSearch {
 					String hashAlgorithm = conn.getConfiguration()
 							.getPasswordHashAlgorithm();
 					if (isBlank(hashAlgorithm) || "NONE".equalsIgnoreCase(hashAlgorithm)) {
-						byte[] passwordVal = (byte[]) entry.getAttributes().get(conn.getConfiguration().getPasswordAttribute()).get();
-						String stringPwdValue = new String(passwordVal);
-						if (stringPwdValue.startsWith("{")){
+						javax.naming.directory.Attribute passwordAttribute = entry.getAttributes().get(conn.getConfiguration().getPasswordAttribute());
+						if (passwordAttribute != null){
+							byte[] passwordVal = (byte[]) passwordAttribute.get();
+							String stringPwdValue = new String(passwordVal);
+							if (stringPwdValue.startsWith("{")){
+								log.warn("Could not read password value. Password is in unsupported format.");
+								attribute = AttributeBuilder.build(attrName, new GuardedString());
+							}
+							attribute = AttributeBuilder.buildPassword(stringPwdValue.toCharArray());
+						} else {
 							log.warn("Could not read password value. Password is in unsupported format.");
-							attribute = AttributeBuilder.build(attrName, new GuardedString());
+							attribute = AttributeBuilder.build(attrName, new GuardedString());	
 						}
-						attribute = AttributeBuilder.buildPassword(stringPwdValue.toCharArray());
+						
 					} else {
 						log.warn("Could not read password value. Password is in unsupported format.");
 						attribute = AttributeBuilder.build(attrName, new GuardedString());
