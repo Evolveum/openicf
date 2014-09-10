@@ -36,6 +36,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 {
     internal class AuthenticationHelper
     {
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         // errors are documented in winerror.h
         internal static readonly int ERROR_PASSWORD_MUST_CHANGE = 1907;
         internal static readonly int ERROR_LOGON_FAILURE = 1326;
@@ -109,7 +112,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         // no idea what could have gone wrong, so log it and throw connector error
                         string errorMessage = string.Format(
                             "Windows returned error number {0} from LogonUser call", lastWindowsError);
-                        Trace.TraceError(errorMessage);
+                        LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, errorMessage);
                         //TODO: Add localization
                         throw new ConnectorException(errorMessage);
                     }
@@ -121,7 +124,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch(Exception e)
             {
-                Trace.TraceError(e.Message);
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, e.Message);
                 throw;
             }
             finally
@@ -193,61 +196,31 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// sets the _currentPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        internal void setCurrentPassword(UnmanagedArray<char> clearChars)
-        {
-            _currentPassword = "";
+        //internal void setCurrentPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _currentPassword = "";
 
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
-            {
-                _currentPassword += clearChars[i];
-            }
-        }
-
-        internal class SetCurrentPasswordAccessor : GuardedString.Accessor
-        {
-            private PasswordChangeHandler handler;
-            internal SetCurrentPasswordAccessor(PasswordChangeHandler handler)
-            {
-                this.handler = handler;
-            }
-
-            public void Access(UnmanagedArray<char> clearChars)
-            {
-                handler.setCurrentPassword(clearChars);
-            }
-        };
-
-
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _currentPassword += clearChars[i];
+        //    }
+        //}
+        // Gael 1.1 legacy
         /// <summary>
         /// Sets the _newPassword variable
         /// </summary>
         /// <param name="clearChars"></param>
-        public void setNewPassword(UnmanagedArray<char> clearChars)
-        {
-            _newPassword = "";
-
-            // build up the string from the unmanaged array
-            for (int i = 0; i < clearChars.Length; i++)
-            {
-                _newPassword += clearChars[i];
-            }
-        }
-
-        internal class SetNewPasswordAccessor : GuardedString.Accessor
-        {
-            private PasswordChangeHandler handler;
-            internal SetNewPasswordAccessor(PasswordChangeHandler handler)
-            {
-                this.handler = handler;
-            }
-
-            public void Access(UnmanagedArray<char> clearChars)
-            {
-                handler.setNewPassword(clearChars);
-            }
-        };
-            
+        //internal void setNewPassword(UnmanagedArray<char> clearChars)
+        //{
+        //    _newPassword = "";
+        //    // build up the string from the unmanaged array
+        //    for (int i = 0; i < clearChars.Length; i++)
+        //    {
+        //        _newPassword += clearChars[i];
+        //    }
+        //}
+        // Gael - 1.1 legacy
 
         /// <summary>
         /// Does an administrative password change.  The Directory
@@ -260,8 +233,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsNewPassword)
         {
             // decrypt and save the new password
-            gsNewPassword.Access(new SetNewPasswordAccessor(this));            
-
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            
             // get the native com object as an IADsUser, and set the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -279,9 +252,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GuardedString gsCurrentPassword, GuardedString gsNewPassword)
         {
             // decrypt and save the old nad new passwords
-            gsNewPassword.Access(new SetNewPasswordAccessor(this));
-            gsCurrentPassword.Access(new SetCurrentPasswordAccessor(this));
-
+            _newPassword = SecurityUtil.Decrypt(gsNewPassword);
+            _currentPassword = SecurityUtil.Decrypt(gsCurrentPassword);
+            
             // get the native com object as an IADsUser, and change the 
             // password
             IADsUser user = (IADsUser)directoryEntry.NativeObject;
@@ -291,18 +264,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <summary>
         ///     Authenticates the user
         /// </summary>
-        /// <param name="directoryEntry"></param>
         /// <param name="username"></param>
         /// <param name="password"></param>
+        /// <param name="returnUidOnly"></param>
         internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
-            Org.IdentityConnectors.Common.Security.GuardedString password, bool returnUidOnly)
+            GuardedString password, bool returnUidOnly)
         {
             AuthenticationHelper authHelper = new AuthenticationHelper(_configuration);
             if(returnUidOnly)
             {
                 return authHelper.GetUidFromSamAccountName(username);
             }
-            password.Access(new SetCurrentPasswordAccessor(this));
+            _currentPassword = SecurityUtil.Decrypt(password);
             return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
 

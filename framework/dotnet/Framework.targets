@@ -29,14 +29,11 @@
         <FrameworkDistDir>$(MSBuildProjectDirectory)\..\Dist</FrameworkDistDir>
         <!--FrameworkRootDir>$(MSBuildProjectDirectory)\..\..\</FrameworkRootDir-->
         <FrameworkRootDir>$(MSBuildProjectDirectory)</FrameworkRootDir>
-<<<<<<< HEAD
         <!--<REVISION>0</REVISION>-->
-=======
         <TreatTestFailureAsBuildFailure>true</TreatTestFailureAsBuildFailure>
->>>>>>> remotes/trunk
     </PropertyGroup>
 
-    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />  
 
     <Target Name="GenerateAssemblyInfo">
         <Error
@@ -50,6 +47,13 @@
             <Output TaskParameter="Minor" PropertyName="Minor" />
             <Output TaskParameter="Build" PropertyName="Build" />
         </Version>
+        <CreateProperty Value="$(Revision)"  Condition=" '$(SVN_REVISION)'=='' ">
+          <Output TaskParameter="Value" PropertyName="SVNRevision"/>
+        </CreateProperty>
+        <CreateProperty Value="$(SVN_REVISION)"  Condition=" '$(SVN_REVISION)'!='' ">
+          <Output TaskParameter="Value" PropertyName="SVNRevision"/>
+        </CreateProperty>
+        <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(Revision) Revision: $(SVNRevision)"/>
         <WriteLinesToFile File="$(VersionFileOut)" Lines="$(Major).$(Minor).$(Build).$(Revision)" Overwrite="true" />
         <AssemblyInfo CodeLanguage="CS"  
             OutputFile="AssemblyInfo.cs"
@@ -58,7 +62,7 @@
             AssemblyCopyright="$(Copyright)"
             AssemblyCompany="$(Company)"             
             AssemblyVersion="$(Major).$(Minor).$(Build).$(Revision)" 
-            AssemblyFileVersion="$(Major).$(Minor).$(Build).$(Revision)"
+            AssemblyFileVersion="$(Major).$(Minor).$(Build).$(Revision) Revision:$(SVNRevision)"
             InternalsVisibleTo="$(InternalsVisibleTo)" />
     </Target>
     

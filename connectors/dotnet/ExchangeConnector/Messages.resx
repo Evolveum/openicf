@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -307,9 +307,18 @@
     <value>There is no supported Exchange PowerShell snap-in registered.</value>
   </data>
   <data name="display_ExchangeUri" xml:space="preserve">
-    <value>URI of remote PowerShell used to manage Exchange.</value>
+    <value>URI of remote PowerShell used to manage Exchange (if applicable)</value>
   </data>
   <data name="help_ExchangeUri" xml:space="preserve">
-    <value>Specify the URI pointing to place where to execute PowerShell commands used to manage Exchange accounts. An example: http://exchange.example.com/PowerShell/. As the host name, DO NOT use "localhost", because in that case the Kerberos authentication to that host will fail.</value>
+    <value>Specify the URI pointing to place where to execute PowerShell commands used to manage Exchange accounts. An example: http://exchange.example.com/PowerShell/. As the host name, DO NOT use "localhost", because in that case the Kerberos authentication to that host will fail. If you do not specify this parameter, local PowerShell connection is used.</value>
+  </data>
+  <data name="display_ExchangeVersion" xml:space="preserve">
+    <value>Version of Exchange (2007, 2010, or 2013)</value>
+  </data>
+  <data name="help_ExchangeVersion" xml:space="preserve">
+    <value>Specify the version of Exchange to be managed. If not specified, auto detection will be  attempted (auto detection is possible only for local PowerShell connections).</value>
+  </data>
+  <data name="MESSAGE_OBJECT_CLASS___ACCOUNT__" xml:space="preserve">
+    <value>User</value>
   </data>
 </root>

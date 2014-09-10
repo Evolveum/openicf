@@ -68,6 +68,7 @@
     <EmbeddedResource Include="config.xsd" />
   </ItemGroup>
   <Target Name="Clean">
+    <Delete Files="AssemblyInfo.cs;version.txt" />
     <RemoveDir Directories="obj;bin" />
   </Target>
 </Project>

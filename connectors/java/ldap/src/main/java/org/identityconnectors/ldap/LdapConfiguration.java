@@ -20,8 +20,8 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * 
- * Portions Copyrighted 2013 Forgerock
- * Portions Copyrighted 2011 Radovan Semancik (Evolveum)
+ * Portions Copyrighted 2013-2014 ForgeRock AS
+ * Portions Copyrighted 2011-2014 Radovan Semancik (Evolveum)
  */
 package org.identityconnectors.ldap;
 
@@ -84,6 +84,11 @@ public class LdapConfiguration extends AbstractConfiguration {
     private boolean ssl;
 
     /**
+     * Whether the use STARTTLS LDAP extension right after the connection.
+     */
+    private boolean startTls;
+    
+    /**
      * LDAP URL's to connect to if the main server specified through the host and port
      * properties is not available.
      */
@@ -103,12 +108,12 @@ public class LdapConfiguration extends AbstractConfiguration {
      * The base DNs for operations on the server.
      */
     private String[] baseContexts = { };
-    
+
     /**
      * Referral policy. Defaults to 'follow'
      * Values can be: 'follow', 'ignore' or 'throw'
      */
-    
+
     private String referralsHandling = "follow";
 
     /**
@@ -116,12 +121,19 @@ public class LdapConfiguration extends AbstractConfiguration {
      * will be written to.
      */
     private String passwordAttribute = "userPassword";
+    
+    /**
+     * The authentication mechanism to use. Either "simple" or "SASL-GSSAPI".
+     * Defaults to "simple"
+     */
+    
+    private String authType = "simple";
 
     /**
      * A search filter that any account needs to match in order to be returned.
      */
     private String accountSearchFilter = null;
-    
+
     /**
      * A search filter that any group needs to match in order to be returned.
      */
@@ -131,7 +143,7 @@ public class LdapConfiguration extends AbstractConfiguration {
      * The LDAP attribute holding the member for non-POSIX static groups.
      */
     private String groupMemberAttribute = "uniqueMember";
-    
+
     /**
      * If true, add an extra _memberId attribute to get the group members __UID__
      */
@@ -189,7 +201,7 @@ public class LdapConfiguration extends AbstractConfiguration {
      * Whether to read the schema from the server.
      */
     private boolean readSchema = true;
-
+    
     // Sync configuration properties.
 
     private String[] baseContextsToSynchronize = { };
@@ -201,7 +213,7 @@ public class LdapConfiguration extends AbstractConfiguration {
     private String[] modifiersNamesToFilterOut = { };
 
     private String accountSynchronizationFilter;
-    
+
     private String groupSynchronizationFilter;
 
     private int changeLogBlockSize = 100;
@@ -211,18 +223,16 @@ public class LdapConfiguration extends AbstractConfiguration {
     private boolean filterWithOrInsteadOfAnd;
 
     private boolean removeLogEntryObjectClassFromFilter = true;
-    
+
     private boolean synchronizePasswords;
-    
+
     private String passwordAttributeToSynchronize;
-    
+
     private GuardedByteArray passwordDecryptionKey;
-    
+
     private GuardedByteArray passwordDecryptionInitializationVector;
-    
+
     private boolean useTimestampsForSync = false;
-    
-    private String serverInformationObjectClass = "SERVER_INFO";
 
     // Other state.
 
@@ -300,14 +310,14 @@ public class LdapConfiguration extends AbstractConfiguration {
         if (changeLogBlockSize <= 0) {
             failValidation("changeLogBlockSize.legalValue");
         }
-        
+
         if (synchronizePasswords) {
             checkNotBlank(passwordAttributeToSynchronize, "passwordAttributeToSynchronize.notBlank");
             checkNotBlank(passwordDecryptionKey, "decryptionKey.notBlank");
             checkNotBlank(passwordDecryptionInitializationVector, "decryptionInitializationVector.notBlank");
         }
     }
-    
+
     private void checkNotBlank(String value, String errorMessage) {
         if (isBlank(value)) {
             failValidation(errorMessage);
@@ -365,13 +375,13 @@ public class LdapConfiguration extends AbstractConfiguration {
             }
         }
     }
-    
+
     private void checkReferralsHandling(String ref, String errorMessage){
         if (!ref.matches("follow|ignore|throw")){
             failValidation(errorMessage);
         }
     }
-    
+
     private void checkPasswordHashAlgorithm(String algo, String errorMessage){
         if ((algo != null) && !algo.matches("(?i:SSHA|SHA|SMD5|MD5|WIN-AD)")){
             failValidation(errorMessage);
@@ -407,6 +417,14 @@ public class LdapConfiguration extends AbstractConfiguration {
         this.ssl = ssl;
     }
 
+    public boolean isStartTls() {
+        return startTls;
+    }
+
+    public void setStartTls(boolean startTls) {
+        this.startTls = startTls;
+    }
+
     public String[] getFailover() {
         return failover.clone();
     }
@@ -431,7 +449,15 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setCredentials(GuardedString credentials) {
         this.credentials = credentials != null ? credentials.copy() : null;
     }
-
+    
+    public String getAuthType(){
+        return authType;
+    }
+    
+    public void setAuthType(String authType){
+        this.authType = authType;
+    }
+    
     public String[] getBaseContexts() {
         return baseContexts.clone();
     }
@@ -439,7 +465,7 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setBaseContexts(String... baseContexts) {
         this.baseContexts = baseContexts.clone();
     }
-    
+
     public String getReferralsHandling(){
         return referralsHandling;
     }
@@ -447,7 +473,7 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setReferralsHandling(String referral){
         this.referralsHandling = referral;
     }
-    
+
     public String getPasswordAttribute() {
         return passwordAttribute;
     }
@@ -505,7 +531,7 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setAccountSearchFilter(String accountSearchFilter) {
         this.accountSearchFilter = accountSearchFilter;
     }
-    
+
     public String getGroupSearchFilter() {
         return groupSearchFilter;
     }
@@ -618,14 +644,6 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setReadSchema(boolean readSchema) {
         this.readSchema = readSchema;
     }
-    
-    public String getServerInformationObjectClass() {
-        return serverInformationObjectClass;
-    }
-
-    public void setServerInformationObjectClass(String serverInformationObjectClass) {
-        this.serverInformationObjectClass = serverInformationObjectClass;
-    }
 
     // Sync properties getters and setters.
 
@@ -700,7 +718,7 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setChangeNumberAttribute(String changeNumberAttribute) {
         this.changeNumberAttribute = changeNumberAttribute;
     }
-    
+
     @ConfigurationProperty(operations = { SyncOp.class }, required = false)
     public boolean isUseTimestampsForSync() {
         return useTimestampsForSync;

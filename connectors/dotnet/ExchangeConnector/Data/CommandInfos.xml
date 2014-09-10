@@ -33,7 +33,6 @@
       <string>UserPrincipalName</string>
       <string>Alias</string>
       <string>DisplayName</string>
-      <string>DomainController</string>
       <string>FirstName</string>
       <string>Initials</string>
       <string>LastName</string>
@@ -69,8 +68,12 @@
       <string>CustomAttribute13</string>
       <string>CustomAttribute14</string>
       <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
       <string>DisplayName</string>
-      <string>DomainController</string>
       <string>EmailAddresses</string>
       <string>EmailAddressPolicyEnabled</string>
       <string>Extensions</string>
@@ -116,7 +119,6 @@
     <Parameters>
       <string>ExternalEmailAddress</string>
       <string>Alias</string>
-      <string>DomainController</string>
       <string>MacAttachmentFormat</string>
       <string>MessageBodyFormat</string>
       <string>MessageFormat</string>
@@ -127,7 +129,6 @@
     <Name>Disable-MailUser</Name>
     <NameParameter>Identity</NameParameter>
     <Parameters>
-      <string>DomainController</string>
     </Parameters>
   </SerializableCommandInfo>
   <!-- ************ MAIL USER END ************ -->
@@ -138,7 +139,6 @@
     <Parameters>
       <string>Anr</string>
       <string>Credential</string>
-      <string>DomainController</string>
       <string>Filter</string>
       <string>Identity</string>
       <string>OrganizationalUnit</string>
@@ -159,7 +159,6 @@
       <string>CreateDTMFMap</string>
       <string>Department</string>
       <string>DisplayName</string>
-      <string>DomainController</string>
       <string>Fax</string>
       <string>FirstName</string>
       <string>HomePhone</string>
@@ -206,7 +205,6 @@
       <string>Room</string>
       <string>Shared</string>
       <string>ActiveSyncMailboxPolicy</string>
-      <string>DomainController</string>
       <string>LinkedCredential</string>
       <string>ManagedFolderMailboxPolicy</string>
       <string>ManagedFolderMailboxPolicyAllowed</string>      
@@ -216,7 +214,6 @@
     <Name>Disable-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
     <Parameters>
-      <string>DomainController</string>
     </Parameters>
   </SerializableCommandInfo>
   <SerializableCommandInfo>
@@ -225,7 +222,6 @@
     <Parameters>
       <string>Anr</string>
       <string>Credential</string>
-      <string>DomainController</string>
       <string>Filter</string>
       <string>IgnoreDefaultScope</string>
       <string>OrganizationalUnit</string>
@@ -261,9 +257,13 @@
       <string>CustomAttribute13</string>
       <string>CustomAttribute14</string>
       <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
       <string>DeliverToMailboxAndForward</string>
       <string>DisplayName</string>
-      <string>DomainController</string>
       <string>DowngradeHighPriorityMessagesEnabled</string>
       <string>EmailAddresses</string>
       <string>EmailAddressPolicyEnabled</string>
@@ -329,4 +329,262 @@
   </SerializableCommandInfo>
 
   <!-- ************ MAILBOX END ************ -->
+
+  <!-- ============ AcceptedDomain ============== -->
+  <SerializableCommandInfo>
+    <Name>New-AcceptedDomain</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>DomainName</string>
+      <string>DomainType</string>
+      <string>OutboundOnly</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-AcceptedDomain</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>AddressBookEnabled</string>
+      <string>DomainType</string>
+      <string>MakeDefault</string>
+      <string>MatchSubDomains</string>
+      <string>Name</string>
+      <string>OutboundOnly</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-AcceptedDomain</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-AcceptedDomain</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+  <!-- ============ GlobalAddressList ============== -->
+  <SerializableCommandInfo>
+    <Name>New-GlobalAddressList</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>RecipientFilter</string>      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-GlobalAddressList</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>RecipientFilter</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-GlobalAddressList</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-GlobalAddressList</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+  <!-- ============ AddressList ============== -->
+  <SerializableCommandInfo>
+    <Name>New-AddressList</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>RecipientFilter</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-AddressList</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>RecipientFilter</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-AddressList</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-AddressList</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+  <!-- ============ OfflineAddressBook ============== -->
+  <SerializableCommandInfo>
+    <Name>New-OfflineAddressBook</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>AddressLists</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-OfflineAddressBook</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>AddressLists</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-OfflineAddressBook</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-OfflineAddressBook</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+  <!-- ============ AddressBookPolicy ============== -->
+  <SerializableCommandInfo>
+    <Name>New-AddressBookPolicy</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>AddressLists</string>
+      <string>GlobalAddressList</string>
+      <string>OfflineAddressBook</string>
+      <string>RoomList</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-AddressBookPolicy</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>AddressLists</string>
+      <string>GlobalAddressList</string>
+      <string>OfflineAddressBook</string>
+      <string>RoomList</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-AddressBookPolicy</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-AddressBookPolicy</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+  <!-- ============ DistributionGroup ============== -->
+  <SerializableCommandInfo>
+    <Name>New-DistributionGroup</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>Alias</string>
+      <string>DisplayName</string>
+      <string>OrganizationalUnit</string>
+      <string>PrimarySmtpAddress</string>
+      <string>SamAccountName</string>
+      <string>Type</string>
+      <string>Members</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-DistributionGroup</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>Alias</string>
+      <string>DisplayName</string>
+      <string>PrimarySmtpAddress</string>
+      <string>SamAccountName</string>
+      <string>HiddenFromAddressListsEnabled</string>
+      <string>BypassSecurityGroupManagerCheck</string>
+      <string>CustomAttribute1</string>
+      <string>CustomAttribute2</string>
+      <string>CustomAttribute3</string>
+      <string>CustomAttribute4</string>
+      <string>CustomAttribute5</string>
+      <string>CustomAttribute6</string>
+      <string>CustomAttribute7</string>
+      <string>CustomAttribute8</string>
+      <string>CustomAttribute9</string>
+      <string>CustomAttribute10</string>
+      <string>CustomAttribute11</string>
+      <string>CustomAttribute12</string>
+      <string>CustomAttribute13</string>
+      <string>CustomAttribute14</string>
+      <string>CustomAttribute15</string>
+      <string>ExtensionCustomAttribute1</string>
+      <string>ExtensionCustomAttribute2</string>
+      <string>ExtensionCustomAttribute3</string>
+      <string>ExtensionCustomAttribute4</string>
+      <string>ExtensionCustomAttribute5</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-DistributionGroup</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-DistributionGroup</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+
+  <!-- ============ EmailAddressPolicy ============== -->
+  <SerializableCommandInfo>
+    <Name>New-EmailAddressPolicy</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameters>
+      <string>RecipientContainer</string>
+      <string>IncludedRecipients</string>
+      <string>ConditionalCustomAttribute1</string>
+      <string>EnabledEmailAddressTemplates</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-EmailAddressPolicy</Name>
+    <NameParameter>Name</NameParameter>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters>
+      <string>RecipientContainer</string>
+      <string>IncludedRecipients</string>
+      <string>ConditionalCustomAttribute1</string>
+      <string>EnabledEmailAddressTemplates</string>
+      <!-- TODO other -->
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Remove-EmailAddressPolicy</Name>
+    <UidParameter>Identity</UidParameter>
+    <UsesConfirm>true</UsesConfirm>
+    <Parameters/>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-EmailAddressPolicy</Name>
+    <Parameters/>
+  </SerializableCommandInfo>
+
+
+  
 </ArrayOfSerializableCommandInfo>

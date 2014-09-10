@@ -25,8 +25,6 @@
 
 import ObjectCacheLibrary
 import groovy.json.JsonOutput
-import org.forgerock.openicf.misc.crest.CRESTFilterVisitor
-import org.forgerock.openicf.misc.crest.VisitorParameter
 import org.forgerock.openicf.misc.scriptedcommon.ICFObjectBuilder
 import org.forgerock.openicf.misc.scriptedcommon.ICFObjectBuilder as ICF
 import org.forgerock.openicf.misc.scriptedcommon.MapFilterVisitor
@@ -117,7 +115,7 @@ switch (objectClass) {
             attributesToGet = options.attributesToGet as Set<String>
         }
 
-        if (filter instanceof EqualsFilter && (filter as EqualsFilter).name == Uid.NAME){
+        if (filter instanceof EqualsFilter && (filter as EqualsFilter).name == Uid.NAME) {
             //This is a Read
             handler {
                 uid AttributeUtil.getStringValue((filter as EqualsFilter).attribute)
@@ -148,28 +146,8 @@ switch (objectClass) {
                 }
             }
         }
-        if (null != filter && null != options.options.CREST) {
-            def queryFilter = CRESTFilterVisitor.VISITOR.accept(new VisitorParameter() {
-                String translateName(String name) {
-                    return name;
-                }
-
-                Object convertValue(Attribute attribute) {
-                    if (attribute.value.size() > 1) {
-                        return JsonOutput.toJson(attribute.value)
-                    } else {
-                        Object value = attribute.value[0];
-                        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
-                            return value
-                        } else {
-                            return AttributeUtil.getAsStringValue(attribute)
-                        }
-                    }
-                }
-            }, filter)
-            return new SearchResult(queryFilter.toString(), -1);
-        } else if (null != filter) {
-            def map = MapFilterVisitor.INSTANCE.accept(null, filter)
+        if (null != filter) {
+            def map = filter.accept(MapFilterVisitor.INSTANCE, null)
             return new SearchResult(JsonOutput.toJson(map), -1);
         }
         break;
@@ -228,7 +206,8 @@ switch (objectClass) {
         return new SearchResult()
         break
     default:
-        throw new UnsupportedOperationException("Search operation of type:" + objectClass)
+        throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+                objectClass.objectClassValue + " is not supported.")
 }
 
 

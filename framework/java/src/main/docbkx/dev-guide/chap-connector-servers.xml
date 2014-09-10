@@ -10,7 +10,7 @@
   ! Suite 900, Mountain View, California, 94041, USA.
   !
   ! You can also obtain a copy of the license at
-  ! legal/CC-BY-NC-ND.txt.
+  ! legal-notices/CC-BY-NC-ND.txt.
   ! See the License for the specific language governing permissions
   ! and limitations under the License.
   !
@@ -20,7 +20,7 @@
   !
   ! CCPL HEADER END
   !
-  !      Copyright 2012-2013 ForgeRock AS
+  !      Copyright 2012-2014 ForgeRock AS
   !
 -->
 <chapter xml:id='chap-connector-servers'
@@ -315,9 +315,9 @@ connectorserver.key=lmA6bMfENJGlIDbfrVtklXFK32s\=
 
   <para>Use the <option>-run</option> option.</para>
 
-  <screen>java
- -cp "connector-framework.jar:connector-framework-internal.jar:groovy-all.jar"
- org.identityconnectors.framework.server.Main
+  <screen>$ java \
+ -cp "connector-framework.jar:connector-framework-internal.jar:groovy-all.jar" \
+ org.identityconnectors.framework.server.Main \
  -run -properties connectorserver.properties</screen>
 
   <section xml:id="install-connectors-java">

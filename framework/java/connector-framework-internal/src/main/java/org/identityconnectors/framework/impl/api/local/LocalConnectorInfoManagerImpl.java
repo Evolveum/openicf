@@ -20,6 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * Portions Copyrighted 2010-2014 ForgeRock AS.
+ * Portions Copyrighted 2010-2014 Tirasa.
  */
 package org.identityconnectors.framework.impl.api.local;
 
@@ -84,17 +85,19 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
             throws ConfigurationException {
         final List<WorkingBundleInfo> rv = new ArrayList<WorkingBundleInfo>();
         for (URL url : bundleURLs) {
-            WorkingBundleInfo info;
+            WorkingBundleInfo info = null;
             try {
-                //getFile() fails when the url contains space
-                final File file = new File(url.toURI());
-                if ("file".equals(url.getProtocol()) && file.isDirectory()) {
-                    info = processDirectory(file);
-                } else {
+                if ("file".equals(url.getProtocol())) {
+                    final File file = new File(url.toURI());
+                    if (file.isDirectory()) {
+                        info = processDirectory(file);
+                    }
+                }
+                if (info == null) {
                     info = processURL(url, true);
                 }
             } catch (URISyntaxException e) {
-                throw new ConfigurationException("Invalid bundleURL: " + url.getFile(), e);
+                throw new ConfigurationException("Invalid bundleURL: " + url.toExternalForm(), e);
             }
             rv.add(info);
         }
@@ -171,7 +174,7 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
 
         try {
             JarInputStream stream = null;
-            if (url.getProtocol().equals("file")) {
+            if ("file".equals(url.getProtocol())) {
                 info.getImmediateClassPath().add(url);
             } else {
                 // if we're in a WAR, this might not be the kind of URL
@@ -254,8 +257,8 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
                         // it might be from a bundle
                         // fragment ( a bundle only included by other bundles ).
                         // However, we should definitely warn
-                        LOG.warn(
-                                e,
+                        LOG.info(LOG.isOk() ?
+                                 e : null,
                                 "Unable to load class {0} from bundle {1}. Class will be ignored and will not be listed in list of connectors.",
                                 className, bundleInfo.getOriginalLocation());
                     }
@@ -279,13 +282,15 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
                         info.setMessages(messages);
                         info.setDefaultAPIConfiguration(createDefaultAPIConfiguration(info));
                         rv.add(info);
+                        LOG.info("Add ConnectorInfo {0} to Local Connector Info Manager from {1}",
+                                info.getConnectorKey(), bundleInfo.getOriginalLocation());
                     } catch (final NoClassDefFoundError e) {
-                        LOG.warn(LOG.isOk() ?
+                        LOG.info(LOG.isOk() ?
                                 e : null,
                                 "Unable to load configuration class of connector {0} from bundle {1}. Class will be ignored and will not be listed in list of connectors.",
                                 connectorClass, bundleInfo.getOriginalLocation());
                     } catch (final TypeNotPresentException e) {
-                        LOG.warn(LOG.isOk() ?
+                        LOG.info(LOG.isOk() ?
                                  e : null,
                                 "Unable to load configuration class of connector {0} from bundle {1}. Class will be ignored and will not be listed in list of connectors.",
                                 connectorClass, bundleInfo.getOriginalLocation());
@@ -404,7 +409,6 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
         return paths;
     }
 
-    @Override
     public ConnectorInfo findConnectorInfo(final ConnectorKey key) {
         for (ConnectorInfo info : connectorInfos) {
             if (info.getConnectorKey().equals(key)) {
@@ -414,7 +418,6 @@ public class LocalConnectorInfoManagerImpl implements ConnectorInfoManager {
         return null;
     }
 
-    @Override
     public List<ConnectorInfo> getConnectorInfos() {
         return Collections.unmodifiableList(connectorInfos);
     }

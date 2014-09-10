@@ -28,34 +28,19 @@
  *  +---------------------------------------------------+
  */
 
-import org.identityconnectors.contract.data.groovy.Lazy
 import org.identityconnectors.common.security.GuardedString
 
-// Connector WRONG configuration for ValidateApiOpTests
-//connector.i1.wrong.host=""
-//connector.i2.wrong.login=""
-//connector.i3.wrong.password=new GuardedString("".toCharArray())
 
-
-configuration{
-    clientId="__configureme__"
-    clientSecret=new GuardedString("__configureme__".toCharArray())
-    refreshToken=new GuardedString("__configureme__".toCharArray())
+configuration {
+    clientId = "__configureme__"
+    clientSecret = new GuardedString("__configureme__".toCharArray())
+    refreshToken = new GuardedString("__configureme__".toCharArray())
 }
 
 testsuite {
     // path to bundle jar - property is set by ant - leave it as it is
-    bundleJar=System.getProperty("bundleJar")
-    bundleName=System.getProperty("bundleName")
-    bundleVersion=System.getProperty("bundleVersion")
-    connectorName=System.getProperty("connectorName")
-
-    // ValidateApiOpTests:
-//    Validate.iterations="3"
-//
-//    // AuthenticationApiOpTests:
-//    Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-//    Authentication.__ACCOUNT__.wrong.password=new GuardedString("bogus".toCharArray())
-} // testsuite
-
-//HOST="0.0.0.0"
+    bundleJar = System.getProperty("bundleJar")
+    bundleName = System.getProperty("bundleName")
+    bundleVersion = System.getProperty("bundleVersion")
+    connectorName = System.getProperty("connectorName")
+}

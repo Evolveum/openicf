@@ -91,6 +91,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ObjectClassesExtensionFile", HelpMessageKey = "help_ObjectClassesExtensionFile", Order = 12)]
+        public String ObjectClassesExtensionFile
+        { get; set; }
+
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ObjectClassesReplacementFile", HelpMessageKey = "help_ObjectClassesReplacementFile", Order = 13)]
+        public String ObjectClassesReplacementFile
+        { get; set; }
+
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ScriptingConfigurationFile", HelpMessageKey = "help_ScriptingConfigurationFile", Order = 14)]
+        public String ScriptingConfigurationFile
+        { get; set; }
+
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CacheScripts", HelpMessageKey = "help_CacheScripts", Order = 15)]
+        public bool CacheScripts
+        { get; set; }
+
         public ActiveDirectoryConfiguration()
         {
             DomainName = "";

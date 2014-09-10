@@ -39,8 +39,7 @@ namespace Org.IdentityConnectors.Exchange.Data
         /// <summary>
         /// Prevents a default instance of the <see cref="PersistenceUtility" /> class from being created. 
         /// </summary>
-        private PersistenceUtility()
-        {
+        private PersistenceUtility() {
         }
 
         /// <summary>
@@ -50,7 +49,6 @@ namespace Org.IdentityConnectors.Exchange.Data
         /// <exception cref="IOException">if not able to read from persistent store</exception>
         internal static IList<SerializableCommandInfo> ReadCommandInfo()
         {
-            Trace.TraceInformation("PersistenceUtility.ReadCommandInfo entry");
             // persistent file
             const string PersistFile = "Org.IdentityConnectors.Exchange.Data.CommandInfos.xml";
 
@@ -61,18 +59,14 @@ namespace Org.IdentityConnectors.Exchange.Data
                 throw new IOException(
                         string.Format(CultureInfo.CurrentCulture, "Unable to read the {0} file from Assembly", PersistFile));
             }
-            //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo having stream = " + stream);
 
             // we just read
             using (TextReader streamReader = new StreamReader(stream))
             {
-                //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo creating a serializer");
                 XmlSerializer ser = new XmlSerializer(typeof(List<SerializableCommandInfo>));
-                //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo calling Deserialize");
                 List<SerializableCommandInfo> commandInfos = (List<SerializableCommandInfo>)ser.Deserialize(streamReader);
-                //Trace.TraceInformation("PersistenceUtility.ReadCommandInfo exit");
                 return commandInfos;
             }            
-        }            
+        }
     }
 }

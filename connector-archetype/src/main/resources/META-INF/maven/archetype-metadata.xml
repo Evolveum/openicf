@@ -3,7 +3,7 @@
 <!--
   ~ DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   ~
-  ~ Copyright (c) 2011-2013. ForgeRock Inc. All rights reserved.
+  ~ Copyright (c) 2011-2014. ForgeRock AS. All rights reserved.
   ~
   ~ The contents of this file are subject to the terms
   ~ of the Common Development and Distribution License
@@ -34,16 +34,13 @@
         <requiredProperty key="connectorName">
         </requiredProperty>
         <requiredProperty key="compatibility_version">
-            <defaultValue>1.1</defaultValue>
+            <defaultValue>1.4</defaultValue>
         </requiredProperty>
         <requiredProperty key="framework_version">
-            <defaultValue>1.0</defaultValue>
+            <defaultValue>0.0</defaultValue>
         </requiredProperty>
-        <requiredProperty key="jira_componentId">
-            <defaultValue>10191</defaultValue>
-        </requiredProperty>
-        <requiredProperty key="jira_fixVersionIds">
-            <defaultValue>0</defaultValue>
+        <requiredProperty key="statefulConnector">
+            <defaultValue>n</defaultValue>
         </requiredProperty>
         <requiredProperty key="poolableConnector">
             <defaultValue>n</defaultValue>
@@ -110,12 +107,6 @@
                 <include>**/*.xml</include>
             </includes>
         </fileSet>
-        <fileSet filtered="false" encoding="UTF-8">
-            <directory>src/main/docbkx</directory>
-            <excludes>
-                <exclude>**/*.xml</exclude>
-            </excludes>
-        </fileSet>
         <fileSet filtered="true" packaged="true" encoding="UTF-8">
             <directory>src/test/java</directory>
             <includes>
@@ -137,7 +128,7 @@
         <fileSet filtered="true" encoding="UTF-8">
             <directory>src/site</directory>
             <includes>
-                <include>**/*.xml</include>
+                <include>**/*.vm</include>
             </includes>
         </fileSet>
         <fileSet filtered="true" encoding="UTF-8">

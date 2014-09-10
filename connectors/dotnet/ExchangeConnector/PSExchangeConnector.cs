@@ -76,7 +76,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Runspace instance variable, it is managed resource - has to be released
         /// </summary>
-        private RunSpaceInstance runspace;
+        private PowerShellSupport runspace;
 
         /// <summary>
         /// Map of object class infos, used for <see cref="Schema"/> generating
@@ -350,7 +350,6 @@ namespace Org.IdentityConnectors.Exchange
             /// </summary>
             internal static readonly CommandInfo SetUser = new CommandInfo("Set-User");
 
-
             /// <summary>
             /// List of SerializableCommandInfo object - will be read from persistence
             /// </summary>
@@ -366,7 +365,7 @@ namespace Org.IdentityConnectors.Exchange
             /// , made private to be immutable
             /// </summary>
             /// <param name="name">Command name</param>
-            private CommandInfo(string name)
+            internal CommandInfo(string name)
             {
                 this.Name = name;                
             }
@@ -395,6 +394,30 @@ namespace Org.IdentityConnectors.Exchange
                 get
                 {
                     return this.SerCmdInfo.NameParameter;
+                }
+            }
+
+            internal string UidParameter
+            {
+                get
+                {
+                    return this.SerCmdInfo.UidParameter;
+                }
+            }
+
+            internal bool UsesDomainController
+            {
+                get
+                {
+                    return this.SerCmdInfo.UsesDomainController;
+                }
+            }
+
+            internal bool UsesConfirm
+            {
+                get
+                {
+                    return this.SerCmdInfo.UsesConfirm;
                 }
             }
 

@@ -43,6 +43,8 @@ namespace Org.IdentityConnectors.Exchange.Data
         public SerializableCommandInfo()
         {
             this.parameters = new List<string>();
+            UsesConfirm = false;
+            UsesDomainController = true;
         }
 
         /// <summary>
@@ -51,9 +53,24 @@ namespace Org.IdentityConnectors.Exchange.Data
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets special parameter name used as id for this command
+        /// TODO
         /// </summary>
         public string NameParameter { get; set; }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public string UidParameter { get; set; }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public bool UsesConfirm { get; set; }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public bool UsesDomainController { get; set; }
 
         /// <summary>
         /// Gets Command parameters - only string type is supported

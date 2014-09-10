@@ -19,6 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2014 ForgeRock AS. 
  */
 package org.identityconnectors.framework.impl.api.local.operations;
 
@@ -128,19 +129,16 @@ public class SearchImplTests {
          */
         public static class MockFilterTranslator implements
                 FilterTranslator<List<ConnectorObject>> {
-            @Override
             public List<List<ConnectorObject>> translate(Filter filter) {
                 return ((MockFilter) filter).getObjects();
             }
         }
 
-        @Override
         public FilterTranslator<List<ConnectorObject>> createFilterTranslator(
                 ObjectClass objectClass, OperationOptions options) {
             return new MockFilterTranslator();
         }
 
-        @Override
         public void executeQuery(ObjectClass objectClass,
                 List<ConnectorObject> query, ResultsHandler handler,
                 OperationOptions options) {
@@ -154,19 +152,16 @@ public class SearchImplTests {
         //
         // Do nothing methods for search impl call..
         //
-        @Override
         public void dispose() {
             // TODO Auto-generated method stub
 
         }
 
-        @Override
         public Configuration getConfiguration() {
             // TODO Auto-generated method stub
             return null;
         }
 
-        @Override
         public void init(Configuration cfg) {
             // TODO Auto-generated method stub
 
@@ -183,7 +178,6 @@ public class SearchImplTests {
             _objs = objs;
         }
 
-        @Override
         public boolean accept(ConnectorObject obj) {
             return true;
         }

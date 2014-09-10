@@ -39,7 +39,7 @@ public final class AndFilter extends CompositeFilter {
     /**
      * And the the left and right filters.
      */
-    public AndFilter(Filter left, Filter right) {
+    public AndFilter(final Filter left, final Filter right) {
         this(CollectionUtil.newList(left, right));
     }
 
@@ -53,7 +53,6 @@ public final class AndFilter extends CompositeFilter {
      *
      * @see Filter#accept(ConnectorObject)
      */
-    @Override
     public boolean accept(final ConnectorObject obj) {
         boolean result = true;
         for (final Filter subFilter : subFilters) {
@@ -64,7 +63,6 @@ public final class AndFilter extends CompositeFilter {
         }
         return result;
     }
-
 
     public <R, P> R accept(FilterVisitor<R, P> v, P p) {
         return v.visitAndFilter(p, this);
@@ -81,8 +79,8 @@ public final class AndFilter extends CompositeFilter {
             LinkedList<Filter> right = new LinkedList<Filter>(subFilters);
             right.removeFirst();
             return new AndFilter(right);
-        } else if (subFilters.size() == 2 ){
-           return subFilters.getLast();
+        } else if (subFilters.size() == 2) {
+            return subFilters.getLast();
         } else {
             return null;
         }

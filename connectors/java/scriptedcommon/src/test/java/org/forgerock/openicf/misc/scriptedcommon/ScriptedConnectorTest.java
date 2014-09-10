@@ -29,7 +29,12 @@ import static org.forgerock.openicf.connectors.RESTTestBase.createConnectorFacad
 import static org.identityconnectors.framework.common.objects.filter.FilterBuilder.*;
 import static org.identityconnectors.framework.common.objects.filter.FilterBuilder.not;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +44,7 @@ import java.util.Set;
 import org.forgerock.openicf.connectors.groovy.ScriptedConnector;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedByteArray;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
@@ -77,9 +83,11 @@ import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.Filter;
+import org.identityconnectors.framework.impl.api.local.LocalConnectorFacadeImpl;
 import org.identityconnectors.test.common.TestHelpers;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -159,8 +167,8 @@ public class ScriptedConnectorTest {
 
     @Test(expectedExceptions = ConnectorException.class)
     public void testAuthenticateNotEmpty() throws Exception {
-        getFacade(TEST_NAME).authenticate(TEST, "TESTOK2", new GuardedString("NOT_EMPTY".toCharArray()),
-                null);
+        getFacade(TEST_NAME).authenticate(TEST, "TESTOK2",
+                new GuardedString("NOT_EMPTY".toCharArray()), null);
     }
 
     // =======================================================================
@@ -361,6 +369,16 @@ public class ScriptedConnectorTest {
         Assert.assertEquals(facade.runScriptOnConnector(builder.build(), null), uid);
     }
 
+    @Test(expectedExceptions = ConnectorException.class,
+            expectedExceptionsMessageRegExp = "No argument has arrived.")
+    public void testScriptOnConnectorArgFail() throws Exception {
+        ConnectorFacade facade = getFacade(TEST_NAME);
+        ScriptContextBuilder builder = new ScriptContextBuilder();
+        builder.setScriptLanguage("Groovy");
+        builder.setScriptText("try{return loginName}catch(MissingPropertyException e){throw new Exception(\"No argument has arrived.\")}");
+        facade.runScriptOnConnector(builder.build(), null);
+    }
+
     // =======================================================================
     // ScriptOnResource Operation Test
     // =======================================================================
@@ -378,6 +396,16 @@ public class ScriptedConnectorTest {
 
     }
 
+    @Test(expectedExceptions = ConnectorException.class,
+            expectedExceptionsMessageRegExp = "No argument has arrived.")
+    public void testScriptOnResourceArgFail() throws Exception {
+        ConnectorFacade facade = getFacade(TEST_NAME);
+        ScriptContextBuilder builder = new ScriptContextBuilder();
+        builder.setScriptLanguage("Groovy");
+        builder.setScriptText("try{return loginName}catch(MissingPropertyException e){throw new Exception(\"No argument has arrived.\")}");
+        facade.runScriptOnResource(builder.build(), null);
+    }
+
     @Test(expectedExceptions = InvalidAttributeValueException.class)
     public void testScriptOnResourceFail() throws Exception {
         ConnectorFacade facade = getFacade(TEST_NAME);
@@ -392,11 +420,139 @@ public class ScriptedConnectorTest {
     // =======================================================================
 
     @Test
-    public void testGet() throws Exception{
+    public void testGet() throws Exception {
         ConnectorObject co = getFacade(TEST_NAME).getObject(TEST, new Uid("ANY"), null);
         Assert.assertEquals(co.getUid().getUidValue(), "ANY");
         Assert.assertEquals(co.getName().getNameValue(), "ANY");
         Assert.assertEquals(co.getObjectClass(), TEST);
+
+        assertThat(co.getAttributeByName("attributeString").getValue()).describedAs(
+                "attributeString").containsOnly("retipipiter");
+        assertThat(co.getAttributeByName("attributeStringMultivalue").getValue()).describedAs(
+                "attributeStringMultivalue").containsOnly("value1", "value2");
+
+        assertThat(co.getAttributeByName("attributelongp").getValue())
+                .describedAs("attributelongp").containsOnly(11l);
+        assertThat(co.getAttributeByName("attributelongpMultivalue").getValue()).describedAs(
+                "attributelongpMultivalue").containsOnly(12l, 13l);
+
+        assertThat(co.getAttributeByName("attributeLong").getValue()).describedAs("attributeLong")
+                .containsOnly(14l);
+        assertThat(co.getAttributeByName("attributeLongMultivalue").getValue()).describedAs(
+                "attributeLongMultivalue").containsOnly(15l, 16l);
+
+        assertThat(co.getAttributeByName("attributechar").getValue()).describedAs("attributechar")
+                .containsOnly('a');
+        assertThat(co.getAttributeByName("attributecharMultivalue").getValue()).describedAs(
+                "attributecharMultivalue").containsOnly('b', 'c');
+
+        assertThat(co.getAttributeByName("attributeCharacter").getValue()).describedAs(
+                "attributeCharacter").containsOnly('d');
+        assertThat(co.getAttributeByName("attributeCharacterMultivalue").getValue()).describedAs(
+                "attributeCharacterMultivalue").containsOnly('e', 'f');
+
+        assertThat(co.getAttributeByName("attributedoublep").getValue()).describedAs(
+                "attributedoublep").containsOnly(Double.MIN_NORMAL);
+        assertThat(co.getAttributeByName("attributedoublepMultivalue").getValue()).describedAs(
+                "attributedoublepMultivalue").containsOnly(Double.MIN_VALUE, Double.MAX_VALUE);
+
+        assertThat(co.getAttributeByName("attributeDouble").getValue()).describedAs(
+                "attributeDouble").containsOnly(17D);
+        assertThat(co.getAttributeByName("attributeDoubleMultivalue").getValue()).describedAs(
+                "attributeDoubleMultivalue").containsOnly(18D, 19D);
+
+        assertThat(co.getAttributeByName("attributefloatp").getValue()).describedAs(
+                "attributefloatp").containsOnly(20F);
+        assertThat(co.getAttributeByName("attributefloatpMultivalue").getValue()).describedAs(
+                "attributefloatpMultivalue").containsOnly(21F, 22F);
+
+        assertThat(co.getAttributeByName("attributeFloat").getValue())
+                .describedAs("attributeFloat").containsOnly(23F);
+        assertThat(co.getAttributeByName("attributeFloatMultivalue").getValue()).describedAs(
+                "attributeFloatMultivalue").containsOnly(24F, 25F);
+
+        assertThat(co.getAttributeByName("attributeint").getValue()).describedAs("attributeint")
+                .containsOnly(26);
+        assertThat(co.getAttributeByName("attributeintMultivalue").getValue()).describedAs(
+                "attributeintMultivalue").containsOnly(27, 28);
+
+        assertThat(co.getAttributeByName("attributeInteger").getValue()).describedAs(
+                "attributeInteger").containsOnly(29);
+        assertThat(co.getAttributeByName("attributeIntegerMultivalue").getValue()).describedAs(
+                "attributeIntegerMultivalue").containsOnly(30, 31);
+
+        assertThat(co.getAttributeByName("attributebooleanp").getValue()).describedAs(
+                "attributebooleanp").containsOnly(true);
+        assertThat(co.getAttributeByName("attributebooleanpMultivalue").getValue()).describedAs(
+                "attributebooleanpMultivalue").containsOnly(true, false);
+
+        assertThat(co.getAttributeByName("attributeBoolean").getValue()).describedAs(
+                "attributeBoolean").containsOnly(false);
+        assertThat(co.getAttributeByName("attributeBooleanMultivalue").getValue()).describedAs(
+                "attributeBooleanMultivalue").containsOnly(true, false);
+
+        assertThat(co.getAttributeByName("attributebytep").getValue())
+                .describedAs("attributebytep").containsOnly((byte) 48);
+        assertThat(co.getAttributeByName("attributebytepMultivalue").getValue()).describedAs(
+                "attributebytepMultivalue").containsOnly((byte) 49, (byte) 50);
+
+        assertThat(co.getAttributeByName("attributeByte").getValue()).describedAs("attributeByte")
+                .containsOnly((byte) 51);
+        assertThat(co.getAttributeByName("attributeByteMultivalue").getValue()).describedAs(
+                "attributeByteMultivalue").containsOnly((byte) 52, (byte) 53);
+
+        assertThat(co.getAttributeByName("attributeByteArray").getValue()).describedAs(
+                "attributeByteArray").containsOnly(
+                new Object[] { "array".getBytes(Charset.forName("UTF-8")) });
+        assertThat(co.getAttributeByName("attributeByteArrayMultivalue").getValue()).describedAs(
+                "attributeByteArrayMultivalue").containsOnly(
+                "item1".getBytes(Charset.forName("UTF-8")),
+                "item2".getBytes(Charset.forName("UTF-8")));
+
+        assertThat(co.getAttributeByName("attributeBigDecimal").getValue()).describedAs(
+                "attributeBigDecimal").containsOnly(BigDecimal.ONE);
+        assertThat(co.getAttributeByName("attributeBigDecimalMultivalue").getValue()).describedAs(
+                "attributeBigDecimalMultivalue").containsOnly(BigDecimal.ZERO, BigDecimal.TEN);
+
+        assertThat(co.getAttributeByName("attributeBigInteger").getValue()).describedAs(
+                "attributeBigInteger").containsOnly(BigInteger.ONE);
+        assertThat(co.getAttributeByName("attributeBigIntegerMultivalue").getValue()).describedAs(
+                "attributeBigIntegerMultivalue").containsOnly(BigInteger.ZERO, BigInteger.TEN);
+
+        assertThat(co.getAttributeByName("attributeGuardedByteArray").getValue()).describedAs(
+                "attributeGuardedByteArray").containsOnly(
+                new GuardedByteArray("array".getBytes(Charset.forName("UTF-8"))));
+        assertThat(co.getAttributeByName("attributeGuardedByteArrayMultivalue").getValue())
+                .describedAs("attributeGuardedByteArrayMultivalue").containsOnly(
+                        new GuardedByteArray("item1".getBytes(Charset.forName("UTF-8"))),
+                        new GuardedByteArray("item2".getBytes(Charset.forName("UTF-8"))));
+
+        assertThat(co.getAttributeByName("attributeGuardedString").getValue()).describedAs(
+                "attributeGuardedString").containsOnly(new GuardedString("secret".toCharArray()));
+        assertThat(co.getAttributeByName("attributeGuardedStringMultivalue").getValue())
+                .describedAs("attributeGuardedStringMultivalue").containsOnly(
+                        new GuardedString("secret1".toCharArray()),
+                        new GuardedString("secret2".toCharArray()));
+
+        assertThat(co.getAttributeByName("attributeMap").getValue()).describedAs("attributeMap")
+                .containsOnly(createAssertMap(42));
+        assertThat(co.getAttributeByName("attributeMapMultivalue").getValue()).describedAs(
+                "attributeMapMultivalue").containsOnly(createAssertMap(42), createAssertMap(43));
+
+    }
+
+    private Map<String, Object> createAssertMap(int n) {
+        Map<String, Object> result = new HashMap<String, Object>(6);
+        result.put("string", "String");
+        result.put("number", n);
+        result.put("trueOrFalse", true);
+        result.put("nullValue", null);
+        result.put("collection", Arrays.asList("item1", "item2"));
+        Map<String, Object> o = new HashMap<String, Object>(2);
+        o.put("key1", "value1");
+        o.put("key2", "value2");
+        result.put("object", o);
+        return result;
     }
 
     // =======================================================================
@@ -438,15 +594,6 @@ public class ScriptedConnectorTest {
             Assert.assertEquals(e.getMessage(),
                     "ContainsAllValuesFilter transformation is not supported");
         }
-
-        OperationOptionsBuilder builder = new OperationOptionsBuilder();
-        builder.setOption("CREST", true);
-        handler = new ToListResultsHandler();
-        result = getFacade(TEST_NAME).search(TEST, and(left, right), handler, builder.build());
-        Assert.assertEquals(handler.getObjects().size(), 10);
-        Assert.assertEquals(
-                result.getPagedResultsCookie(),
-                "((((/attributeString sw \"reti\" and /attributeString co \"pipi\") and /attributeString ew \"ter\") and /attributeStringMultivalue ca \"[\"value1\",\"value2\"]\") and ((((/attributeInteger le 42 or /attributeFloat lt 3.4028235E38) or /attributeDouble ge 4.9E-324) or /attributeLong gt -9223372036854775808) and ! (/attributeByte eq 33)))");
     }
 
     @Test
@@ -479,7 +626,7 @@ public class ScriptedConnectorTest {
     public void testSearch2() throws Exception {
         ConnectorFacade search = getFacade(TEST_NAME);
         for (int i = 0; i < 100; i++) {
-            Set<Attribute> co = getTestConnectorObject(String.format("TEST%05d", i));
+            Set<Attribute> co = getTestConnectorObject(String.format("TESTS%05d", i));
             co.add(AttributeBuilder.build("sortKey", i));
             search.create(ObjectClass.ACCOUNT, co, null);
         }
@@ -494,7 +641,7 @@ public class ScriptedConnectorTest {
 
         while ((result =
                 search.search(ObjectClass.ACCOUNT, startsWith(AttributeBuilder.build(Name.NAME,
-                        "TEST")), new ResultsHandler() {
+                        "TESTS")), new ResultsHandler() {
                     private int index = 101;
 
                     public boolean handle(ConnectorObject connectorObject) {
@@ -532,11 +679,12 @@ public class ScriptedConnectorTest {
     @Test(dataProvider = "SyncObjectClassProvider")
     public void testSyncNull(ObjectClass objectClass) throws Exception {
         final List<SyncDelta> result = new ArrayList<SyncDelta>();
-        SyncToken lastToken = getFacade(TEST_NAME).sync(objectClass, new SyncToken(5), new SyncResultsHandler() {
-            public boolean handle(SyncDelta delta) {
-                return result.add(delta);
-            }
-        }, null);
+        SyncToken lastToken =
+                getFacade(TEST_NAME).sync(objectClass, new SyncToken(5), new SyncResultsHandler() {
+                    public boolean handle(SyncDelta delta) {
+                        return result.add(delta);
+                    }
+                }, null);
         Assert.assertEquals(lastToken.getValue(), 10);
         Assert.assertTrue(result.isEmpty());
     }
@@ -713,7 +861,6 @@ public class ScriptedConnectorTest {
     // Update Operation Test
     // =======================================================================
 
-
     @Test
     public void testUpdate() throws Exception {
         Uid uid = createTestUser("TESTOK01");
@@ -721,6 +868,27 @@ public class ScriptedConnectorTest {
         updateAttributes.add(AttributeBuilder.build("email", "foo@example.com"));
 
         uid = getFacade(TEST_NAME).update(ObjectClass.ACCOUNT, uid, updateAttributes, null);
+    }
+
+    @Test(expectedExceptions = PreconditionFailedException.class)
+    public void testUpdateMVCCNOK1() throws Exception {
+        Uid uid = createTestUser("TESTMVCCNOK01");
+        Set<Attribute> updateAttributes = new HashSet<Attribute>(1);
+        updateAttributes.add(AttributeBuilder.build("email", "foo@example.com"));
+        Assert.assertNotNull(uid.getRevision());
+        getFacade(TEST_NAME).update(ObjectClass.ACCOUNT, new Uid(uid.getUidValue(), "NOK"),
+                updateAttributes, null);
+    }
+
+    @Test(expectedExceptions = PreconditionRequiredException.class)
+    public void testUpdateMVCCNOK2() throws Exception {
+        Uid uid = createTestUser("TESTMVCCNOK02");
+        Set<Attribute> updateAttributes = new HashSet<Attribute>(1);
+        updateAttributes.add(new Name("TEST"));
+        updateAttributes.add(AttributeBuilder.build("email", "foo@example.com"));
+        Assert.assertNotNull(uid.getRevision());
+        getFacade(TEST_NAME).update(ObjectClass.ACCOUNT, new Uid(uid.getUidValue()),
+                updateAttributes, null);
     }
 
     @Test(expectedExceptions = InvalidAttributeValueException.class,
@@ -781,8 +949,6 @@ public class ScriptedConnectorTest {
         getFacade(TEST_NAME).update(UNKNOWN, new Uid("TESTOK1"), updateAttributes, null);
     }
 
-
-
     protected Uid createTestUser(String username) {
         Set<Attribute> createAttributes = getTestConnectorObject(username);
         ConnectorFacade facade = getFacade(TEST_NAME);
@@ -802,7 +968,8 @@ public class ScriptedConnectorTest {
         createAttributes.add(AttributeBuilder.build("firstName", "John"));
         createAttributes.add(AttributeBuilder.build("sn", name.toUpperCase()));
         createAttributes.add(AttributeBuilder.buildPassword("Passw0rd".toCharArray()));
-        createAttributes.add(AttributeBuilder.build(PredefinedAttributes.DESCRIPTION, "Description"));
+        createAttributes.add(AttributeBuilder
+                .build(PredefinedAttributes.DESCRIPTION, "Description"));
         createAttributes.add(AttributeBuilder.build("groups", "group1", "group2"));
 
         return createAttributes;
@@ -813,5 +980,11 @@ public class ScriptedConnectorTest {
             facade = createConnectorFacade(ScriptedConnector.class, environment);
         }
         return facade;
+    }
+
+    @AfterClass
+    public synchronized void afterClass() {
+        ((LocalConnectorFacadeImpl) facade).dispose();
+        facade = null;
     }
 }

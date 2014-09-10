@@ -23,7 +23,7 @@
   !      Copyright 2011-2014 ForgeRock AS
   !
 -->
-<chapter xml:id="install-workday-connector"
+<chapter xml:id="install-org.forgerock.openicf.connectors-groovy-connector-${project.version}"
     xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en'
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
     xsi:schemaLocation='http://docbook.org/ns/docbook
@@ -36,14 +36,14 @@
         prerequisites specific to its use.
     </para>
 
-    <section xml:id="before-you-install">
+    <section xml:id="before-you-install-org.forgerock.openicf.connectors-groovy-connector-${project.version}">
         <title>Before You Install the ${project.name}</title>
         <para>
             TO BE WRITTEN MANUALLY
         </para>
     </section>
 
-    <section xml:id="connector-install">
+    <section xml:id="connector-install-org.forgerock.openicf.connectors-groovy-connector-${project.version}">
         <title>Installing the ${project.name}</title>
         <para>
             TO BE WRITTEN MANUALLY
@@ -52,10 +52,16 @@
 
         </para>
 
-        <section xml:id="scriptedsql-dependencies">
+        <section xml:id="scriptedsql-dependencies-org.forgerock.openicf.connectors-groovy-connector-${project.version}">
             <title>ScriptedSQL Connector Installation</title>
             <para>
-                Copy these requirements to bundle folder.
+                Install connector on Java 7 OSGi: copy these requirements to /bundle folder. Non OSGi installation you can
+                use non OSGi juli version
+                <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.tomcat%7Ctomcat-juli%7C8.0.11%7Cjar"
+                      xlink:show="new">
+                    <filename>tomcat-juli-8.0.11.jar</filename>
+                </link>
+                and copy these requirements to /lib folder.
             </para>
             <itemizedlist>
                 <listitem>
@@ -69,17 +75,71 @@
                 </listitem>
                 <listitem>
                     <para>
-                        <filename>tomcat-jdbc-7.0.53.jar</filename>
-                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.tomcat%7Ctomcat-jdbc%7C7.0.53%7Cjar"
+                        <filename>tomcat-jdbc-8.0.11.jar</filename>
+                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.tomcat%7Ctomcat-jdbc%7C8.0.11%7Cjar"
                               xlink:show="new">
-                            (org.apache.tomcat:tomcat-jdbc:7.0.53)
+                            (org.apache.tomcat:tomcat-jdbc:8.0.11)
+                        </link>
+                        <note>
+                            <para>The 8.0.11 is the first working OSGi ready version.</para>
+                        </note>
+                    </para>
+                </listitem>
+            </itemizedlist>
+
+            <para>
+                Install connector on Java 6: copy these requirements to /lib folder.
+            </para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <filename>tomcat-juli-7.0.55.jar</filename>
+                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.tomcat%7Ctomcat-juli%7C7.0.55%7Cjar"
+                              xlink:show="new">
+                            (org.apache.tomcat:tomcat-juli:7.0.55)
+                        </link>
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <filename>tomcat-jdbc-7.0.55.jar</filename>
+                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.tomcat%7Ctomcat-jdbc%7C7.0.55%7Cjar"
+                              xlink:show="new">
+                            (org.apache.tomcat:tomcat-jdbc:7.0.55)
                         </link>
                     </para>
                 </listitem>
             </itemizedlist>
         </section>
 
-        <section xml:id="scriptedcrest-dependencies">
+        <section xml:id="scriptedrest-dependencies-org.forgerock.openicf.connectors-groovy-connector-${project.version}">
+            <title>Scripted REST Connector Installation</title>
+            <para>
+                Copy these requirements to bundle folder.
+            </para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <filename>httpclient-osgi-4.3.3.jar</filename>
+                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.httpcomponents%7Chttpclient-osgi%7C4.3.3%7Cbundle"
+                              xlink:show="new">
+                            (org.apache.httpcomponents:httpclient-osgi:4.3.3)
+                        </link>
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <filename>httpcore-osgi-4.3.2.jar</filename>
+                        <link xlink:href="http://search.maven.org/#artifactdetails%7Corg.apache.httpcomponents%7Chttpcore-osgi%7C4.3.2%7Cbundle"
+                              xlink:show="new">
+                            (org.apache.httpcomponents:httpcore-osgi:4.3.2)
+                        </link>
+                    </para>
+                </listitem>
+            </itemizedlist>
+        </section>
+
+        <section xml:id="scriptedcrest-dependencies-org.forgerock.openicf.connectors-groovy-connector-${project.version}">
             <title>ScriptedCREST Connector Installation</title>
             <para>
                 Copy these requirements to bundle folder.

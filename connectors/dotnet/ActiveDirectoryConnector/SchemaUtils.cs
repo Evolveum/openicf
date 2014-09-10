@@ -10,8 +10,12 @@ using System.Text;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
-    public class SchemaUtils
-    {
+    public class SchemaUtils {
+
+        // tracing (using ActiveDirectoryConnector's name!)
+        internal static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
         public delegate ICollection<ObjectClass> GetSupportedObjectClassesDelegate();
         public delegate ObjectClassInfo GetObjectClassInfoDelegate(ObjectClass oc);
         public delegate IList<SafeType<SPIOperation>> GetSupportedOperationsDelegate(ObjectClass oc);
@@ -21,14 +25,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GetSupportedObjectClassesDelegate getSupportedObjectClassesDelegate,
             GetObjectClassInfoDelegate getObjectClassInfoDelegate,
             GetSupportedOperationsDelegate getSupportedOperationsDelegate,
-            GetUnSupportedOperationsDelegate getUnSupportedOperationsDelegate)
-        {
-            SchemaBuilder schemaBuilder =
-                new SchemaBuilder(SafeType<Connector>.Get(connector));
+            GetUnSupportedOperationsDelegate getUnSupportedOperationsDelegate) {
+
+            SchemaBuilder schemaBuilder = new SchemaBuilder(SafeType<Connector>.Get(connector));
 
             //iterate through supported object classes
-            foreach (ObjectClass oc in getSupportedObjectClassesDelegate())
-            {
+            foreach (ObjectClass oc in getSupportedObjectClassesDelegate()) {
                 ObjectClassInfo ocInfo = getObjectClassInfoDelegate(oc);
                 Assertions.NullCheck(ocInfo, "ocInfo");
 
@@ -37,52 +39,43 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 //add supported operations
                 IList<SafeType<SPIOperation>> supportedOps = getSupportedOperationsDelegate(oc);
-                if (supportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in supportedOps)
-                    {
+                if (supportedOps != null) {
+                    foreach (SafeType<SPIOperation> op in supportedOps) {
                         schemaBuilder.AddSupportedObjectClass(op, ocInfo);
                     }
                 }
 
                 //remove unsupported operatons
                 IList<SafeType<SPIOperation>> unSupportedOps = getUnSupportedOperationsDelegate(oc);
-                if (unSupportedOps != null)
-                {
-                    foreach (SafeType<SPIOperation> op in unSupportedOps)
-                    {
+                if (unSupportedOps != null) {
+                    foreach (SafeType<SPIOperation> op in unSupportedOps) {
                         schemaBuilder.RemoveSupportedObjectClass(op, ocInfo);
                     }
                 }
             }
-            Trace.TraceInformation("Finished retrieving schema");
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Finished retrieving schema");
             return schemaBuilder.Build();
         }
 
         public static IDictionary<ObjectClass, ICollection<string>> GetAttributesReturnedByDefault(
             GetSupportedObjectClassesDelegate getSupportedObjectClassesDelegate,
-            GetObjectClassInfoDelegate getObjectClassInfoDelegate)
-        {
+            GetObjectClassInfoDelegate getObjectClassInfoDelegate) {
             var attributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
 
             //iterate through supported object classes
-            foreach (ObjectClass oc in getSupportedObjectClassesDelegate())
-            {
+            foreach (ObjectClass oc in getSupportedObjectClassesDelegate()) {
                 ObjectClassInfo ocInfo = getObjectClassInfoDelegate(oc);
                 Assertions.NullCheck(ocInfo, "ocInfo");
 
                 //populate the list of default attributes to get
                 attributesReturnedByDefault.Add(oc, new HashSet<string>());
-                foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos)
-                {
-                    if (caInfo.IsReturnedByDefault)
-                    {
+                foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos) {
+                    if (caInfo.IsReturnedByDefault) {
                         attributesReturnedByDefault[oc].Add(caInfo.Name);
                     }
                 }
             }
             return attributesReturnedByDefault;
         }
-
     }
 }

@@ -34,9 +34,9 @@ import org.identityconnectors.framework.spi.PoolableConnector;
  * Main implementation of the ScriptedSQL Connector.
  *
  * @author Gael Allioux <gael.allioux@forgerock.com>
- * 
+ *
  */
-@ConnectorClass(displayNameKey = "ScriptedSQL.connector.display", configurationClass = ScriptedSQLConfiguration.class)
+@ConnectorClass(displayNameKey = "scripted.sql.connector.display", configurationClass = ScriptedSQLConfiguration.class)
 public class ScriptedSQLConnector extends ScriptedConnector implements PoolableConnector {
     /**
      * Callback method to receive the {@link Configuration}.

@@ -98,8 +98,8 @@
     <None Include="app.config" />
   </ItemGroup>
   <Target Name="Clean">
-    <RemoveDir Directories="bin;obj">
-    </RemoveDir>
+    <Delete Files="AssemblyInfo.cs;version.txt" />
+    <RemoveDir Directories="obj;bin" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

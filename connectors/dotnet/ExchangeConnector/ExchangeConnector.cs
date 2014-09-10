@@ -20,8 +20,10 @@
 // "Portions Copyrighted [year] [name of copyright owner]"
 // ====================
 // Portions Copyrighted 2014 ForgeRock AS.
+// Portions Copyrighted 2014 Evolveum
 // </copyright>
 // <author>Tomas Knappek</author>
+// <author>Pavol Mederly</author>
 
 namespace Org.IdentityConnectors.Exchange
 {
@@ -39,6 +41,7 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.Framework.Common.Objects.Filters;
     using Org.IdentityConnectors.Framework.Spi;
     using Org.IdentityConnectors.Framework.Spi.Operations;
+    using System.Reflection;
 
     /// <summary>
     /// MS Exchange connector - build to have the same functionality as Exchange resource adapter
@@ -48,7 +51,7 @@ namespace Org.IdentityConnectors.Exchange
         MessageCatalogPaths = new[] { "Org.IdentityConnectors.Exchange.Messages",
                 "Org.IdentityConnectors.ActiveDirectory.Messages" })]
     public class ExchangeConnector : CreateOp, Connector, SchemaOp, DeleteOp,
-        SearchOp<String>, TestOp, ScriptOnResourceOp, UpdateOp, SyncOp,
+        SearchOp<string>, TestOp, ScriptOnResourceOp, UpdateOp, SyncOp,
         AuthenticateOp, PoolableConnector, AttributeNormalizer
     {
         #region Fields Definition
@@ -57,6 +60,12 @@ namespace Org.IdentityConnectors.Exchange
         /// ClassName - used for debugging purposes
         /// </summary>
         private static readonly string ClassName = typeof(ExchangeConnector).ToString();
+
+        private static TraceSource LOGGER = new TraceSource(TraceNames.DEFAULT);
+        private static TraceSource LOGGER_API = new TraceSource(TraceNames.API);
+        private const int CAT_DEFAULT = 1;      // default tracing event category
+
+        private IDictionary<string, ObjectClassHandler> _handlers;
 
         /// <summary>
         /// A delegate to carry out AD-related tasks.
@@ -69,26 +78,58 @@ namespace Org.IdentityConnectors.Exchange
         private static Schema _schema = null;
 
         /// <summary>
+        /// Cached object class infos.
+        /// </summary>
+        private IDictionary<ObjectClass, ObjectClassInfo> _objectClassInfos = null;
+
+        /// <summary>
         /// Configuration instance
         /// </summary>
         private ExchangeConfiguration _configuration;
 
-        /// <summary>
-        /// Runspace instance
-        /// </summary>
-        private RunSpaceInstance _runspace;
+        // TODO do cleanly
+        public ExchangeConfiguration Configuration {
+            get {
+                return _configuration;
+            }
+        }
+
+        public ActiveDirectoryConnector ActiveDirectoryConnector {
+            get {
+                return _activeDirectoryConnector;
+            }
+        }
+
+        internal ExchangePowerShellSupport PowerShellSupport {
+            get {
+                return _powershell;
+            }
+        }
+        private ExchangePowerShellSupport _powershell;
+
+        private Scripting _scripting;
 
         #endregion
 
         #region Constructors
-        static ExchangeConnector()
-        {
+        static ExchangeConnector() {
             PSExchangeConnector.CommandInfo.InitializeIfNeeded();
         }
 
-        public ExchangeConnector()
-        {
+        public ExchangeConnector() {
             _activeDirectoryConnector = new ActiveDirectoryConnector();
+            _handlers = new Dictionary<string, ObjectClassHandler>() {
+                { ObjectClass.ACCOUNT_NAME, new AccountHandler() },
+                { ActiveDirectoryConnector.OBJECTCLASS_OU, new DelegateToActiveDirectoryHandler() },
+                { ActiveDirectoryConnector.OBJECTCLASS_GROUP, new DelegateToActiveDirectoryHandler() },
+                { AcceptedDomainHandler.OBJECTCLASS_NAME, new AcceptedDomainHandler() },
+                { GlobalAddressListHandler.OBJECTCLASS_NAME, new GlobalAddressListHandler() },
+                { AddressListHandler.OBJECTCLASS_NAME, new AddressListHandler() },
+                { OfflineAddressBookHandler.OBJECTCLASS_NAME, new OfflineAddressBookHandler() },
+                { AddressBookPolicyHandler.OBJECTCLASS_NAME, new AddressBookPolicyHandler() },
+                { DistributionGroupHandler.OBJECTCLASS_NAME, new DistributionGroupHandler() },
+                { EmailAddressPolicyHandler.OBJECTCLASS_NAME, new EmailAddressPolicyHandler() }
+            };
         }
         #endregion
 
@@ -101,156 +142,60 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attributes">Object attributes</param>
         /// <param name="options">Operation options</param>
         /// <returns>Uid of the created object</returns>
-        public Uid Create(
-                ObjectClass oclass, ICollection<ConnectorAttribute> attributes, OperationOptions options)
-        {
+        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
+            const string operation = "Create";
+
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this._configuration);
 
-            Trace.TraceInformation("Exchange.Create method; attributes:\n{0}", CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Create method for {0}; attributes:\n{1}", oclass.GetObjectClassValue(), CommonUtils.DumpConnectorAttributes(attributes));
+
+            CreateOpContext context = new CreateOpContext() {
+                Attributes = attributes,
+                Connector = this,
+                ConnectorConfiguration = this._configuration,
+                ObjectClass = oclass,
+                OperationName = operation,
+                Options = options
+            };
+
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    CreateMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+
+                return context.Uid;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Create operation: {0}", e);
+                throw;
+            }
+        }
+
+        public void CreateMain(CreateOpContext context) {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            // we handle accounts only
-            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                return _activeDirectoryConnector.Create(oclass, attributes, options);
-            }
+            GetHandler(context).Create(context);
 
-            const string METHOD = "Create";
-            Debug.WriteLine(METHOD + ":entry", ClassName);
-
-            // get recipient type
-            string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, attributes) as string;
-
-            PSExchangeConnector.CommandInfo cmdInfoEnable = null;
-            PSExchangeConnector.CommandInfo cmdInfoSet = null;
-            switch (rcptType)
-            {
-                case ExchangeConnectorAttributes.RcptTypeMailBox:
-                    cmdInfoEnable = PSExchangeConnector.CommandInfo.EnableMailbox;
-                    cmdInfoSet = PSExchangeConnector.CommandInfo.SetMailbox;
-                    break;
-                case ExchangeConnectorAttributes.RcptTypeMailUser:
-                    cmdInfoEnable = PSExchangeConnector.CommandInfo.EnableMailUser;
-                    cmdInfoSet = PSExchangeConnector.CommandInfo.SetMailUser;
-                    break;
-                case ExchangeConnectorAttributes.RcptTypeUser:
-                    break;
-                default:
-                    throw new ArgumentException(
-                              this._configuration.ConnectorMessages.Format(
-                              "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
-            }
-
-            // first create the object in AD
-            ICollection<ConnectorAttribute> adAttributes = FilterOut(attributes, cmdInfoEnable, cmdInfoSet);
-            Uid uid = _activeDirectoryConnector.Create(oclass, adAttributes, options);
-
-            if (rcptType == ExchangeConnectorAttributes.RcptTypeUser)
-            {
-                // AD account only, we do nothing
-                return uid;
-            }
-
-            // prepare the command            
-            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, attributes, this._configuration);
-            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, attributes, this._configuration);
-
-            try
-            {
-                this.InvokePipeline(cmdEnable);
-                this.InvokePipeline(cmdSet);
-            }
-            catch
-            {
-                Trace.TraceWarning("Rolling back AD create for UID: " + uid.GetUidValue());
-
-                // rollback AD create
-                try
-                {
-                    Delete(oclass, uid, options);
-                }
-                catch
-                {
-                    Trace.TraceWarning("Not able to rollback AD create for UID: " + uid.GetUidValue());
-
-                    // note: this is not perfect, we hide the original exception
-                    throw;
-                }
-
-                // rethrow original exception
-                throw;
-            }
-
-            Debug.WriteLine(METHOD + ":exit", ClassName);
-            Trace.TraceInformation("Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
-            return uid;
-        }
-        #endregion
-
-        #region Connector Members
-        /// <summary>
-        /// Inits the connector with configuration injected
-        /// </summary>
-        /// <param name="configuration">Connector configuration</param>
-        public void Init(Configuration configuration)
-        {
-            Trace.TraceInformation("ExchangeConnector.Init: entry");
-
-            this._configuration = (ExchangeConfiguration)configuration;
-            _activeDirectoryConnector.Init(configuration);
-            Schema();
-            this._runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, this._configuration.ExchangeUri, configuration.ConnectorMessages);
-
-            Trace.TraceInformation("ExchangeConnector.Init: exit");
-        }
-        #endregion
-
-        #region IDisposable Members
-        /// <summary>
-        /// Dispose resources, <see cref="IDisposable"/>
-        /// </summary>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Create method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
 
-        /// <summary>
-        /// Dispose the resources we use
-        /// </summary>
-        /// <param name="disposing">true if called from <see cref="PSExchangeConnector.Dispose()"/> (?????)</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // free managed resources
-                if (this._runspace != null)
-                {
-                    this._runspace.Dispose();
-                    this._runspace = null;
-                }
-            }
+        private ObjectClassHandler GetHandler(Context context) {
+            return GetHandler(context.ObjectClass.GetObjectClassValue());
         }
-        #endregion
 
-
-        #region TestOp Members
-
-        /// <summary>
-        /// Tests if the connector is properly configured and ready
-        /// </summary>
-        public void Test()
-        {
-            // validate the configuration first, this will check AD configuration too
-            _configuration.Validate();
-
-            // AD validation (includes configuration validation too)
-            _activeDirectoryConnector.Test();
-
-            // runspace check
-            _runspace.Test();
+        private ObjectClassHandler GetHandler(string objectClassName) {
+            ObjectClassHandler handler;
+            if (_handlers.TryGetValue(objectClassName, out handler)) {
+                return handler;
+            } else {
+                throw new ConnectorException("Unsupported object class " + objectClassName + " (there is no handler for it)");
+            }
         }
 
         #endregion
@@ -264,173 +209,465 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="attributes">Object attributes</param>
         /// <param name="options">Operation options</param>
         /// <returns>Uid of the updated object</returns>
-        public Uid Update(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options)
-        {
-            const string METHOD = "Update";
-            Debug.WriteLine(METHOD + ":entry", ClassName);
+        public Uid Update(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
+            const string operation = "Update";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
             ExchangeUtility.NullCheck(uid, "uid", this._configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this._configuration);
 
-            Trace.TraceInformation("Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
+
+            if (attributes == null || attributes.Count == 0) {
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT,
+                    "Returning immediately, as there are no attributes to modify.");
+                return uid;
+            }
+
+            UpdateOpContext context = new UpdateOpContext() {
+                Attributes = attributes,
+                Connector = this,
+                ConnectorConfiguration = this._configuration,
+                ObjectClass = oclass,
+                OperationName = operation,
+                Options = options,
+                Uid = uid
+            };
+
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    UpdateMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+
+                return context.Uid;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Update operation: {0}", e);
+                throw;
+            }
+        }
+
+        public void UpdateMain(UpdateOpContext context) {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            // we handle accounts only
-            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                return _activeDirectoryConnector.Update(oclass, uid, attributes, options);
-            }
+            GetHandler(context).Update(context);
 
-            // get recipient type and database
-            string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, attributes) as string;
-            string database = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttDatabase, attributes) as string;
-
-            // update in AD first
-            var filtered = FilterOut(
-                attributes,
-                PSExchangeConnector.CommandInfo.EnableMailbox,
-                PSExchangeConnector.CommandInfo.EnableMailUser,
-                PSExchangeConnector.CommandInfo.SetMailbox,
-                PSExchangeConnector.CommandInfo.SetMailUser);
-            _activeDirectoryConnector.Update(oclass, uid, filtered, options);
-
-            // retrieve Exchange-related information about the user
-            ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, ExchangeConnectorAttributes.AttDatabaseADName));
-
-            // to get the user information, we have to provide user's name
-            attributes = new HashSet<ConnectorAttribute>(attributes);           // to make collection modifiable
-            attributes.Add(aduser.Name);                    
-
-            // now create and execute PS command to get the information
-            PSExchangeConnector.CommandInfo cmdInfo;
-            if (aduser.GetAttributeByName(ExchangeConnectorAttributes.AttDatabaseADName) != null)
-            {
-                cmdInfo = PSExchangeConnector.CommandInfo.GetMailbox;       // we can be sure it is user mailbox type
-            }
-            else
-            {
-                cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
-            }
-            PSObject psuser = this.GetUser(cmdInfo, attributes);
-
-            // do we change recipient type?
-            string origRcptType = psuser.Members[ExchangeConnectorAttributes.AttRecipientType].Value.ToString();
-            if (String.IsNullOrEmpty(rcptType))
-            {
-                rcptType = origRcptType;
-            }
-
-            if (rcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
-            {
-                // disabling Mailbox if needed
-                if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
-                {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributes, this._configuration);
-                    cmdDisable.Parameters.Add("Confirm", false);
-                    this.InvokePipeline(cmdDisable);
-                }
-
-                // enabling MailUser if needed
-                if (origRcptType != rcptType)
-                {
-                    // Enable-MailUser needs the value of ExternalEmailAddress, so we have to get it
-                    string externalEmailAddress = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, attributes) as string;
-                    if (String.IsNullOrEmpty(externalEmailAddress))
-                    {
-                        PSMemberInfo o = psuser.Members[ExchangeConnectorAttributes.AttExternalEmailAddress];
-                        if (o == null || o.Value == null || String.IsNullOrEmpty(o.Value.ToString()))
-                        {
-                            throw new InvalidOperationException("Missing ExternalEmailAddress value, which is required for a MailUser");
-                        }
-                        externalEmailAddress = o.Value.ToString();
-                        ExchangeUtility.SetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, externalEmailAddress, attributes);
-                    }
-
-                    // now execute the Enable-MailUser command
-                    Command cmdEnable = ExchangeUtility.GetCommand(
-                            PSExchangeConnector.CommandInfo.EnableMailUser, attributes, this._configuration);
-                    this.InvokePipeline(cmdEnable);
-                }
-
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, attributes, this._configuration);
-                this.InvokePipeline(cmdSet);
-            }
-            else if (rcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
-            {
-                // we should execute something like this here:
-                // get-user -identity id|?{$_.RecipientType -eq "User"}|enable-mailbox -database "db"
-                // unfortunately I was not able to get it working with the pipeline... that's why there are two commands
-                // executed :-(
-                // alternatively there can be something like:
-                // get-user -identity id -RecipientTypeDetails User|enable-mailbox -database "db", but we have then trouble
-                // with detecting attempt to change the database attribute               
-                string origDatabase = psuser.Members[ExchangeConnectorAttributes.AttDatabase] != null ? psuser.Members[ExchangeConnectorAttributes.AttDatabase].Value.ToString() : null;
-                if (origRcptType != rcptType)
-                {
-                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, attributes, this._configuration);
-                    this.InvokePipeline(cmdEnable);
-                }
-                else
-                {
-                    // trying to update the database?
-                    if (database != null && database != origDatabase)
-                    {
-                        throw new ArgumentException(
-                            this._configuration.ConnectorMessages.Format(
-                            "ex_not_updatable", "Update of [{0}] attribute is not supported", ExchangeConnectorAttributes.AttDatabase));
-                    }
-                }
-
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes, this._configuration);
-                this.InvokePipeline(cmdSet);
-            }
-            else if (rcptType == ExchangeConnectorAttributes.RcptTypeUser)
-            {
-                if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
-                {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributes, this._configuration);
-                    cmdDisable.Parameters.Add("Confirm", false);
-                    this.InvokePipeline(cmdDisable);
-                }
-                else if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
-                {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, attributes, this._configuration);
-                    cmdDisable.Parameters.Add("Confirm", false);
-                    this.InvokePipeline(cmdDisable);
-                }
-                else if (origRcptType == ExchangeConnectorAttributes.RcptTypeUser)
-                {
-                    // if orig is User, there is no need to disable anything
-                }
-                else
-                {
-                    throw new InvalidOperationException("Invalid original recipient type: " + origRcptType);
-                }
-
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, attributes, this._configuration);
-                this.InvokePipeline(cmdSet);
-            }
-            else
-            {
-                // unsupported rcpt type
-                throw new ArgumentException(
-                            this._configuration.ConnectorMessages.Format(
-                            "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
-            }
-
-            Debug.WriteLine(METHOD + ":exit", ClassName);
-            Trace.TraceInformation("Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
-            return uid;
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Update method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
         }
         #endregion
 
         #region DeleteOp Members
 
-        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
+        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+            const string operation = "Delete";
+
+            ExchangeUtility.NullCheck(objClass, "objClass", this._configuration);
+            ExchangeUtility.NullCheck(uid, "uid", this._configuration);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Delete method; uid:\n{0}", uid.GetUidValue());
+
+            DeleteOpContext context = new DeleteOpContext() {
+                Connector = this,
+                ConnectorConfiguration = _configuration,
+                ObjectClass = objClass,
+                OperationName = operation,
+                Uid = uid,
+                Options = options
+            };
+
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    DeleteMain(context);
+                }
+
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Delete operation: {0}", e);
+                throw;
+            }
+        }
+
+        public void DeleteMain(DeleteOpContext context) {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            GetHandler(context).Delete(context);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Delete method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+        }
+
+        #endregion
+
+        #region ExecuteQuery
+        /// <summary>
+        /// Implementation of SearchOp.ExecuteQuery
+        /// </summary>
+        /// <param name="oclass">Object class</param>
+        /// <param name="query">Query to execute</param>
+        /// <param name="handler">Results handler</param>
+        /// <param name="options">Operation options</param>
+        public void ExecuteQuery( ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options) {
+            const string operation = "ExecuteQuery";
+
+            ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.ExecuteQuery method; oclass = {0}, query = {1}", oclass, query);
+
+            ExecuteQueryContext context = new ExecuteQueryContext() {
+                Connector = this,
+                ConnectorConfiguration = _configuration,
+                ObjectClass = oclass,
+                OperationName = operation,
+                Options = options,
+                Query = query,
+                ResultsHandler = handler
+            };
+
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    ExecuteQueryMain(context);
+                }
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing ExecuteQuery operation: {0}", e);
+                throw;
+            }
+
+            // TODO what about executing a script on each returned item?
+        }
+
+        public void ExecuteQueryMain(ExecuteQueryContext context) {
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.ExecuteQueryMain starting");
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            GetHandler(context).ExecuteQuery(context);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+        }
+        #endregion
+
+        #region SyncOp Members
+
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass) {
+            return _activeDirectoryConnector.GetLatestSyncToken(objectClass);
+        }
+
+        /// <summary>
+        /// Implementation of SynOp.Sync
+        /// </summary>
+        /// <param name="objClass">Object class</param>
+        /// <param name="token">Sync token</param>
+        /// <param name="handler">Sync results handler</param>
+        /// <param name="options">Operation options</param>
+        public void Sync(
+                ObjectClass oclass, SyncToken token, SyncResultsHandler handler, OperationOptions options) {
+            const string operation = "Sync";
+
+            ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
+                "Exchange.Sync method; oclass = {0}, token = {1}", oclass, token);
+
+            SyncOpContext context = new SyncOpContext() {
+                Connector = this,
+                ConnectorConfiguration = _configuration,
+                ObjectClass = oclass,
+                OperationName = operation,
+                Options = options,
+                SyncToken = token,
+                SyncResultsHandler = handler
+            };
+
+            try {
+                _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+                if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                    SyncMain(context);
+                }
+                _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Sync operation: {0}", e);
+                throw;
+            }
+
+            // TODO what about executing a script on each returned item?
+        }
+
+        public void SyncMain(SyncOpContext context) {
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Sync starting");
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            GetHandler(context).Sync(context);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Sync method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
+        }
+
+        #endregion
+
+        #region SchemaOp Implementation
+
+        /// <summary>
+        /// Implementation of SchemaSpiOp
+        /// </summary>
+        /// <returns></returns>
+        public Schema Schema()
         {
-            _activeDirectoryConnector.Delete(objClass, uid, options);
+            try {
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Schema method");
+                if (_schema != null) {
+                    LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning cached schema");
+                } else {
+                    _schema = SchemaUtils.BuildSchema(this,
+                                GetSupportedObjectClasses,
+                                GetObjectClassInfo,
+                                GetSupportedOperations,
+                                GetUnSupportedOperations);
+                    LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Returning newly created schema");
+                }
+                return _schema;
+            } catch (Exception e) {
+                LOGGER.TraceEvent(TraceEventType.Error, CAT_DEFAULT, "Exception while executing Schema operation: {0}", e);
+                throw;
+            }
+        }
+
+        internal Schema GetSchema() {
+            return _schema;
+        }
+
+        /// <summary>
+        /// Gets the object class info for specified object class, used for schema building
+        /// </summary>
+        /// <param name="oc">ObjectClass to get info for</param>
+        /// <returns>ObjectClass' ObjectClassInfo</returns>
+        internal ObjectClassInfo GetObjectClassInfo(ObjectClass oc) {
+            //return GetHandler(oc.GetObjectClassValue()).GetObjectClassInfo(this, oc);
+            return GetDeclaredObjectClassInfos()[oc];
+        }
+
+        /// <summary>
+        /// Defines the supported object classes by the connector, used for schema building
+        /// </summary>
+        /// <returns>List of supported object classes</returns>
+        public ICollection<ObjectClass> GetSupportedObjectClasses() {
+            return GetDeclaredObjectClassInfos().Keys;
+        }
+
+        /// <summary>
+        /// Gets the object class info for specified object class, used for schema building
+        /// </summary>
+        /// <param name="oc">ObjectClass to get info for</param>
+        /// <returns>ObjectClass' ObjectClassInfo</returns>
+        public ObjectClassInfo GetObjectClassInfoGeneric(ObjectClass oc) {
+            return GetDeclaredObjectClassInfos()[oc];
+        }
+
+        // copied from AD and modified
+        private IDictionary<ObjectClass, ObjectClassInfo> GetDeclaredObjectClassInfos() {
+            if (_objectClassInfos == null) {
+                var infos = new List<IDictionary<ObjectClass, ObjectClassInfo>>();
+
+                if (_configuration.ObjectClassesReplacementFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesReplacementFile));
+                } else {
+                    infos.Add(CommonUtils.GetOCInfoFromExecutingAssembly("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml"));
+                    infos.Add(CommonUtils.GetOCInfoFromAssembly("Org.IdentityConnectors.Exchange.ObjectClasses.xml", Assembly.GetExecutingAssembly()));
+                }
+                if (_configuration.ObjectClassesExtensionFile != null) {
+                    infos.Add(CommonUtils.GetOCInfoFromFile(_configuration.ObjectClassesExtensionFile));
+                }
+                _objectClassInfos = CommonUtils.MergeOCInfo(infos);
+            }
+            return _objectClassInfos;
+        }
+
+        /// <summary>
+        /// Gets the list of supported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        public IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc) {
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the list of UNsupported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        public IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc) {
+            return _activeDirectoryConnector.GetUnSupportedOperations(oc);
+        }
+
+        #endregion
+
+        #region Attribute normalization
+
+        /// <summary>
+        /// Attribute normalizer
+        /// </summary>
+        /// <param name="oclass">Object class</param>
+        /// <param name="attribute">Attribute to be normalized</param>
+        /// <returns>Normalized attribute</returns>
+        public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        {
+            // normalize the attribute using AD connector first
+            // attribute = base.NormalizeAttribute(oclass, attribute);
+
+            // normalize mail-related attributes
+            //Trace.TraceInformation("NormalizeAttribute called for {0}", attribute.GetDetails());
+            if (attribute.Is(ExchangeConnectorAttributes.AttExternalEmailAddress) || attribute.Is(ExchangeConnectorAttributes.AttForwardingSmtpAddress)) {
+                return NormalizeSmtpAddressAttribute(attribute);
+            } else {
+                return attribute;
+            }
+
+            // TODO: what with EmailAddresses? (we should not remove SMTP/smpt prefix, because it carries information on primary/secondary address type)
+            // TODO: and other attributes?
+        }
+
+        private ConnectorAttribute NormalizeSmtpAddressAttribute(ConnectorAttribute attribute) {
+            if (attribute.Value == null) {
+                return attribute;
+            }
+
+            IList<object> normValues = new List<object>();
+            bool normalized = false;
+            foreach (object val in attribute.Value) {
+                string strVal = val as string;
+                if (strVal != null) {
+                    string[] split = strVal.Split(':');
+                    if (split.Length == 2) {
+                        // it contains delimiter, use the second part
+                        normValues.Add(split[1]);
+                        normalized = true;
+                    } else {
+                        // put the original value
+                        normValues.Add(val);
+                    }
+                }
+            }
+
+            if (normalized) {
+                // build the attribute again
+                return ConnectorAttributeBuilder.Build(attribute.Name, normValues);
+            } else {
+                return attribute;
+            }
+        }
+        #endregion
+
+        #region Filter translation
+
+        // TODO Exchange-specific attributes
+        
+        /// <summary>
+        /// Implementation of SearchOp.CreateFilterTranslator
+        /// </summary>
+        /// <param name="oclass">Object class</param>
+        /// <param name="options">Operation options</param>
+        /// <returns>Filter translator</returns>
+        public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options) {
+            return _handlers[oclass.GetObjectClassValue()].CreateFilterTranslator(this, oclass, options);
+        }
+
+        #endregion
+
+        // ====================================== HERE ARE OBJECT-CLASS-INDEPENDENT CONNECTOR PARTS =====================================
+
+        #region Connector Members
+        /// <summary>
+        /// Inits the connector with configuration injected
+        /// </summary>
+        /// <param name="configuration">Connector configuration</param>
+        public void Init(Configuration configuration) {
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ExchangeConnector.Init: entry");
+
+            _configuration = (ExchangeConfiguration)configuration;
+            _activeDirectoryConnector.Init(configuration);
+            _schema = null;
+            _objectClassInfos = null;
+            Schema();
+            _powershell = new ExchangePowerShellSupport(_configuration.ExchangeVersion, _configuration.ExchangeUri, 
+                 _configuration.ConnectorMessages);
+            _scripting = new Scripting(_configuration.ScriptingConfigurationFile, _powershell);
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "ExchangeConnector.Init: exit");
+        }
+        #endregion
+
+        #region IDisposable Members
+        /// <summary>
+        /// Dispose resources, <see cref="IDisposable"/>
+        /// </summary>
+        public void Dispose() {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Dispose the resources we use
+        /// </summary>
+        /// <param name="disposing">true if called from <see cref="PSExchangeConnector.Dispose()"/> (?????)</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing) {
+                // free managed resources
+                if (this._powershell != null) {
+                    this._powershell.Dispose();
+                    this._powershell = null;
+                }
+            }
+        }
+        #endregion
+
+        #region TestOp Members
+
+        public void Test() {
+            const string operation = "Test";
+
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Exchange.Test method");
+
+            Context context = new Context() {
+                Connector = this,
+                ConnectorConfiguration = _configuration,
+                OperationName = operation
+            };
+
+            _scripting.ExecutePowerShell(context, Scripting.Position.BeforeMain);
+            if (!_scripting.ExecutePowerShell(context, Scripting.Position.InsteadOfMain)) {
+                TestMain();
+            }
+            _scripting.ExecutePowerShell(context, Scripting.Position.AfterMain);
+        }
+
+        /// <summary>
+        /// Tests if the connector is properly configured and ready
+        /// </summary>
+        public void TestMain()
+        {
+            // validate the configuration first, this will check AD configuration too
+            _configuration.Validate();
+
+            // AD validation (includes configuration validation too)
+            _activeDirectoryConnector.Test();
+
+            // runspace check (disabled as it does nothing)
+            //_powershell.Test();
         }
 
         #endregion
@@ -443,70 +680,6 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         #endregion
-
-        public SyncToken GetLatestSyncToken(ObjectClass objectClass)
-        {
-            return _activeDirectoryConnector.GetLatestSyncToken(objectClass);
-        }
-
-        /// <summary>
-        /// Implementation of SynOp.Sync
-        /// </summary>
-        /// <param name="objClass">Object class</param>
-        /// <param name="token">Sync token</param>
-        /// <param name="handler">Sync results handler</param>
-        /// <param name="options">Operation options</param>
-        public void Sync(
-                ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
-        {
-            ExchangeUtility.NullCheck(objClass, "oclass", this._configuration);         
-
-            // we handle accounts only
-            if (!objClass.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                _activeDirectoryConnector.Sync(objClass, token, handler, options);
-                return;
-            }
-
-            ICollection<string> attsToGet = null;
-            if (options != null && options.AttributesToGet != null)
-            {
-                attsToGet = CollectionUtil.NewSet(options.AttributesToGet);
-            }
-
-            // delegate to get the exchange attributes if requested            
-            SyncResultsHandler xchangeHandler = new SyncResultsHandler()
-            {
-                Handle = delta =>
-                {
-                    if (delta.DeltaType == SyncDeltaType.DELETE)
-                    {
-                        return handler.Handle(delta);
-                    }
-
-                // replace the ad attributes with exchange ones and add recipient type and database (if requested)
-                ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object, attsToGet);
-                updated = this.AddExchangeAttributes(objClass, updated, attsToGet); 
-                if (updated != delta.Object)
-                {
-                    // build new sync delta, cause we changed the object
-                    SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
-                                                        {
-                                                                DeltaType = delta.DeltaType,
-                                                                Token = delta.Token,
-                                                                Uid = delta.Uid,
-                                                                Object = updated
-                                                            };
-                        delta = deltaBuilder.Build();
-                    }
-
-                    return handler.Handle(delta);
-                }
-            };
-
-            // call AD sync, use xchangeHandler
-            _activeDirectoryConnector.SyncInternal(objClass, token, xchangeHandler, options, GetAdAttributesToReturn(objClass, options));
-        }
 
         #region AuthenticateOp Members
 
@@ -529,545 +702,6 @@ namespace Org.IdentityConnectors.Exchange
 
         #endregion
 
-        /// <summary>
-        /// Implementation of SearchOp.ExecuteQuery
-        /// </summary>
-        /// <param name="oclass">Object class</param>
-        /// <param name="query">Query to execute</param>
-        /// <param name="handler">Results handler</param>
-        /// <param name="options">Operation options</param>
-        public void ExecuteQuery(
-                ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
-        {
-            ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
-
-            Trace.TraceInformation("Exchange.ExecuteQuery starting");
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            // we handle accounts only
-            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                _activeDirectoryConnector.ExecuteQuery(oclass, query, handler, options);
-                return;
-            }
-
-            ICollection<string> attsToGet = null;
-            if (options != null && options.AttributesToGet != null)
-            {
-                attsToGet = CollectionUtil.NewList(options.AttributesToGet);
-            }
-
-            // delegate to get the exchange attributes if requested            
-            ResultsHandler filter = new ResultsHandler()
-            {
-                Handle = cobject =>
-                {
-                    Trace.TraceInformation("Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
-                    ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
-                    filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
-                    Trace.TraceInformation("Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
-                    return handler.Handle(filtered);
-                }
-            };
-
-            ResultsHandler handler2use = filter;
-            OperationOptions options2use = options;
-
-            // mapping AttributesToGet from Exchange to AD "language"
-            // actually, we don't need this code any more, because the only attribute that
-            // is not retrieved by default is Database, and it is NOT retrieved via AD.
-            // Uncomment this code if necessary in the future.
-            if (options != null && options.AttributesToGet != null)
-            {
-                /*
-                ISet<string> mappedExchangeAttributesToGet = new HashSet<string>(AttMap2AD.Keys);
-                mappedExchangeAttributesToGet.IntersectWith(options.AttributesToGet);
-                if (mappedExchangeAttributesToGet.Count > 0 || attsToGet.Contains(AttRecipientType))
-                {
-                    // replace Exchange attributes with AD names
-                    var newAttsToGet = ExchangeUtility.FilterReplace(attsToGet, AttMap2AD);
-
-                    // we have to remove recipient type, as it is unknown to AD
-                    newAttsToGet.Remove(AttRecipientType);
-
-                    // build new op options
-                    var builder = new OperationOptionsBuilder(options);
-                    string[] attributesToGet = new string[newAttsToGet.Count];
-                    newAttsToGet.CopyTo(attributesToGet, 0);
-                    builder.AttributesToGet = attributesToGet;
-                    options2use = builder.Build();
-                } */
-
-                if (attsToGet.Contains(ExchangeConnectorAttributes.AttDatabase))
-                {
-                    attsToGet.Remove(ExchangeConnectorAttributes.AttDatabase);
-
-                    // build new op options
-                    var builder = new OperationOptionsBuilder(options);
-                    string[] attributesToGet = new string[attsToGet.Count];
-                    attsToGet.CopyTo(attributesToGet, 0);
-                    builder.AttributesToGet = attributesToGet;
-                    options2use = builder.Build();
-                }
-            }
-
-            _activeDirectoryConnector.ExecuteQueryInternal(oclass, query, handler2use, options2use, GetAdAttributesToReturn(oclass, options));
-            Trace.TraceInformation("Exchange.ExecuteQuery method exiting, took {0} ms", stopWatch.ElapsedMilliseconds);
-        }
-
-        /// <summary>
-        /// Implementation of SearchOp.CreateFilterTranslator
-        /// </summary>
-        /// <param name="oclass">Object class</param>
-        /// <param name="options">Operation options</param>
-        /// <returns>Filter translator</returns>
-        public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
-        {
-            return new LegacyExchangeConnectorFilterTranslator();
-        }
-
-        /// <summary>
-        /// Attribute normalizer
-        /// </summary>
-        /// <param name="oclass">Object class</param>
-        /// <param name="attribute">Attribute to be normalized</param>
-        /// <returns>Normalized attribute</returns>
-        public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
-        {
-            // normalize the attribute using AD connector first
-            // attribute = base.NormalizeAttribute(oclass, attribute);
-
-            // normalize mail-related attributes
-            //Trace.TraceInformation("NormalizeAttribute called for {0}", attribute.GetDetails());
-            if (attribute.Is(ExchangeConnectorAttributes.AttExternalEmailAddress) || attribute.Is(ExchangeConnectorAttributes.AttForwardingSmtpAddress))
-            {
-                return NormalizeSmtpAddressAttribute(attribute);
-            }
-            else
-            {
-                return attribute;
-            }
-
-            // TODO: what with EmailAddresses? (we should not remove SMTP/smpt prefix, because it carries information on primary/secondary address type)
-            // TODO: and other attributes?
-        }
-
-        private ConnectorAttribute NormalizeSmtpAddressAttribute(ConnectorAttribute attribute)
-        {
-            if (attribute.Value == null)
-            {
-                return attribute;
-            }
-
-            IList<object> normValues = new List<object>();
-            bool normalized = false;
-            foreach (object val in attribute.Value)
-            {
-                string strVal = val as string;
-                if (strVal != null)
-                {
-                    string[] split = strVal.Split(':');
-                    if (split.Length == 2)
-                    {
-                        // it contains delimiter, use the second part
-                        normValues.Add(split[1]);
-                        normalized = true;
-                    }
-                    else
-                    {
-                        // put the original value
-                        normValues.Add(val);
-                    }
-                }
-            }
-
-            if (normalized)
-            {
-                // build the attribute again
-                return ConnectorAttributeBuilder.Build(attribute.Name, normValues);
-            }
-            else
-            {
-                return attribute;
-            }
-        }
-
-
-        /// <summary>
-        /// helper method to filter out all attributes used in ExchangeConnector only
-        /// </summary>
-        /// <param name="attributes">Connector attributes</param>
-        /// <param name="cmdInfos">CommandInfo whose parameters will be used and filtered out from attributes</param>
-        /// <returns>
-        /// Filtered connector attributes
-        /// </returns>
-        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
-        {
-            IList<string> attsToRemove = new List<string> { ExchangeConnectorAttributes.AttRecipientType };
-            CollectionUtil.AddAll(attsToRemove, ExchangeConnectorAttributes.AttMap2AD.Keys);
-            if (cmdInfos != null)
-            {
-                foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
-                {
-                    if (cmdInfo != null)
-                    {
-                        CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
-                    }
-                }
-            }
-            return ExchangeUtility.FilterOut(attributes, attsToRemove);
-        }
-
-        /// <summary>
-        /// This method tries to get name and value from <see cref="PSMemberInfo"/> and
-        /// creates <see cref="ConnectorAttribute"/> out of it
-        /// </summary>
-        /// <param name="info">PSMemberInfo to get the data from</param>
-        /// <returns>Created ConnectorAttribute or null if not possible to create it</returns>
-        private static ConnectorAttribute GetAsAttribute(PSMemberInfo info)
-        {
-            Assertions.NullCheck(info, "param");
-            if (info.Value != null)
-            {
-                string value = info.Value.ToString();
-
-                // TODO: add type recognition, currently only string is supported
-                if (value != info.Value.GetType().ToString() && !string.IsNullOrEmpty(value))
-                {
-                    return ConnectorAttributeBuilder.Build(info.Name, value);
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Returns first element of the collection
-        /// </summary>
-        /// <typeparam name="T">Object Type stored in collection</typeparam>
-        /// <param name="collection">Collection to get the first element from</param>
-        /// <returns>First element in the collection, null if the collection is empty</returns>
-        private static T GetFirstElement<T>(IEnumerable<T> collection) where T : class
-        {
-            foreach (T o in collection)
-            {
-                return o;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets Recipient Type/Database from Exchange database, this method can be more general, but it is ok
-        /// for our needs
-        /// </summary>
-        /// <param name="oc">object class, currently the method works for <see cref="ObjectClass.ACCOUNT"/> only</param>
-        /// <param name="cobject">connector object to get the recipient type/database for</param>
-        /// <param name="attToGet">attributes to get</param>
-        /// <returns>Connector Object with recipient type added</returns>
-        /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
-        /// user is not found we get this exception too)</exception>
-        private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IEnumerable<string> attToGet)
-        {            
-            ExchangeUtility.NullCheck(oc, "name", this._configuration);
-            ExchangeUtility.NullCheck(oc, "cobject", this._configuration);
-
-            // we support ACCOUNT only or there is nothing to add
-            if (!oc.Is(ObjectClass.ACCOUNT_NAME) || attToGet == null)
-            {
-                return cobject;
-            }
-
-            // check it is not deleted object
-            bool? deleted = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttIsDeleted, cobject.GetAttributes()) as bool?;
-            if (deleted != null && deleted == true)
-            {
-                // do nothing, it is deleted object
-                return cobject;
-            }
-
-            ICollection<string> lattToGet = CollectionUtil.NewCaseInsensitiveSet();
-            CollectionUtil.AddAll(lattToGet, attToGet);
-            foreach (string att in attToGet)
-            {
-                if (cobject.GetAttributeByName(att) != null && att != ExchangeConnectorAttributes.AttDatabase)
-                {
-                    lattToGet.Remove(att);
-                }
-            }
-
-            if (lattToGet.Count == 0)
-            {
-                return cobject;
-            }
-
-            ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
-            cobjBuilder.AddAttributes(cobject.GetAttributes());
-
-            PSExchangeConnector.CommandInfo cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
-
-            // prepare the connector attribute list to get the command
-            ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
-
-            // get the command
-            Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes, this._configuration);
-            ICollection<PSObject> foundObjects = this.InvokePipeline(cmd);
-            PSObject user = null;
-            if (foundObjects != null && foundObjects.Count == 1)
-            {
-                user = GetFirstElement(foundObjects);
-                foreach (var info in user.Properties)
-                {
-                    ConnectorAttribute att = GetAsAttribute(info);
-                    if (att != null && lattToGet.Contains(att.Name))
-                    {
-                        cobjBuilder.AddAttribute(att);
-                        lattToGet.Remove(att.Name);
-                    }
-                }
-
-                if (lattToGet.Count == 0)
-                {
-                    return cobjBuilder.Build();
-                }
-            }
-
-            if (user == null)
-            {
-                // nothing to do
-                return cobject;
-            }
-
-            string rcptType = user.Members[ExchangeConnectorAttributes.AttRecipientType].Value.ToString();
-            foundObjects = null;
-
-            // get detailed information            
-            if (rcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
-            {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailbox, attributes, this._configuration));
-            }
-            else if (rcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
-            {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailUser, attributes, this._configuration));
-            }
-
-            if (foundObjects != null && foundObjects.Count == 1)
-            {
-                PSObject userDetails = GetFirstElement(foundObjects);
-                foreach (var info in userDetails.Properties)
-                {
-                    ConnectorAttribute att = GetAsAttribute(info);
-                    if (att != null && lattToGet.Contains(att.Name))
-                    {
-                        cobjBuilder.AddAttribute(att);
-                        lattToGet.Remove(att.Name);
-                    }
-                }
-            }
-
-            return cobjBuilder.Build();
-        }
-
-        /// <summary>
-        /// Invokes command in PowerShell runspace, this method is just helper
-        /// method to do the exception localization
-        /// </summary>
-        /// <param name="cmd">Command to execute</param>
-        /// <returns>Collection of <see cref="PSObject"/> returned from runspace</returns>
-        /// <exception cref="ConnectorException">If some troubles with command execution, 
-        /// the exception will be partially localized</exception>
-        private ICollection<PSObject> InvokePipeline(Command cmd)
-        {
-            try
-            {
-                Trace.TraceInformation("PowerShell Command: " + cmd);
-                foreach (CommandParameter parameter in cmd.Parameters)
-                {
-                    Trace.TraceInformation("parameter: " + parameter.Name + " value:" + parameter.Value);
-                }
-
-                return this._runspace.InvokePipeline(cmd);
-            }
-            catch (Exception e)
-            {
-                throw new ConnectorException(this._configuration.ConnectorMessages.Format(
-                            "ex_powershell_problem", "Problem while PowerShell execution {0}", e));
-            }
-        }
-
-        /// <summary>
-        /// helper method for searching object in AD by UID
-        /// </summary>
-        /// <param name="uid">Uid of the searched </param>
-        /// <param name="oclass">Object class</param>
-        /// <param name="options">Operation options</param>
-        /// <returns>Connector object found by the Uid</returns>
-        private ConnectorObject ADSearchByUid(Uid uid, ObjectClass oclass, OperationOptions options)
-        {
-            ExchangeUtility.NullCheck(uid, "uid", this._configuration);
-            ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
-            if (options == null)
-            {
-                options = new OperationOptionsBuilder().Build();
-            }
-
-            ConnectorObject ret = null;
-            Filter filter = FilterBuilder.EqualTo(uid);
-            var translator = _activeDirectoryConnector.CreateFilterTranslator(oclass, options);
-            IList<string> queries = translator.Translate(filter);
-
-            if (queries.Count == 1)
-            {
-                ResultsHandler handler = new ResultsHandler()
-                {
-                    Handle = cobject =>
-                    {
-                        ret = cobject;
-                        return false;
-                    }
-                };
-                _activeDirectoryConnector.ExecuteQuery(oclass, queries[0], handler, options);
-            }
-
-            return ret;
-        }
-
-        /// <summary>
-        /// Gets the Exchange user using powershell Get-User command
-        /// </summary>
-        /// <param name="cmdInfo">command info to get the user</param>
-        /// <param name="attributes">attributes containing the Name</param>
-        /// <returns><see cref="PSObject"/> with user info</returns>
-        private PSObject GetUser(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
-        {
-            // assert we have user name
-            string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
-            ExchangeUtility.NullCheck(name, "User name", this._configuration);
-
-            Command cmdUser = ExchangeUtility.GetCommand(cmdInfo, attributes, this._configuration);
-            ICollection<PSObject> users = this.InvokePipeline(cmdUser);
-            if (users.Count == 1)
-            {
-                foreach (PSObject obj in users)
-                {
-                    return obj;
-                }
-            }
-
-            throw new ArgumentException(
-                this._configuration.ConnectorMessages.Format(
-                "ex_bad_username", "Provided User name is not unique or not existing"));
-        }
-
-        /// <summary>
-        /// Filter translator which does MS Exchange specific translation
-        /// </summary>
-        private class LegacyExchangeConnectorFilterTranslator : ActiveDirectoryFilterTranslator
-        {
-            /// <summary>
-            /// Translates the connector attribute name to LDAP name            
-            /// </summary>
-            /// <param name="attr">Connector attribute name</param>
-            /// <returns>Translated string array</returns>
-            protected override string[] GetLdapNamesForAttribute(ConnectorAttribute attr)
-            {
-                // Exchange attributes with known mappings to AD
-                foreach (string attrNameInExchange in ExchangeConnectorAttributes.AttMap2AD.Keys)
-                {
-                    if (attr.Is(attrNameInExchange))
-                    {
-                        return new[] { ExchangeConnectorAttributes.AttMap2AD[attrNameInExchange] };
-                    }
-                }
-
-                // Other Exchange attributes have no mapping to AD ones.
-                // This means that some attributes with more complicated mappings,
-                // like RecipientType or EmailAddressPolicyEnabled, cannot be
-                // used in search queries.
-                if (ExchangeConnectorAttributes.IsExchangeAttribute(attr))
-                {
-                    return null;
-                }
-                else
-                {
-                    return base.GetLdapNamesForAttribute(attr);
-                }
-            }
-        }
-        #region SchemaOp Implementation
-
-        /// <summary>
-        /// Implementation of SchemaSpiOp
-        /// </summary>
-        /// <returns></returns>
-        public Schema Schema()
-        {
-            Trace.TraceInformation("Exchange.Schema method");
-            if (_schema != null)
-            {
-                Trace.TraceInformation("Returning cached schema");
-            }
-            else
-            {
-                _schema = SchemaUtils.BuildSchema(this,
-                                _activeDirectoryConnector.GetSupportedObjectClasses,
-                                GetObjectClassInfo,
-                                _activeDirectoryConnector.GetSupportedOperations,
-                                _activeDirectoryConnector.GetUnSupportedOperations);
-            }
-            return _schema;
-        }
-
-        /// <summary>
-        /// Gets the object class info for specified object class, used for schema building
-        /// </summary>
-        /// <param name="oc">ObjectClass to get info for</param>
-        /// <returns>ObjectClass' ObjectClassInfo</returns>
-        private ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
-        {
-            // get the object class from base
-            ObjectClassInfo oinfo = _activeDirectoryConnector.GetObjectClassInfo(oc);
-            Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: oinfo for {0} from AD has {1} entries", oc, oinfo.ConnectorAttributeInfos.Count);
-
-            // add additional attributes for ACCOUNT
-            if (oc.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                var classInfoBuilder = new ObjectClassInfoBuilder { IsContainer = oinfo.IsContainer, ObjectType = oinfo.ObjectType };
-                classInfoBuilder.AddAllAttributeInfo(oinfo.ConnectorAttributeInfos);
-                classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ManualExchangeAttInfosForSchema);
-                classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.AttInfoCustomAttributesForSchema);
-                classInfoBuilder.AddAllAttributeInfo(ExchangeConnectorAttributes.ExchangeRelatedADAttInfosForSchema);
-                oinfo = classInfoBuilder.Build();
-                Trace.TraceInformation("ExchangeConnector.GetObjectClassInfo: newly created oinfo has {0} entries", oinfo.ConnectorAttributeInfos.Count);
-            }
-
-            // return
-            return oinfo;
-        }
-
-        private ICollection<string> GetAdAttributesToReturn(ObjectClass oclass, OperationOptions options)
-        {
-            ICollection<string> attNames = _activeDirectoryConnector.GetAdAttributesToReturn(oclass, options);
-
-            // In attNames there is a mix of attributes - some AD-only ones (from ObjectClasses.xml),
-            // and some Exchange ones (from the schema) and some AD-only-for-Exchange ones (from the schema).
-            // We should convert Exchange ones to their AD counterparts and add "hidden useful" AD attributes.
-
-            if (oclass.Is(ObjectClass.ACCOUNT_NAME))
-            {
-                ICollection<string> newAttNames = new HashSet<string>(attNames);
-
-                // IMPORTANT: we assume that "options" do not imply any additional AD attributes
-                CollectionUtil.AddAll(newAttNames, ExchangeConnectorAttributes.AttMapFromAD.Keys);
-                CollectionUtil.AddAll(newAttNames, ExchangeConnectorAttributes.HiddenAdAttributesToRetrieve);
-                CollectionUtil.AddAll(newAttNames, ExchangeConnectorAttributes.VisibleAdAttributesToRetrieve);
-                attNames = newAttNames;
-            }
-            return attNames;
-        }
-
-        #endregion
 
     }
 }

@@ -42,7 +42,7 @@ import java.text.DateFormat
 def operation = operation as OperationType
 def updateAttributes = attributes as Set<Attribute>
 def configuration = configuration as ScriptedConfiguration
-def id = id as Attribute
+def id = id as String
 def log = log as Log
 def objectClass = objectClass as ObjectClass
 def options = options as OperationOptions
@@ -143,15 +143,19 @@ switch (operation) {
                 TestHelper.exceptionTest(operation, objectClass, uid, options)
                 break
             case TestHelper.SAMPLE:
-                throw new UnsupportedOperationException("Update operation of type:" + objectClass)
+                throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+                        objectClass.objectClassValue + " is not supported.")
             default:
-                throw new UnsupportedOperationException("Update operation of type:" + objectClass)
+                throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+                        objectClass.objectClassValue + " is not supported.")
         }
         break
     case OperationType.ADD_ATTRIBUTE_VALUES:
-        throw new UnsupportedOperationException()
+        throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+                objectClass.objectClassValue + " is not supported.")
     case OperationType.REMOVE_ATTRIBUTE_VALUES:
-        throw new UnsupportedOperationException()
+        throw new UnsupportedOperationException(operation.name() + " operation of type:" +
+                objectClass.objectClassValue + " is not supported.")
     default:
         throw new ConnectorException("UpdateScript can not handle operation:" + operation.name())
 }

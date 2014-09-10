@@ -64,7 +64,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             StringBuilder builder = new StringBuilder();
             if (not) {
-                builder.Append("!(");
+                builder.Append("(!");
             }
             if (attrNames.Length == 1) {
                 builder.Append('(');
@@ -108,7 +108,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             StringBuilder builder = new StringBuilder();
             if (not) {
-                builder.Append("!(");
+                builder.Append("(!");
             }
             if (attrNames.Length == 1) {
                 builder.Append('(');
@@ -142,7 +142,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             StringBuilder builder = new StringBuilder();
             if (not) {
-                builder.Append("!(");
+                builder.Append("(!");
             }
             if (attrNames.Length == 1) {
                 builder.Append('(');
@@ -257,7 +257,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             StringBuilder builder = new StringBuilder();
             if (not) {
-                builder.Append("!(");
+                builder.Append("(!");
             }
             BuildGreaterOrEqualFilter(builder, attrNames, filter.GetValue());
             if (not) {
@@ -293,7 +293,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             StringBuilder builder = new StringBuilder();
             if (not) {
-                builder.Append("!(");
+                builder.Append("(!");
             }
             BuildLessOrEqualFilter(builder, attrNames, filter.GetValue());
             if (not) {
