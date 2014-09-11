@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+====================
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+
+Copyright (c) 2014 ForgeRock AS. All Rights Reserved
+
+The contents of this file are subject to the terms
+of the Common Development and Distribution License
+(the License). You may not use this file except in
+compliance with the License.
+
+You can obtain a copy of the License at
+http://forgerock.org/license/CDDLv1.0.html
+See the License for the specific language governing
+permission and limitations under the License.
+
+When distributing Covered Code, include this CDDL
+Header Notice in each file and include the License file
+at http://forgerock.org/license/CDDLv1.0.html
+If applicable, add the following below the CDDL Header,
+with the fields enclosed by brackets [] replaced by
+your own identifying information:
+"Portions Copyrighted [year] [name of copyright owner]"
+ ====================
+-->
+<config>
+  <property name="configuration.CreateScriptFileName" value="..\..\..\Samples\Tests\Create.ps1"/>
+  <property name="configuration.UpdateScriptFileName" value="..\..\..\Samples\Tests\Update.ps1"/>
+  <property name="configuration.DeleteScriptFileName" value="..\..\..\Samples\Tests\\Delete.ps1"/>
+  <property name="configuration.SearchScriptFileName" value="..\..\..\Samples\Tests\Search.ps1"/>
+  <property name="configuration.TestScriptFileName" value="..\..\..\Samples\Tests\Test.ps1"/>
+  <property name="configuration.SchemaScriptFileName" value="..\..\..\Samples\Tests\Schema.ps1"/>
+  <property name="configuration.SyncScriptFileName" value="..\..\..\Samples\Tests\Sync.ps1"/>
+  <property name="configuration.AuthenticateScriptFileName" value="..\..\..\Samples\Tests\Authenticate.ps1"/>
+  <property name="configuration.ResolveUsernameScriptFileName" value="..\..\..\Samples\Tests\ResolveUsername.ps1"/>
+  <property name="configuration.UidAttributeName" value="__UID__"/>
+  <property name="configuration.NameAttributeName" value="__NAME__"/>
+  <property name="configuration.QueryFilterType" value="Native"/>
+  <property name="configuration.SubstituteUidAndNameInQueryFilter" value="False"/>
+  <property name="configuration.VariablesPrefix" value="Connector"/>
+</config>
