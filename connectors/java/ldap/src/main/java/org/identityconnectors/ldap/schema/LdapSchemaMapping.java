@@ -40,8 +40,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.naming.NameAlreadyBoundException;
 
+import javax.naming.NameAlreadyBoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
@@ -178,7 +178,9 @@ public class LdapSchemaMapping {
             result = getLdapUidAttribute(oclass);
         } else if (AttributeUtil.namesEqual(Name.NAME, attrName)) {
             result = getLdapNameAttribute(oclass);
-        }
+        } else if (AttributeUtil.namesEqual(OperationalAttributes.PASSWORD_NAME, attrName)){
+    		result = getLdapPasswordAttribute(oclass);
+    	} 
 
         if (result == null && !AttributeUtil.isSpecialName(attrName)) {
             result = attrName;
@@ -258,6 +260,10 @@ public class LdapSchemaMapping {
      */
     public String getLdapNameAttribute(ObjectClass oclass) {
         return DEFAULT_LDAP_NAME_ATTR;
+    }
+    
+    public String getLdapPasswordAttribute(ObjectClass oclass) {
+    	return conn.getConfiguration().getPasswordAttribute();
     }
 
     /**
