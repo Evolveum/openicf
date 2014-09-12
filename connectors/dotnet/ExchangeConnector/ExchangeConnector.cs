@@ -51,7 +51,7 @@ namespace Org.IdentityConnectors.Exchange
         MessageCatalogPaths = new[] { "Org.IdentityConnectors.Exchange.Messages",
                 "Org.IdentityConnectors.ActiveDirectory.Messages" })]
     public class ExchangeConnector : CreateOp, Connector, SchemaOp, DeleteOp,
-        SearchOp<string>, TestOp, ScriptOnResourceOp, UpdateOp, SyncOp,
+        SearchOp<string>, TestOp, ScriptOnResourceOp, UpdateOp, UpdateAttributeValuesOp, SyncOp,
         AuthenticateOp, PoolableConnector, AttributeNormalizer
     {
         #region Fields Definition
@@ -210,14 +210,27 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="options">Operation options</param>
         /// <returns>Uid of the updated object</returns>
         public Uid Update(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
+            return Update(UpdateType.REPLACE, oclass, uid, attributes, options);
+        }
+
+        public Uid AddAttributeValues(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> valuesToAdd, OperationOptions options) {
+            return Update(UpdateType.ADD, oclass, uid, valuesToAdd, options);
+        }
+
+        public Uid RemoveAttributeValues(ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> valuesToRemove, OperationOptions options) {
+            return Update(UpdateType.DELETE, oclass, uid, valuesToRemove, options);
+        }
+
+        public Uid Update(UpdateType updateType, ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes, OperationOptions options) {
             const string operation = "Update";
 
+            ExchangeUtility.NullCheck(updateType, "updateType", this._configuration);
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
             ExchangeUtility.NullCheck(uid, "uid", this._configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this._configuration);
 
             LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
-                "Exchange.Update method; oclass = {0}, uid = {1}, attributes:\n{2}", oclass, uid, CommonUtils.DumpConnectorAttributes(attributes));
+                "Exchange.Update method; oclass = {0}, uid = {1}, type = {2}, attributes:\n{3}", oclass, uid, updateType, CommonUtils.DumpConnectorAttributes(attributes));
 
             if (attributes == null || attributes.Count == 0) {
                 LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT,
@@ -226,6 +239,7 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             UpdateOpContext context = new UpdateOpContext() {
+                UpdateType = updateType,
                 Attributes = attributes,
                 Connector = this,
                 ConnectorConfiguration = this._configuration,
@@ -320,6 +334,10 @@ namespace Org.IdentityConnectors.Exchange
             const string operation = "ExecuteQuery";
 
             ExchangeUtility.NullCheck(oclass, "oclass", this._configuration);
+            if (options == null)
+            {
+                options = new OperationOptions(new Dictionary<string,object>());
+            }
 
             LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
                 "Exchange.ExecuteQuery method; oclass = {0}, query = {1}", oclass, query);

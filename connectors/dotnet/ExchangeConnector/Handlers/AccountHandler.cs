@@ -23,7 +23,7 @@ namespace Org.IdentityConnectors.Exchange {
 
         public void Create(CreateOpContext context) {
 
-            PreprocessAttributes(context);
+            context.Attributes = DeduplicateEmailAddresses(context, context.Attributes);
 
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
@@ -85,8 +85,8 @@ namespace Org.IdentityConnectors.Exchange {
             }
 
             // prepare the command            
-            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, enhancedAttributes, (ExchangeConfiguration) context.ConnectorConfiguration);
-            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, enhancedAttributes, (ExchangeConfiguration)context.ConnectorConfiguration);
+            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, enhancedAttributes, uid, (ExchangeConfiguration) context.ConnectorConfiguration);
+            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, enhancedAttributes, uid, (ExchangeConfiguration)context.ConnectorConfiguration);
 
             try {
                 _helper.InvokePipeline(exconn, cmdEnable);
@@ -111,16 +111,10 @@ namespace Org.IdentityConnectors.Exchange {
             context.Uid = uid;
         }
 
-        public void Update(UpdateOpContext context) {
-
-            PreprocessAttributes(context);
-
+        public void Update(UpdateOpContext context) 
+        {
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
             ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
-
-            // get recipient type and database
-            string rcptType = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttRecipientType, context.Attributes) as string;
-            string database = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttDatabase, context.Attributes) as string;
 
             // update in AD first
             var filtered = ExchangeUtility.FilterOut(
@@ -129,71 +123,67 @@ namespace Org.IdentityConnectors.Exchange {
                 PSExchangeConnector.CommandInfo.EnableMailUser,
                 PSExchangeConnector.CommandInfo.SetMailbox,
                 PSExchangeConnector.CommandInfo.SetMailUser);
-            adconn.Update(context.ObjectClass, context.Uid, filtered, context.Options);
+            adconn.Update(context.UpdateType, context.ObjectClass, context.Uid, filtered, context.Options);
 
             // retrieve Exchange-related information about the user
-            ConnectorObject aduser = ADSearchByUid(exconn, context.Uid, context.ObjectClass, ExchangeUtility.AddAttributeToOptions(context.Options, ExchangeConnectorAttributes.AttDatabaseADName));
+            string query = "(objectGUID=" + ActiveDirectoryUtils.ConvertUIDToSearchString(context.Uid) + ")";
+            ConnectorObject currentObject = _helper.GetCurrentObject(context, query);
+            ICollection<ConnectorAttribute> attributesForReplace = _helper.DetermineNewAttributeValues(context, currentObject);
 
-            // to get the user information, we have to provide user's name
-            context.Attributes = new HashSet<ConnectorAttribute>(context.Attributes);           // to make collection modifiable
-            context.Attributes.Add(aduser.Name);
+            attributesForReplace = DeduplicateEmailAddresses(context, attributesForReplace);
 
-            // now create and execute PS command to get the information
-            PSExchangeConnector.CommandInfo cmdInfo;
-            if (aduser.GetAttributeByName(ExchangeConnectorAttributes.AttDatabaseADName) != null)
+            string origRcptType;
+            var newRcptType = _helper.DetermineOrigAndNewAttributeValue(context, currentObject, attributesForReplace, ExchangeConnectorAttributes.AttRecipientType, out origRcptType);
+            if (newRcptType == null) 
             {
-                cmdInfo = PSExchangeConnector.CommandInfo.GetMailbox;       // we can be sure it is user mailbox type
-            }
-            else
-            {
-                cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
-            }
-            PSObject psuser = GetUser(exconn, cmdInfo, context.Attributes);
-
-            // do we change recipient type?
-            string origRcptType = psuser.Members[ExchangeConnectorAttributes.AttRecipientType].Value.ToString();
-            if (String.IsNullOrEmpty(rcptType))
-            {
-                rcptType = origRcptType;
+                newRcptType = ExchangeConnectorAttributes.RcptTypeUser;
             }
 
-            if (rcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
+            string origDatabase;
+            var newDatabase = _helper.DetermineOrigAndNewAttributeValue(context, currentObject, attributesForReplace, ExchangeConnectorAttributes.AttDatabase, out origDatabase);
+
+            // PART 1 - DEALING WITH MailUser CASE
+
+            if (ExchangeConnectorAttributes.RcptTypeMailUser.Equals(newRcptType)) 
             {
                 // disabling Mailbox if needed
-                if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
+                if (ExchangeConnectorAttributes.RcptTypeMailBox.Equals(origRcptType)) 
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, exconn.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributesForReplace, context.Uid, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
                     _helper.InvokePipeline(exconn, cmdDisable);
                 }
 
                 // enabling MailUser if needed
-                if (origRcptType != rcptType)
+                if (!ExchangeConnectorAttributes.RcptTypeMailUser.Equals(origRcptType)) 
                 {
                     // Enable-MailUser needs the value of ExternalEmailAddress, so we have to get it
-                    string externalEmailAddress = ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, context.Attributes) as string;
-                    if (String.IsNullOrEmpty(externalEmailAddress))
+                    string origExternalEmailAddress;
+                    var newExternalEmailAddress = _helper.DetermineOrigAndNewAttributeValue(context, currentObject, attributesForReplace, ExchangeConnectorAttributes.AttExternalEmailAddress, out origExternalEmailAddress);
+
+                    if (String.IsNullOrEmpty(newExternalEmailAddress)) 
                     {
-                        PSMemberInfo o = psuser.Members[ExchangeConnectorAttributes.AttExternalEmailAddress];
-                        if (o == null || o.Value == null || String.IsNullOrEmpty(o.Value.ToString()))
-                        {
-                            throw new InvalidOperationException("Missing ExternalEmailAddress value, which is required for a MailUser");
-                        }
-                        externalEmailAddress = o.Value.ToString();
-                        ExchangeUtility.SetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, externalEmailAddress, context.Attributes);
+                        throw new InvalidOperationException("Missing ExternalEmailAddress value, which is required for a MailUser");
                     }
+                    ExchangeUtility.SetAttValue(ExchangeConnectorAttributes.AttExternalEmailAddress, newExternalEmailAddress, attributesForReplace);
 
                     // now execute the Enable-MailUser command
                     Command cmdEnable = ExchangeUtility.GetCommand(
-                            PSExchangeConnector.CommandInfo.EnableMailUser, context.Attributes, exconn.Configuration);
+                                PSExchangeConnector.CommandInfo.EnableMailUser, attributesForReplace, context.Uid, exconn.Configuration);
                     _helper.InvokePipeline(exconn, cmdEnable);
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, context.Attributes, exconn.Configuration);
+                // setting MailUser attributes
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, attributesForReplace, context.Uid, exconn.Configuration);
                 _helper.InvokePipeline(exconn, cmdSet);
             }
-            else if (rcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
+
+            // PART 2 - DEALING WITH UserMailbox CASE
+
+            else if (ExchangeConnectorAttributes.RcptTypeMailBox.Equals(newRcptType))
             {
+                // enable mailbox if necessary
+
                 // we should execute something like this here:
                 // get-user -identity id|?{$_.RecipientType -eq "User"}|enable-mailbox -database "db"
                 // unfortunately I was not able to get it working with the pipeline... that's why there are two commands
@@ -201,16 +191,15 @@ namespace Org.IdentityConnectors.Exchange {
                 // alternatively there can be something like:
                 // get-user -identity id -RecipientTypeDetails User|enable-mailbox -database "db", but we have then trouble
                 // with detecting attempt to change the database attribute               
-                string origDatabase = psuser.Members[ExchangeConnectorAttributes.AttDatabase] != null ? psuser.Members[ExchangeConnectorAttributes.AttDatabase].Value.ToString() : null;
-                if (origRcptType != rcptType)
+                if (!ExchangeConnectorAttributes.RcptTypeMailBox.Equals(origRcptType))
                 {
-                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, context.Attributes, exconn.Configuration);
+                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, attributesForReplace, context.Uid, exconn.Configuration);
                     _helper.InvokePipeline(exconn, cmdEnable);
                 }
                 else
                 {
-                    // trying to update the database?
-                    if (database != null && database != origDatabase)
+                    // are we trying to update the database?
+                    if (newDatabase != null && origDatabase != null && !newDatabase.Equals(origDatabase))
                     {
                         throw new ArgumentException(
                             context.ConnectorConfiguration.ConnectorMessages.Format(
@@ -218,24 +207,27 @@ namespace Org.IdentityConnectors.Exchange {
                     }
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, context.Attributes, exconn.Configuration);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributesForReplace, context.Uid, exconn.Configuration);
                 _helper.InvokePipeline(exconn, cmdSet);
             }
-            else if (rcptType == ExchangeConnectorAttributes.RcptTypeUser)
+
+            // PART 3 - DEALING WITH User CASE
+
+            else if (ExchangeConnectorAttributes.RcptTypeUser.Equals(newRcptType))
             {
-                if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailBox)
+                if (ExchangeConnectorAttributes.RcptTypeMailBox.Equals(origRcptType))
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, context.Attributes, exconn.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailbox, attributesForReplace, context.Uid, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
                     _helper.InvokePipeline(exconn, cmdDisable);
                 }
-                else if (origRcptType == ExchangeConnectorAttributes.RcptTypeMailUser)
+                else if (ExchangeConnectorAttributes.RcptTypeMailUser.Equals(origRcptType))
                 {
-                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, context.Attributes, exconn.Configuration);
+                    Command cmdDisable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.DisableMailUser, attributesForReplace, context.Uid, exconn.Configuration);
                     cmdDisable.Parameters.Add("Confirm", false);
                     _helper.InvokePipeline(exconn, cmdDisable);
                 }
-                else if (origRcptType == ExchangeConnectorAttributes.RcptTypeUser)
+                else if (ExchangeConnectorAttributes.RcptTypeUser.Equals(origRcptType))
                 {
                     // if orig is User, there is no need to disable anything
                 }
@@ -244,7 +236,7 @@ namespace Org.IdentityConnectors.Exchange {
                     throw new InvalidOperationException("Invalid original recipient type: " + origRcptType);
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, context.Attributes, exconn.Configuration);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetUser, attributesForReplace, context.Uid, exconn.Configuration);
                 _helper.InvokePipeline(exconn, cmdSet);
             }
             else
@@ -252,44 +244,122 @@ namespace Org.IdentityConnectors.Exchange {
                 // unsupported rcpt type
                 throw new ArgumentException(
                             context.ConnectorConfiguration.ConnectorMessages.Format(
-                            "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
+                            "ex_bad_rcpt", "Recipient type [{0}] is not supported", newRcptType));
             }
         }
 
-        private void PreprocessAttributes(CreateUpdateOpContext context) {
-            // deduplicate EmailAddresses
+        /// <summary>
+        /// DeduplicatesEmailAddresses.
+        ///  - on REPLACE (i.e. update/replace or create) the situation is easy: we just remove duplicate entries (SMTP:x & smtp:x result in SMTP:x)
+        ///  - on DELETE we currently do nothing
+        ///  - on ADD we have one additional rule:
+        ///     "If we are adding SMTP:x, we first convert all SMTP:y in existing records to smtp:y because we see the intent of having x to be a new primary"
+        ///  
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="attributes">these are attributes to be set (already resolved if we have update of type ADD or DELETE)</param>
+        /// <returns></returns>
+        private ICollection<ConnectorAttribute> DeduplicateEmailAddresses(CreateUpdateOpContext context, ICollection<ConnectorAttribute> attributes)
+        {
+            // trivial cases
 
-            ConnectorAttribute attribute = ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddresses, context.Attributes);
-            if (attribute != null) {
-                if (attribute.Value != null) {
-                    IDictionary<string, string> values = new Dictionary<string, string>();       // normalized->most-recent-original e.g. SMTP:XYZ@AAA.EDU -> SMTP:xyz@aaa.edu (if primary is present)
-                    bool changed = false;
-                    foreach (object v in attribute.Value) {
-                        string address = (string)v;
-                        string normalized = address.ToUpper();
-                        if (values.ContainsKey(normalized)) {
-                            changed = true;
-                            string existing = values[normalized];
-                            if (address.StartsWith("SMTP:") && existing.StartsWith("smtp:")) {
-                                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", existing, address);
-                                values[normalized] = address;
-                            } else {
-                                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", address, existing);
-                            }
-                        } else {
-                            values.Add(normalized, address);
-                        }
-                    }
-                    if (changed) {
-                        ConnectorAttributeBuilder cab = new ConnectorAttributeBuilder();
-                        cab.Name = ExchangeConnectorAttributes.AttEmailAddresses;
-                        foreach (string value in values.Values) {
-                            cab.AddValue(value);
-                        }
-                        context.Attributes.Remove(attribute);
-                        context.Attributes.Add(cab.Build());
+            if (context is UpdateOpContext && ((UpdateOpContext)context).UpdateType == UpdateType.DELETE)
+            {
+                return attributes;
+            }
+
+            ConnectorAttribute attribute = ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddresses, attributes);
+            if (attribute == null || attribute.Value == null)
+            {
+                return attributes;      // missing or empty EmailAddresses - nothing to deduplicate
+            }
+            ConnectorAttribute attributeDelta = ConnectorAttributeUtil.Find(ExchangeConnectorAttributes.AttEmailAddresses, context.Attributes);
+            if (attributeDelta == null || attributeDelta.Value == null)
+            {
+                return attributes;      // missing or empty changed EmailAddresses - nothing to deduplicate
+            }
+
+            // now the main part
+
+            IList<string> valuesToDeduplicate = new List<string>();
+            foreach (object o in attribute.Value)
+            {
+                if (o != null)
+                {
+                    valuesToDeduplicate.Add(o.ToString());
+                }
+            }
+            bool changed = false;
+
+            // special rule: if ADD with SMTP:, let us change all other "SMTP:x" to "smtp:x"
+            Boolean isUpdateAdd = context is UpdateOpContext && ((UpdateOpContext)context).UpdateType == UpdateType.ADD;
+            if (isUpdateAdd)
+            {
+                string newPrimary = null;
+                foreach (object o in attributeDelta.Value)
+                {
+                    if (((string)o).StartsWith("SMTP:"))
+                    {
+                        newPrimary = (string)o;
+                        break;
                     }
                 }
+                if (newPrimary != null)
+                {
+                    foreach (string address in new List<string>(valuesToDeduplicate))      // to eliminate concurrent access
+                    {
+                        if (address.StartsWith("SMTP:") && !address.Equals(newPrimary))
+                        {
+                            string replacement = "smtp:" + address.Substring(5);
+                            LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Changing duplicate primary-candidate address {0} to {1}", address, replacement);
+                            valuesToDeduplicate.Remove(address);
+                            valuesToDeduplicate.Add(replacement);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            IDictionary<string, string> values = new Dictionary<string, string>();       // normalized->most-recent-original e.g. SMTP:XYZ@AAA.EDU -> SMTP:xyz@aaa.edu (if primary is present)
+            foreach (object v in valuesToDeduplicate) 
+            {
+                string address = (string)v;
+                string normalized = address.ToUpper();
+                if (values.ContainsKey(normalized)) 
+                {
+                    changed = true;
+                    string existing = values[normalized];
+                    if (address.StartsWith("SMTP:") && existing.StartsWith("smtp:")) 
+                    {
+                        LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", existing, address);
+                        values[normalized] = address;
+                    }
+                    else 
+                    {
+                        LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Removing redundant address {0}, keeping {1}", address, existing);
+                    }
+                } 
+                else 
+                {
+                    values.Add(normalized, address);
+                }
+            }
+            if (changed)
+            {
+                ConnectorAttributeBuilder cab = new ConnectorAttributeBuilder();
+                cab.Name = ExchangeConnectorAttributes.AttEmailAddresses;
+                foreach (string value in values.Values)
+                {
+                    cab.AddValue(value);
+                }
+                ICollection<ConnectorAttribute> rv = new List<ConnectorAttribute>(attributes);          // the original is (sometimes) a read-only collection
+                rv.Remove(attribute);
+                rv.Add(cab.Build());
+                return rv;
+            }
+            else
+            {
+                return attributes;
             }
         }
 
@@ -318,8 +388,8 @@ namespace Org.IdentityConnectors.Exchange {
                 Handle = cobject =>
                 {
                     LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Object returned from AD connector: {0}", CommonUtils.DumpConnectorAttributes(cobject.GetAttributes()));
-                    ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject, attsToGet);
-                    filtered = AddExchangeAttributes(exconn, context.ObjectClass, filtered, attsToGet);
+                    ConnectorObject filtered = ExchangeUtility.ConvertAdAttributesToExchange(cobject);
+                    //filtered = AddExchangeAttributes(exconn, context.ObjectClass, filtered, attsToGet);
                     LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
                     return context.ResultsHandler.Handle(filtered);
                 }
@@ -329,8 +399,7 @@ namespace Org.IdentityConnectors.Exchange {
             OperationOptions options2use = context.Options;
 
             // mapping AttributesToGet from Exchange to AD "language"
-            // actually, we don't need this code any more, because the only attribute that
-            // is not retrieved by default is Database, and it is NOT retrieved via AD.
+            // actually, we don't need this code any more, because there are no attribute that are not retrieved by default 
             // Uncomment this code if necessary in the future.
             if (context.Options != null && context.Options.AttributesToGet != null)
             {
@@ -353,6 +422,7 @@ namespace Org.IdentityConnectors.Exchange {
                     options2use = builder.Build();
                 } */
 
+                /*
                 if (attsToGet.Contains(ExchangeConnectorAttributes.AttDatabase))
                 {
                     attsToGet.Remove(ExchangeConnectorAttributes.AttDatabase);
@@ -364,6 +434,7 @@ namespace Org.IdentityConnectors.Exchange {
                     builder.AttributesToGet = attributesToGet;
                     options2use = builder.Build();
                 }
+                 */
             }
 
             adconn.ExecuteQueryInternal(context.ObjectClass, 
@@ -393,8 +464,8 @@ namespace Org.IdentityConnectors.Exchange {
                     }
 
                     // replace the ad attributes with exchange ones and add recipient type and database (if requested)
-                    ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object, attsToGet);
-                    updated = this.AddExchangeAttributes(exconn, context.ObjectClass, updated, attsToGet);
+                    ConnectorObject updated = ExchangeUtility.ConvertAdAttributesToExchange(delta.Object);
+                    //updated = this.AddExchangeAttributes(exconn, context.ObjectClass, updated, attsToGet);
                     if (updated != delta.Object)
                     {
                         // build new sync delta, cause we changed the object
@@ -450,13 +521,15 @@ namespace Org.IdentityConnectors.Exchange {
         /// <param name="cmdInfo">command info to get the user</param>
         /// <param name="attributes">attributes containing the Name</param>
         /// <returns><see cref="PSObject"/> with user info</returns>
-        private PSObject GetUser(ExchangeConnector connector, PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
+        private PSObject GetUser(ExchangeConnector connector, PSExchangeConnector.CommandInfo cmdInfo, Name nameAttribute)
         {
             ExchangeConfiguration configuration = connector.Configuration;
             // assert we have user name
-            string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
+            string name = nameAttribute.GetNameValue();
             ExchangeUtility.NullCheck(name, "User name", configuration);
 
+            ICollection<ConnectorAttribute> attributes = new List<ConnectorAttribute>();
+            attributes.Add(nameAttribute);
             Command cmdUser = ExchangeUtility.GetCommand(cmdInfo, attributes, configuration);
             ICollection<PSObject> users = _helper.InvokePipeline(connector, cmdUser);
             if (users.Count == 1)
@@ -484,6 +557,10 @@ namespace Org.IdentityConnectors.Exchange {
         /// user is not found we get this exception too)</exception>
         private ConnectorObject AddExchangeAttributes(ExchangeConnector exchangeConnector, ObjectClass oc, ConnectorObject cobject, IEnumerable<string> attToGet)
         {
+            // NOTHING TO DO. Everything has been read from AD!
+            return cobject;
+
+            /*
             ExchangeConfiguration configuration = exchangeConnector.Configuration;
             ExchangeUtility.NullCheck(oc, "name", configuration);
             ExchangeUtility.NullCheck(oc, "cobject", configuration);
@@ -582,6 +659,7 @@ namespace Org.IdentityConnectors.Exchange {
             }
 
             return cobjBuilder.Build();
+            */
         }
 
         private ICollection<string> GetAdAttributesToReturn(ActiveDirectoryConnector adConnector, ObjectClass oclass, OperationOptions options)

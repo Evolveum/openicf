@@ -238,8 +238,8 @@
       <AttributeInfo name="samAccountName" type="String"/>
       <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="displayName" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+<!--        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/> -->
       </AttributeInfo>
       <AttributeInfo name="managedBy" type="String"/>
       <AttributeInfo name="mail" type="String"/>
@@ -303,8 +303,8 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
       <AttributeInfo name="displayName" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+<!--        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/> -->
       </AttributeInfo>
       <AttributeInfo name="__DESCRIPTION__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>

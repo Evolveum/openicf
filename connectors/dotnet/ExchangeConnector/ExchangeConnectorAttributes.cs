@@ -195,20 +195,20 @@ namespace Org.IdentityConnectors.Exchange
         /// being put into Database attribute). We plan to deal with this
         /// conversion in the future.
         /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoDatabase =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttDatabase,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+        //private static readonly ConnectorAttributeInfo AttInfoDatabase =
+        //        ConnectorAttributeInfoBuilder.Build(
+        //                AttDatabase,
+        //                typeof(string),
+        //                0);
 
         /// <summary>
         /// Database attribute info (AD version)
         /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoADDatabase =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttDatabaseADName,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+        //private static readonly ConnectorAttributeInfo AttInfoADDatabase =
+        //        ConnectorAttributeInfoBuilder.Build(
+        //                AttDatabaseADName,
+        //                typeof(string),
+        //                ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
 
         /// <summary>
         /// DeliverToMailboxAndForward
@@ -321,7 +321,8 @@ namespace Org.IdentityConnectors.Exchange
             { AttExternalEmailAddress, AttExternalEmailAddressADName },
             { AttHiddenFromAddressListsEnabled, AttHiddenFromAddressListsEnabledADName },
             { AttDeliverToMailboxAndForward, AttDeliverToMailboxAndForwardADName },
-            { AttForwardingSmtpAddress, AttForwardingSmtpAddressADName }
+            { AttForwardingSmtpAddress, AttForwardingSmtpAddressADName },
+            { AttDatabase, AttDatabaseADName }
         };
 
         // externally-visible Exchange attributes not mentioned in AttMap2AD
@@ -330,8 +331,7 @@ namespace Org.IdentityConnectors.Exchange
             { 
                 AttPrimarySmtpAddress,
                 AttRecipientType, 
-                AttEmailAddressPolicyEnabled,
-                AttDatabase 
+                AttEmailAddressPolicyEnabled
             };
 
         // these attributes should be retrieved from AD (but not sent further); note that all AD attributes mentioned in AttMap2AD are retrieved by default
@@ -346,8 +346,7 @@ namespace Org.IdentityConnectors.Exchange
             new HashSet<string> 
             { 
                 AttMsExchRecipientDisplayTypeADName,
-                AttMsExchRecipientTypeDetailsADName,
-                AttDatabaseADName
+                AttMsExchRecipientTypeDetailsADName
             };
 
         // these "manually defined" Exchange attributes should be part of the schema (here are all except custom attributes)

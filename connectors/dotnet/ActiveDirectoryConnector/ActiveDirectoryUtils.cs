@@ -65,13 +65,63 @@ namespace Org.IdentityConnectors.ActiveDirectory
             _customHandlers = new CustomAttributeHandlers(_configuration);
         }
 
+        // e.g. <GUID=64A09EFC1C50EB40B1692D8FBA4BBB64> --> fc9ea064-501c-40eb-b169-2d8fba4bbb64
+        public static string ConvertADGUIDtoObjectGUID(string uid)
+        {
+            if (uid == null)
+            {
+                return null;
+            }
+
+            uid = uid.ToLower();
+            if (!uid.StartsWith("<guid=") || !uid.EndsWith(">") || uid.Length != 39)
+            {
+                return uid;
+            }
+            uid = uid.Substring(6, 32);
+            StringBuilder rv = new StringBuilder();
+            rv.Append(uid.Substring(6, 2));
+            rv.Append(uid.Substring(4, 2));
+            rv.Append(uid.Substring(2, 2));
+            rv.Append(uid.Substring(0, 2));
+            rv.Append("-");
+            rv.Append(uid.Substring(10, 2));
+            rv.Append(uid.Substring(8, 2));
+            rv.Append("-");
+            rv.Append(uid.Substring(14, 2));
+            rv.Append(uid.Substring(12, 2));
+            rv.Append("-");
+            rv.Append(uid.Substring(16, 4));
+            rv.Append("-");
+            rv.Append(uid.Substring(20, 12));
+            return rv.ToString();
+        }
+
+
+        public static String ConvertUIDToSearchString(Uid uid)
+        {
+            // e.g. <GUID=8184d4af97d9ed4c949c21665768881b>
+            string uidValue = uid.GetUidValue().ToLower();
+            if (!uidValue.StartsWith("<guid=") || !uidValue.EndsWith(">") || uidValue.Length != 39)
+            {
+                throw new ArgumentException("Unsupported UID format: " + uidValue);
+            }
+            string raw = uidValue.Substring(6, 32);
+            StringBuilder rv = new StringBuilder();
+            for (int i = 0; i < raw.Length; i += 2)
+            {
+                rv.Append("\\").Append(raw.Substring(i, 2));
+            }
+            return rv.ToString();
+        }
+
         /// <summary>
         /// Converts a guid in byte array form to a string suitable
         /// for ldap search.
         /// </summary>
         /// <param name="guidBytes"></param>
         /// <returns></returns>
-        internal static String ConvertUIDBytesToSearchString(Byte[] guidBytes)
+        public static String ConvertUIDBytesToSearchString(Byte[] guidBytes)
         {
             String searchGuid = "";
 

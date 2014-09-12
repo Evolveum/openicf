@@ -99,17 +99,27 @@ namespace Org.IdentityConnectors.Exchange
 
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ExchangeConfiguration config)
         {
-            return GetCommand(cmdInfo, null, null, config);
+            return GetCommand(cmdInfo, null, null, null, config);
         }
 
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, Uid uidAttribute, ExchangeConfiguration config)
         {
-            return GetCommand(cmdInfo, null, uidAttribute, config);
+            return GetCommand(cmdInfo, null, uidAttribute, null, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, Name nameAttribute, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, null, null, nameAttribute, config);
         }
 
         internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
         {
-            return GetCommand(cmdInfo, attributes, ConnectorAttributeUtil.GetUidAttribute(attributes), config);
+            return GetCommand(cmdInfo, attributes, null, null, config);
+        }
+
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
+        {
+            return GetCommand(cmdInfo, attributes, uidAttribute, null, config);
         }
 
         /// <summary>
@@ -122,41 +132,50 @@ namespace Org.IdentityConnectors.Exchange
         /// Ready to execute Command
         /// </returns>
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
-        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, ExchangeConfiguration config)
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, Uid uidAttribute, Name nameAttribute, ExchangeConfiguration config)
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             
             LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "GetCommand: cmdInfo name = {0}", cmdInfo.Name);
 
+            ISet<string> parametersSet = new HashSet<string>();
+
             // create command
             Command cmd = new Command(cmdInfo.Name);
 
-            // map name attribute, if mapping specified
-            if (!string.IsNullOrEmpty(cmdInfo.NameParameter))
-            {                
-                object val = GetAttValue(Name.NAME, attributes);
-                if (val != null)
+            if (!string.IsNullOrEmpty(cmdInfo.UidParameter) && !parametersSet.Contains(cmdInfo.UidParameter))
+            {
+                Uid uidAttr = uidAttribute != null ? uidAttribute : ConnectorAttributeUtil.GetUidAttribute(attributes);
+                string uid = uidAttr != null ? uidAttr.GetUidValue() : null;
+                if (uid != null)
                 {
-                    cmd.Parameters.Add(cmdInfo.NameParameter, val);
+                    cmd.Parameters.Add(cmdInfo.UidParameter, ActiveDirectoryUtils.ConvertADGUIDtoObjectGUID(uid));
+                    parametersSet.Add(cmdInfo.UidParameter);
                 }
             }
 
-            if (!string.IsNullOrEmpty(cmdInfo.UidParameter))
+            // map name attribute, if mapping specified
+            if (!string.IsNullOrEmpty(cmdInfo.NameParameter) && !parametersSet.Contains(cmdInfo.NameParameter))
             {
-                if (uidAttribute != null && uidAttribute.GetUidValue() != null)
+                Name nameAttr = nameAttribute != null ? nameAttribute : ConnectorAttributeUtil.GetNameFromAttributes(attributes);
+                string name = nameAttr != null ? nameAttr.GetNameValue() : null; ;
+                if (name != null)
                 {
-                    cmd.Parameters.Add(cmdInfo.UidParameter, uidAttribute.GetUidValue());
+                    cmd.Parameters.Add(cmdInfo.NameParameter, name);
+                    parametersSet.Add(cmdInfo.NameParameter);
                 }
             }
 
             if (cmdInfo.UsesConfirm)
             {
                 cmd.Parameters.Add("confirm", false);
+                parametersSet.Add("confirm");
             }
 
             if (cmdInfo.UsesDomainController)
             {
                 cmd.Parameters.Add("DomainController", ActiveDirectoryUtils.GetDomainControllerName(config));
+                parametersSet.Add("DomainController");
             }
 
             // TODO check this only for user-related operations
@@ -184,7 +203,12 @@ namespace Org.IdentityConnectors.Exchange
                         } else {
                             valueToSet = ConnectorAttributeUtil.GetSingleValue(attribute);
                         }
+                        if (parametersSet.Contains(attName))
+                        {
+                            throw new InvalidOperationException("Parameter " + attName + " is already defined for command " + cmdInfo.Name);
+                        }
                         cmd.Parameters.Add(attName, valueToSet);
+                        parametersSet.Add(attName);
                     }
                 }
             }
@@ -327,11 +351,10 @@ namespace Org.IdentityConnectors.Exchange
         /// if the atribute name is in attributes to get
         /// </summary>
         /// <param name="cobject">ConnectorObject which attributes should be replaced</param>
-        /// <param name="attsToGet">Attributes to get list</param>
         /// <param name="map">Replace mapping</param>
         /// <returns>ConnectorObject with replaced attributes</returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ConnectorObject ConvertAdAttributesToExchange(ConnectorObject cobject, ICollection<string> attsToGet)
+        internal static ConnectorObject ConvertAdAttributesToExchange(ConnectorObject cobject)
         {
             Assertions.NullCheck(cobject, "cobject");
 
@@ -365,32 +388,34 @@ namespace Org.IdentityConnectors.Exchange
             copyAttribute(builder, cobject, ExchangeConnectorAttributes.AttPrimarySmtpAddressADName, ExchangeConnectorAttributes.AttPrimarySmtpAddress);
 
             // derive recipient type
-            long? recipientTypeDetails =
-                ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()) as long?;
-            String recipientType = null;
-            switch (recipientTypeDetails)
-            { // see http://blogs.technet.com/b/benw/archive/2007/04/05/exchange-2007-and-recipient-type-details.aspx
-
-                case 1: recipientType = ExchangeConnectorAttributes.RcptTypeMailBox; break;
-                case 128: recipientType = ExchangeConnectorAttributes.RcptTypeMailUser; break;
-
-                case null:          // we are dealing with user accounts, so we can assume that an account without Exchange information is an ordinary User
-                case 65536: recipientType = ExchangeConnectorAttributes.RcptTypeUser; break;
-            }
+            string recipientType = GetRecipientType(cobject);
             if (recipientType != null)
             {
                 builder.AddAttribute(ConnectorAttributeBuilder.Build(ExchangeConnectorAttributes.AttRecipientType, new string[] { recipientType }));
-            }
-            else
-            {
-                LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
-                    ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
             }
 
             builder.ObjectClass = cobject.ObjectClass;
             builder.SetName(cobject.Name);
             builder.SetUid(cobject.Uid);
             return builder.Build();
+        }
+
+        public static string GetRecipientType(ConnectorObject cobject) {
+            long? recipientTypeDetails =
+                ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()) as long?;
+            switch (recipientTypeDetails) { // see http://blogs.technet.com/b/benw/archive/2007/04/05/exchange-2007-and-recipient-type-details.aspx
+
+                case 1: return ExchangeConnectorAttributes.RcptTypeMailBox; 
+                case 128: return ExchangeConnectorAttributes.RcptTypeMailUser; 
+
+                case null:          // we are dealing with user accounts, so we can assume that an account without Exchange information is an ordinary User
+                case 65536: return ExchangeConnectorAttributes.RcptTypeUser;
+
+                default: 
+                    LOGGER.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "Unknown recipientTypeDetails: {0} ({1})", recipientTypeDetails,
+                        ExchangeUtility.GetAttValue(ExchangeConnectorAttributes.AttMsExchRecipientTypeDetailsADName, cobject.GetAttributes()));
+                    return null;
+            }
         }
 
         private static void copyAttribute(ConnectorObjectBuilder builder, ConnectorObject cobject, string src, string dest)

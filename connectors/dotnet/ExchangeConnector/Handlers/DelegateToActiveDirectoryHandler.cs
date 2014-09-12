@@ -24,7 +24,7 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
             ActiveDirectoryConnector adconn = exconn.ActiveDirectoryConnector;
 
-            adconn.Update(context.ObjectClass, context.Uid, context.Attributes, context.Options);
+            adconn.Update(context.UpdateType, context.ObjectClass, context.Uid, context.Attributes, context.Options);
         }
 
         public void Delete(DeleteOpContext context)

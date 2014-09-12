@@ -30,6 +30,7 @@ namespace Org.IdentityConnectors.ActiveDirectory {
     }
 
     public class UpdateOpContext : CreateUpdateOpContext {
+        public UpdateType UpdateType { get; set; }
     }
 
     public class DeleteOpContext : Context {

@@ -140,6 +140,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // - Group membership cannot be change by memberOf, but must
             //   be changed by changing the members property of the group
 
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
             LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, 
                 "AD.Create method starting; oclass: {0}, attributes:\n{1}", 
                 oclass.GetObjectClassValue(),
@@ -276,7 +279,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     newDe.Dispose();
                 }
             }
-            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Create returning UID: {0}", uid.GetUidValue());
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Create returning UID: {0}, finishing in {1} ms", uid.GetUidValue(), watch.ElapsedMilliseconds);
             return uid;
         }
 
@@ -817,7 +820,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             ICollection<string> attributeNames = null;
 
-            if ((options.AttributesToGet != null) && (options.AttributesToGet.Length > 0))
+            if (options != null && options.AttributesToGet != null && options.AttributesToGet.Length > 0)
             {
                 attributeNames = new HashSet<string>(options.AttributesToGet);
             }
@@ -905,6 +908,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return Update(UpdateType.REPLACE, objclass, ConnectorAttributeUtil.AddUid(attrs, uid), options);
         }
 
+        // this one is used from Exchange connector
+        public Uid Update(UpdateType updateType, ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs, OperationOptions options) 
+        {
+            return Update(updateType, objclass, ConnectorAttributeUtil.AddUid(attrs, uid), options);
+        }
+
+
         public Uid AddAttributeValues(ObjectClass objclass,
                 Uid uid,
                 ICollection<ConnectorAttribute> valuesToAdd,
@@ -925,17 +935,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public Uid Update(UpdateType type, ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
-            Uid updatedUid = null;
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
 
             LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method; type = {0}, oclass = {1}, attributes:\n{2}", type, oclass, CommonUtils.DumpConnectorAttributes(attributes));
+
+            Uid updatedUid = ConnectorAttributeUtil.GetUidAttribute(attributes);
+
+            if (attributes.Count == 0 || (updatedUid != null && attributes.Count == 1))
+            {
+                // nothing besides UID
+                LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method finishing - nothing to do");
+                return updatedUid;
+            }
 
             if (_configuration == null)
             {
                 throw new ConfigurationException(_configuration.ConnectorMessages.Format(
                     "ex_ConnectorNotConfigured", "Connector has not been configured"));
             }
-
-            updatedUid = ConnectorAttributeUtil.GetUidAttribute(attributes);
+            
             if (updatedUid == null)
             {
                 throw new ConnectorException(_configuration.ConnectorMessages.Format(
@@ -979,7 +998,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     updateEntry.Dispose();
                 }
             }
-            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method finishing");
+            LOGGER_API.TraceEvent(TraceEventType.Information, CAT_DEFAULT, "AD.Update method finishing in {0} ms", watch.ElapsedMilliseconds);
             return updatedUid;
         }
 

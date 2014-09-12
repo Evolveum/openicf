@@ -48,6 +48,7 @@
   <SerializableCommandInfo>
     <Name>Set-MailUser</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>AcceptMessagesOnlyFrom</string>
       <string>AcceptMessagesOnlyFromDLMembers</string>
@@ -106,6 +107,7 @@
   <SerializableCommandInfo>
     <Name>Get-MailUser</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>Identity</string>
       <string>OrganizationalUnit</string>
@@ -116,6 +118,7 @@
   <SerializableCommandInfo>
     <Name>Enable-MailUser</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>ExternalEmailAddress</string>
       <string>Alias</string>
@@ -128,6 +131,7 @@
   <SerializableCommandInfo>
     <Name>Disable-MailUser</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
     </Parameters>
   </SerializableCommandInfo>
@@ -136,6 +140,7 @@
   <SerializableCommandInfo>
     <Name>Get-User</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>Anr</string>
       <string>Credential</string>
@@ -151,6 +156,7 @@
   <SerializableCommandInfo>
     <Name>Set-User</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>AssistantName</string>
       <string>City</string>
@@ -196,6 +202,7 @@
   <SerializableCommandInfo>
     <Name>Enable-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>Database</string>
       <string>Equipment</string>
@@ -213,12 +220,14 @@
   <SerializableCommandInfo>
     <Name>Disable-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
     </Parameters>
   </SerializableCommandInfo>
   <SerializableCommandInfo>
     <Name>Get-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>Anr</string>
       <string>Credential</string>
@@ -234,6 +243,7 @@
   <SerializableCommandInfo>
     <Name>Set-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
+    <UidParameter>Identity</UidParameter>
     <Parameters>
       <string>AcceptMessagesOnlyFrom</string>
       <string>AcceptMessagesOnlyFromDLMembers</string>

@@ -101,9 +101,11 @@ namespace Org.IdentityConnectors.Exchange
         {
             ExchangeConnector exconn = (ExchangeConnector)context.Connector;
 
+            ICollection<ConnectorAttribute> attributesForReplace = _helper.DetermineNewAttributeValues(context, context.Uid.GetUidValue()); // query string is the UID value!
+
             Command cmdSet = ExchangeUtility.GetCommand(
                 new PSExchangeConnector.CommandInfo(GetSetCommandName()), 
-                context.Attributes, context.Uid, exconn.Configuration);
+                attributesForReplace, context.Uid, exconn.Configuration);
 
             try {
                 _helper.InvokePipeline(exconn, cmdSet);
