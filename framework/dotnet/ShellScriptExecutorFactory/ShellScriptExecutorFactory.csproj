@@ -48,10 +48,9 @@
     <DebugType>pdbonly</DebugType>
     <OutputPath>bin\Release\</OutputPath>
     <ErrorReport>prompt</ErrorReport>
-    <DebugSymbols>False</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
