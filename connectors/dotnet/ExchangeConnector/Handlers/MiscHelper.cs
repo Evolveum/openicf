@@ -158,7 +158,7 @@ namespace Org.IdentityConnectors.Exchange
                     if (changed)
                     {
                         ConnectorAttributeBuilder b = new ConnectorAttributeBuilder();
-                        b.Name = originalAttribute.Name;
+                        b.Name = attribute.Name;
                         b.AddValue(newValues);
                         ConnectorAttribute modified = b.Build();
 
