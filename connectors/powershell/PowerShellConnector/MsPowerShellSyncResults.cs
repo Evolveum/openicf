@@ -60,7 +60,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
         /// </summary>
         /// <param name="result"></param>
         /// <returns></returns>
-        public Boolean Process(SyncDelta result)
+        public Object Process(SyncDelta result)
         {
             return _handler.Handle(result);
         }
@@ -80,7 +80,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
         /// </remarks>
         /// <param name="result"></param>
         /// <returns></returns>
-        public Boolean Process(Hashtable result)
+        public Object Process(Hashtable result)
         {
             var syncbld = new SyncDeltaBuilder();
             var cobld = new ConnectorObjectBuilder();

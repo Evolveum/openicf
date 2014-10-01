@@ -73,12 +73,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             ((SearchResultsHandler)_handler).HandleResult(new SearchResult(cookie, pages));
         }
 
-        //public Boolean Process(ConnectorObject result)
-        //{
-        //    return _handler.Handle(result);
-        //}
-
-        public Boolean Process(Object result)
+        public Object Process(Object result)
         {
             if (result == null)
             {
