@@ -1,0 +1,110 @@
+<!--
+  ====================
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
+  
+  The contents of this file are subject to the terms of the Common Development 
+  and Distribution License("CDDL") (the "License").  You may not use this file 
+  except in compliance with the License.
+  
+  You can obtain a copy of the License at 
+  http://IdentityConnectors.dev.java.net/legal/license.txt
+  See the License for the specific language governing permissions and limitations 
+  under the License. 
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each file
+  and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+  ====================
+  Portions Copyrighted 2014 ForgeRock AS
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <!-- DotNet Common build targets -->
+  <PropertyGroup>
+    <VersionFileIn>$(MSBuildProjectDirectory)\version.template</VersionFileIn>
+    <VersionFileOut>$(MSBuildProjectDirectory)\version.txt</VersionFileOut>
+    <Company>ForgeRock AS</Company>
+    <Copyright>Copyright 2014 ForgeRock AS. All rights reserved.</Copyright>
+    <CommonBuildDir>$(MSBuildProjectDirectory)\..\Build</CommonBuildDir>
+    <ForgeRockLegal>false</ForgeRockLegal>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+
+  <Target Name="GenerateAssemblyInfo">
+    <Version VersionFile="$(VersionFileIn)">
+      <Output TaskParameter="Major" PropertyName="Major" />
+      <Output TaskParameter="Minor" PropertyName="Minor" />
+      <Output TaskParameter="Build" PropertyName="Build" />
+      <Output TaskParameter="Revision" PropertyName="Revision" />
+    </Version>
+    <CreateProperty Value="$(Revision)"  Condition=" '$(SVN_REVISION)'=='' ">
+      <Output TaskParameter="Value" PropertyName="SVNRevision"/>
+    </CreateProperty>
+    <CreateProperty Value="$(SVN_REVISION)"  Condition=" '$(SVN_REVISION)'!='' ">
+      <Output TaskParameter="Value" PropertyName="SVNRevision"/>
+    </CreateProperty>
+    <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(Revision) Revision: $(SVNRevision)"/>
+    <!-- need to store the version file if SVN_revision is defined, it is used for running contract tests -->
+    <WriteLinesToFile File="$(VersionFileOut)" Lines="$(Major).$(Minor).$(Build).$(Revision)" Overwrite="true"/>
+    <AssemblyInfo CodeLanguage="CS"
+              OutputFile="AssemblyInfo.cs"
+              AssemblyTitle="$(ProductName)"
+              AssemblyProduct="$(ProductName)"
+              AssemblyCopyright="$(Copyright)"
+              AssemblyCompany="$(Company)"
+              AssemblyVersion="$(Major).$(Minor).$(Build).$(Revision)"
+              AssemblyFileVersion="$(Major).$(Minor).$(Build).$(Revision) Revision:$(SVNRevision)"
+              InternalsVisibleTo="$(InternalsVisibleTo)" />
+  </Target>
+  
+  <Target Name="BuildZip">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\legal-notices\CDDLv1_0.txt" DestinationFolder="$(OutputPath)\legal-notices" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\legal-notices\ForgeRock_License.txt" DestinationFolder="$(OutputPath)\legal-notices" Condition=" '$(ForgeRockLegal)'=='true' "/>
+    <ItemGroup>
+      <ZipFiles Include="$(OutputPath)\*.dll" Exclude="*.zip" />
+      <ZipFiles Include="$(OutputPath)\??-??\*.*" Exclude="*.zip" />
+      <ZipFiles Include="$(OutputPath)\legal-notices\*.txt" Exclude="*.zip" />
+    </ItemGroup>
+    <MakeDir Directories="$(CommonBuildDir)" Condition="!Exists('$(CommonBuildDir)')" />
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)"
+      ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(Revision).zip" Condition=" '$(Configuration)'=='Release' "/>
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)"
+      ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(Revision)-SNAPSHOT.zip" Condition=" '$(Configuration)'!='Release' "/>
+  </Target>
+  
+  <Target Name="NUnit" DependsOnTargets="Build">
+    <!-- Run the tests -->
+    <CreateItem Include="$(OutputPath)\*Tests.dll">
+      <Output TaskParameter="Include" ItemName="TestAssembly" />
+    </CreateItem>
+    <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="$(OutputPath)\NUnitResults_$(Configuration).xml" />
+  </Target>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <BuildDependsOn>
+      CommonBeforeBuild;
+      $(BuildDependsOn);
+      CommonAfterBuild
+    </BuildDependsOn>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      CommonClean
+    </CleanDependsOn>
+  </PropertyGroup>
+  <Target Name="CommonBeforeBuild">
+    <CallTarget Targets="GenerateAssemblyInfo" />
+  </Target>
+  <Target Name="CommonAfterBuild">
+    <CallTarget Condition=" '$(ZipRelease)'=='true' " Targets="BuildZip" />
+  </Target>
+  <Target Name="CommonClean">
+    <Delete Files="AssemblyInfo.cs;version.txt" />
+    <RemoveDir Directories="bin;obj;$(CommonBuildDir)"/>
+  </Target>
+
+</Project>

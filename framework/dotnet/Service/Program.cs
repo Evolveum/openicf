@@ -26,6 +26,7 @@ using System.Configuration;
 using System.Configuration.Install;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.ServiceProcess;
 using Org.IdentityConnectors.Common.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -52,16 +53,30 @@ namespace Org.IdentityConnectors.Framework.Service
         private static IDictionary<string, string> ParseOptions(string[] args)
         {
             IDictionary<string, string> rv = new Dictionary<string, string>();
-            String serviceName = null;
+
             for (int i = 1; i < args.Length; i++)
             {
+                String optionName = null;
                 String opt = args[i].ToLower();
-                if (OPT_SERVICE_NAME.ToLower().Equals(opt))
+
+                if (OPT_SERVICE_NAME.Equals(opt, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    optionName = OPT_SERVICE_NAME;
+                }
+                else if (OPT_CERTFILE_NAME.Equals(opt, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    optionName = OPT_CERTFILE_NAME;
+                }
+                else if (OPT_CERTSTOR_NAME.Equals(opt, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    optionName = OPT_CERTSTOR_NAME;
+                }
+                if (optionName != null)
                 {
                     i++;
                     if (i < args.Length)
                     {
-                        serviceName = args[i];
+                        rv[optionName] = args[i];
                     }
                     else
                     {
@@ -75,7 +90,6 @@ namespace Org.IdentityConnectors.Framework.Service
                     return null;
                 }
             }
-            rv["/serviceName"] = serviceName;
             return rv;
         }
 
@@ -138,10 +152,9 @@ namespace Org.IdentityConnectors.Framework.Service
 
         private static void DoInstall(IDictionary<string, string> options)
         {
-            String serviceName = options[OPT_SERVICE_NAME];
-            if (serviceName != null)
+            if (options.ContainsKey(OPT_SERVICE_NAME))
             {
-                ProjectInstaller.ServiceName = serviceName;
+                ProjectInstaller.ServiceName = options[OPT_SERVICE_NAME];
             }
             TransactedInstaller ti = new TransactedInstaller();
             string[] cmdline =
@@ -160,10 +173,9 @@ namespace Org.IdentityConnectors.Framework.Service
 
         private static void DoUninstall(IDictionary<string, string> options)
         {
-            String serviceName = options[OPT_SERVICE_NAME];
-            if (serviceName != null)
+            if (options.ContainsKey(OPT_SERVICE_NAME))
             {
-                ProjectInstaller.ServiceName = serviceName;
+                ProjectInstaller.ServiceName = options[OPT_SERVICE_NAME];
             }
             TransactedInstaller ti = new TransactedInstaller();
             string[] cmdline =
@@ -244,7 +256,7 @@ namespace Org.IdentityConnectors.Framework.Service
             else
             {
                 str = new GuardedString();
-                foreach (char c in key.ToCharArray())
+                foreach (char c in key)
                 {
                     str.AppendChar(c);
                 }
@@ -259,17 +271,26 @@ namespace Org.IdentityConnectors.Framework.Service
 
         private static void DoStoreCertificate(IDictionary<string, string> options)
         {
-            string storeName = null != options[OPT_CERTSTOR_NAME] ? options[OPT_CERTSTOR_NAME] : "ConnectorServerSSLCertificate";
-            string certificateFile = options[OPT_CERTFILE_NAME];
+            string storeName = options.ContainsKey(OPT_CERTSTOR_NAME) ? options[OPT_CERTSTOR_NAME] : "ConnectorServerSSLCertificate";
 
-            if (certificateFile == null)
+
+            if (!options.ContainsKey(OPT_CERTFILE_NAME) || String.IsNullOrEmpty(options[OPT_CERTFILE_NAME]))
             {
                 Usage();
                 throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException("Missing required argument: " + OPT_CERTFILE_NAME);
             }
-
-            X509Certificate2 certificate = new X509Certificate2(certificateFile);
-            X509Store store = new X509Store(storeName,  StoreLocation.LocalMachine);
+            X509Certificate2 certificate = null;
+            try
+            {
+                certificate = new X509Certificate2(options[OPT_CERTFILE_NAME]);
+            }
+            catch (CryptographicException)
+            {
+                Console.Write("Please enter the keystore password: ");
+                GuardedString v1 = ReadPassword();
+                certificate = new X509Certificate2(options[OPT_CERTFILE_NAME], SecurityUtil.Decrypt(v1));
+            }
+            X509Store store = new X509Store(storeName, StoreLocation.LocalMachine);
 
             store.Open(OpenFlags.ReadWrite);
             X509CertificateCollection certificates = store.Certificates;

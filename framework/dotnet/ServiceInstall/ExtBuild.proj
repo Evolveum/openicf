@@ -34,7 +34,7 @@
     <WriteLinesToFile File="Files.wxs" Lines="@(FileTopLines)" Overwrite="true" />
 
     <ItemGroup>
-      <AllFiles Include="..\Service\bin\$(Configuration)\*.dll;..\Service\bin\$(Configuration)\*.config"
+      <AllFiles Include="..\Service\bin\$(Configuration)\*.*"
 		            Exclude="..\Service\bin\$(Configuration)\*.exe"/>
       <EXEFiles Include="..\Service\bin\$(Configuration)\ConnectorServer.exe"/>
       <PowerShellScriptExecutorFactoryFiles  Include="..\PowerShellScriptExecutorFactory\bin\$(Configuration)\*.ScriptExecutorFactory.*"/>
@@ -87,9 +87,10 @@
     <Copy SourceFiles="..\legal\ForgeRock_License.txt" DestinationFolder="bin\$(Configuration)\target\legal-notices" Condition=" '$(ForgeRockLegal)' == 'true' "/>
     <ItemGroup>
       <ZipFiles Include="bin\$(Configuration)\target\**\*.dll;
+            bin\$(Configuration)\target\**\*.pdb;
             bin\$(Configuration)\target\**\*.exe;
             bin\$(Configuration)\target\**\*.config;
-            bin\$(Configuration)\target\**\*.txt" Exclude="*.zip;*.pdb" />
+            bin\$(Configuration)\target\**\*.txt" Exclude="*.zip" />
     </ItemGroup>
     <Zip Files="@(ZipFiles)" WorkingDirectory="bin\$(Configuration)\target" ZipFileName="bin\$(Configuration)\openicf-$(OpenICFVersion)-dotnet.zip" />
   </Target>

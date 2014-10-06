@@ -33,6 +33,10 @@ def connection = connection as Connection
 def log = log as Log
 
 def url = getClass().getClassLoader().getResource("schema.json")
+if (configuration.propertyBag.containsKey("schema")) {
+    url = getClass().getClassLoader().getResource(configuration.propertyBag.get("schema") as String)
+}
+
 def schema = SchemaSlurper.parse(url)
 
 configuration.propertyBag.putAll(schema)

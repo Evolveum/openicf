@@ -49,7 +49,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>./bin/Release/</OutputPath>
-    <DebugSymbols>False</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>pdbonly</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
@@ -95,7 +95,9 @@
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Target Name="Clean">
     <Delete Files="AssemblyInfo.cs;version.txt" />
