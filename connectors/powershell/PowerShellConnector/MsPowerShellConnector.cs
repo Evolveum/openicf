@@ -82,7 +82,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
         protected static String Result = "Result";
         protected static String ScriptArguments = "Arguments";
         protected static String GuardedString = "GuardedString";
-
+        
         private MsPowerShellConfiguration _configuration;
         private MsPowerShellHost _psHost;
         private Schema _schema;
@@ -116,7 +116,15 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             Trace.TraceInformation("PowerShell Connector Init method");
             _configuration = (MsPowerShellConfiguration)configuration;
             _configuration.Validate();
-            _psHost = _configuration.PsModulesToImport.Length > 0 ? new MsPowerShellHost(_configuration.PsModulesToImport) : new MsPowerShellHost();
+            if (_configuration.UseInterpretersPool)
+            {
+                _psHost = new MsPowerShellHost(_configuration.GetRunspacePool());
+            }
+            else
+            {
+                _psHost = _configuration.PsModulesToImport.Length > 0 ? new MsPowerShellHost(_configuration.PsModulesToImport) : new MsPowerShellHost();
+            }
+
             _attrSubstitute = new Hashtable();
             if (_configuration.SubstituteUidAndNameInQueryFilter)
             {
@@ -182,7 +190,8 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 
         protected void ExecuteTest(String scriptName)
         {
-            ExecuteScriptFile(scriptName, CreateBinding(new Dictionary<String, Object>(), OperationType.TEST, null, null, null, null));
+            ExecuteScript(GetScript(scriptName),
+                CreateBinding(new Dictionary<String, Object>(), OperationType.TEST, null, null, null, null));
         }
         #endregion
 
@@ -222,7 +231,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
                 {SchemaBldr, scb}
             };
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.SCHEMA, null, null, null, null));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.SCHEMA, null, null, null, null));
             return scb.Build();
         }
 
@@ -267,7 +276,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
                 {Username, username}
             };
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.RESOLVE_USERNAME, objectClass, null, null, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.RESOLVE_USERNAME, objectClass, null, null, options));
             return result.Uid;
         }
 
@@ -316,7 +325,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
                 {Password, SecurityUtil.Decrypt(password)}
             };
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.AUTHENTICATE, objectClass, null, null, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.AUTHENTICATE, objectClass, null, null, options));
             return result.Uid;
         }
 
@@ -379,7 +388,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             }
 
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.SEARCH, objectClass, null, null, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.SEARCH, objectClass, null, null, options));
         }
         #endregion
 
@@ -416,7 +425,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             if (ConnectorAttributeUtil.GetNameFromAttributes(createAttributes) != null)
                 arguments.Add(Id, ConnectorAttributeUtil.GetNameFromAttributes(createAttributes).GetNameValue());
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.CREATE, objectClass, null, createAttributes, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.CREATE, objectClass, null, createAttributes, options));
             return result.Uid.GetUidValue() != null ? result.Uid : null;
         }
 
@@ -454,7 +463,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
                 {Result, result},
             };
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.UPDATE, objectClass, uid, updateAttributes, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.UPDATE, objectClass, uid, updateAttributes, options));
             return result.Uid.GetUidValue() != null ? result.Uid : null;
         }
 
@@ -484,7 +493,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 
         protected void ExecuteDelete(String scriptName, ObjectClass objectClass, Uid uid, OperationOptions options)
         {
-            ExecuteScriptFile(scriptName, CreateBinding(new Dictionary<String, Object>(), OperationType.DELETE, objectClass, uid, null, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(new Dictionary<String, Object>(), OperationType.DELETE, objectClass, uid, null, options));
         }
 
         #endregion
@@ -524,7 +533,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             var result = new MsPowerShellSyncTokenHandler();
             var arguments = new Dictionary<String, Object> { { Result, result } };
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.GET_LATEST_SYNC_TOKEN, objectClass, null, null, null));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.GET_LATEST_SYNC_TOKEN, objectClass, null, null, null));
             return result.SyncToken;
         }
 
@@ -561,7 +570,7 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             };
             if (token != null) { arguments.Add(Token, token.Value); }
 
-            ExecuteScriptFile(scriptName, CreateBinding(arguments, OperationType.SYNC, objectClass, null, null, options));
+            ExecuteScript(GetScript(scriptName), CreateBinding(arguments, OperationType.SYNC, objectClass, null, null, options));
         }
         #endregion
 
@@ -645,11 +654,6 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             return binding;
         }
 
-        protected Object ExecuteScriptFile(String scriptName, Dictionary<String, Object> arguments)
-        {
-            return _psHost.ExecuteScript(loadScript(scriptName), arguments);
-        }
-
         protected Object ExecuteScript(String script, Dictionary<String, Object> arguments)
         {
             return _psHost.ExecuteScript(script, arguments);
@@ -659,18 +663,35 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 
         #region private members
 
+        private String GetScript(String fileName)
+        {
+            Object script;
+            if (_configuration.ReloadScriptOnExecution)
+            {
+                script = loadScript(fileName);
+            }
+            else if (!_configuration.PropertyBag.TryGetValue(fileName, out script))
+            {
+                script = loadScript(fileName);
+                _configuration.PropertyBag.TryAdd(fileName, script);
+            }
+            return (String) script;
+        }
+
         private void ParseScripts()
         {
-            foreach (var script in _configuration.GetValidScripts())
+            foreach (var file in _configuration.GetValidScripts())
             {
                 try
                 {
-                    _psHost.ValidateScript(loadScript(script));
-                    Trace.TraceInformation("{0} script parsed successfully", script);
+                    var script = loadScript(file);
+                    _psHost.ValidateScript(script);
+                    Trace.TraceInformation("{0} script parsed successfully", file);
+                    _configuration.PropertyBag.TryAdd(file, script);
                 }
                 catch (Exception ex)
                 {
-                    throw new ConnectorException(script + " script parse error: " + ex.Message);
+                    throw new ConnectorException(file + " script parse error: " + ex.Message);
                 }
             }
         }

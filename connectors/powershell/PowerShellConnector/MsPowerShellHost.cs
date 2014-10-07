@@ -31,14 +31,14 @@ using System.Collections.ObjectModel;
 
 namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 {
-    class MsPowerShellHost : IDisposable
+    public class MsPowerShellHost : IDisposable
     {
         private readonly PowerShell _ps;
         private readonly Runspace _space;
 
+
         public MsPowerShellHost()
         {
-            _space = RunspaceFactory.CreateRunspace();
             _ps = PowerShell.Create();
             Init();
         }
@@ -48,7 +48,16 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             InitialSessionState initial = InitialSessionState.CreateDefault();
             initial.ImportPSModule(modules);
             _space = RunspaceFactory.CreateRunspace(initial);
+            _space.Open();
             _ps = PowerShell.Create();
+            _ps.Runspace = _space;
+            Init();
+        }
+
+        public MsPowerShellHost(RunspacePool rsPool)
+        {
+            _ps = PowerShell.Create();
+            _ps.RunspacePool = rsPool;
             Init();
         }
 
@@ -66,18 +75,17 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
         public Collection<Object> ExecuteScript(String script, IDictionary<String, Object> arguments)
         {
             var result = new Collection<object>();
+           
+            _ps.Commands.Clear();
             foreach (var entry in arguments)
             {
                 if (entry.Value != null)
                 {
-                    _space.SessionStateProxy.SetVariable(entry.Key, new PSObject(entry.Value));
+                    _ps.AddCommand("Set-Variable").AddArgument(entry.Key).AddArgument(entry.Value);
                 }
             }
-
-            _ps.Commands.Clear(); 
-            //ps.AddScript(loadScript(fileName),true);
             _ps.AddScript(script);
-            
+
             try
             {
                 _ps.Streams.ClearStreams();
@@ -98,11 +106,8 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
             }
         }
 
-
         private void Init()
         {
-            _space.Open();
-            _ps.Runspace = _space;
             _ps.Streams.Verbose.DataAdded += new EventHandler<DataAddedEventArgs>(SendVerbose);
             _ps.Streams.Warning.DataAdded += new EventHandler<DataAddedEventArgs>(SendWarning);
         }

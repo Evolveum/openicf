@@ -222,4 +222,16 @@
   <data name="help_VariablesPrefix" xml:space="preserve">
     <value>Prefix for all the variables inject in the scripts by the connector. Defaults to "Connector". Variables are then accessed this way: $Connector.&lt;variable_name&gt;</value>
   </data>
+  <data name="display_ReloadScriptOnExecution" xml:space="preserve">
+    <value>Reload Script on Execution</value>
+  </data>
+  <data name="help_ReloadScriptOnExecution" xml:space="preserve">
+    <value>Reload the script from disk everytime it is executed. Use for debugging</value>
+  </data>
+  <data name="display_UseInterpretersPool" xml:space="preserve">
+    <value>Use PowerShell RunSpace Pool</value>
+  </data>
+  <data name="help_UseInterpretersPool" xml:space="preserve">
+    <value>If true, the connector will leverage PowerShell RunSpace Pool.</value>
+  </data>
 </root>
