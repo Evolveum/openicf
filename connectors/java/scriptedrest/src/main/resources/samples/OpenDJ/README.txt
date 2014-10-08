@@ -6,6 +6,12 @@ OpenDJ samples
 1 - Few things to know:
 -----------------------
 
+1) Download the missing piece from here: http://repository.codehaus.org/org/codehaus/groovy/modules/http-builder/http-builder/0.6/http-builder-0.6-all.zip
+2) unzip it
+3) create new folder in openidm/lib
+4) copy there all files from http-builder-0.6/depedencies to openidm/lib
+
+5)
 - The samples scripts provided work with OpenDJ 2.6 REST interface
 - The Example.ldif file should be loaded in DJ for the samples to work
 - By default, REST interface is OFF in DJ. You need to enable it. See:
