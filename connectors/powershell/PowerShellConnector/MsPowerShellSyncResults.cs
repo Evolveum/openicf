@@ -23,7 +23,6 @@
  */
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Org.IdentityConnectors.Framework.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
@@ -33,6 +32,13 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 {
     class MsPowerShellSyncResults
     {
+        protected static String ObjectClassKeyName = "ObjectClass";
+        protected static String UidKeyName = "Uid";
+        protected static String PreviousUidKeyName = "PreviousUid";
+        protected static String SyncTokenKeyName = "SyncToken";
+        protected static String DeltaTypeKeyName = "DeltaType";
+        protected static String ConnectorObjectKeyName = "Object";
+
         private readonly ObjectClass _objectClass;
         private readonly SyncResultsHandler _handler;
 
@@ -73,10 +79,11 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
         /// The result Hashtable must follow a specific format and contain the following key/value:
         /// 
         /// "Token": (Object) token object (could be Integer, Date, String), [!! could be null]
-        /// "Operation": (String) ("CREATE|UPDATE|CREATE_OR_UPDATE"|"DELETE"),
+        /// "DeltaType": (String) ("CREATE|UPDATE|CREATE_OR_UPDATE"|"DELETE"),
         /// "Uid": (String) uid  (uid of the entry),
         /// "PreviousUid": (String) previous uid (This is for rename ops),
         /// "Object": Hashtable(String,List) of attributes name/values describing the object
+        /// "ObjectClass": (String) must be set if Operation = DELETE and Object = null
         /// </remarks>
         /// <param name="result"></param>
         /// <returns></returns>
@@ -88,25 +95,25 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 
             // SyncToken
             // Mandatory here
-            if (result.ContainsKey("SyncToken"))
+            if (result.ContainsKey(SyncTokenKeyName))
             {
-                syncbld.Token = result["SyncToken"] == null ? new SyncToken(0L) : new SyncToken(result["SyncToken"]);
+                syncbld.Token = result[SyncTokenKeyName] == null ? new SyncToken(0L) : new SyncToken(result[SyncTokenKeyName]);
             }
             else
                 throw new ArgumentException("SyncToken is missing in Sync result");
 
             // SyncDelta
             // Mandatory here
-            if (result.ContainsKey("DeltaType") && result["DeltaType"] != null && !"".Equals(result["DeltaType"]))
+            if (isValidKeyAndValue(result,DeltaTypeKeyName))
             {
-                var op = result["DeltaType"];
-                if ("CREATE".Equals(op))
+                var op = result[DeltaTypeKeyName];
+                if (SyncDeltaType.CREATE.ToString().Equals(op as String, StringComparison.OrdinalIgnoreCase))
                     syncbld.DeltaType = SyncDeltaType.CREATE;
-                else if ("UPDATE".Equals(op))
+                else if (SyncDeltaType.UPDATE.ToString().Equals(op as String, StringComparison.OrdinalIgnoreCase))
                     syncbld.DeltaType = SyncDeltaType.UPDATE;
-                else if ("DELETE".Equals(op))
+                else if (SyncDeltaType.DELETE.ToString().Equals(op as String, StringComparison.OrdinalIgnoreCase))
                     syncbld.DeltaType = SyncDeltaType.DELETE;
-                else if ("CREATE_OR_UPDATE".Equals(op))
+                else if (SyncDeltaType.CREATE_OR_UPDATE.ToString().Equals(op as String, StringComparison.OrdinalIgnoreCase))
                     syncbld.DeltaType = SyncDeltaType.CREATE_OR_UPDATE;
                 else
                     throw new ArgumentException("Unrecognized DeltaType in Sync result");
@@ -116,29 +123,58 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
 
             // Uid 
             // Mandatory
-            if (result.ContainsKey("Uid") && result["Uid"] != null && !"".Equals(result["uid"]))
+            if (isValidKeyAndValue(result, UidKeyName))
             {
-                uid = new Uid((String) result["Uid"]);
+                var value = result[UidKeyName];
+                if (value is String)
+                {
+                    uid = new Uid(value as String);
+                } else if (value is Uid)
+                {
+                    uid = value as Uid;
+                }
+                else
+                {
+                    throw new ArgumentException("Unrecognized Uid in Sync result");
+                }
                 syncbld.Uid = uid;
                 cobld.SetUid(uid);
             }
             else
+            {
                 throw new ArgumentException("Uid is missing in Sync result");
-
+            }
 
             // PreviousUid 
             // Not valid if DELETE
-            if (result.ContainsKey("PreviousUid") && result["PreviousUid"] != null && !"".Equals(result["uid"]))
-                    syncbld.PreviousUid = new Uid((String)result["PreviousUid"]);
-
+            if (isValidKeyAndValue(result, PreviousUidKeyName))
+            {
+                var value = result[PreviousUidKeyName];
+                Uid previousUid;
+                if (value is String)
+                {
+                    previousUid = new Uid(value as String);
+                }
+                else if (value is Uid)
+                {
+                    previousUid = value as Uid;
+                }
+                else
+                {
+                    throw new ArgumentException("Unrecognized PreviousUid in Sync result");
+                }
+                syncbld.PreviousUid = previousUid;
+            }
             if (syncbld.PreviousUid != null && syncbld.DeltaType == SyncDeltaType.DELETE)
+            {
                 throw new ArgumentException("PreviousUid can only be specified for Create or Update.");
+            }
 
             // Connector object
-            // Mandatory
-            if (result.ContainsKey("Object") && result["Object"] is Hashtable)
+            // Mandatory unless DELETE
+            if (result.ContainsKey(ConnectorObjectKeyName) && result[ConnectorObjectKeyName] is Hashtable)
             {
-                var attrs = result["Object"] as Hashtable;
+                var attrs = result[ConnectorObjectKeyName] as Hashtable;
 
                 if (!attrs.ContainsKey(Name.NAME))
                     throw new ArgumentException("The Object must contain a Name");
@@ -181,10 +217,36 @@ namespace Org.ForgeRock.OpenICF.Connectors.MsPowerShell
                 cobld.ObjectClass = _objectClass;
                 syncbld.Object = cobld.Build();
             }
-            else if (SyncDeltaType.DELETE != syncbld.DeltaType)
+            // If operation is DELETE and the ConnectorObject is null,
+            // we need to set the ObjectClass at the SyncDelta level
+            else if ((SyncDeltaType.DELETE == syncbld.DeltaType) && isValidKeyAndValue(result, ObjectClassKeyName))
+            {
+                var objclass = result[ObjectClassKeyName];
+                if (objclass is ObjectClass)
+                {
+                    syncbld.ObjectClass = objclass as ObjectClass;
+                }
+                else if (objclass is String) 
+                {
+                    syncbld.ObjectClass = new ObjectClass(objclass as String);
+                }
+                else
+                {
+                    throw new ArgumentException("Unrecognized ObjectClass in Sync result");
+                }
+            }
+            else
+            {
                 throw new ArgumentException("Object is missing in Sync result");
+            }
 
             return _handler.Handle(syncbld.Build());
+        }
+
+        // check Key and Value
+        private Boolean isValidKeyAndValue(Hashtable hash, String key)
+        {
+            return (hash.ContainsKey(key) && !String.IsNullOrEmpty(hash[key] as String));
         }
     }
 }

@@ -77,6 +77,7 @@ try
 
 if ($Connector.Operation -eq "SCHEMA")
  {
+
  	###########################
  	# __ACCOUNT__ object class
 	###########################

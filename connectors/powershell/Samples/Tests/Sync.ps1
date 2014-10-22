@@ -227,11 +227,22 @@ try
 				$syncbld = New-Object Org.IdentityConnectors.Framework.Common.Objects.SyncDeltaBuilder
 				$syncbld.DeltaType = $deltatype::CREATE_OR_UPDATE
 				$syncbld.Object = $cobld.Build()
-				$syncbld.Token = New-Object Org.IdentityConnectors.Framework.Common.Objects.SyncToken($i)
-						
-				$Connector.Result.Process($syncbld.Build())
+				$syncbld.Token = New-Object Org.IdentityConnectors.Framework.Common.Objects.SyncToken($i)						
+				$Connector.Result.Process($syncbld.Build())	
 	        }
-	        $Connector.Result.Complete(17)
+			# Test the DELETE without Connector object
+			Write-Verbose -verbose "Processing entry without Connector object"
+			$syncbld = New-Object Org.IdentityConnectors.Framework.Common.Objects.SyncDeltaBuilder
+			$syncbld.DeltaType = $deltatype::DELETE
+			$syncbld.Token = New-Object Org.IdentityConnectors.Framework.Common.Objects.SyncToken(17)
+			$syncbld.Uid = "FooBar"
+			$syncbld.ObjectClass = [Org.IdentityConnectors.Framework.Common.Objects.ObjectClass]::ACCOUNT
+			$Connector.Result.Process($syncbld.Build())	
+			
+			$result = @{"SyncToken" = 18; "DeltaType" = "DELETE"; "Uid" = "Grp18"; "ObjectClass" = "__GROUP__"}
+			$Connector.Result.Process($result)
+			
+	        $Connector.Result.Complete(19)
 		}
 		elseif ($Connector.ObjectClass.Type -eq "__SAMPLE__")
 		{
