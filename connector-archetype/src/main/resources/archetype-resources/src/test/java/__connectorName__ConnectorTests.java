@@ -96,6 +96,7 @@ import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
+import org.identityconnectors.framework.impl.api.local.LocalConnectorFacadeImpl;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
@@ -108,8 +109,6 @@ import org.testng.annotations.Test;
 /**
  * Attempts to test the {@link ${connectorName}Connector} with the framework.
  *
- * @author ${symbol_dollar}author${symbol_dollar}
- * @version ${symbol_dollar}Revision${symbol_dollar} ${symbol_dollar}Date${symbol_dollar}
  */
 public class ${connectorName}ConnectorTests {
 
@@ -127,7 +126,7 @@ public class ${connectorName}ConnectorTests {
     private static final PropertyBag PROPERTIES = TestHelpers.getProperties(${connectorName}Connector.class);
 
     @BeforeClass
-    public static void setUp() {
+    public void setUp() {
         //
         //other setup work to do before running tests
         //
@@ -138,10 +137,13 @@ public class ${connectorName}ConnectorTests {
     }
 
     @AfterClass
-    public static void tearDown() {
+    public void tearDown() {
         //
-        //clean up resources
+        // clean up resources
         //
+        if (connectorFacade instanceof LocalConnectorFacadeImpl) {
+            ((LocalConnectorFacadeImpl) connectorFacade).dispose();
+        }
     }
 
     @Test
@@ -162,7 +164,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void authenticateTest() {
         logger.info("Running Authentication Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Uid uid =
                 facade.authenticate(ObjectClass.ACCOUNT, "username", new GuardedString("Passw0rd"
@@ -175,7 +177,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void createTest() {
         logger.info("Running Create Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Set<Attribute> createAttributes = new HashSet<Attribute>();
         createAttributes.add(new Name("Foo"));
@@ -190,7 +192,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void deleteTest() {
         logger.info("Running Delete Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         facade.delete(ObjectClass.ACCOUNT, new Uid("username"), builder.build());
     }
@@ -200,7 +202,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void resolveUsernameTest() {
         logger.info("Running ResolveUsername Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Uid uid = facade.resolveUsername(ObjectClass.ACCOUNT, "username", builder.build());
         Assert.assertEquals(uid.getUidValue(), "username");
@@ -211,7 +213,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void schemaTest() {
         logger.info("Running Schema Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         Schema schema = facade.schema();
         Assert.assertNotNull(schema.findObjectClassInfo(ObjectClass.ACCOUNT_NAME));
     }
@@ -221,7 +223,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void runScriptOnConnectorTest() {
         logger.info("Running RunScriptOnConnector Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setRunAsUser("admin");
         builder.setRunWithPassword(new GuardedString("Passw0rd".toCharArray()));
@@ -239,7 +241,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void runScriptOnResourceTest() {
         logger.info("Running RunScriptOnResource Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setRunAsUser("admin");
         builder.setRunWithPassword(new GuardedString("Passw0rd".toCharArray()));
@@ -255,7 +257,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void getObjectTest() {
         logger.info("Running GetObject Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setAttributesToGet(Name.NAME);
         ConnectorObject co =
@@ -267,7 +269,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void searchTest() {
         logger.info("Running Search Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setPageSize(10);
         final ResultsHandler handler = new ToListResultsHandler();
@@ -284,7 +286,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void getLatestSyncTokenTest() {
         logger.info("Running GetLatestSyncToken Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         SyncToken token = facade.getLatestSyncToken(ObjectClass.ACCOUNT);
         Assert.assertEquals(token.getValue(), 10);
     }
@@ -292,7 +294,7 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void syncTest() {
         logger.info("Running Sync Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setPageSize(10);
         final SyncResultsHandler handler = new SyncResultsHandler() {
@@ -311,14 +313,14 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void testTest() {
         logger.info("Running Test Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         facade.test();
     }
 
     @Test
     public void validateTest() {
         logger.info("Running Validate Test");
-        final ConnectorFacade facade = createConnectorFacade(BasicConnector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         facade.validate();
     }
 #end
@@ -327,13 +329,13 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void updateTest() {
         logger.info("Running Update Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Set<Attribute> updateAttributes = new HashSet<Attribute>();
         updateAttributes.add(new Name("Foo"));
 
         Uid uid = facade.update(ObjectClass.ACCOUNT, new Uid("Foo"), updateAttributes, builder.build());
-        Assert.assertEquals(uid.getUidValue(),"foo");
+        Assert.assertEquals(uid.getUidValue(), "foo");
     }
 #end
 
@@ -341,27 +343,27 @@ public class ${connectorName}ConnectorTests {
     @Test
     public void addAttributeValuesTest() {
         logger.info("Running AddAttributeValues Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Set<Attribute> updateAttributes = new HashSet<Attribute>();
         // add 'group2' to existing groups
         updateAttributes.add(AttributeBuilder.build(PredefinedAttributes.GROUPS_NAME, "group2"));
 
         Uid uid = facade.addAttributeValues(ObjectClass.ACCOUNT, new Uid("Foo"), updateAttributes, builder.build());
-        Assert.assertEquals(uid.getUidValue(),"foo");
+        Assert.assertEquals(uid.getUidValue(), "foo");
     }
 
     @Test
     public void removeAttributeValuesTest() {
         logger.info("Running RemoveAttributeValues Test");
-        final ConnectorFacade facade = createConnectorFacade(${connectorName}Connector.class, null);
+        final ConnectorFacade facade = getFacade(${connectorName}Connector.class, null);
         final OperationOptionsBuilder builder = new OperationOptionsBuilder();
         Set<Attribute> updateAttributes = new HashSet<Attribute>();
         // remove 'group2' from existing groups
         updateAttributes.add(AttributeBuilder.build(PredefinedAttributes.GROUPS_NAME, "group2"));
 
         Uid uid = facade.removeAttributeValues(ObjectClass.ACCOUNT, new Uid("Foo"), updateAttributes, builder.build());
-        Assert.assertEquals(uid.getUidValue(),"foo");
+        Assert.assertEquals(uid.getUidValue(), "foo");
     }
 #end
 
@@ -388,7 +390,7 @@ public class ${connectorName}ConnectorTests {
         PropertyBag propertyBag = TestHelpers.getProperties(clazz, environment);
 
         APIConfiguration impl =
-        TestHelpers.createTestConfiguration(clazz, propertyBag, "configuration");
+            TestHelpers.createTestConfiguration(clazz, propertyBag, "configuration");
         impl.setProducerBufferSize(0);
         impl.getResultsHandlerConfiguration().setEnableAttributesToGetSearchResultsHandler(false);
         impl.getResultsHandlerConfiguration().setEnableCaseInsensitiveFilter(false);

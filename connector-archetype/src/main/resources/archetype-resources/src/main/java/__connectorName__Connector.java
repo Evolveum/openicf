@@ -266,9 +266,9 @@ public class ${connectorName}Connector implements #if($poolable_connector_safe)P
                 throw new InvalidAttributeValueException("Name attribute is required");
             }
         } else {
-            logger.warn("Delete of type {0} is not supported", configuration.getConnectorMessages()
+            logger.warn("Create of type {0} is not supported", configuration.getConnectorMessages()
                     .format(objectClass.getDisplayNameKey(), objectClass.getObjectClassValue()));
-            throw new UnsupportedOperationException("Delete of type"
+            throw new UnsupportedOperationException("Create of type"
                     + objectClass.getObjectClassValue() + " is not supported");
         }
     }
