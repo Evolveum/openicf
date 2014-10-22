@@ -114,9 +114,13 @@ public class ${connectorName}Configuration extends AbstractConfiguration#if($sta
 
         Assertions.nullCheck(password, "password");
     }
-    #if($statefulConnector == 'Y' || $statefulConnector == 'y')
+
+#if($statefulConnector == 'Y' || $statefulConnector == 'y')
+    /**
+     * {@inheritDoc}
+     */
     public void release() {
     }
-    #end
+#end
 
 }

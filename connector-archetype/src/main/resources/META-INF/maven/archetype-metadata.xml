@@ -37,7 +37,7 @@
             <defaultValue>1.4</defaultValue>
         </requiredProperty>
         <requiredProperty key="framework_version">
-            <defaultValue>0.0</defaultValue>
+            <defaultValue>1.0-RC1</defaultValue>
         </requiredProperty>
         <requiredProperty key="statefulConnector">
             <defaultValue>n</defaultValue>

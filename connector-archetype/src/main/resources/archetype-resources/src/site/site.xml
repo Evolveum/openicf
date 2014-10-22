@@ -48,7 +48,7 @@
         <menu name="${connectorName} Core Docs">
             <item name="All Formats" href="docs.html" />
             <!--item name="Release Notes" href="./doc/release-notes/index.html" /-->
-            <item name="Developer Guide" href="./doc/${artifactId}-${symbol_dollar}{project.version}/index.html" />
+            <item name="Developer Guide" href="./doc/${symbol_dollar}{project.artifactId}-${symbol_dollar}{project.version}/index.html" />
         </menu>
 
         <menu ref="reports"/>
