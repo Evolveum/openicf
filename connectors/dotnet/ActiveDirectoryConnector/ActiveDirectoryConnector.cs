@@ -469,8 +469,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                 }
 
+                SortOption sortOption = null;
+                if (options.SortKeys != null && options.SortKeys.Length > 0)
+                {
+                    if (options.SortKeys.Length > 1)
+                    {
+                        throw new ArgumentException("At most one sort key is supported");
+                    }
+                    Org.IdentityConnectors.Framework.Common.Objects.SortKey key = options.SortKeys[0];
+                    var attributeName = CustomAttributeHandlers.ToRealName(key.Field);
+                    sortOption = new SortOption(attributeName, key.IsAscendingOrder() ? SortDirection.Ascending : SortDirection.Descending);
+                }
+
                 ExecuteQueryInternal(oclass, query, handler, options,
-                    false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope, adAttributesToReturn);
+                    false, sortOption, _configuration.LDAPHostName, useGC, searchContainer, searchScope, adAttributesToReturn);
             }
             catch (DirectoryServicesCOMException e)
             {
@@ -543,8 +555,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
             string searchRoot, SearchScope searchScope, ICollection<string> attributesToReturn)
         {
-            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}", 
-                CollectionUtil.Dump(attributesToReturn));
+            bool pagedSearch = options.PageSize.HasValue && options.PageSize.Value > 0;
+
+            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "AD.ExecuteQueryInternal: modifying query; attributesToReturn = {0}, pageSize = {1}", 
+                CollectionUtil.Dump(attributesToReturn), options.PageSize);
+
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
             {
@@ -580,6 +595,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             DirectorySearcher searcher = null;
             DirectoryEntry searchRootEntry = null;
+            int totalCount = -1;
             try
             {
                 if (searchRoot.Equals(_configuration.Container, StringComparison.OrdinalIgnoreCase))
@@ -596,8 +612,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     searcher = new DirectorySearcher(searchRootEntry, query);
                 }
 
-                searcher.PageSize = 1000;
                 searcher.SearchScope = searchScope;
+
+                int offset = 1;
+
+                if (pagedSearch)
+                {
+                    DirectoryVirtualListView vlv = new DirectoryVirtualListView();
+                    if (options.PagedResultsCookie != null)
+                    {
+                        LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "PagedResultsCookie is not supported, the provided value of '{0}' will be ignored.", options.PagedResultsCookie);
+                    }
+                    if (options.PagedResultsOffset.HasValue)
+                    {
+                        if (options.PagedResultsOffset.Value == 0)
+                        {
+                            throw new ArgumentException("PagedResultsOffset value of 0 is not supported.");     // TODO or issue warning only?
+                        }
+                        offset = options.PagedResultsOffset.Value;
+                        vlv.Offset = offset;
+                    }
+                    vlv.BeforeCount = 0;
+                    vlv.AfterCount = options.PageSize.Value - 1;
+
+                    vlv.ApproximateTotal = 1000000;         // TODO what with this?
+                    searcher.VirtualListView = vlv;
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: creating VLV: BeforeCount={0}, AfterCount={1}, Offset={2}",
+                        vlv.BeforeCount, vlv.AfterCount, vlv.Offset);
+
+                    // when using VLV we have to provide some sorting
+                    if (sortOption == null)
+                    {
+                        sortOption = new SortOption(ATT_CN, SortDirection.Ascending);
+                        LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "No sort option specified, but VLV requires one. Default one will be used.");
+                    }
+                }
+                else
+                {
+                    searcher.PageSize = 1000;               // this must be set in order to retrieve all relevant records
+                }
 
                 if (includeDeleted)
                 {
@@ -607,6 +660,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (sortOption != null)
                 {
                     searcher.Sort = sortOption;
+                    LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Sort option: {0} / {1}", sortOption.PropertyName, sortOption.Direction);
                 }
 
                 LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Search: Performing query");
@@ -627,12 +681,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     foreach (DS.SearchResult result in resultSet)
                     {
-                        buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler);
                         count++;
+                        if (!buildConnectorObject(result, oclass, useGlobalCatalog, searchRoot, attributesToReturn, handler))
+                        {
+                            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Processing search results was stopped on the client request");
+                            break;
+                        }
                     }
+
+                    if (pagedSearch)
+                    {
+                        DirectoryVirtualListView vlv = null;
+                        try
+                        {
+                            vlv = searcher.VirtualListView;
+                        }
+                        catch (Exception e)
+                        {
+                            LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Couldn't get VirtualListView from the DirectorySearcher instance. Exception = {0}", e);
+                        }
+                        if (vlv != null)
+                        {
+                            totalCount = vlv.ApproximateTotal;
+                            LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "VLV returned = {0}; BeforeCount={1}, AfterCount={2}, Offset={3}, ApproxTotal={4}, DirVLVContext={5}, Target={6}, TargetPerc={7}", vlv, 
+                                vlv.BeforeCount, vlv.AfterCount, vlv.Offset, vlv.ApproximateTotal, vlv.DirectoryVirtualListViewContext, vlv.Target, vlv.TargetPercentage);
+                        }
+                    }
+
                 }
                 finally
                 {
+                    if (handler is SearchResultsHandler && pagedSearch)
+                    {
+                        int remainingEntries = totalCount - (offset - 1) - count;           // may be incorrect if processing was stopped on request by handler
+                        Org.IdentityConnectors.Framework.Common.Objects.SearchResult searchResult = 
+                            new Org.IdentityConnectors.Framework.Common.Objects.SearchResult("dummy cookie", remainingEntries);
+                        var searchHandler = handler as SearchResultsHandler;
+                        searchHandler.HandleResult(searchResult);
+                    }
+
                 	stopWatch.Stop();
                     TimeSpan ts = stopWatch.Elapsed;
 					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds);
@@ -644,13 +731,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                 }
             }
-            catch (Exception e)
-            {
-                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Exception message: {0}", e.Message);
-            }
             finally
             {
-                //searcher.Dispose();
+                if (searcher != null)
+                {
+                    searcher.Dispose();
+                }
                 if (searchRootEntry != null)
                 {
                     searchRootEntry.Dispose();
@@ -658,11 +744,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-
-        private void buildConnectorObject(DS.SearchResult result, ObjectClass oclass, bool useGlobalCatalog, string searchRoot, ICollection<string> attributesToReturn, ResultsHandler handler)
+        // returns true if the processing should continue
+        private bool buildConnectorObject(DS.SearchResult result, ObjectClass oclass, bool useGlobalCatalog, string searchRoot, ICollection<string> attributesToReturn, ResultsHandler handler)
         {
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();
+
+            bool rv = true;
 
             try
             {
@@ -781,7 +869,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 String msg = String.Format("Returning ''{0}'', in {1} ms",
                     (result.Path != null) ? result.Path : "<path is null>", stopWatch.ElapsedMilliseconds);
                 LOGGER_API.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, msg);
-                handler.Handle(builder.Build());
+                rv = handler.Handle(builder.Build());
             }
             catch (DirectoryServicesCOMException e)
             {
@@ -798,6 +886,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Exception details: " + e);
             }
 			stopWatch.Stop();
+            return rv;
         }
 
         private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)

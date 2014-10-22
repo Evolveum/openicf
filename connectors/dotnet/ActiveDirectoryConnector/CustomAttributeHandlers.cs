@@ -1524,6 +1524,33 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             return newAttribute;
         }
+
+        internal static string ToRealName(string name)
+        {
+            if (NameUtil.IsSpecialName(name))
+            {
+                if (name.Equals(Name.NAME))
+                {
+                    return ActiveDirectoryConnector.ATT_DISTINGUISHED_NAME;
+                }
+                else if (name.Equals(PredefinedAttributes.SHORT_NAME))
+                {
+                    return ActiveDirectoryConnector.ATT_SHORT_NAME;
+                }
+                else if (name.Equals(PredefinedAttributes.DESCRIPTION))
+                {
+                    return ActiveDirectoryConnector.ATT_DESCRIPTION;
+                }
+                else
+                {
+                    throw new ArgumentException("Cannot translate " + name + " to AD attribute name");
+                }
+            }
+            else
+            {
+                return name;
+            }
+        }
     }
     
 }
