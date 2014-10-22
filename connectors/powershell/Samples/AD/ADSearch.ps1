@@ -23,12 +23,15 @@
 # @author Gael Allioux <gael.allioux@forgerock.com>
 #
 #REQUIRES -Version 2.0
+
 <#  
 .SYNOPSIS  
     This is a sample Search script with Active Directory as a target
 	
 .DESCRIPTION
-
+	This script leverages both Get-ADUser and Get-ADGroup to search for users and groups.
+	It also demo how to use PowerShell pipes to handles the results back to the connector framework.
+	
 .INPUT VARIABLES
 	The connector injects the following variables to the script:
 	- <prefix>.Configuration : handler to the connector's configuration object
@@ -38,19 +41,19 @@
 	- <prefix>.Query: a handler to the Query.
 	
 .RETURNS
-  
+	The entries found
+	
 .NOTES  
     File Name      : ADSearch.ps1  
     Author         : Gael Allioux (gael.allioux@forgerock.com)
-    Prerequisite   : PowerShell V2
+    Prerequisite   : PowerShell V2 - AD module loaded by the connector
     Copyright 2014 - ForgeRock AS    
 .LINK  
     Script posted over:  
     http://openicf.forgerock.org
-.EXAMPLE  
-    Example 1     
-.EXAMPLE    
-    Example 2
+		
+	Active Directory Administration with Windows PowerShell
+	http://technet.microsoft.com/en-us/library/dd378937(v=ws.10).aspx
 #>
 
 # We define a filter to process results through a pipe and feed the result handler

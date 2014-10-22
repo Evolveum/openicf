@@ -29,7 +29,9 @@
     This is a sample Sync script for Active Directory users and groups
 	
 .DESCRIPTION
-
+	This script leverages the uSNChanged attribute to find entries that have been
+	modified since last invoke
+	
 .INPUT VARIABLES
 	The connector injects the following variables to the script:
 	- <prefix>.Configuration : handler to the connector's configuration object
@@ -39,30 +41,33 @@
 	- <prefix>.Token: The sync token value
 
 .RETURNS
-	if action = "GET_LATEST_SYNC_TOKEN", it must return an object representing the last known
-    sync token for the corresponding ObjectClass
+	if Operation is "GET_LATEST_SYNC_TOKEN":
+	Must return an object representing the last known sync token for the corresponding ObjectClass
 	
-	if action = "SYNC":
+	if Operation is "SYNC":
     Call Connector.Results.Process(Hashtable) describing one update:
     Map should look like the following:
-
    [
    "SyncToken": <Object> token of the object that changed(could be Integer, Date, String) , [!! could be null]
-   "DeltaType":<String> ("CREATE|UPDATE|CREATE_OR_UPDATE"|"DELETE"), the type of change that occurred
-   "PreviousUid":<String>, the Uid of the object before the change (This is for rename ops)
-   "Object": <Hashtable> The object that has changed
+   "DeltaType": <String> ("CREATE|UPDATE|CREATE_OR_UPDATE"|"DELETE"), the type of change that occurred
+   "Uid": <String>; the Uid (OpenICF __UID__) of the entry
+   "PreviousUid": <String>, the Uid of the object before the change (This is for rename ops)
+   "Object": <Hashtable> The Connector object that has changed
+   "ObjectClass": <String|ObjectClass> The ObjectClass of the entry. Needs to be set if op=DELETE and Object=null
    ]
   
 .NOTES  
     File Name      : ADSync.ps1  
     Author         : Gael Allioux (gael.allioux@forgerock.com)
-    Prerequisite   : PowerShell V2
+    Prerequisite   : PowerShell V2 - AD module loaded by the connector
     Copyright 2014 - ForgeRock AS    
 
 .LINK  
     Script posted over:  
     http://openicf.forgerock.org
-
+		
+	Active Directory Administration with Windows PowerShell
+	http://technet.microsoft.com/en-us/library/dd378937(v=ws.10).aspx
 #>
 
 # We define a filter to process results through a pipe and feed the sync result handler
