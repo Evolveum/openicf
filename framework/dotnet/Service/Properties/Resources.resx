@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,121 +117,72 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="connector_displayName" xml:space="preserve">
-    <value>PowerShell Connector </value>
-  </data>
-  <data name="MESSAGE_OBJECT_CLASS___ACCOUNT__" xml:space="preserve">
-    <value>User</value>
-  </data>
-  <data name="MESSAGE_OBJECT_CLASS___GROUP__" xml:space="preserve">
-    <value>Group</value>
-  </data>
-  <data name="group_OperationScripts" xml:space="preserve">
-    <value>Operation Script Files</value>
-  </data>
-  <data name="display_SchemaScriptFileName" xml:space="preserve">
-    <value>Schema Script filename</value>
-  </data>
-  <data name="display_AuthenticateScriptFileName" xml:space="preserve">
-    <value>Authenticate Script filename</value>
-  </data>
-  <data name="help_AuthenticateScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the AUTHENTICATE operation.</value>
-  </data>
-  <data name="display_CreateScriptFileName" xml:space="preserve">
-    <value>Create Script filename</value>
-  </data>
-  <data name="display_DeleteScriptFileName" xml:space="preserve">
-    <value>Delete Script filename</value>
-  </data>
-  <data name="display_ResolveUsernameScriptFileName" xml:space="preserve">
-    <value>ResolveUsername Script filename</value>
-  </data>
-  <data name="display_ScriptOnResourceScriptFileName" xml:space="preserve">
-    <value>ScriptOnResource Script filename</value>
-  </data>
-  <data name="display_SearchScriptFileName" xml:space="preserve">
-    <value>Search Script filename</value>
-  </data>
-  <data name="display_SyncScriptFileName" xml:space="preserve">
-    <value>Sync Script filename</value>
-  </data>
-  <data name="display_TestScriptFileName" xml:space="preserve">
-    <value>Test Script filename</value>
-  </data>
-  <data name="display_UpdateScriptFileName" xml:space="preserve">
-    <value>Update Script filename</value>
-  </data>
-  <data name="help_CreateScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the CREATE operation.</value>
-  </data>
-  <data name="help_DeleteScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the DELETE operation.</value>
-  </data>
-  <data name="help_ResolveUsernameScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the RESOLVE_USERNAME operation.</value>
-  </data>
-  <data name="help_SchemaScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the SCHEMA operation.</value>
-  </data>
-  <data name="help_ScriptOnResourceScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the RUNSCRIPTONRESOURCE operation.</value>
-  </data>
-  <data name="help_SearchScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the SEARCH operation.</value>
-  </data>
-  <data name="help_SyncScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the SYNC operation.</value>
-  </data>
-  <data name="help_TestScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the TEST operation.</value>
-  </data>
-  <data name="help_UpdateScriptFileName" xml:space="preserve">
-    <value>The name of the file used to perform the UPDATE operation.</value>
-  </data>
-  <data name="display_NameAttributeName" xml:space="preserve">
-    <value>Name to use for __NAME__ in Query Filter</value>
-  </data>
-  <data name="display_QueryFilterType" xml:space="preserve">
-    <value>Format of the query filter</value>
-  </data>
-  <data name="display_SubstituteUidAndNameInQueryFilter" xml:space="preserve">
-    <value>Substitute __UID__ and __NAME__ in Query Filter</value>
-  </data>
-  <data name="display_UidAttributeName" xml:space="preserve">
-    <value>Name to use for __UID__ in Query Filter</value>
-  </data>
-  <data name="display_VariablesPrefix" xml:space="preserve">
-    <value>Connector variables prefix</value>
-  </data>
-  <data name="group_PowerShell" xml:space="preserve">
-    <value>PowerShell Runspace</value>
-  </data>
-  <data name="help_NameAttributeName" xml:space="preserve">
-    <value>Name  attribute name (__NAME__) can be replaced in query filter by a more convenient alias</value>
-  </data>
-  <data name="help_QueryFilterType" xml:space="preserve">
-    <value>QueryFilterType must be either "Native"|"Map"|"Ldap"|"AdPsModule". Defaults to "Map"</value>
-  </data>
-  <data name="help_SubstituteUidAndNameInQueryFilter" xml:space="preserve">
-    <value>Define if __UID__ and __NAME__ should be replaced by the value defined in NameAttributeName and UidAttributeName in the Queryfilter</value>
-  </data>
-  <data name="help_UidAttributeName" xml:space="preserve">
-    <value>Uid attribute name (__UID__) can be replaced in query filter by a more convenient alias</value>
-  </data>
-  <data name="help_VariablesPrefix" xml:space="preserve">
-    <value>Prefix for all the variables inject in the scripts by the connector. Defaults to "Connector". Variables are then accessed this way: $Connector.&lt;variable_name&gt;</value>
-  </data>
-  <data name="display_ReloadScriptOnExecution" xml:space="preserve">
-    <value>Reload Script on Execution</value>
-  </data>
-  <data name="help_ReloadScriptOnExecution" xml:space="preserve">
-    <value>Reload the script from disk everytime it is executed. Use for debugging</value>
-  </data>
-  <data name="display_UseInterpretersPool" xml:space="preserve">
-    <value>Use PowerShell RunSpace Pool</value>
-  </data>
-  <data name="help_UseInterpretersPool" xml:space="preserve">
-    <value>If true, the connector will leverage PowerShell RunSpace Pool.</value>
+  <data name="DefaultConfig" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;configuration&gt;
+  &lt;runtime&gt;
+    &lt;loadFromRemoteSources enabled="true"/&gt;
+  &lt;/runtime&gt;
+  &lt;connectionStrings&gt;
+    &lt;!-- Example connection to a SQL Server Database on localhost. --&gt;
+    &lt;!-- &lt;add name="ExampleConnectionString"
+            connectionString="Data Source=.;Initial Catalog=DBName;Integrated Security=True"
+            providerName="System.Data.SqlClient" /&gt; --&gt;
+  &lt;/connectionStrings&gt;
+  &lt;appSettings&gt;
+    &lt;!-- access these values via the property:
+            System.Configuration.ConfigurationManager.AppSettings[key]
+     --&gt;
+    &lt;add key="connectorserver.port" value="8759" /&gt;
+    &lt;add key="connectorserver.usessl" value="false" /&gt;
+    &lt;add key="connectorserver.certificatestorename" value="ConnectorServerSSLCertificate" /&gt;
+    &lt;add key="connectorserver.ifaddress" value="0.0.0.0" /&gt;
+    &lt;add key="connectorserver.maxFacadeLifeTime" value="0" /&gt;
+    &lt;add key="connectorserver.key" value="lmA6bMfENJGlIDbfrVtklXFK32s=" /&gt;
+    &lt;!--
+            Enable/Disable the logging proxy for all operations.
+        --&gt;
+    &lt;add key="logging.proxy" value="false"/&gt;
+  &lt;/appSettings&gt;
+  &lt;system.diagnostics&gt;
+    &lt;trace autoflush="true" indentsize="4"&gt;
+      &lt;listeners&gt;
+        &lt;remove name="Default" /&gt;
+        &lt;add name="console" /&gt;
+        &lt;add name="file" /&gt;
+      &lt;/listeners&gt;
+    &lt;/trace&gt;
+    &lt;sources&gt;
+      &lt;source name="ConnectorServer" switchName="switch1"&gt;
+        &lt;listeners&gt;
+          &lt;remove name="Default" /&gt;
+          &lt;add name="file" /&gt;
+        &lt;/listeners&gt;
+      &lt;/source&gt;
+      &lt;source name="MyClass2" switchName="switch2"&gt;
+        &lt;listeners&gt;
+          &lt;remove name="Default" /&gt;
+          &lt;add name="file" /&gt;
+        &lt;/listeners&gt;
+      &lt;/source&gt;
+    &lt;/sources&gt;
+    &lt;switches&gt;
+      &lt;add name="switch1" value="Information"/&gt;
+      &lt;add name="switch2" value="Warning"/&gt;
+    &lt;/switches&gt;
+    &lt;sharedListeners&gt;
+      &lt;add name="console"
+           type="System.Diagnostics.ConsoleTraceListener"&gt;
+      &lt;/add&gt;
+      &lt;add name="file"
+           type="System.Diagnostics.TextWriterTraceListener"
+           initializeData="connectorserver.log"
+           traceOutputOptions="DateTime"&gt;
+        &lt;filter type="System.Diagnostics.EventTypeFilter" initializeData="Information"/&gt;
+      &lt;/add&gt;
+    &lt;/sharedListeners&gt;
+  &lt;/system.diagnostics&gt;
+
+&lt;/configuration&gt;</value>
   </data>
 </root>

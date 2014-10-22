@@ -24,7 +24,7 @@
   !      Copyright 2011-2014 ForgeRock AS
   !
 -->
- <chapter xml:id="install-${groupId}-${artifactId}-${compatibility_version}.${version}"
+ <chapter xml:id="install-${groupId}-${artifactId}-${symbol_dollar}{project.version}"
  xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en'
  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
  xsi:schemaLocation='http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd'
@@ -37,14 +37,14 @@
         prerequisites specific to its use.
     </para>
 
-    <section xml:id="before-you-install-${groupId}-${artifactId}-${compatibility_version}.${version}">
+    <section xml:id="before-you-install-${groupId}-${artifactId}-${symbol_dollar}{project.version}">
         <title>Before You Install the ${symbol_dollar}{project.name}</title>
         <para>
             TO BE WRITTEN MANUALLY
         </para>
     </section>
 
-    <section xml:id="connector-install-${groupId}-${artifactId}-${compatibility_version}.${version}">
+    <section xml:id="connector-install-${groupId}-${artifactId}-${symbol_dollar}{project.version}">
         <title>Installing the ${symbol_dollar}{project.name}</title>
         <para>
             TO BE WRITTEN MANUALLY
@@ -52,7 +52,7 @@
     </section>
 
     #if ( $poolableConnector == 'Y' || $poolableConnector == 'y' )
-    <section xml:id="connector-pooling-connectorname-${groupId}-${artifactId}-${compatibility_version}.${version}">
+    <section xml:id="connector-pooling-connectorname-${groupId}-${artifactId}-${symbol_dollar}{project.version}">
         <title>Configuring Connector Pooling</title>
         <para>
             TO BE WRITTEN MANUALLY

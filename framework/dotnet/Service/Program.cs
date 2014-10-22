@@ -25,11 +25,13 @@ using System;
 using System.Configuration;
 using System.Configuration.Install;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.ServiceProcess;
 using Org.IdentityConnectors.Common.Security;
 using System.Security.Cryptography.X509Certificates;
+using Sun.OpenConnectors.Framework.Service.Properties;
 
 namespace Org.IdentityConnectors.Framework.Service
 {
@@ -47,6 +49,7 @@ namespace Org.IdentityConnectors.Framework.Service
             Console.WriteLine("       /uninstall [/serviceName <serviceName>] - Uninstalls the service.");
             Console.WriteLine("       /run - Runs the service from the console.");
             Console.WriteLine("       /setKey [<key>] - Sets the connector server key.");
+            Console.WriteLine("       /setDefaults - Sets default app.config");
             Console.WriteLine("       /storeCertificate [/storeName <certificatestorename>] [/certificateFile <certificate>]- Stores the Certificate in the storage.");
         }
 
@@ -113,6 +116,20 @@ namespace Org.IdentityConnectors.Framework.Service
                         return;
                     }
                     DoSetKey(args.Length > 1 ? args[1] : null);
+                    return;
+                }
+                if (cmd.Equals("/setDefaults", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (args.Length > 1)
+                    {
+                        Usage();
+                        return;
+                    }
+                    using (var file = new StreamWriter(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile, false))
+                    {
+                        file.WriteLine(Resources.ResourceManager.GetString("DefaultConfig"));
+                        Console.WriteLine("Default configuration successfully restored.");
+                    }                    
                     return;
                 }
                 IDictionary<string, string> options =
@@ -288,7 +305,7 @@ namespace Org.IdentityConnectors.Framework.Service
             {
                 Console.Write("Please enter the keystore password: ");
                 GuardedString v1 = ReadPassword();
-                certificate = new X509Certificate2(options[OPT_CERTFILE_NAME], SecurityUtil.Decrypt(v1));
+                certificate = new X509Certificate2(options[OPT_CERTFILE_NAME], SecurityUtil.Decrypt(v1), X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             }
             X509Store store = new X509Store(storeName, StoreLocation.LocalMachine);
 
