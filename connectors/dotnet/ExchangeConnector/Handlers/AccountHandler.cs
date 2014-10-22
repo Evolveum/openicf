@@ -3,6 +3,7 @@ using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
+using Org.IdentityConnectors.Framework.Spi;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -383,7 +384,7 @@ namespace Org.IdentityConnectors.Exchange {
             }
 
             // delegate to get the exchange attributes if requested            
-            ResultsHandler filter = new ResultsHandler()
+            ResultsHandler filter = new SearchResultsHandler()
             {
                 Handle = cobject =>
                 {
@@ -392,7 +393,16 @@ namespace Org.IdentityConnectors.Exchange {
                     //filtered = AddExchangeAttributes(exconn, context.ObjectClass, filtered, attsToGet);
                     LOGGER.TraceEvent(TraceEventType.Verbose, CAT_DEFAULT, "Object as passed from Exchange connector: {0}", CommonUtils.DumpConnectorAttributes(filtered.GetAttributes()));
                     return context.ResultsHandler.Handle(filtered);
-                }
+                },
+
+                HandleResult = result =>
+                    {
+                        if (context.ResultsHandler is SearchResultsHandler)
+                        {
+                            ((SearchResultsHandler)context.ResultsHandler).HandleResult(result);
+                        }
+                    }
+
             };
 
             ResultsHandler handler2use = filter;

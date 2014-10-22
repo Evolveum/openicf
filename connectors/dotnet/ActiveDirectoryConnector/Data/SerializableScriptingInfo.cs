@@ -46,7 +46,7 @@ namespace Org.IdentityConnectors.ActiveDirectory.Data
 
         internal IList<ScriptToRun> GetScriptsFor(string operationName, ObjectClass objectClass, Scripting.Position position)
         {
-            var rv = new List<ScriptToRun>();
+            List<ScriptToRun> rv = new List<ScriptToRun>();
             foreach (OperationInfo operationInfo in OperationInfo)
             {
                 // does operation name match?
@@ -72,7 +72,7 @@ namespace Org.IdentityConnectors.ActiveDirectory.Data
                     CollectionUtil.AddAll(rv, operationInfo.GetScriptsFor(objectClass, position));
                 }
             }
-            // TODO sort the list before return
+            rv.Sort((x, y) => x.Order.CompareTo(y.Order));
             return rv;
         }
 
