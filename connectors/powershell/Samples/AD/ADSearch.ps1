@@ -73,13 +73,13 @@ filter Process-Results {
 				$values = @();
 				foreach($val in $_.$attrName) 
 				{
-					$values += $val
+					$values += $val.ToString()
 				}
 				$result.Add($attrName, $values)
 			}
 			else
 			{
-				$result.Add($attrName, $_.$attrName)
+				$result.Add($attrName, $_.$attrName.ToString())
 			}
 		}
 	}
