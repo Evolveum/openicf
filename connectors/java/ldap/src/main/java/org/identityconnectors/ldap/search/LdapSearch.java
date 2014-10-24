@@ -33,8 +33,6 @@ import java.util.Set;
 
 import static java.util.Collections.singletonList;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
