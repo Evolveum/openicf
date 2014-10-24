@@ -31,7 +31,7 @@
     <OutputName>ServiceInstall</OutputName>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <SupressIces>ICE45</SupressIces>
-    <OpenICFVersion>1.4.1.0-SNAPSHOT</OpenICFVersion>	
+    <OpenICFVersion>1.4.2.0-SNAPSHOT</OpenICFVersion>	
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -54,6 +54,7 @@
     <DebugSymbols>true</DebugSymbols>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <OpenICFVersion>1.4.2.0</OpenICFVersion>
   </PropertyGroup>
   <Import Project="$(WixTargetsPath)" />
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
