@@ -41,10 +41,8 @@
 <List>
   <ObjectClassInfo container="false" type="__ACCOUNT__">
     <AttributeInfos>
-      <AttributeInfo name="sAMAccountName" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="userPrincipalName" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="sAMAccountName" type="String"/>
+      <AttributeInfo name="userPrincipalName" type="String"/>
       <AttributeInfo name="givenName" type="String"/>
       <AttributeInfo name="sn" type="String"/>
       <AttributeInfo name="cn" type="String">
