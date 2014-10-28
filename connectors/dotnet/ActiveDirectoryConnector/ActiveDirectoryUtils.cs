@@ -775,7 +775,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             LargeInteger largeInteger = new LargeIntegerClass();
             largeInteger.HighPart = (int)(int64Value >> 32); ;
-            largeInteger.LowPart = (int)(int64Value & 0xFFFFFFFF);
+            largeInteger.LowPart = unchecked((int)(int64Value & 0xFFFFFFFF));
             return largeInteger;
         }
 
