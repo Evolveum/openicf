@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -66,6 +66,14 @@ if ($Connector.Operation -eq "RESOLVE_USERNAME")
 		$user = Get-ADUser -Identity $Connector.UserName
 		$Connector.Result.Uid = $user.ObjectGUID.ToString()
 	}
+	else
+	{
+		throw New-Object System.NotSupportedException("$($Connector.Operation) operation on type:$($Connector.ObjectClass.Type) is not supported")
+	}
+}
+else
+{
+	throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException("ResolveUsernameScript can not handle operation: $($Connector.Operation)")
 }
 }
 catch #Re-throw the original exception

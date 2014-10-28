@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -59,6 +59,10 @@ try
  if ($Connector.Operation -eq "TEST")
  {
  	(Get-ADForest).domains
+ }
+ else
+ {
+ 	throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException("TestScript can not handle operation: $($Connector.Operation)")
  }
 }
 catch #Rethrow the original exception

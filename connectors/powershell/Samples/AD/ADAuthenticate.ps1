@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -68,8 +68,12 @@ if ($Connector.ObjectClass.Type -eq "__ACCOUNT__")
 	Write-Verbose -verbose $res.Name
 	$Connector.Result.Uid = $res.ObjectGUID.ToString()
 }
+else
+{
+	throw New-Object System.NotSupportedException("$($Connector.Operation) operation on type:$($Connector.ObjectClass.Type) is not supported")
+}
 }
 catch #Re-throw the original exception
 {
-	throw
+	throw New-Object org.identityconnectors.framework.common.exceptions.InvalidCredentialException("The server has rejected the client credentials")
 }

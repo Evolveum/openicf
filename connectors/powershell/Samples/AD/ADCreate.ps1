@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -36,7 +36,7 @@
 	- <prefix>.Configuration : handler to the connector's configuration object
 	- <prefix>.Options: a handler to the Operation Options
 	- <prefix>.Operation: String correponding to the action ("CREATE" here)
-	- <prefix>.ObjectClass: a String describing the Object class (__ACCOUNT__ / __GROUP__ / other)
+	- <prefix>.ObjectClass: the Object class object (__ACCOUNT__ / __GROUP__ / other)
 	- <prefix>.Attributes: A collection of ConnectorAttributes representing the entry attributes
 	- <prefix>.Id: Corresponds to the OpenICF __NAME__ atribute if it is provided as part of the attribute set,
 	 otherwise null
@@ -266,8 +266,12 @@ if ($Connector.Operation -eq "CREATE")
 		{
 		$Connector.Result.Uid = Create-NewGroup $Connector.Attributes
 		}
-		default {throw "Unsupported operation"}
+		default {throw "Unsupported type: $($Connector.ObjectClass.Type)"}
 	}
+}
+else
+{
+	throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException("CreateScript can not handle operation: $($Connector.Operation)")
 }
 }
 catch #Re-throw the original exception
