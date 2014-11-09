@@ -24,8 +24,7 @@
  */
 package org.identityconnectors.ldap.search;
 
-import com.sun.jndi.ldap.ctl.SortControl;
-import com.sun.jndi.ldap.ctl.VirtualListViewControl;
+import org.forgerock.opendj.ldap.controls.VirtualListViewRequestControl;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +37,7 @@ import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.SortControl;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -78,7 +78,6 @@ import static org.identityconnectors.ldap.ADLdapUtil.fetchGroupMembersByRange;
 import static org.identityconnectors.ldap.ADLdapUtil.getADLdapDatefromJavaDate;
 import static org.identityconnectors.ldap.ADLdapUtil.getJavaDateFromADTime;
 import org.identityconnectors.ldap.LdapConnection.ServerType;
-
 
 /**
  * A class to perform an LDAP search against a {@link LdapConnection}.
@@ -127,8 +126,8 @@ public class LdapSearch {
 
         groupHelper = new GroupHelper(conn);
     }
-    
-    public final void execute(){
+
+    public final void execute() {
         execute(handler);
     }
 
@@ -136,10 +135,8 @@ public class LdapSearch {
      * Performs the search and passes the resulting {@link ConnectorObject}s to
      * the given handler.
      *
-     * @param handler
-     *            the handler.
-     * @throws NamingException
-     *             if a JNDI exception occurs.
+     * @param handler the handler.
+     * @throws NamingException if a JNDI exception occurs.
      */
     public final void execute(final ResultsHandler handler) {
         final String[] attrsToGetOption = options.getAttributesToGet();
@@ -159,7 +156,7 @@ public class LdapSearch {
     public final ConnectorObject getSingleResult() {
         final String[] attrsToGetOption = options.getAttributesToGet();
         final Set<String> attrsToGet = getAttributesToGet(attrsToGetOption);
-        final ConnectorObject[] results = new ConnectorObject[] { null };
+        final ConnectorObject[] results = new ConnectorObject[]{null};
         LdapInternalSearch search = getInternalSearch(attrsToGet);
         search.execute(new LdapSearchResultsHandler() {
             public boolean handle(String baseDN, SearchResult result) throws NamingException {
@@ -390,9 +387,10 @@ public class LdapSearch {
     
     /**
      * Creates a search filter which will filter to a given {@link ObjectClass}.
-     * It will be composed of an optional filter to be applied before the object class filters,
-     * the filters for all LDAP object classes for the given {@code ObjectClass}, and
-     * an optional filter to be applied before the object class filters.
+     * It will be composed of an optional filter to be applied before the object
+     * class filters, the filters for all LDAP object classes for the given
+     * {@code ObjectClass}, and an optional filter to be applied before the
+     * object class filters.
      */
     private String getSearchFilter(String... optionalFilters) {
         StringBuilder builder = new StringBuilder();
@@ -465,16 +463,16 @@ public class LdapSearch {
         boolean usePagedResultsControl = conn.getConfiguration().isUsePagedResultControl();
         int pageSize = conn.getConfiguration().getBlockSize();
         SortKey[] sortKeys = null;
-        
-        if (options.getSortKeys() != null && options.getSortKeys().length > 0){
-            if (conn.supportsControl(SortControl.OID)){
+
+        if (options.getSortKeys() != null && options.getSortKeys().length > 0) {
+            if (conn.supportsControl(SortControl.OID)) {
                 sortKeys = options.getSortKeys();
             }
         }
 
-        if((null != options.getPageSize() && options.getPageSize() > 0) && conn.supportsControl(PagedResultsControl.OID)) {
-            strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler)handler, sortKeys);
-        } else if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewControl.OID)) {
+        if ((null != options.getPageSize() && options.getPageSize() > 0) && conn.supportsControl(PagedResultsControl.OID)) {
+            strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler) handler, sortKeys);
+        } else if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewRequestControl.OID)) {
             String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
             strategy = new VlvIndexSearchStrategy(vlvSortAttr, pageSize);
         } else if (useBlocks && conn.supportsControl(PagedResultsControl.OID)) {

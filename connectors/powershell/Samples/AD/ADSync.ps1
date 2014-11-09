@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -124,7 +124,12 @@ elseif ($Connector.Operation -eq "SYNC")
 		{
 			Get-ADGroup -Filter $filter -SearchBase $searchBase -Properties $attrsToGet | Process-Sync
 		}
+		default {throw "Unsupported type: $($Connector.ObjectClass.Type)"}
 	}
+}
+else
+{
+	throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException("SyncScript can not handle operation: $($Connector.Operation)")
 }
 }
 catch #Rethrow the original exception

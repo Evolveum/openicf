@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -92,7 +92,7 @@ filter Process-Results {
 # Always put code in try/catch statement and make sure exceptions are re-thrown to connector
 try
 {
-	$searchBase = 'ou=test,dc=example,dc=com'
+	$searchBase = 'CN=Users,DC=example,DC=com'
 	$attrsToGet = "*"
 	$filter = "*"
 
@@ -107,6 +107,10 @@ try
 		"__GROUP__"
 		{
 			Get-ADGroup -Filter $filter -SearchBase $searchBase -Properties $attrsToGet | Process-Results
+		}
+		default
+		{
+			throw "Unsupported type: $($Connector.ObjectClass.Type)"	
 		}
 	}	
 }

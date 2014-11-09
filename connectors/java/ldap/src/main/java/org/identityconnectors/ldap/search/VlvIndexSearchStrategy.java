@@ -19,9 +19,12 @@
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ *  Portions Copyrighted 2013-2014 ForgeRock AS
  */
 package org.identityconnectors.ldap.search;
 
+import com.sun.jndi.ldap.Ber;
+import com.sun.jndi.ldap.BerDecoder;
 import static org.identityconnectors.common.StringUtil.isNotBlank;
 
 import java.io.IOException;
@@ -33,15 +36,18 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.BasicControl;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.SortControl;
 import javax.naming.ldap.SortResponseControl;
 
+import org.forgerock.opendj.ldap.ByteString;
+import org.forgerock.opendj.ldap.controls.VirtualListViewRequestControl;
+import org.forgerock.opendj.ldap.controls.VirtualListViewResponseControl;
+
 import org.identityconnectors.common.logging.Log;
 
-import com.sun.jndi.ldap.ctl.VirtualListViewControl;
-import com.sun.jndi.ldap.ctl.VirtualListViewResponseControl;
 
 public class VlvIndexSearchStrategy extends LdapSearchStrategy {
 
@@ -100,8 +106,9 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             SortControl sortControl = new SortControl(vlvIndexAttr, Control.CRITICAL);
             
             int afterCount = blockSize - 1;
-            VirtualListViewControl vlvControl = new VirtualListViewControl(index, lastListSize, 0, afterCount, Control.CRITICAL);
-            vlvControl.setContextID(cookie);
+            
+            VirtualListViewRequestControl vlvreq = VirtualListViewRequestControl.newOffsetControl(Control.CRITICAL, index, lastListSize, 0, afterCount, ByteString.valueOf(cookie));
+            BasicControl vlvControl = new BasicControl(VirtualListViewRequestControl.OID, Control.CRITICAL, vlvreq.getValue().toByteArray());
             
             getLog().ok("New search: target = {0}, afterCount = {1}", index, afterCount);
             ctx.setRequestControls(new Control[] { sortControl, vlvControl });
@@ -176,14 +183,26 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
                         throw sortControl.getException();
                     }
                 }
-                if (control instanceof VirtualListViewResponseControl) {
-                    VirtualListViewResponseControl vlvControl = (VirtualListViewResponseControl) control;
-                    if (vlvControl.getResultCode() == 0) {
-                        lastListSize = vlvControl.getListSize();
-                        cookie = vlvControl.getContextID();
-                        getLog().ok("Response control: lastListSize = {0}", lastListSize);
-                    } else {
-                        throw vlvControl.getException();
+                if (control.getID().equalsIgnoreCase(VirtualListViewResponseControl.OID)) {
+                    byte[] value = control.getEncodedValue();
+                    if ((value != null) && (value.length > 0)) {
+                        BerDecoder decoder = new BerDecoder(value, 0, value.length);
+                        
+                        try {
+                            decoder.parseSeq(null);
+                            int offset = decoder.parseInt();
+                            lastListSize = decoder.parseInt();
+                            getLog().ok("Response control: lastListSize = {0}", lastListSize);
+                            int code = decoder.parseEnumeration();
+                            if ((decoder.bytesLeft() > 0) && (decoder.peekByte() == Ber.ASN_OCTET_STR)) {
+                                cookie = decoder.parseOctetString(Ber.ASN_OCTET_STR, null);
+                            }
+                            if (code != 0) {
+                                throw new NamingException("The view operation has failed on LDAP server");
+                            }
+                        } catch (IOException ex) {
+                            getLog().error("Can't decode response control");
+                        }
                     }
                 }
             }

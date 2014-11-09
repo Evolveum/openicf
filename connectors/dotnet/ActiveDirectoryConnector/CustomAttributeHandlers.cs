@@ -602,19 +602,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else
             {
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Clear();
-                Int64 int64Value = -1;
-                LargeInteger li = new LargeIntegerClass();
-                li.HighPart = (int)(int64Value >> 32);
-                li.LowPart = (int)(int64Value & 0xFFFFFFFF);
-                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = li;
-                /*
-                // this value can't be set (other than to zero) I'm throwing my own exception
-                // here, because if not, AD thows this (at least on my machine):
-                //      System.DirectoryServices.DirectoryServicesCOMException : A device attached to the system is not functioning. (Exception from HRESULT: 0x8007001F)
-                throw new ConnectorException(_configuration.ConnectorMessages.Format(
-                    "ex_PasswordMustBeReset",
-                    "Password expiration can only be reset by reseting the password"));
-                 */
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = ActiveDirectoryUtils.GetLargeIntegerFromLong(-1);
             }
         }
 

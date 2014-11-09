@@ -1,4 +1,4 @@
-﻿# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
 # Copyright (c) 2014 ForgeRock AS. All Rights Reserved
 #
@@ -64,7 +64,12 @@ if ($Connector.Operation -eq "DELETE")
 	{
 		"__ACCOUNT__"  {Remove-ADUser -Identity $Connector.Uid.GetUidValue() -Confirm:$false}
 		"__GROUP__" {Remove-ADGroup -Identity $Connector.Uid.GetUidValue() -Confirm:$false}
+		default {throw "Unsupported type: $($Connector.ObjectClass.Type)"}
 	}
+}
+else
+{
+	throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException("DeleteScript can not handle operation: $($Connector.Operation)")
 }
 }
 catch #Re-throw the original exception

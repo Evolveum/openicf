@@ -43,11 +43,11 @@ import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
-import javax.naming.ldap.Control;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
+import javax.naming.ldap.Control;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
@@ -56,11 +56,9 @@ import org.identityconnectors.common.security.GuardedString.Accessor;
 import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
-import org.identityconnectors.ldap.schema.LdapSchemaMapping;
-
-import com.sun.jndi.ldap.ctl.PasswordExpiredResponseControl;
 import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
+import org.identityconnectors.ldap.schema.LdapSchemaMapping;
 
 public class LdapConnection {
 
@@ -107,6 +105,7 @@ public class LdapConnection {
     }
     private static final String LDAP_CTX_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
     public static final String SASL_GSSAPI = "SASL-GSSAPI";
+    public static final String PASSWORD_EXPIRED_OID = "2.16.840.1.113730.3.4.4";
     private static final Log log = Log.getLog(LdapConnection.class);
     private final LdapConfiguration config;
     private final LdapSchemaMapping schemaMapping;
@@ -307,11 +306,10 @@ public class LdapConnection {
     private static boolean hasPasswordExpiredControl(Control[] controls) {
         if (controls != null) {
             for (Control control : controls) {
-                if (control instanceof PasswordExpiredResponseControl) {
+                if (PASSWORD_EXPIRED_OID.equalsIgnoreCase(control.getID()))
                     return true;
                 }
             }
-        }
         return false;
     }
 

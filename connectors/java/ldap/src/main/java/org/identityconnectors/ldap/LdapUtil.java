@@ -50,7 +50,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassUtil;
 import static org.identityconnectors.framework.common.objects.ObjectClassUtil.createSpecialName;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import static org.identityconnectors.ldap.LdapEntry.isDNAttribute;
@@ -534,7 +533,7 @@ public class LdapUtil {
                 }
             }
         } catch (NamingException e) {
-            log.error(e,"Error reading group member attribute");
+            log.warn(e,"Error reading group member attribute");
         }
         return AttributeBuilder.build("_memberId", membersIds);
     }
@@ -548,7 +547,7 @@ public class LdapUtil {
                 }
             }
         } catch (NamingException e) {
-            log.error(e,"Error reading group member attribute");
+            log.warn(e,"Error reading group member attribute");
         }
         return AttributeBuilder.build("_memberId", membersIds);
     }
@@ -589,26 +588,37 @@ public class LdapUtil {
         // Account
         for (String oc: lconn.getConfiguration().getAccountObjectClasses()) {
             if (values.contains(oc)) {
-                log.info("Account ObjectClass found based on objectClass attribute value: {}", oc);
+                log.info("Account ObjectClass found based on objectClass attribute value: {0}", oc);
                 return ObjectClass.ACCOUNT;
             }
         }
         // Group
         for (String oc: lconn.getConfiguration().getGroupObjectClasses()) {
             if (values.contains(oc)) {
-                log.info("Group ObjectClass found based on objectClass attribute value: {}", oc);
+                log.info("Group ObjectClass found based on objectClass attribute value: {0}", oc);
                 return ObjectClass.GROUP;
             }
         }
         // now... let's guess for the best...
         for (String oc: lconn.getConfiguration().getObjectClassesToSynchronize()) {
             if (values.contains(oc)) {
-                log.info("{} ObjectClass found based on objectClass attribute value: {}", oc,oc);
+                log.info("{0} ObjectClass found based on objectClass attribute value", oc);
                 return new ObjectClass(oc);
             }
         }
        log.info("No suitable ObjectClass found based on objectClass attribute value. Returning UNKNOWN ObjectClass");
        return UNKNOWN_OBJCLASS;
     }
+   
+   public static boolean isSameDistinguishedName(String first, LdapContext context) {
+        try {
+            LdapName lfirst = new LdapName(first);
+            LdapName lsecond = new LdapName(context.getEnvironment().get("java.naming.security.principal").toString());
+            return lfirst.equals(lsecond);
+        } catch (NamingException ex) {
+            log.info("Can't compare DN {0} with the operation's context DN", first);
+        }
+        return false;
+   }
 
 }
