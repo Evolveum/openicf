@@ -72,7 +72,7 @@
 
 # We define a filter to process results through a pipe and feed the sync result handler
 filter Process-Sync {
-	$object = @{"__NAME__" = $_.DistinguishedName; "__UID__" = $_.ObjectGUID;}
+	$object = @{"__NAME__" = $_.DistinguishedName; "__UID__" = $_.ObjectGUID.ToString();}
 	foreach($attr in $_.GetEnumerator())
 	{
 		if ($attr.Value.GetType().Name -eq "ADPropertyValueCollection")
@@ -90,7 +90,7 @@ filter Process-Sync {
 		}
 	}
 	
-	$result = @{"SyncToken" = $_.uSNChanged; "DeltaType" = "CREATE_OR_UPDATE"; "Uid" = $_.ObjectGUID; "Object" = $object}
+	$result = @{"SyncToken" = $_.uSNChanged; "DeltaType" = "CREATE_OR_UPDATE"; "Uid" = $_.ObjectGUID.ToString(); "Object" = $object}
 	
 	if (!$Connector.Result.Process($result))
 	{
@@ -110,7 +110,7 @@ if ($Connector.Operation -eq "GET_LATEST_SYNC_TOKEN")
 }
 elseif ($Connector.Operation -eq "SYNC")
 {
-	$searchBase = 'ou=test,dc=example,dc=com'
+	$searchBase = 'CN=Users,DC=example,DC=com'
 	$attrsToGet = "*"
 	$filter = "uSNChanged -gt {0}" -f $Connector.Token
 	
