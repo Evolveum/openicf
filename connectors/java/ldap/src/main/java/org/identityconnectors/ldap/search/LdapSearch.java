@@ -21,6 +21,7 @@
  * ====================
  * 
  * Portions Copyrighted [2013-2014] Forgerock
+ * Portions Copyrighted 2014 Evolveum
  */
 package org.identityconnectors.ldap.search;
 
@@ -470,12 +471,12 @@ public class LdapSearch {
             }
         }
 
-        if ((null != options.getPageSize() && options.getPageSize() > 0) && conn.supportsControl(PagedResultsControl.OID)) {
+        if (useBlocks && usePagedResultsControl && (null != options.getPageSize() && options.getPageSize() > 0) && conn.supportsControl(PagedResultsControl.OID)) {
             strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler) handler, sortKeys);
         } else if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewRequestControl.OID)) {
             String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
-            strategy = new VlvIndexSearchStrategy(vlvSortAttr, pageSize);
-        } else if (useBlocks && conn.supportsControl(PagedResultsControl.OID)) {
+            strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, pageSize);
+        } else if (useBlocks && usePagedResultsControl && conn.supportsControl(PagedResultsControl.OID)) {
             strategy = new SimplePagedSearchStrategy(pageSize, sortKeys);
         } else {
             strategy = new DefaultSearchStrategy(false, sortKeys);

@@ -20,11 +20,13 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  *  Portions Copyrighted 2013-2014 ForgeRock AS
+ *  Portions Copyrighted 2014 Evolveum
  */
 package org.identityconnectors.ldap.search;
 
 import com.sun.jndi.ldap.Ber;
 import com.sun.jndi.ldap.BerDecoder;
+
 import static org.identityconnectors.common.StringUtil.isNotBlank;
 
 import java.io.IOException;
@@ -45,15 +47,17 @@ import javax.naming.ldap.SortResponseControl;
 import org.forgerock.opendj.ldap.ByteString;
 import org.forgerock.opendj.ldap.controls.VirtualListViewRequestControl;
 import org.forgerock.opendj.ldap.controls.VirtualListViewResponseControl;
-
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.SortKey;
 
 
 public class VlvIndexSearchStrategy extends LdapSearchStrategy {
 
     private static Log log;
 
-    private final String vlvIndexAttr;
+    private OperationOptions options;
+    private final String vlvDefaultSortAttr;
     private final int blockSize;
 
     private int index;
@@ -71,8 +75,9 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
         return log;
     }
 
-    public VlvIndexSearchStrategy(String vlvSortAttr, int blockSize) {
-        this.vlvIndexAttr = isNotBlank(vlvSortAttr) ? vlvSortAttr : "uid";
+    public VlvIndexSearchStrategy(OperationOptions options, String vlvDefaultSortAttr, int blockSize) {
+    	this.options = options;
+        this.vlvDefaultSortAttr = isNotBlank(vlvDefaultSortAttr) ? vlvDefaultSortAttr : "uid";
         this.blockSize = blockSize;
     }
 
@@ -97,15 +102,35 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
         getLog().ok("Searching in {0}", baseDN);
         
         index = 1;
+        if (options != null && options.getPagedResultsOffset() != null) {
+        	index = options.getPagedResultsOffset() + 1;
+        }
+        Integer numberOfEntriesToReturn = null; // null means "as many as there are"
+        if (options != null && options.getPageSize() != null) {
+        	numberOfEntriesToReturn = options.getPageSize();
+        }
+        String vlvSortAttr = vlvDefaultSortAttr;
+        if (options != null && options.getSortKeys() != null && options.getSortKeys().length > 0) {
+        	if (options.getSortKeys().length > 1) {
+        		log.warn("Multiple sort keys are not supported");
+        	}
+        	SortKey sortKey = options.getSortKeys()[0];
+        	vlvSortAttr = sortKey.getField();
+        }
+        
         lastListSize = 0;
-        cookie = null;
+        cookie = new byte[0];
 
         String lastResultName = null;
+        int numberOfResutlsReturned = 0;
 
         for (;;) {
-            SortControl sortControl = new SortControl(vlvIndexAttr, Control.CRITICAL);
+            SortControl sortControl = new SortControl(vlvSortAttr, Control.CRITICAL);
             
             int afterCount = blockSize - 1;
+            if (numberOfEntriesToReturn != null && (numberOfResutlsReturned + afterCount + 1 > numberOfEntriesToReturn)) {
+            	afterCount = numberOfEntriesToReturn - numberOfResutlsReturned - 1;
+            }
             
             VirtualListViewRequestControl vlvreq = VirtualListViewRequestControl.newOffsetControl(Control.CRITICAL, index, lastListSize, 0, afterCount, ByteString.valueOf(cookie));
             BasicControl vlvControl = new BasicControl(VirtualListViewRequestControl.OID, Control.CRITICAL, vlvreq.getValue().toByteArray());
@@ -149,6 +174,7 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             while (resultIter.hasNext()) {
                 result = resultIter.next();
                 index++;
+                numberOfResutlsReturned++;
                 if (!handler.handle(baseDN, result)) {
                     return false;
                 }
@@ -159,6 +185,9 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
 
             if (index > lastListSize) {
                 break;
+            }
+            if (numberOfEntriesToReturn != null && numberOfEntriesToReturn <= numberOfResutlsReturned) {
+            	break;
             }
 
             // DSEE seems to only have a single VLV index (although it claims to support more).
