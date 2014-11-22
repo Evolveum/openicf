@@ -191,6 +191,11 @@ public class LdapConfiguration extends AbstractConfiguration {
      * The attribute used as the sort key for the VLV index.
      */
     private String vlvSortAttribute = "uid";
+    
+    /**
+     * The ordering rule to use for the VLV searches.
+     */
+    private String vlvSortOrderingRule = null;
 
     /**
      * The LDAP attribute to map Uid to.
@@ -629,7 +634,15 @@ public class LdapConfiguration extends AbstractConfiguration {
         this.vlvSortAttribute = vlvSortAttribute;
     }
 
-    public String getUidAttribute() {
+    public String getVlvSortOrderingRule() {
+		return vlvSortOrderingRule;
+	}
+
+	public void setVlvSortOrderingRule(String vlvSortOrderingRule) {
+		this.vlvSortOrderingRule = vlvSortOrderingRule;
+	}
+
+	public String getUidAttribute() {
         return uidAttribute;
     }
 
@@ -861,6 +874,7 @@ public class LdapConfiguration extends AbstractConfiguration {
         builder.append(blockSize);
         builder.append(usePagedResultControl);
         builder.append(vlvSortAttribute);
+        builder.append(vlvSortOrderingRule);
         builder.append(uidAttribute);
         builder.append(readSchema);
         // Sync configuration properties.

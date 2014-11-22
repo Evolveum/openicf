@@ -111,6 +111,7 @@
             <artifactId>opendj-ldap-sdk</artifactId>
             <version>2.6.9</version>
             <type>jar</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

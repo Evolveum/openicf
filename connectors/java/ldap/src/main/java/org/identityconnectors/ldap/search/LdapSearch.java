@@ -25,13 +25,12 @@
  */
 package org.identityconnectors.ldap.search;
 
-import org.forgerock.opendj.ldap.controls.VirtualListViewRequestControl;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import static java.util.Collections.singletonList;
+
 import java.util.Date;
 
 import javax.naming.NamingException;
@@ -72,12 +71,14 @@ import org.identityconnectors.framework.common.objects.OperationalAttributeInfos
 import org.identityconnectors.framework.common.objects.SortKey;
 import org.identityconnectors.framework.spi.SearchResultsHandler;
 import org.identityconnectors.ldap.ADLdapUtil;
+
 import static org.identityconnectors.ldap.LdapUtil.buildMemberIdAttribute;
 import static org.identityconnectors.ldap.LdapUtil.getStringAttrValues;
 import static org.identityconnectors.ldap.ADLdapUtil.objectGUIDtoString;
 import static org.identityconnectors.ldap.ADLdapUtil.fetchGroupMembersByRange;
 import static org.identityconnectors.ldap.ADLdapUtil.getADLdapDatefromJavaDate;
 import static org.identityconnectors.ldap.ADLdapUtil.getJavaDateFromADTime;
+
 import org.identityconnectors.ldap.LdapConnection.ServerType;
 
 /**
@@ -458,7 +459,7 @@ public class LdapSearch {
     }
 
     private LdapSearchStrategy getSearchStrategy() {
-        LdapSearchStrategy strategy;
+        LdapSearchStrategy strategy = null;
 
         boolean useBlocks = conn.getConfiguration().isUseBlocks();
         boolean usePagedResultsControl = conn.getConfiguration().isUsePagedResultControl();
@@ -471,14 +472,30 @@ public class LdapSearch {
             }
         }
 
-        if (useBlocks && usePagedResultsControl && (null != options.getPageSize() && options.getPageSize() > 0) && conn.supportsControl(PagedResultsControl.OID)) {
-            strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler) handler, sortKeys);
-        } else if (useBlocks && !usePagedResultsControl && conn.supportsControl(VirtualListViewRequestControl.OID)) {
-            String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
-            strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, pageSize);
-        } else if (useBlocks && usePagedResultsControl && conn.supportsControl(PagedResultsControl.OID)) {
-            strategy = new SimplePagedSearchStrategy(pageSize, sortKeys);
-        } else {
+        if (useBlocks) {
+        	if (usePagedResultsControl) {
+        		if (conn.supportsControl(PagedResultsControl.OID)) {
+        			if (null != options.getPageSize() && options.getPageSize() > 0) {
+        				// TODO: this is ugly, refactor
+        				strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler) handler, sortKeys);
+        			} else {
+        				strategy = new SimplePagedSearchStrategy(pageSize, sortKeys);
+        			}
+        		} else {
+        			log.warn("Configuration set to use PagedResultsControl but the server does not support it. Falling back to default search strategy.");
+        		}
+        	} else {
+        		if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
+        			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
+                    String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
+					strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, pageSize);
+        		} else {
+        			log.warn("Configuration set to use blocks but the server does not support VLV. Falling back to default search strategy.");
+        		}
+        	}
+        }
+        
+        if (strategy == null) {
             strategy = new DefaultSearchStrategy(false, sortKeys);
         }
         return strategy;

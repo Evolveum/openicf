@@ -24,9 +24,6 @@
  */
 package org.identityconnectors.ldap.search;
 
-import com.sun.jndi.ldap.Ber;
-import com.sun.jndi.ldap.BerDecoder;
-
 import static org.identityconnectors.common.StringUtil.isNotBlank;
 
 import java.io.IOException;
@@ -38,15 +35,12 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.naming.ldap.BasicControl;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.SortControl;
 import javax.naming.ldap.SortResponseControl;
 
-import org.forgerock.opendj.ldap.ByteString;
-import org.forgerock.opendj.ldap.controls.VirtualListViewRequestControl;
-import org.forgerock.opendj.ldap.controls.VirtualListViewResponseControl;
+import org.identityconnectors.common.Base64;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.SortKey;
@@ -58,6 +52,7 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
 
     private OperationOptions options;
     private final String vlvDefaultSortAttr;
+    private String sortOrderingRuleID;
     private final int blockSize;
 
     private int index;
@@ -75,9 +70,10 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
         return log;
     }
 
-    public VlvIndexSearchStrategy(OperationOptions options, String vlvDefaultSortAttr, int blockSize) {
+    public VlvIndexSearchStrategy(OperationOptions options, String vlvDefaultSortAttr, String sortOrderingRuleID, int blockSize) {
     	this.options = options;
         this.vlvDefaultSortAttr = isNotBlank(vlvDefaultSortAttr) ? vlvDefaultSortAttr : "uid";
+        this.sortOrderingRuleID = sortOrderingRuleID;
         this.blockSize = blockSize;
     }
 
@@ -99,43 +95,47 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
     }
 
     private boolean searchBaseDN(LdapContext ctx, String baseDN, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
-        getLog().ok("Searching in {0}", baseDN);
+        getLog().ok("New VLV search in {0}", baseDN);
         
         index = 1;
         if (options != null && options.getPagedResultsOffset() != null) {
-        	index = options.getPagedResultsOffset() + 1;
+        	index = options.getPagedResultsOffset();
         }
         Integer numberOfEntriesToReturn = null; // null means "as many as there are"
         if (options != null && options.getPageSize() != null) {
         	numberOfEntriesToReturn = options.getPageSize();
         }
         String vlvSortAttr = vlvDefaultSortAttr;
+        boolean ascendingOrder = true;
         if (options != null && options.getSortKeys() != null && options.getSortKeys().length > 0) {
         	if (options.getSortKeys().length > 1) {
         		log.warn("Multiple sort keys are not supported");
         	}
         	SortKey sortKey = options.getSortKeys()[0];
         	vlvSortAttr = sortKey.getField();
+        	ascendingOrder = sortKey.isAscendingOrder();
         }
         
         lastListSize = 0;
-        cookie = new byte[0];
+        cookie = null;
+        if (options != null && options.getPagedResultsCookie() != null) {
+        	cookie = Base64.decode(options.getPagedResultsCookie());
+        }
 
         String lastResultName = null;
         int numberOfResutlsReturned = 0;
 
         for (;;) {
-            SortControl sortControl = new SortControl(vlvSortAttr, Control.CRITICAL);
+			javax.naming.ldap.SortKey ldapSortKey = new javax.naming.ldap.SortKey(vlvSortAttr, ascendingOrder, sortOrderingRuleID);
+            SortControl sortControl = new SortControl(new javax.naming.ldap.SortKey[]{ldapSortKey}, Control.CRITICAL);
             
             int afterCount = blockSize - 1;
             if (numberOfEntriesToReturn != null && (numberOfResutlsReturned + afterCount + 1 > numberOfEntriesToReturn)) {
             	afterCount = numberOfEntriesToReturn - numberOfResutlsReturned - 1;
             }
             
-            VirtualListViewRequestControl vlvreq = VirtualListViewRequestControl.newOffsetControl(Control.CRITICAL, index, lastListSize, 0, afterCount, ByteString.valueOf(cookie));
-            BasicControl vlvControl = new BasicControl(VirtualListViewRequestControl.OID, Control.CRITICAL, vlvreq.getValue().toByteArray());
+            VirtualListViewRequestControl vlvControl = new VirtualListViewRequestControl(0, afterCount, index, lastListSize, cookie, Control.CRITICAL);
             
-            getLog().ok("New search: target = {0}, afterCount = {1}", index, afterCount);
             ctx.setRequestControls(new Control[] { sortControl, vlvControl });
 
             // Need to process the response controls, which are available after
@@ -145,15 +145,23 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             // So storing the results before actually sending them to the handler.
             List<SearchResult> resultList = new ArrayList<SearchResult>(blockSize);
 
+            if (getLog().isOk()) {
+            	getLog().ok("LDAP search request: VLV( target = {0}, lastListSize = {1}, afterCount = {2}, cookie = {3} ),"
+            			+ " SSS( attr = {4}, ascending = {5}, ordering = {6} )", 
+            			index, lastListSize, afterCount, Base64.encode(cookie), 
+            			vlvSortAttr, ascendingOrder, sortOrderingRuleID);
+            }
             NamingEnumeration<SearchResult> results = ctx.search(baseDN, query, searchControls);
+            int resultCount = 0;
             try {
                 while (results.hasMore()) {
                     SearchResult result = results.next();
+                    resultCount++;
 
                     boolean overlap = false;
                     if (lastResultName != null) {
                         if (lastResultName.equals(result.getName())) {
-                            getLog().warn("Working around rounding error overlap at index " + index);
+                            getLog().warn("Working around rounding error overlap at index {0} (name={1})", index, lastResultName);
                             overlap = true;
                         }
                         lastResultName = null;
@@ -166,6 +174,7 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             } finally {
                 results.close();
             }
+            getLog().ok("LDAP search response: {0} results returned, reduced to {1}", resultCount, resultList.size());
 
             processResponseControls(ctx.getResponseControls());
 
@@ -176,17 +185,21 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
                 index++;
                 numberOfResutlsReturned++;
                 if (!handler.handle(baseDN, result)) {
+                	getLog().ok("Ending VLV search because handler returned false");
                     return false;
                 }
             }
             if (result != null) {
                 lastResultName = result.getName();
             }
+            getLog().ok("Handling of results completed, {0} resutls handled, index {1} (lastResultName={2})", numberOfResutlsReturned, index, lastResultName);
 
             if (index > lastListSize) {
+            	getLog().ok("Ending VLV search because index ({0}) went over list size ({1})", index, lastListSize);
                 break;
             }
             if (numberOfEntriesToReturn != null && numberOfEntriesToReturn <= numberOfResutlsReturned) {
+            	getLog().ok("Ending VLV search because enough entries already returned");
             	break;
             }
 
@@ -196,7 +209,7 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             // So, in this case, index will never reach lastListSize. To avoid an infinite loop,
             // ending search if we received no results in the last iteration.
             if (resultList.isEmpty()) {
-                getLog().warn("Ending search because received no results");
+                getLog().warn("Ending VLV search because received no results");
                 break;
             }
         }
@@ -213,25 +226,21 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
                     }
                 }
                 if (control.getID().equalsIgnoreCase(VirtualListViewResponseControl.OID)) {
-                    byte[] value = control.getEncodedValue();
-                    if ((value != null) && (value.length > 0)) {
-                        BerDecoder decoder = new BerDecoder(value, 0, value.length);
-                        
-                        try {
-                            decoder.parseSeq(null);
-                            int offset = decoder.parseInt();
-                            lastListSize = decoder.parseInt();
-                            getLog().ok("Response control: lastListSize = {0}", lastListSize);
-                            int code = decoder.parseEnumeration();
-                            if ((decoder.bytesLeft() > 0) && (decoder.peekByte() == Ber.ASN_OCTET_STR)) {
-                                cookie = decoder.parseOctetString(Ber.ASN_OCTET_STR, null);
-                            }
-                            if (code != 0) {
-                                throw new NamingException("The view operation has failed on LDAP server");
-                            }
-                        } catch (IOException ex) {
-                            getLog().error("Can't decode response control");
+                	try {
+                		VirtualListViewResponseControl vlvResponse = new VirtualListViewResponseControl(control.getID(), control.isCritical(), control.getEncodedValue());
+                		byte[] value = control.getEncodedValue();
+                        int offset = vlvResponse.getTargetPosition();
+                        lastListSize = vlvResponse.getContentCount();
+                        int code = vlvResponse.getVirtualListViewResult();
+                        cookie = vlvResponse.getContextID();
+                        if (getLog().isOk()) {
+                        	getLog().ok("Response control: offset = {0}, lastListSize = {1}, cookie = {2}", offset, lastListSize, Base64.encode(cookie));
                         }
+                        if (code != 0) {
+                            throw new NamingException("The view operation has failed on LDAP server, error="+code);
+                        }
+                    } catch (IOException ex) {
+                        getLog().error("Can't decode response control");
                     }
                 }
             }
