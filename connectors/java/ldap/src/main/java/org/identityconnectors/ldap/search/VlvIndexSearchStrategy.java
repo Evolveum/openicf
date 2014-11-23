@@ -44,6 +44,7 @@ import org.identityconnectors.common.Base64;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.SortKey;
+import org.identityconnectors.ldap.LdapConnection;
 
 
 public class VlvIndexSearchStrategy extends LdapSearchStrategy {
@@ -78,25 +79,26 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
     }
 
     @Override
-    public void doSearch(LdapContext initCtx, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
+    public void doSearch(LdapConnection conn, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
         getLog().ok("Searching in {0} with filter {1} and {2}", baseDNs, query, searchControlsToString(searchControls));
 
         Iterator<String> baseDNIter = baseDNs.iterator();
         boolean proceed = true;
 
-        LdapContext ctx = initCtx.newInstance(null);
+        LdapContext ctx = conn.getInitialContext().newInstance(null);
         try {
             while (baseDNIter.hasNext() && proceed) {
-                proceed = searchBaseDN(ctx, baseDNIter.next(), query, searchControls, handler);
+                proceed = searchBaseDN(conn, ctx, baseDNIter.next(), query, searchControls, handler);
             }
         } finally {
             ctx.close();
         }
     }
 
-    private boolean searchBaseDN(LdapContext ctx, String baseDN, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
+    private boolean searchBaseDN(LdapConnection conn, LdapContext ctx, String baseDN, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
         getLog().ok("New VLV search in {0}", baseDN);
         
+        boolean continueFlag = true;
         index = 1;
         if (options != null && options.getPagedResultsOffset() != null) {
         	index = options.getPagedResultsOffset();
@@ -186,8 +188,12 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
                 numberOfResutlsReturned++;
                 if (!handler.handle(baseDN, result)) {
                 	getLog().ok("Ending VLV search because handler returned false");
-                    return false;
+                	continueFlag = false;
+                    break;
                 }
+            }
+            if (!continueFlag) {
+            	break;
             }
             if (result != null) {
                 lastResultName = result.getName();
@@ -213,7 +219,16 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
                 break;
             }
         }
-        return true;
+        
+        if (options != null && options.getPagedResultsOffset() != null) {
+        	// If there was an offset then it is likely that this search will continue. Therefore do NOT close the search yet.
+        } else  {
+        	// Close the connection so the server can free any allocated resources.
+        	// The connection will automatically reconnect on the next use.
+        	conn.close();
+        }
+        
+        return continueFlag;
     }
 
     private void processResponseControls(Control[] controls) throws NamingException {
@@ -246,4 +261,19 @@ public class VlvIndexSearchStrategy extends LdapSearchStrategy {
             }
         }
     }
+
+	@Override
+	public String getPagedResultsCookie() {
+		if (cookie == null) {
+			return null;
+		}
+		return Base64.encode(cookie);
+	}
+
+	@Override
+	public int getRemainingPagedResults() {
+		return lastListSize;
+	}
+    
+    
 }

@@ -22,6 +22,7 @@ package org.identityconnectors.ldap.search;
 
 import java.io.IOException;
 import java.util.List;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.OperationNotSupportedException;
@@ -33,12 +34,15 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.PagedResultsResponseControl;
 import javax.naming.ldap.SortControl;
+
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.spi.SearchResultsHandler;
 import org.identityconnectors.common.Base64;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.SortKey;
+import org.identityconnectors.ldap.LdapConnection;
+
 import static org.identityconnectors.ldap.search.LdapSearchStrategy.searchControlsToString;
 
 /**
@@ -64,10 +68,10 @@ public class PagedSearchStrategy extends LdapSearchStrategy {
     }
 
     @Override
-    public void doSearch(LdapContext initCtx, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
+    public void doSearch(LdapConnection conn, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
         log.ok("Searching in {0} with filter {1} and {2}", baseDNs, query, searchControlsToString(searchControls));
 
-        LdapContext ctx = initCtx.newInstance(null);
+        LdapContext ctx = conn.getInitialContext().newInstance(null);
         String returnedCookie = null;
         int context = 0;
         int records = 0;

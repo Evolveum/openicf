@@ -31,9 +31,11 @@ import javax.naming.NamingException;
 import javax.naming.directory.SearchControls;
 import javax.naming.ldap.LdapContext;
 
+import org.identityconnectors.ldap.LdapConnection;
+
 public abstract class LdapSearchStrategy {
 
-    public abstract void doSearch(LdapContext initCtx, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler)
+    public abstract void doSearch(LdapConnection conn, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler)
             throws IOException, NamingException;
 
     static String searchControlsToString(SearchControls controls) {
@@ -56,4 +58,12 @@ public abstract class LdapSearchStrategy {
         builder.append('}');
         return builder.toString();
     }
+
+	public String getPagedResultsCookie() {
+		return null;
+	}
+
+	public int getRemainingPagedResults() {
+		return -1;
+	}
 }

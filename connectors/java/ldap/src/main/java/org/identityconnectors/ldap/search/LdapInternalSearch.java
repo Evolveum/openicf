@@ -60,7 +60,7 @@ public class LdapInternalSearch {
     public void execute(LdapSearchResultsHandler handler) {
         String filter = blankAsAllObjects(this.filter);
         try {
-            strategy.doSearch(conn.getInitialContext(), baseDNs, filter, controls, handler);
+            strategy.doSearch(conn, baseDNs, filter, controls, handler);
         } catch (IOException e) {
             throw new ConnectorException(e);
         } catch (PartialResultException e) {
@@ -89,4 +89,12 @@ public class LdapInternalSearch {
         result.setTimeLimit(0);
         return result;
     }
+
+	public String getPagedResultsCookie() {
+		return strategy.getPagedResultsCookie();
+	}
+
+	public int getRemainingPagedResults() {
+		return strategy.getRemainingPagedResults();
+	}
 }

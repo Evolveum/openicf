@@ -149,6 +149,14 @@ public class LdapSearch {
                 return handler.handle(createConnectorObject(baseDN, result, attrsToGet, attrsToGetOption != null));
             }
         });
+        
+        if (handler instanceof SearchResultsHandler) {
+        	String pagedResultsCookie = search.getPagedResultsCookie();
+			int remainingPagedResults = search.getRemainingPagedResults();
+			org.identityconnectors.framework.common.objects.SearchResult result = 
+        			new org.identityconnectors.framework.common.objects.SearchResult(pagedResultsCookie, remainingPagedResults);
+			((SearchResultsHandler)handler).handleResult(result);
+        }
     }
 
     /**

@@ -24,6 +24,7 @@
 package org.identityconnectors.ldap.search;
 
 import java.io.IOException;
+
 import static org.identityconnectors.ldap.LdapUtil.escapeDNValueOfJNDIReservedChars;
 
 import java.util.Iterator;
@@ -41,6 +42,7 @@ import javax.naming.ldap.SortControl;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.SortKey;
+import org.identityconnectors.ldap.LdapConnection;
 
 public class DefaultSearchStrategy extends LdapSearchStrategy {
 
@@ -60,13 +62,13 @@ public class DefaultSearchStrategy extends LdapSearchStrategy {
     }
 
     @Override
-    public void doSearch(LdapContext initCtx, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException,NamingException {
+    public void doSearch(LdapConnection conn, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException,NamingException {
         log.ok("Searching in {0} with filter {1} and {2}", baseDNs, query, searchControlsToString(searchControls));
 
         Iterator<String> baseDNIter = baseDNs.iterator();
         boolean proceed = true;
         boolean isSorted = false;
-        LdapContext ctx = initCtx;
+        LdapContext ctx = conn.getInitialContext();
         
         if (sortKeys != null && sortKeys.length > 0){
             javax.naming.ldap.SortKey[] skis = new javax.naming.ldap.SortKey[sortKeys.length];
@@ -74,7 +76,7 @@ public class DefaultSearchStrategy extends LdapSearchStrategy {
                 skis[i] = new javax.naming.ldap.SortKey(sortKeys[i].getField(),sortKeys[i].isAscendingOrder(),null);
             }
             // We don't want to make this critical... better return unsorted results than nothing.
-            ctx = initCtx.newInstance(new Control[]{new SortControl(skis, Control.NONCRITICAL)});
+            ctx = conn.getInitialContext().newInstance(new Control[]{new SortControl(skis, Control.NONCRITICAL)});
             isSorted = true;
         }
 

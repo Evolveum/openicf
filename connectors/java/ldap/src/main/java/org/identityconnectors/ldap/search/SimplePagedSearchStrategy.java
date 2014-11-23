@@ -40,6 +40,7 @@ import javax.naming.ldap.SortControl;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.SortKey;
+import org.identityconnectors.ldap.LdapConnection;
 
 public class SimplePagedSearchStrategy extends LdapSearchStrategy {
 
@@ -59,10 +60,10 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
     }
 
     @Override
-    public void doSearch(LdapContext initCtx, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
+    public void doSearch(LdapConnection conn, List<String> baseDNs, String query, SearchControls searchControls, LdapSearchResultsHandler handler) throws IOException, NamingException {
         log.ok("Searching in {0} with filter {1} and {2}", baseDNs, query, searchControlsToString(searchControls));
 
-        LdapContext ctx = initCtx.newInstance(null);
+        LdapContext ctx = conn.getInitialContext().newInstance(null);
         SortControl sortControl = null;
         
         if (sortKeys != null && sortKeys.length > 0){
