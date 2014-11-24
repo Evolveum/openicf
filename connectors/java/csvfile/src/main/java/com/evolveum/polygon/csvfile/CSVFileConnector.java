@@ -91,6 +91,8 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -123,7 +125,7 @@ import java.util.regex.Pattern;
 @ConnectorClass(displayNameKey = "UI_CONNECTOR_NAME",
 configurationClass = CSVFileConfiguration.class)
 public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsernameOp, CreateOp, DeleteOp, SchemaOp,
-        SearchOp<String>, SyncOp, TestOp, UpdateAttributeValuesOp {
+        SearchOp<String>, SyncOp, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, ScriptOnConnectorOp {
 
     /**
      * Setup logging for the {@link CSVFileConnector}.
