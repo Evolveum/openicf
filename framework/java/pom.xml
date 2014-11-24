@@ -25,21 +25,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.forgerock</groupId>
-        <artifactId>forgerock-parent</artifactId>
-        <version>1.2.0</version>
+        <groupId>com.evolveum.openicf</groupId>
+        <artifactId>evolveum-openicf-parent</artifactId>
+        <version>1.2.7-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.framework</groupId>
+    <groupId>com.evolveum.openicf.framework</groupId>
     <artifactId>framework</artifactId>
     <version>1.4.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>OpenICF Project</name>
+    <name>OpenICF Project - Evolveum version</name>
     <description>
         The Open Identity Connectors Framework and Toolkit (OpenICF) is built to help drive development of Connectors.
         Connectors provide a consistent generic layer between applications and target resources.
     </description>
-    <inceptionYear>2010</inceptionYear>
-    <url>http://openicf.forgerock.org</url>
     <licenses>
         <license>
             <name>CDDL-1.0</name>
@@ -61,98 +59,15 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/framework/java</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/framework/java</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/framework/java</url>
+            <connection>https://github.com/Evolveum/openicf.git</connection>
+            <developerConnection>git@github.com:Evolveum/openicf.git</developerConnection>
+            <url>https://github.com/Evolveum/openicf.git</url>
     </scm>
-    <distributionManagement>
-        <site>
-            <id>forgerock.org</id>
-            <name>ForgeRock Community Server</name>
-            <url>${siteDistributionURL}</url>
-        </site>
-    </distributionManagement>
-
-    <!-- (see FAQ at http://maven.apache.org/guides/mini/guide-central-repository-upload.html ) -->
-    <repositories>
-        <repository>
-            <id>forgerock-staging-repository</id>
-            <name>ForgeRock Release Repository</name>
-            <url>http://maven.forgerock.org/repo/releases</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>forgerock-snapshots-repository</id>
-            <name>ForgeRock Snapshot Repository</name>
-            <url>http://maven.forgerock.org/repo/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>forgerock-plugins-repository</id>
-            <name>ForgeRock Plugin Repository</name>
-            <url>http://maven.forgerock.org/repo/repo</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <mailingLists>
-        <mailingList>
-            <name>OpenICF: Technical communications</name>
-            <post>openicf@forgerock.org</post>
-            <subscribe>https://lists.forgerock.org/mailman/listinfo/openicf</subscribe>
-            <unsubscribe>https://lists.forgerock.org/mailman/listinfo/openicf</unsubscribe>
-            <archive>https://lists.forgerock.org/pipermail/openicf/</archive>
-        </mailingList>
-        <mailingList>
-            <name>OpenICF: Commit Notificatons</name>
-            <post>commitopenicf@forgerock.org</post>
-            <subscribe>https://lists.forgerock.org/mailman/listinfo/commitopenicf</subscribe>
-            <unsubscribe>https://lists.forgerock.org/mailman/listinfo/commitopenicf</unsubscribe>
-            <archive>https://lists.forgerock.org/pipermail/commitopenicf/</archive>
-        </mailingList>
-        <mailingList>
-            <name>OpenICF: Developers</name>
-            <post>openicf-dev@forgerock.org</post>
-            <subscribe>https://lists.forgerock.org/mailman/listinfo/openicf-dev</subscribe>
-            <unsubscribe>https://lists.forgerock.org/mailman/listinfo/openicf-dev</unsubscribe>
-            <archive>https://lists.forgerock.org/pipermail/openicf-dev/</archive>
-        </mailingList>
-    </mailingLists>
-
-    <issueManagement>
-        <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10192</url>
-    </issueManagement>
-
-    <ciManagement>
-        <system>jenkins</system>
-        <url>http://builds.forgerock.org/job/OpenICF</url>
-    </ciManagement>
-
-    <developers>
-        <developer>
-            <id>forgerock</id>
-            <name>OpenICF Community</name>
-            <email>openicf@forgerock.org</email>
-            <organization>ForgeRock</organization>
-            <roles>
-                <role>Architect</role>
-                <role>Release Manager</role>
-                <role>Java Developer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-    </developers>
 
     <properties>
         <!-- maven-compiler-plugin -->
-        <maven.compiler.target>1.5</maven.compiler.target>
-        <maven.compiler.source>1.5</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
         <framework.compatibilityVersion>1.4</framework.compatibilityVersion>
         <licenseResourceBundle>org.forgerock.openicf:openicf-license:1.2.0</licenseResourceBundle>
         <siteDistributionURL>scp://forgerock.org/var/www/vhosts/openicf.forgerock.org/httpdocs</siteDistributionURL>

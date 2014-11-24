@@ -21,16 +21,17 @@
  with the fields enclosed by brackets [] replaced by
  your own identifying information:
  "Portions Copyrighted [year] [name of copyright owner]"
+ Portions Copyrighted 2014 Evolveum
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.forgerock.openicf.framework</groupId>
+        <groupId>com.evolveum.openicf.framework</groupId>
         <artifactId>framework</artifactId>
         <version>1.4.2.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.connectors</groupId>
+    <groupId>com.evolveum.openicf.connectors</groupId>
     <artifactId>connectors-parent</artifactId>
     <packaging>pom</packaging>
     <name>OpenICF Connectors</name>
@@ -39,19 +40,6 @@
         connector bundle and common reporting for connectors.
         This is not multimodule project, it does not aggregate the connectors, it is just common parent.
     </description>
-    <distributionManagement>
-        <site>
-            <id>forgerock.org</id>
-            <url>${siteDistributionURL}/connectors/</url>
-        </site>
-    </distributionManagement>
-    <scm>
-        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/framework/java/connectors-parent</connection>
-        <developerConnection>
-            scm:svn:https://svn.forgerock.org/openicf/trunk/framework/java/connectors-parent
-        </developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/framework/java/connectors-parent</url>
-    </scm>
     <!-- mvn help:effective-pom
          mvn archetype:create-from-project
          mvn help:active-profiles
