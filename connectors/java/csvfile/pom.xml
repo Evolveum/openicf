@@ -46,7 +46,7 @@
         <url>https://bamboo.evolveum.com/</url>
     </ciManagement>
     <properties>
-        <connectorPackage>org.forgerock.openicf.csvfile</connectorPackage>
+        <connectorPackage>com.evolveum.polygon.csvfile</connectorPackage>
         <connectorClass>CSVFileConnector</connectorClass>
     </properties>
     <repositories>
