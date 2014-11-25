@@ -2,74 +2,63 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2011-2013 ForgeRock AS. All rights reserved.
-
- The contents of this file are subject to the terms
- of the Common Development and Distribution License
- (the License). You may not use this file except in
- compliance with the License.
-
+ Copyright (c) 2014 Evolveum All rights reserved.
+ 
+ The contents of this file are subject to the terms of the Common Development
+ and Distribution License("CDDL") (the "License").  You may not use this file
+ except in compliance with the License.
+ 
  You can obtain a copy of the License at
- http://forgerock.org/license/CDDLv1.0.html
- See the License for the specific language governing
- permission and limitations under the License.
-
- When distributing Covered Code, include this CDDL
- Header Notice in each file and include the License file
- at http://forgerock.org/license/CDDLv1.0.html
- If applicable, add the following below the CDDL Header,
- with the fields enclosed by brackets [] replaced by
- your own identifying information:
+ http://opensource.org/licenses/cddl1.php
+ See the License for the specific language governing permissions and limitations
+ under the License.
+ 
+ When distributing the Covered Code, include this CDDL Header Notice in each file
+ and include the License file at http://opensource.org/licenses/cddl1.php.
+ If applicable, add the following below this CDDL Header, with the fields
+ enclosed by brackets [] replaced by your own identifying information:
  "Portions Copyrighted [year] [name of copyright owner]"
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.forgerock.openicf.framework</groupId>
-        <artifactId>framework</artifactId>
-        <version>1.1.1.0</version>
+        <artifactId>polygon</artifactId>
+        <groupId>com.evolveum.polygon</groupId>
+        <version>1.4.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>org.forgerock.openicf.misc</groupId>
     <artifactId>dbcommon</artifactId>
-    <version>1.1.1.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+    <version>1.4.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>Database Common</name>
-    <description>This is a generic bundle that contains many of the utilities needed for any sort of database connector, such as query builders, connection wrappers, and other SQL utilities.</description>
-    <url>http://openicf.forgerock.org/connectors/dbcommon</url>
+    <description>This is a generic library that contains utilities needed for database connectors, such as query builders, connection wrappers, and other SQL utilities.</description>
+    <scm>
+            <connection>https://github.com/Evolveum/openicf.git</connection>
+            <developerConnection>git@github.com:Evolveum/openicf.git</developerConnection>
+            <url>https://github.com/Evolveum/openicf.git</url>
+    </scm>
     <issueManagement>
         <system>jira</system>
-        <url>https://bugster.forgerock.org/jira/browse/OPENICF/component/10831</url>
+        <url>https://jira.evolveum.com</url>
     </issueManagement>
     <ciManagement>
-        <system>jenkins</system>
-        <url>http://builds.forgerock.org/job/OpenICF - Database Common</url>
+        <system>bamboo</system>
+        <url>https://bamboo.evolveum.com/</url>
     </ciManagement>
-    <scm>
-        <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dbcommon</connection>
-        <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/dbcommon</developerConnection>
-        <url>http://sources.forgerock.org/browse/openicf/trunk/connectors/java/dbcommon</url>
-    </scm>
     <repositories>
-        <repository>
-            <id>forgerock-staging-repository</id>
-            <name>ForgeRock Release Repository</name>
-            <url>http://maven.forgerock.org/repo/releases</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>forgerock-snapshots-repository</id>
-            <name>ForgeRock Snapshot Repository</name>
-            <url>http://maven.forgerock.org/repo/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
+		<repository>
+		        <id>evolveum</id>
+		        <name>Evolveum Public Releases</name>
+		        <url>http://nexus.evolveum.com/nexus/content/groups/public</url>
+		</repository>
+		<repository>
+		        <id>evolveum-snapshots</id>
+		        <name>Evolveum Snapshots</name>
+		        <url>http://nexus.evolveum.com/nexus/content/repositories/snapshots/</url>
+		</repository>
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>org.forgerock.openicf.framework</groupId>
+            <groupId>net.tirasa.connid</groupId>
             <artifactId>connector-framework</artifactId>
         </dependency>
 
@@ -80,13 +69,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
