@@ -170,25 +170,41 @@ public class LdapConfiguration extends AbstractConfiguration {
      * and throw exceptions (PasswordExpiredException, etc.) appropriately.
      */
     private boolean respectResourcePasswordPolicyChangeAfterReset;
+    /**
+     * Specifies strategy of using paging mechanisms such as VLV or Simple Paged Results.
+     * Possible values: "none", "auto", "spr", "vlv"
+     * Default value: "auto"
+     */
+    private String pagingStrategy = null;
+
+    public static final String PAGING_STRATEGY_NONE = "none";
+    public static final String PAGING_STRATEGY_AUTO = "auto";
+    public static final String PAGING_STRATEGY_SPR = "spr";
+    public static final String PAGING_STRATEGY_VLV = "vlv";
 
     /**
      * Whether to use block-based LDAP controls like simple paged results or VLV control.
+     * DEPRECATED. Use pagingStrategy instead.
      */
-    private boolean useBlocks = false;
+    @Deprecated
+    private Boolean useBlocks = null;
 
     /**
-     * The block size for simple paged results and VLV index searches.
+     * The block size for simple paged results and VLV searches.
      */
     private int blockSize = 100;
 
     /**
      * If true, simple paged search will be preferred over VLV index search
      * when both are available.
+     * DEPRECATED. Use pagingStrategy instead. Setting this to true is equivalent
+     * to setting pagingStrategy to "spr". If pagingStrategy is already set this value is ignored.
      */
-    private boolean usePagedResultControl = false;
+    @Deprecated
+    private Boolean usePagedResultControl = null;
 
     /**
-     * The attribute used as the sort key for the VLV index.
+     * The attribute used as the sort key for the VLV searches.
      */
     private String vlvSortAttribute = "uid";
     
@@ -601,12 +617,20 @@ public class LdapConfiguration extends AbstractConfiguration {
     public void setRespectResourcePasswordPolicyChangeAfterReset(boolean respectResourcePasswordPolicyChangeAfterReset) {
         this.respectResourcePasswordPolicyChangeAfterReset = respectResourcePasswordPolicyChangeAfterReset;
     }
+    
+    public String getPagingStrategy() {
+		return pagingStrategy;
+	}
 
-    public boolean isUseBlocks() {
+	public void setPagingStrategy(String pagingStrategy) {
+		this.pagingStrategy = pagingStrategy;
+	}
+
+	public Boolean getUseBlocks() {
         return useBlocks;
     }
 
-    public void setUseBlocks(boolean useBlocks) {
+    public void setUseBlocks(Boolean useBlocks) {
         this.useBlocks = useBlocks;
     }
 
@@ -618,11 +642,11 @@ public class LdapConfiguration extends AbstractConfiguration {
         this.blockSize = blockSize;
     }
 
-    public boolean isUsePagedResultControl() {
+    public Boolean getUsePagedResultControl() {
         return usePagedResultControl;
     }
 
-    public void setUsePagedResultControl(boolean usePagedResultControl) {
+    public void setUsePagedResultControl(Boolean usePagedResultControl) {
         this.usePagedResultControl = usePagedResultControl;
     }
 

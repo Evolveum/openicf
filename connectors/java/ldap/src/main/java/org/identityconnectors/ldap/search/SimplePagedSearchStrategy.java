@@ -20,6 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * "Portions Copyrighted 2014 ForgeRock AS"
+ * Portions Copyrighted 2014 Evolveum
  */
 package org.identityconnectors.ldap.search;
 
@@ -38,7 +39,9 @@ import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.PagedResultsResponseControl;
 import javax.naming.ldap.SortControl;
 
+import org.identityconnectors.common.Base64;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.SortKey;
 import org.identityconnectors.ldap.LdapConnection;
 
@@ -46,16 +49,20 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
 
     private static final Log log = Log.getLog(SimplePagedSearchStrategy.class);
 
-    private final int pageSize;
+    private OperationOptions options;
+    private final int defaultPageSize;
     private final SortKey[] sortKeys;
+    private byte[] cookie = null;
+    private int lastListSize;
 
-    public SimplePagedSearchStrategy(int pageSize) {
-        this.pageSize = pageSize;
+    public SimplePagedSearchStrategy(int defaultPageSize) {
+        this.defaultPageSize = defaultPageSize;
         this.sortKeys = null;
     }
     
-    public SimplePagedSearchStrategy(int pageSize, SortKey[] sortKeys) {
-        this.pageSize = pageSize;
+    public SimplePagedSearchStrategy(OperationOptions options, int defaultPageSize, SortKey[] sortKeys) {
+    	this.options = options;
+        this.defaultPageSize = defaultPageSize;
         this.sortKeys = sortKeys;
     }
 
@@ -81,8 +88,17 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
 
             while (baseDNIter.hasNext() && proceed) {
                 String baseDN = baseDNIter.next();
-                byte[] cookie = null;
+                cookie = null;
+                if (options != null && options.getPagedResultsCookie() != null) {
+                	cookie = Base64.decode(options.getPagedResultsCookie());
+                }
+                int pageSize = defaultPageSize;
+                int numberOfResutlsReturned = 0;
                 do {
+                	if (options != null && options.getPageSize() != null && 
+                			((numberOfResutlsReturned + pageSize) > options.getPageSize())) {
+                    	pageSize = options.getPageSize() - numberOfResutlsReturned;
+                    }
                     if (sortControl != null) {
                         ctx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, cookie, Control.CRITICAL), sortControl});
                     } else {
@@ -91,13 +107,20 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
                     NamingEnumeration<SearchResult> results = ctx.search(baseDN, query, searchControls);
                     try {
                         while (proceed && results.hasMore()) {
+                        	numberOfResutlsReturned++;
                             proceed = handler.handle(baseDN, results.next());
                         }
                     } catch (PartialResultException e) {
                         log.ok("PartialResultException caught: {0}",e.getRemainingName());
                         results.close();
-                    } 
-                    cookie = getResponseCookie(ctx.getResponseControls());
+                    }
+                    PagedResultsResponseControl pagedControlResponse = getPagedControlResponse(ctx.getResponseControls());
+                    cookie = pagedControlResponse.getCookie();
+                    lastListSize = pagedControlResponse.getResultSize();
+                    if (options != null && options.getPageSize() != null && 
+                			((numberOfResutlsReturned) >= options.getPageSize())) {
+                    	break;
+                    }
                 } while (cookie != null);
             }
         } finally {
@@ -105,15 +128,28 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
         }
     }
 
-    private byte[] getResponseCookie(Control[] controls) {
+    private PagedResultsResponseControl getPagedControlResponse(Control[] controls) {
         if (controls != null) {
             for (Control control : controls) {
                 if (control instanceof PagedResultsResponseControl) {
                     PagedResultsResponseControl pagedControl = (PagedResultsResponseControl) control;
-                    return pagedControl.getCookie();
+                    return pagedControl;
                 }
             }
         }
         return null;
     }
+    
+    @Override
+	public int getRemainingPagedResults() {
+		return lastListSize;
+	}
+        
+    @Override
+	public String getPagedResultsCookie() {
+		if (cookie == null) {
+			return null;
+		}
+		return Base64.encode(cookie);
+	}
 }

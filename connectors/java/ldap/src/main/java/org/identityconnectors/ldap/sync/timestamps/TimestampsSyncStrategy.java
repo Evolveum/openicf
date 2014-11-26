@@ -108,7 +108,7 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
         controls.setDerefLinkFlag(false);
         controls.setReturningAttributes(new String[]{"*", createTimestamp, modifyTimestamp,conn.getConfiguration().getUidAttribute()});
         
-        if (conn.getConfiguration().isUseBlocks() && conn.supportsControl(PagedResultsControl.OID)) {
+        if (conn.getConfiguration().getUseBlocks() && conn.supportsControl(PagedResultsControl.OID)) {
             strategy = new SimplePagedSearchStrategy(conn.getConfiguration().getBlockSize());
         } else {
             strategy = new DefaultSearchStrategy(false);

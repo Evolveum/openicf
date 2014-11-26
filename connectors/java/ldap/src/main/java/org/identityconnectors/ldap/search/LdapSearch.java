@@ -42,6 +42,7 @@ import javax.naming.ldap.SortControl;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.security.GuardedByteArray.Accessor;
+import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -57,6 +58,7 @@ import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.ldap.ADUserAccountControl;
 import org.identityconnectors.ldap.GroupHelper;
+import org.identityconnectors.ldap.LdapConfiguration;
 import org.identityconnectors.ldap.LdapConnection;
 import org.identityconnectors.ldap.LdapConstants;
 import org.identityconnectors.ldap.LdapEntry;
@@ -469,9 +471,22 @@ public class LdapSearch {
     private LdapSearchStrategy getSearchStrategy() {
         LdapSearchStrategy strategy = null;
 
-        boolean useBlocks = conn.getConfiguration().isUseBlocks();
-        boolean usePagedResultsControl = conn.getConfiguration().isUsePagedResultControl();
-        int pageSize = conn.getConfiguration().getBlockSize();
+        Boolean useBlocks = conn.getConfiguration().getUseBlocks();
+        Boolean usePagedResultsControl = conn.getConfiguration().getUsePagedResultControl();
+        String pagingStrategy = conn.getConfiguration().getPagingStrategy();
+        if (pagingStrategy == null) {
+        	if (useBlocks != null && !useBlocks) {
+        		pagingStrategy = LdapConfiguration.PAGING_STRATEGY_NONE;
+        	} else if (usePagedResultsControl != null && usePagedResultsControl) {
+        		pagingStrategy = LdapConfiguration.PAGING_STRATEGY_SPR;
+        	} else if (usePagedResultsControl != null && !usePagedResultsControl) {
+        		pagingStrategy = LdapConfiguration.PAGING_STRATEGY_VLV;
+        	} else {
+        		pagingStrategy = LdapConfiguration.PAGING_STRATEGY_AUTO;
+        	}
+        }
+               
+        int blockSize = conn.getConfiguration().getBlockSize();
         SortKey[] sortKeys = null;
 
         if (options.getSortKeys() != null && options.getSortKeys().length > 0) {
@@ -479,26 +494,53 @@ public class LdapSearch {
                 sortKeys = options.getSortKeys();
             }
         }
-
-        if (useBlocks) {
-        	if (usePagedResultsControl) {
-        		if (conn.supportsControl(PagedResultsControl.OID)) {
-        			if (null != options.getPageSize() && options.getPageSize() > 0) {
-        				// TODO: this is ugly, refactor
-        				strategy = new PagedSearchStrategy(options.getPageSize(), options.getPagedResultsCookie(), options.getPagedResultsOffset(), (SearchResultsHandler) handler, sortKeys);
-        			} else {
-        				strategy = new SimplePagedSearchStrategy(pageSize, sortKeys);
-        			}
-        		} else {
-        			log.warn("Configuration set to use PagedResultsControl but the server does not support it. Falling back to default search strategy.");
-        		}
-        	} else {
+        
+        if (options == null || 
+        		(options.getPagedResultsOffset() == null && options.getPagedResultsCookie() == null &&
+        		options.getPageSize() == null)) {
+    		// Ordinary search, no need for paging. Regardless of the configured strategy.
+        	return new DefaultSearchStrategy(false, sortKeys);
+    	}
+        
+        if (LdapConfiguration.PAGING_STRATEGY_NONE.equals(pagingStrategy)) {
+        	strategy = new DefaultSearchStrategy(false, sortKeys);
+        	
+        } else if (LdapConfiguration.PAGING_STRATEGY_SPR.equals(pagingStrategy)) {
+    		if (conn.supportsControl(PagedResultsControl.OID)) {
+    			strategy = new SimplePagedSearchStrategy(options, blockSize, sortKeys);
+    		} else {
+    			throw new ConfigurationException("Configured paging strategy "+pagingStrategy+", but the server does not support PagedResultsControl.");
+    		}
+    		
+        } else if (LdapConfiguration.PAGING_STRATEGY_VLV.equals(pagingStrategy)) {
+    		if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
+    			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
+                String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
+				strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, blockSize);
+    		} else {
+    			throw new ConfigurationException("Configured paging strategy "+pagingStrategy+", but the server does not support VLV.");
+    		}
+    		
+        } else if (LdapConfiguration.PAGING_STRATEGY_AUTO.equals(pagingStrategy)) {
+        	if (options.getPagedResultsOffset() != null) {
+        		// VLV is the only option here
         		if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
         			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
                     String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
-					strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, pageSize);
+    				strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, blockSize);
         		} else {
-        			log.warn("Configuration set to use blocks but the server does not support VLV. Falling back to default search strategy.");
+        			throw new UnsupportedOperationException("Requested search from offset ("+options.getPagedResultsOffset()+"), but the server does not support VLV. Unable to execute the search.");
+        		}
+        	} else {
+        		if (conn.supportsControl(PagedResultsControl.OID)) {
+        			// SPR is usually a better choice if no offset is specified. Less overhead on the server.
+        			strategy = new SimplePagedSearchStrategy(options, blockSize, sortKeys);
+        		} else if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
+        			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
+                    String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
+    				strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, blockSize);        			
+        		} else {
+        			throw new UnsupportedOperationException("Requested paged search, but the server does not support VLV or PagedResultsControl. Unable to execute the search.");
         		}
         	}
         }
