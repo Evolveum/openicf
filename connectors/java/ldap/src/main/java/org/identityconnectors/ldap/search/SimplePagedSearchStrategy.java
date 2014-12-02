@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.naming.LimitExceededException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.PartialResultException;
+import javax.naming.SizeLimitExceededException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Control;
@@ -53,7 +55,7 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
     private final int defaultPageSize;
     private final SortKey[] sortKeys;
     private byte[] cookie = null;
-    private int lastListSize;
+    private int lastListSize = -1;
 
     public SimplePagedSearchStrategy(int defaultPageSize) {
         this.defaultPageSize = defaultPageSize;
@@ -82,6 +84,14 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
             sortControl = new SortControl(skis, Control.NONCRITICAL);
         }
         
+        int pageSize = defaultPageSize;
+        int offset = 0;
+        if (options != null && options.getPagedResultsOffset() != null) {
+        	offset = options.getPagedResultsOffset();
+        	if (offset != 0) {
+        		log.info("Inefficient search using SimplePaged control and offset {0}",offset);
+        	}
+        }
         try {
             Iterator<String> baseDNIter = baseDNs.iterator();
             boolean proceed = true;
@@ -92,37 +102,83 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
                 if (options != null && options.getPagedResultsCookie() != null) {
                 	cookie = Base64.decode(options.getPagedResultsCookie());
                 }
-                int pageSize = defaultPageSize;
-                int numberOfResutlsReturned = 0;
+                pageSize = defaultPageSize;
+                int numberOfResutlsHandled = 0;
+                int numberOfResultsSkipped = 0;
                 do {
                 	if (options != null && options.getPageSize() != null && 
-                			((numberOfResutlsReturned + pageSize) > options.getPageSize())) {
-                    	pageSize = options.getPageSize() - numberOfResutlsReturned;
+                			((numberOfResutlsHandled + numberOfResultsSkipped + pageSize) > offset + options.getPageSize())) {
+                		pageSize = offset + options.getPageSize() - (numberOfResutlsHandled + numberOfResultsSkipped);
                     }
                     if (sortControl != null) {
                         ctx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, cookie, Control.CRITICAL), sortControl});
                     } else {
                         ctx.setRequestControls(new Control[]{new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
                     }
-                    NamingEnumeration<SearchResult> results = ctx.search(baseDN, query, searchControls);
+                    if (log.isOk()) {
+                    	log.ok("LDAP search request: PagedResults( pageSize = {0}, cookie = {1} )", 
+                    			pageSize, Base64.encode(cookie));
+                    }
+                    int responseResultCount = 0;
+                    NamingEnumeration<SearchResult> results = null;
                     try {
+                    	results = ctx.search(baseDN, query, searchControls);
                         while (proceed && results.hasMore()) {
-                        	numberOfResutlsReturned++;
-                            proceed = handler.handle(baseDN, results.next());
+                        	responseResultCount++;
+                        	SearchResult searchResult = results.next();
+                        	if (offset > numberOfResultsSkipped) {
+                        		numberOfResultsSkipped++;
+                        	} else {
+	                        	numberOfResutlsHandled++;
+	                            proceed = handler.handle(baseDN, searchResult);
+	                            if (!proceed) {
+	                            	log.ok("Ending search because handler returned false");
+	                            }
+                        	}
                         }
                     } catch (PartialResultException e) {
                         log.ok("PartialResultException caught: {0}",e.getRemainingName());
-                        results.close();
+                        if (results != null) {
+                        	results.close();
+                        }
+                    } catch (NamingException e) {
+                    	log.error("Unexpected search exception: {0}", e.getMessage(), e);
+                    	throw e;
+                    } catch (RuntimeException e) {
+                    	log.error("Unexpected search exception: {0}", e.getMessage(), e);
+                    	throw e;
                     }
                     PagedResultsResponseControl pagedControlResponse = getPagedControlResponse(ctx.getResponseControls());
-                    cookie = pagedControlResponse.getCookie();
-                    lastListSize = pagedControlResponse.getResultSize();
+                    if (pagedControlResponse != null) {
+	                    cookie = pagedControlResponse.getCookie();
+	                    lastListSize = pagedControlResponse.getResultSize();
+                    } else {
+                    	cookie = null;
+	                    lastListSize = -1;
+                    }
+                    if (log.isOk()) {
+                    	log.ok("LDAP search response: {0} results returned, PagedResults( resultSize = {1}, cookie = {2} )", responseResultCount, 
+                    			pagedControlResponse==null?"noControl":pagedControlResponse.getResultSize(),
+                    			pagedControlResponse==null?"noControl":Base64.encode(pagedControlResponse.getCookie()));
+                    }
+                    if (responseResultCount == 0) {
+                    	// Zero results returned. This is either a hidded error or end of search.
+                    	log.warn("Zero results returned from paged search");
+                    	break;
+                    }
+                    if (!proceed) {
+                    	break;
+                    }
                     if (options != null && options.getPageSize() != null && 
-                			((numberOfResutlsReturned) >= options.getPageSize())) {
+                			((numberOfResutlsHandled + numberOfResultsSkipped) >= offset + options.getPageSize())) {
                     	break;
                     }
                 } while (cookie != null);
             }
+        } catch (LimitExceededException e) {
+        	// This should not happen!
+        	log.error("Server size limit exceeded even though SimplePaged control was used (page size {0})", pageSize, e);
+        	throw e;
         } finally {
             ctx.close();
         }
@@ -132,8 +188,7 @@ public class SimplePagedSearchStrategy extends LdapSearchStrategy {
         if (controls != null) {
             for (Control control : controls) {
                 if (control instanceof PagedResultsResponseControl) {
-                    PagedResultsResponseControl pagedControl = (PagedResultsResponseControl) control;
-                    return pagedControl;
+                	return (PagedResultsResponseControl) control;
                 }
             }
         }

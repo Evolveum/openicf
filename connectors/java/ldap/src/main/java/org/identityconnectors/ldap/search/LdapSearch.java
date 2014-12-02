@@ -495,18 +495,21 @@ public class LdapSearch {
             }
         }
         
-        if (options == null || 
-        		(options.getPagedResultsOffset() == null && options.getPagedResultsCookie() == null &&
-        		options.getPageSize() == null)) {
-    		// Ordinary search, no need for paging. Regardless of the configured strategy.
+        if (options != null && options.getAllowPartialResults() != null && options.getAllowPartialResults() && 
+        		options.getPagedResultsOffset() == null && options.getPagedResultsCookie() == null &&
+        		options.getPageSize() == null) {
+    		// Seach that allow partial results, no need for paging. Regardless of the configured strategy.
         	return new DefaultSearchStrategy(false, sortKeys);
     	}
         
         if (LdapConfiguration.PAGING_STRATEGY_NONE.equals(pagingStrategy)) {
+        	// This may fail on a sizeLimit. But this is what has been configured so we are going to do it anyway.
+        	log.ok("Selecting default search strategy because strategy setting is set to {0}", pagingStrategy);
         	strategy = new DefaultSearchStrategy(false, sortKeys);
         	
         } else if (LdapConfiguration.PAGING_STRATEGY_SPR.equals(pagingStrategy)) {
     		if (conn.supportsControl(PagedResultsControl.OID)) {
+    			log.ok("Selecting SimplePaged search strategy because strategy setting is set to {0}", pagingStrategy);
     			strategy = new SimplePagedSearchStrategy(options, blockSize, sortKeys);
     		} else {
     			throw new ConfigurationException("Configured paging strategy "+pagingStrategy+", but the server does not support PagedResultsControl.");
@@ -514,6 +517,7 @@ public class LdapSearch {
     		
         } else if (LdapConfiguration.PAGING_STRATEGY_VLV.equals(pagingStrategy)) {
     		if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
+    			log.ok("Selecting VLV search strategy because strategy setting is set to {0}", pagingStrategy);
     			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
                 String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
 				strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, blockSize);
@@ -525,6 +529,7 @@ public class LdapSearch {
         	if (options.getPagedResultsOffset() != null) {
         		// VLV is the only option here
         		if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
+        			log.ok("Selecting VLV search strategy because strategy setting is set to {0} and the request specifies an offset", pagingStrategy);
         			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
                     String vlvSortOrderingRule = conn.getConfiguration().getVlvSortOrderingRule();
     				strategy = new VlvIndexSearchStrategy(options, vlvSortAttr, vlvSortOrderingRule, blockSize);
@@ -534,6 +539,7 @@ public class LdapSearch {
         	} else {
         		if (conn.supportsControl(PagedResultsControl.OID)) {
         			// SPR is usually a better choice if no offset is specified. Less overhead on the server.
+        			log.ok("Selecting SimplePaged search strategy because strategy setting is set to {0} and the request does not specify an offset", pagingStrategy);
         			strategy = new SimplePagedSearchStrategy(options, blockSize, sortKeys);
         		} else if (conn.supportsControl(VirtualListViewRequestControl.OID)) {
         			String vlvSortAttr = conn.getConfiguration().getVlvSortAttribute();
@@ -546,6 +552,8 @@ public class LdapSearch {
         }
         
         if (strategy == null) {
+        	// Failsafe. This should not be reached.
+        	log.warn("Fallback to default strategy, strategy setting is set to {0}", pagingStrategy);
             strategy = new DefaultSearchStrategy(false, sortKeys);
         }
         return strategy;

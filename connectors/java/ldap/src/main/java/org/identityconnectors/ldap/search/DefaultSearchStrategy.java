@@ -34,6 +34,7 @@ import javax.naming.InvalidNameException;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.SizeLimitExceededException;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Control;
@@ -50,6 +51,7 @@ public class DefaultSearchStrategy extends LdapSearchStrategy {
 
     private final boolean ignoreNonExistingBaseDNs;
     private final SortKey[] sortKeys;
+    private boolean sizeLimitExceeded = false;
 
     public DefaultSearchStrategy(boolean ignoreNonExistingBaseDNs) {
         this.ignoreNonExistingBaseDNs = ignoreNonExistingBaseDNs;
@@ -98,6 +100,10 @@ public class DefaultSearchStrategy extends LdapSearchStrategy {
                 }
                 log.info(e, null);
                 continue;
+            } catch (SizeLimitExceededException e) {
+            	log.info("Size limit exceeded while searching in {0} with filter {1} and {2}", baseDN, query, searchControlsToString(searchControls));
+            	sizeLimitExceeded = true;
+            	continue;
             }
             try {
                 while (proceed && results.hasMore()) {
