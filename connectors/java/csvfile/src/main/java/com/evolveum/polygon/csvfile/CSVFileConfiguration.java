@@ -154,7 +154,7 @@ public class CSVFileConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(displayMessageKey = "UI_FLAT_NAME_ATTRIBUTE",
-    helpMessageKey = "UI_FLAT_NAME_ATTRIBUTE_HELP", required = true)
+    helpMessageKey = "UI_FLAT_NAME_ATTRIBUTE_HELP")
     public String getNameAttribute() {
         return nameAttribute;
     }
