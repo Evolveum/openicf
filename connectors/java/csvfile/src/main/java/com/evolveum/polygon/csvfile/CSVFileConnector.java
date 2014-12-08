@@ -23,6 +23,7 @@
  *
  * Portions Copyrighted 2011 Viliam Repan (lazyman)
  * Portions Copyrighted 2011 Radovan Semancik
+ * Portions Copyrighted 2011 - 2014 Evolveum
  *
  */
 package com.evolveum.polygon.csvfile;
@@ -301,6 +302,11 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         LOCK.readLock().lock();
         try {
             reader = createReader(configuration);
+            if (reader == null) {
+            	// no file yet
+            	log.warn("Returning null schema because the file is not available");
+                return null;
+            }
             headers = readHeader(reader, linePattern, configuration);
             testHeader(headers);
         } catch (Exception ex) {

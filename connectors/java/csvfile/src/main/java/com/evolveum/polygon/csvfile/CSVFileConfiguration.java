@@ -22,6 +22,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  *
  * Portions Copyrighted 2011 Viliam Repan (lazyman)
+ * Portions Copyrighted 2011 - 2014 Evolveum
  *
  * $Id$
  */

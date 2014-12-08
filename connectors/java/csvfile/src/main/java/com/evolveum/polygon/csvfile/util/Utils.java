@@ -109,6 +109,9 @@ public class Utils {
     }
 
     public static BufferedReader createReader(File path, CSVFileConfiguration configuration) throws IOException {
+    	if (path == null) {
+    		return null;
+    	}
         FileInputStream fis = new FileInputStream(path);
         InputStreamReader in = new InputStreamReader(fis, configuration.getEncoding());
         return new BufferedReader(in);
