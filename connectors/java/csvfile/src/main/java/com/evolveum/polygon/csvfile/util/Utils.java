@@ -26,6 +26,7 @@
  */
 package com.evolveum.polygon.csvfile.util;
 
+import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -110,7 +111,7 @@ public class Utils {
 
     public static BufferedReader createReader(File path, CSVFileConfiguration configuration) throws IOException {
     	if (path == null) {
-    		return null;
+    		throw new ConfigurationException("Missing mandatory filePath configuration");
     	}
         FileInputStream fis = new FileInputStream(path);
         InputStreamReader in = new InputStreamReader(fis, configuration.getEncoding());
