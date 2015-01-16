@@ -24,10 +24,10 @@
     <parent>
         <artifactId>polygon</artifactId>
         <groupId>com.evolveum.polygon</groupId>
-        <version>1.4.0.49</version>
+        <version>1.4.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>dbcommon</artifactId>
-    <version>1.4.0.49</version>
+    <version>1.4.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Database Common</name>
     <description>This is a generic library that contains utilities needed for database connectors, such as query builders, connection wrappers, and other SQL utilities.</description>
