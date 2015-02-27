@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ====================
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
+  
+  The contents of this file are subject to the terms of the Common Development 
+  and Distribution License("CDDL") (the "License").  You may not use this file 
+  except in compliance with the License.
+  
+  You can obtain a copy of the License at 
+  http://IdentityConnectors.dev.java.net/legal/license.txt
+  See the License for the specific language governing permissions and limitations 
+  under the License. 
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each file
+  and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+  ====================
+-->
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{BDF495CA-0FCD-4E51-A871-D467CDE3B43E}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Org.IdentityConnectors.Sample</RootNamespace>
+    <AssemblyName>Sample.Connector</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <ZipRelease>true</ZipRelease>
+    <ConnectorFrameworkDir>$(OPENICF_HOME)</ConnectorFrameworkDir>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>False</DebugSymbols>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <Import Project="$(MSBuildProjectDirectory)\..\SampleCommonBuild.Targets" />
+  <ItemGroup>
+    <Reference Include="Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Framework">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Framework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
+    <Reference Include="System.DirectoryServices.Protocols" />
+    <Reference Include="System.Management.Automation" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="SampleConfiguration.cs" />
+    <Compile Include="SampleConnector.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="ActiveDs">
+      <Guid>{97d25db0-0363-11cf-abc4-02608c9e7553}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+    <COMReference Include="ActiveDs">
+      <Guid>{97d25db0-0363-11cf-abc4-02608c9e7553}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Messages.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
