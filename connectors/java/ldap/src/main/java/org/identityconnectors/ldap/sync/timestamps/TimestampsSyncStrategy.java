@@ -44,6 +44,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.SyncDeltaBuilder;
 import org.identityconnectors.framework.common.objects.SyncDeltaType;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
@@ -224,6 +225,9 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                         if (conn.getConfiguration().isGetGroupMemberId() && ObjectClass.GROUP.equals(oclass) 
                                 && id.equalsIgnoreCase(conn.getConfiguration().getGroupMemberAttribute())) {
                             cob.addAttribute(buildMemberIdAttribute(conn, attr));
+                        }
+                        if ("userPassword".equals(id)) {
+                        	id = OperationalAttributes.PASSWORD_NAME;
                         }
                         cob.addAttribute(AttributeBuilder.build(id, values));
                     }
