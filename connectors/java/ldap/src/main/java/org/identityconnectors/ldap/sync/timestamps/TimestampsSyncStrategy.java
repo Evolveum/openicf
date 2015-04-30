@@ -23,6 +23,7 @@
  */
 package org.identityconnectors.ldap.sync.timestamps;
 
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -223,7 +224,12 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                         while (vals.hasMore()) {
                         	Object val = vals.next();
                         	if ("userPassword".equals(id)) {
-                        		val = new GuardedString(((String)val).toCharArray());
+                        		byte[] passBytes = (byte[])val;
+                        		try {
+                        			val = new GuardedString((new String(passBytes, "UTF-8")).toCharArray());
+								} catch (UnsupportedEncodingException e) {
+									throw new RuntimeException(e.getMessage(),e);
+								}
                         	}
                             values.add(val);
                         }
