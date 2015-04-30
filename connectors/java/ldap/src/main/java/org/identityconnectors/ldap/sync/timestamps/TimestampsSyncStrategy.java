@@ -38,6 +38,7 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.PagedResultsControl;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -220,7 +221,11 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                         NamingEnumeration vals = attr.getAll();
                         ArrayList values = new ArrayList();
                         while (vals.hasMore()) {
-                            values.add(vals.next());
+                        	Object val = vals.next();
+                        	if ("userPassword".equals(id)) {
+                        		val = new GuardedString(((String)val).toCharArray());
+                        	}
+                            values.add(val);
                         }
                         if (conn.getConfiguration().isGetGroupMemberId() && ObjectClass.GROUP.equals(oclass) 
                                 && id.equalsIgnoreCase(conn.getConfiguration().getGroupMemberAttribute())) {
