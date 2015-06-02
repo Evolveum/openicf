@@ -27,6 +27,7 @@ import static org.identityconnectors.common.CollectionUtil.newCaseInsensitiveMap
 import static org.identityconnectors.common.CollectionUtil.newCaseInsensitiveSet;
 import static org.identityconnectors.ldap.LdapUtil.quietCreateLdapName;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,7 +149,11 @@ public abstract class LdapEntry {
             if (slashAfterHostPos < 0) {
                 return null;
             }
-            return url.substring(slashAfterHostPos + 1);
+            try {
+				return java.net.URLDecoder.decode(url.substring(slashAfterHostPos + 1), "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
         }
     }
 
