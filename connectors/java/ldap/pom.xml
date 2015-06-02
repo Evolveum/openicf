@@ -28,7 +28,7 @@
         <version>1.4.0.49</version>
     </parent>
     <groupId>com.evolveum.polygon</groupId>
-    <artifactId>connector-ldap</artifactId>
+    <artifactId>connector-ldap-legacy</artifactId>
     <version>1.4.0.50</version>
     <packaging>jar</packaging>
     <name>Generic JNDI based LDAP Connector</name>    
