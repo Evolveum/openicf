@@ -943,7 +943,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else if (originalException.ErrorCode == -2147016657)    // LDAP_CONSTRAINT_VIOLATION
             {
-                return originalException;       // here will be something like SchemaException when it will be available
+                if (originalException.ExtendedError == 8648)
+                {
+                    // userPrincipalName already exists; see https://technet.microsoft.com/en-us/library/dn535779.aspx
+                    return new AlreadyExistsException("UserPrincipalName already exists: " + originalException.Message + ": " + originalException.ExtendedErrorMessage + ": " + message, originalException);
+                }
+                else
+                {
+                    return originalException;       // here will be something like SchemaException when it will be available
+                }
             }
             else
             {
