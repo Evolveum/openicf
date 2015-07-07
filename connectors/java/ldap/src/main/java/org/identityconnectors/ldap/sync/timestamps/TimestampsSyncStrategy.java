@@ -23,11 +23,13 @@
  */
 package org.identityconnectors.ldap.sync.timestamps;
 
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.PartialResultException;
@@ -35,13 +37,16 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.PagedResultsControl;
+
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.SyncDeltaBuilder;
 import org.identityconnectors.framework.common.objects.SyncDeltaType;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
@@ -49,18 +54,25 @@ import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.SyncTokenResultsHandler;
 import org.identityconnectors.ldap.ADLdapUtil;
+import org.identityconnectors.ldap.LdapEntry;
+
 import static org.identityconnectors.ldap.ADLdapUtil.fetchGroupMembersByRange;
 import static org.identityconnectors.ldap.ADLdapUtil.getADLdapDatefromJavaDate;
 import static org.identityconnectors.ldap.ADLdapUtil.getJavaDateFromADTime;
 import static org.identityconnectors.ldap.ADLdapUtil.objectGUIDtoString;
+
 import org.identityconnectors.ldap.LdapConnection;
+
 import static org.identityconnectors.ldap.LdapUtil.buildMemberIdAttribute;
+
 import org.identityconnectors.ldap.ADUserAccountControl;
 import org.identityconnectors.ldap.LdapConnection.ServerType;
 import org.identityconnectors.ldap.LdapConstants;
+
 import static org.identityconnectors.ldap.LdapConstants.OBJECTCLASS_ATTR;
 import static org.identityconnectors.ldap.LdapUtil.getObjectClassFilter;
 import static org.identityconnectors.ldap.LdapUtil.guessObjectClass;
+
 import org.identityconnectors.ldap.search.DefaultSearchStrategy;
 import org.identityconnectors.ldap.search.LdapInternalSearch;
 import org.identityconnectors.ldap.search.LdapSearchStrategy;
@@ -123,7 +135,13 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
             search.execute(new LdapSearchResultsHandler() {
                 public boolean handle(String baseDN, SearchResult result) throws NamingException {
                     Attributes attrs = result.getAttributes();
-                    Uid uid = conn.getSchemaMapping().createUid(conn.getConfiguration().getUidAttribute(), attrs);
+                    String uidAttribute = conn.getConfiguration().getUidAttribute();
+                    Uid uid;
+                    if (LdapEntry.isDNAttribute(uidAttribute)) {
+                    	uid = new Uid(result.getNameInNamespace());
+                    } else {
+                    	uid = conn.getSchemaMapping().createUid(uidAttribute, attrs);
+                    }
                     // build the object first
                     ConnectorObjectBuilder cob = new ConnectorObjectBuilder();
                     cob.setUid(uid);
@@ -204,11 +222,23 @@ public class TimestampsSyncStrategy implements LdapSyncStrategy {
                         NamingEnumeration vals = attr.getAll();
                         ArrayList values = new ArrayList();
                         while (vals.hasMore()) {
-                            values.add(vals.next());
+                        	Object val = vals.next();
+                        	if ("userPassword".equals(id)) {
+                        		byte[] passBytes = (byte[])val;
+                        		try {
+                        			val = new GuardedString((new String(passBytes, "UTF-8")).toCharArray());
+								} catch (UnsupportedEncodingException e) {
+									throw new RuntimeException(e.getMessage(),e);
+								}
+                        	}
+                            values.add(val);
                         }
                         if (conn.getConfiguration().isGetGroupMemberId() && ObjectClass.GROUP.equals(oclass) 
                                 && id.equalsIgnoreCase(conn.getConfiguration().getGroupMemberAttribute())) {
                             cob.addAttribute(buildMemberIdAttribute(conn, attr));
+                        }
+                        if ("userPassword".equals(id)) {
+                        	id = OperationalAttributes.PASSWORD_NAME;
                         }
                         cob.addAttribute(AttributeBuilder.build(id, values));
                     }
