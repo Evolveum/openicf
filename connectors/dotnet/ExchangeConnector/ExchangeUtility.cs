@@ -372,6 +372,18 @@ namespace Org.IdentityConnectors.Exchange
                         emailAddressPolicyEnabled = false;
                     }
                 }
+                else if (attribute.Is(ExchangeConnectorAttributes.AttAddressBookPolicyADName))
+                {
+                    var newAttribute = ExtractCommonName(attribute, ExchangeConnectorAttributes.AttAddressBookPolicy);
+                    builder.AddAttribute(newAttribute);
+                    builder.AddAttribute(attribute);        // keep the original one as well
+                }
+                else if (attribute.Is(ExchangeConnectorAttributes.AttOfflineAddressBookADName))
+                {
+                    var newAttribute = ExtractCommonName(attribute, ExchangeConnectorAttributes.AttOfflineAddressBook);
+                    builder.AddAttribute(newAttribute);
+                    builder.AddAttribute(attribute);        // keep the original one as well
+                }
                 else if (ExchangeConnectorAttributes.AttMapFromAD.TryGetValue(attribute.Name, out newName))
                 {
                     var newAttribute = RenameAttribute(attribute, newName);
@@ -443,6 +455,41 @@ namespace Org.IdentityConnectors.Exchange
             attBuilder.AddValue(cattribute.Value);
             attBuilder.Name = newName;
             return attBuilder.Build();
+        }
+
+        /// <summary>
+        /// Renames the connector attribute to new name; transforms value by keeping Common Name only
+        /// </summary>
+        /// <param name="cattribute">ConnectorAttribute to be renamed</param>
+        /// <param name="newName">New attribute name</param>
+        /// <returns>Renamed and transformed ConnectorAttribute</returns>
+        /// <exception cref="ArgumentNullException">If some of the params is null</exception>
+        internal static ConnectorAttribute ExtractCommonName(ConnectorAttribute cattribute, string newName)
+        {
+            Assertions.NullCheck(cattribute, "cattribute");
+            Assertions.NullCheck(newName, "newName");
+
+            var attBuilder = new ConnectorAttributeBuilder();
+            if (cattribute.Value != null)
+            {
+                ICollection<object> convertedValues = new List<object>();
+                foreach (object oldValue in cattribute.Value)
+                {
+                    if (oldValue != null)       // should be always the case
+                    {
+                        convertedValues.Add(ExtractCommonName(oldValue.ToString()));
+                    }
+                }
+                attBuilder.AddValue(convertedValues);
+            }
+            attBuilder.Name = newName;
+            return attBuilder.Build();
+        }
+
+        private static string ExtractCommonName(string distinguishedName)
+        {
+            
+            return ActiveDirectoryUtils.GetCnValueUnescaped(distinguishedName);
         }
 
         /// <summary>

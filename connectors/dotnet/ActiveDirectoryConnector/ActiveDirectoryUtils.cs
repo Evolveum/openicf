@@ -638,11 +638,32 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// Returns the leaf value of a distinguished name
         /// </summary>
         /// <param name="nameValue"></param>
-        /// <returns></returns>
-        internal static String GetNameAsCN(String nameValue)
+        /// <returns>e.g. CN=somename</returns>
+        public static String GetNameAsCN(String nameValue)
         {
             IADsPathname pathName = getADSPathname(null, null, nameValue);            
             return pathName.Retrieve((int)ADS_FORMAT_ENUM.ADS_FORMAT_LEAF);
+        }
+
+        // returns e.g. "somename" (for nameValue = CN=somename,OU=xxx,...)
+        public static String GetCnValueUnescaped(String nameValue)
+        {
+            IADsPathname pathName = getADSPathname(null, null, nameValue);
+            pathName.EscapedMode = (int) ADS_ESCAPE_MODE_ENUM.ADS_ESCAPEDMODE_OFF_EX;
+            String leaf = pathName.Retrieve((int)ADS_FORMAT_ENUM.ADS_FORMAT_LEAF);
+            if (leaf == null)       // should not occur
+            {
+                return null;
+            }
+            if (leaf.StartsWith("CN=", StringComparison.CurrentCultureIgnoreCase))
+            {
+                return leaf.Substring(3);
+            }
+            else
+            {
+                LOGGER.TraceEvent(TraceEventType.Warning, CAT_DEFAULT, "Common Name cannot be found for DN {0}", nameValue);
+                return null;
+            }
         }
 
         public static string RandomStr()

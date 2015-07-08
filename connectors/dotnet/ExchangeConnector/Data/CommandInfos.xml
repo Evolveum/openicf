@@ -214,7 +214,8 @@
       <string>ActiveSyncMailboxPolicy</string>
       <string>LinkedCredential</string>
       <string>ManagedFolderMailboxPolicy</string>
-      <string>ManagedFolderMailboxPolicyAllowed</string>      
+      <string>ManagedFolderMailboxPolicyAllowed</string>
+      <string>AddressBookPolicy</string>
     </Parameters>
   </SerializableCommandInfo>
   <SerializableCommandInfo>
@@ -247,6 +248,7 @@
     <Parameters>
       <string>AcceptMessagesOnlyFrom</string>
       <string>AcceptMessagesOnlyFromDLMembers</string>
+      <string>AddressBookPolicy</string>
       <string>Alias</string>
       <string>AntispamBypassEnabled</string>
       <string>ApplyMandatoryProperties</string>

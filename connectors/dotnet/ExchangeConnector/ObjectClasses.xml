@@ -82,6 +82,10 @@
       </AttributeInfo>
       <AttributeInfo name="Database" type="String">
       </AttributeInfo>
+      <AttributeInfo name="OfflineAddressBook" type="String">
+      </AttributeInfo>
+      <AttributeInfo name="AddressBookPolicy" type="String">
+      </AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>
   

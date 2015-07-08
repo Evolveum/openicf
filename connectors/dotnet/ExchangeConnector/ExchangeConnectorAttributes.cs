@@ -54,46 +54,12 @@ namespace Org.IdentityConnectors.Exchange
         internal const string AttMsExchRecipientTypeDetailsADName = "msExchRecipientTypeDetails";
 
         /// <summary>
-        /// Recipient type attribute info
-        /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoRecipientType =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttRecipientType,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.REQUIRED);
-
-        private static readonly ConnectorAttributeInfo AttInfoADMsExchRecipientDisplayType =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttMsExchRecipientDisplayTypeADName,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
-
-        private static readonly ConnectorAttributeInfo AttInfoADMsExchRecipientTypeDetails =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttMsExchRecipientTypeDetailsADName,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
-
-        /// <summary>
         /// External Mail Address attribute name
         /// The address where e-mail is redirected when the intended recipient is unavailable.
         /// It has an AD version, but it is hidden, because the mapping between Exchange and AD version is direct.
         /// </summary>
         internal const string AttExternalEmailAddress = "ExternalEmailAddress";
-
-        /// <summary>
-        /// External Mail attribute name as in AD
-        /// </summary>
         internal const string AttExternalEmailAddressADName = "targetAddress";
-
-        /// <summary>
-        /// External Mail attribute info
-        /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoExternalEmailAddress =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttExternalEmailAddress,
-                        typeof(string),
-                        0);
 
         /// <summary>
         /// Email Addresses attribute name
@@ -101,14 +67,7 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
 
         internal const string AttEmailAddresses = "EmailAddresses";
-
         internal const string AttEmailAddressesADName = "proxyAddresses";
-
-        private static readonly ConnectorAttributeInfo AttInfoEmailAddresses =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttEmailAddresses,
-                        typeof(string),
-                        ConnectorAttributeInfo.Flags.MULTIVALUED);
 
         /// <summary>
         /// Controlled by recipient policy?
@@ -118,20 +77,7 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
 
         internal const string AttEmailAddressPolicyEnabled = "EmailAddressPolicyEnabled";
-
         internal const string AttMsExchPoliciesExcludedADName = "msExchPoliciesExcluded";
-
-        private static readonly ConnectorAttributeInfo AttInfoEmailAddressPolicyEnabled =
-            ConnectorAttributeInfoBuilder.Build(
-                AttEmailAddressPolicyEnabled,
-                typeof(Boolean),
-                0);
-
-        // private static readonly ConnectorAttributeInfo AttInfoADMsExchPoliciesExcluded =
-        //    ConnectorAttributeInfoBuilder.Build(
-        //        AttMsExchPoliciesExcludedADName,
-        //        typeof(string),
-        //        ConnectorAttributeInfo.Flags.MULTIVALUED | ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
 
         /// <summary>
         /// Primary SMTP e-mail address
@@ -139,121 +85,44 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
 
         internal const string AttPrimarySmtpAddress = "PrimarySmtpAddress";
-
         internal const string AttPrimarySmtpAddressADName = "mail";
 
-        private static readonly ConnectorAttributeInfo AttInfoPrimarySmtpAddress =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttPrimarySmtpAddress,
-                        typeof(string),
-                        0);
-
-        /// <summary>
-        /// Nickname (alias)
-        /// </summary>
-
         internal const string AttAlias = "Alias";
-
         internal const string AttAliasADName = "mailNickname";
 
-        private static readonly ConnectorAttributeInfo AttInfoAlias =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttAlias,
-                        typeof(string),
-                        0);
-
-        /// <summary>
-        /// Hide object from GAL
-        /// </summary>
-
         internal const string AttHiddenFromAddressListsEnabled = "HiddenFromAddressListsEnabled";
-
         internal const string AttHiddenFromAddressListsEnabledADName = "msExchHideFromAddressLists";
-        
-        private static readonly ConnectorAttributeInfo AttInfoHiddenFromAddressListsEnabled =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttHiddenFromAddressListsEnabled,
-                        typeof(Boolean),
-                        0);
 
-        /// <summary>
-        /// Database attribute name
-        /// </summary>
+        // This attribute can be obtained only using PowerShell connection
+        // (i.e. not directly from AD), so we make it not returnable by default.
+        // If needed, one can use homeMDB AD attribute that seems to contain
+        // DN of the database, and derive common name (which is probably what is 
+        // being put into Database attribute). We plan to deal with this
+        // conversion in the future.
         internal const string AttDatabase = "Database";
-
-        /// <summary>
-        /// Database attribute name as in AD
-        /// </summary>
         internal const string AttDatabaseADName = "homeMDB";
 
-        /// <summary>
-        /// Database attribute info.
-        /// This attribute can be obtained only using PowerShell connection
-        /// (i.e. not directly from AD), so we make it not returnable by default.
-        /// If needed, one can use homeMDB AD attribute that seems to contain
-        /// DN of the database, and derive common name (which is probably what is 
-        /// being put into Database attribute). We plan to deal with this
-        /// conversion in the future.
-        /// </summary>
-        //private static readonly ConnectorAttributeInfo AttInfoDatabase =
-        //        ConnectorAttributeInfoBuilder.Build(
-        //                AttDatabase,
-        //                typeof(string),
-        //                0);
-
-        /// <summary>
-        /// Database attribute info (AD version)
-        /// </summary>
-        //private static readonly ConnectorAttributeInfo AttInfoADDatabase =
-        //        ConnectorAttributeInfoBuilder.Build(
-        //                AttDatabaseADName,
-        //                typeof(string),
-        //                ConnectorAttributeInfo.Flags.NOT_CREATABLE | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
-
-        /// <summary>
-        /// DeliverToMailboxAndForward
-        /// </summary>
+        // Please note that the mapping of DeliverToMailboxAndForward to deliverAndRedirect is the following:
+        //   TRUE maps to TRUE
+        //   FALSE maps to NOT-SET
+        // (as of Exchange 2010)
         internal const string AttDeliverToMailboxAndForward = "DeliverToMailboxAndForward";
-
-        /// <summary>
-        /// DeliverToMailboxAndForward attribute name as in AD
-        /// 
-        /// Please note that the mapping of DeliverToMailboxAndForward to deliverAndRedirect is the following:
-        ///   TRUE maps to TRUE
-        ///   FALSE maps to NOT-SET
-        /// (as of Exchange 2010)
-        /// </summary>
         internal const string AttDeliverToMailboxAndForwardADName = "deliverAndRedirect";
 
-        /// <summary>
-        /// External Mail attribute info
-        /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoDeliverToMailboxAndForward =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttDeliverToMailboxAndForward,
-                        typeof(bool),
-                        0);
-
-        /// <summary>
-        /// ForwardingSmtpAddress - for more detailed description see e.g. http://ficility.net/tag/forwardingsmtpaddress/
-        /// In the future we could implement here also ForwardingAddress/altRecipient attribute, but working with it
-        /// is more complex, as it points NOT to an SMTP address but to a recipient in AD (e.g. via its DN).
-        /// </summary>
+        // ForwardingSmtpAddress - for more detailed description see e.g. http://ficility.net/tag/forwardingsmtpaddress/
+        // In the future we could implement here also ForwardingAddress/altRecipient attribute, but working with it
+        // is more complex, as it points NOT to an SMTP address but to a recipient in AD (e.g. via its DN).
         internal const string AttForwardingSmtpAddress = "ForwardingSmtpAddress";
-
-        /// <summary>
-        /// ForwardingSmtpAddress attribute name as in AD
-        /// </summary>
         internal const string AttForwardingSmtpAddressADName = "msExchGenericForwardingAddress";
 
-        /// <summary>
-        /// External Mail attribute info
-        /// </summary>
-        private static readonly ConnectorAttributeInfo AttInfoForwardingSmtpAddress =
-                ConnectorAttributeInfoBuilder.Build(
-                        AttForwardingSmtpAddress,
-                        typeof(string),
-                        0);
+        // AddressBookPolicy and OfflineAddressBook
+        // Beware, in AD there are stored as DNs, e.g. CN=Test OAB,CN=Offline Address Lists,CN=Address Lists Container,CN=test,CN=Microsoft Exchange,CN=Services,CN=Configuration,DC=test,DC=xyz,DC=local
+        // When extracting the values to be returned to client, we leave only the Common Name.
+        internal const string AttAddressBookPolicy = "AddressBookPolicy";
+        internal const string AttAddressBookPolicyADName = "msExchAddressBookPolicyLink";
+
+        internal const string AttOfflineAddressBook = "OfflineAddressBook";
+        internal const string AttOfflineAddressBookADName = "msExchUseOAB";
 
         /// <summary>
         /// Custom attribute name prefix
@@ -309,10 +178,6 @@ namespace Org.IdentityConnectors.Exchange
         ///     fetches from the AD and passes to a client (or to Exchange connector).
         ///     Here should be all Exchange-related AD attributes.
         ///     
-        /// (5) When creating ObjectClassInfo - ManualExchangeAttInfosForSchema,
-        ///     custom attributes (programatically generated), and ExchangeRelatedADAttInfosForSchema
-        ///     are put into externally visible schema.
-        /// 
         /// </summary>
         internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string> 
         {
@@ -331,7 +196,9 @@ namespace Org.IdentityConnectors.Exchange
             { 
                 AttPrimarySmtpAddress,
                 AttRecipientType, 
-                AttEmailAddressPolicyEnabled
+                AttEmailAddressPolicyEnabled,
+                AttAddressBookPolicy,
+                AttOfflineAddressBook
             };
 
         // these attributes should be retrieved from AD (but not sent further); note that all AD attributes mentioned in AttMap2AD are retrieved by default
@@ -346,7 +213,9 @@ namespace Org.IdentityConnectors.Exchange
             new HashSet<string> 
             { 
                 AttMsExchRecipientDisplayTypeADName,
-                AttMsExchRecipientTypeDetailsADName
+                AttMsExchRecipientTypeDetailsADName,
+                AttAddressBookPolicyADName,
+                AttOfflineAddressBookADName
             };
 
         // these "manually defined" Exchange attributes should be part of the schema (here are all except custom attributes)

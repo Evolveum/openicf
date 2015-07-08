@@ -93,71 +93,49 @@
       <AttributeInfo name="scriptPath" type="String"/>
       
       <AttributeInfo name="TerminalServicesInitialProgram" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-    	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+    	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesWorkDirectory" type="String">
-    	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+    	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="AllowLogon" type="Integer">
-		<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+		    <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="MaxConnectionTime" type="Integer">
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="MaxDisconnectionTime" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="MaxIdleTime" type="Integer">
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="ConnectClientDrivesAtLogon" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="ConnectClientPrintersAtLogon" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="DefaultToMainPrinter" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="BrokenConnectionAction" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="ReconnectionAction" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="EnableRemoteControl" type="Integer">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesProfilePath" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesHomeDirectory" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="TerminalServicesHomeDrive" type="String">
-        <AttributeInfoFlag value="NOT_CREATABLE"/>
-        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
-     	<AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+     	  <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="uSNChanged" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
@@ -198,9 +176,9 @@
       <AttributeInfo name="__LOCK_OUT__" type="Boolean"/>
       <AttributeInfo name="__PASSWORD_EXPIRED__" type="Boolean"/>
       <AttributeInfo name="__CURRENT_PASSWORD__" type="GuardedString">
-      <AttributeInfoFlag value="NOT_CREATABLE"/>
-      <AttributeInfoFlag value="NOT_READABLE"/>
-      <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_READABLE"/>
+        <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
       <AttributeInfo name="__PASSWORD__" type="GuardedString">
         <AttributeInfoFlag value="NOT_READABLE"/>
@@ -225,6 +203,14 @@
       <AttributeInfo name="unixHomeDirectory" type="String"></AttributeInfo>
       <AttributeInfo name="uidNumber" type="Integer"></AttributeInfo>
       <AttributeInfo name="gidNumber" type="Integer"></AttributeInfo>
+      <AttributeInfo name="msExchAddressBookPolicyLink" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>    <!-- updateable only via Exchange connector -->
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
+      <AttributeInfo name="msExchUseOAB" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>    <!-- updateable only via Exchange connector -->
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>
   <ObjectClassInfo container="false" type="Group">
