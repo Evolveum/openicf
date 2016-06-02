@@ -61,28 +61,51 @@ public class CSVFileConfiguration extends AbstractConfiguration {
     private boolean alwaysQualify = true;
     private int preserveLastTokens = 10;
 
-    @ConfigurationProperty(displayMessageKey = "UI_PRESERVE_LAST_TOKENS",
-            helpMessageKey = "UI_PRESERVE_LAST_TOKENS_HELP")
-    public int getPreserveLastTokens() {
-        return preserveLastTokens;
-    }
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_FILE_PATH",
+			helpMessageKey = "UI_FLAT_FILE_PATH_HELP", required = true, order = 1)
+	public File getFilePath() {
+		return filePath;
+	}
 
-    public void setPreserveLastTokens(int preserveLastTokens) {
-        this.preserveLastTokens = preserveLastTokens;
-    }
+	public void setFilePath(File filePath) {
+		this.filePath = filePath;
+	}
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_ENCODING",
-    helpMessageKey = "UI_FLAT_ENCODING_HELP")
-    public String getEncoding() {
-        return encoding;
-    }
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_UNIQUE_ATTRIBUTE",
+			helpMessageKey = "UI_FLAT_UNIQUE_ATTRIBUTE_HELP", required = true, order = 2)
+	public String getUniqueAttribute() {
+		return uniqueAttribute;
+	}
 
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
+	public void setUniqueAttribute(String uniqueAttribute) {
+		this.uniqueAttribute = uniqueAttribute;
+	}
+
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_NAME_ATTRIBUTE",
+			helpMessageKey = "UI_FLAT_NAME_ATTRIBUTE_HELP", order = 3)
+	public String getNameAttribute() {
+		if (StringUtil.isEmpty(nameAttribute)) {
+			return uniqueAttribute;
+		}
+		return nameAttribute;
+	}
+
+	public void setNameAttribute(String nameAttribute) {
+		this.nameAttribute = nameAttribute;
+	}
+
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_PASSWORD_ATTRIBUTE",
+			helpMessageKey = "UI_FLAT_PASSWORD_ATTRIBUTE_HELP", order = 4)
+	public String getPasswordAttribute() {
+		return passwordAttribute;
+	}
+
+	public void setPasswordAttribute(String passwordAttribute) {
+		this.passwordAttribute = passwordAttribute;
+	}
 
     @ConfigurationProperty(displayMessageKey = "UI_FLAT_FIELD_DELIMITER",
-    helpMessageKey = "UI_FLAT_FIELD_DELIMITER_HELP")
+    helpMessageKey = "UI_FLAT_FIELD_DELIMITER_HELP", order = 5)
     public String getFieldDelimiter() {
         return fieldDelimiter;
     }
@@ -91,18 +114,38 @@ public class CSVFileConfiguration extends AbstractConfiguration {
         this.fieldDelimiter = fieldDelimiter;
     }
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_FILE_PATH",
-    helpMessageKey = "UI_FLAT_FILE_PATH_HELP", required = true)
-    public File getFilePath() {
-        return filePath;
-    }
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_FILE_ALWAYS_QUALIFY",
+			helpMessageKey = "UI_FLAT_FILE_ALWAYS_QUALIFY_HELP", order = 6)
+	public boolean getAlwaysQualify() {
+		return alwaysQualify;
+	}
 
-    public void setFilePath(File filePath) {
-        this.filePath = filePath;
-    }
+	public void setAlwaysQualify(boolean alwaysQualify) {
+		this.alwaysQualify = alwaysQualify;
+	}
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_MULTIVALUE_DELIMITER",
-    helpMessageKey = "UI_FLAT_MULTIVALUE_DELIMITER_HELP")
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_VALUE_QUALIFIER",
+			helpMessageKey = "UI_FLAT_VALUE_QUALIFIER_HELP", order = 7)
+	public String getValueQualifier() {
+		return valueQualifier;
+	}
+
+	public void setValueQualifier(String valueQualifier) {
+		this.valueQualifier = valueQualifier;
+	}
+
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_USING_MULTIVALUE",
+			helpMessageKey = "UI_FLAT_USING_MULTIVALUE_HELP", order = 8)
+	public boolean isUsingMultivalue() {
+		return usingMultivalue;
+	}
+
+	public void setUsingMultivalue(boolean usingMultivalue) {
+		this.usingMultivalue = usingMultivalue;
+	}
+
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_MULTIVALUE_DELIMITER",
+    helpMessageKey = "UI_FLAT_MULTIVALUE_DELIMITER_HELP", order = 9)
     public String getMultivalueDelimiter() {
         return multivalueDelimiter;
     }
@@ -111,70 +154,27 @@ public class CSVFileConfiguration extends AbstractConfiguration {
         this.multivalueDelimiter = multivalueDelimiter;
     }
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_PASSWORD_ATTRIBUTE",
-    helpMessageKey = "UI_FLAT_PASSWORD_ATTRIBUTE_HELP")
-    public String getPasswordAttribute() {
-        return passwordAttribute;
-    }
+	@ConfigurationProperty(displayMessageKey = "UI_FLAT_ENCODING",
+			helpMessageKey = "UI_FLAT_ENCODING_HELP", order = 10)
+	public String getEncoding() {
+		return encoding;
+	}
 
-    public void setPasswordAttribute(String passwordAttribute) {
-        this.passwordAttribute = passwordAttribute;
-    }
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_UNIQUE_ATTRIBUTE",
-    helpMessageKey = "UI_FLAT_UNIQUE_ATTRIBUTE_HELP", required = true)
-    public String getUniqueAttribute() {
-        return uniqueAttribute;
-    }
+	@ConfigurationProperty(displayMessageKey = "UI_PRESERVE_LAST_TOKENS",
+			helpMessageKey = "UI_PRESERVE_LAST_TOKENS_HELP", order = 11)
+	public int getPreserveLastTokens() {
+		return preserveLastTokens;
+	}
 
-    public void setUniqueAttribute(String uniqueAttribute) {
-        this.uniqueAttribute = uniqueAttribute;
-        if (StringUtil.isEmpty(nameAttribute)) {
-            nameAttribute = uniqueAttribute;
-        }
-    }
+	public void setPreserveLastTokens(int preserveLastTokens) {
+		this.preserveLastTokens = preserveLastTokens;
+	}
 
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_VALUE_QUALIFIER",
-    helpMessageKey = "UI_FLAT_VALUE_QUALIFIER_HELP")
-    public String getValueQualifier() {
-        return valueQualifier;
-    }
-
-    public void setValueQualifier(String valueQualifier) {
-        this.valueQualifier = valueQualifier;
-    }
-
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_USING_MULTIVALUE",
-    helpMessageKey = "UI_FLAT_USING_MULTIVALUE_HELP")
-    public boolean isUsingMultivalue() {
-        return usingMultivalue;
-    }
-
-    public void setUsingMultivalue(boolean usingMultivalue) {
-        this.usingMultivalue = usingMultivalue;
-    }
-
-    @ConfigurationProperty(displayMessageKey = "UI_FLAT_NAME_ATTRIBUTE",
-    helpMessageKey = "UI_FLAT_NAME_ATTRIBUTE_HELP")
-    public String getNameAttribute() {
-        return nameAttribute;
-    }
-
-    public void setNameAttribute(String nameAttribute) {
-        this.nameAttribute = nameAttribute;
-    }
-
-     @ConfigurationProperty(displayMessageKey = "UI_FLAT_FILE_ALWAYS_QUALIFY",
-    helpMessageKey = "UI_FLAT_FILE_ALWAYS_QUALIFY_HELP", required = true)
-    public boolean getAlwaysQualify() {
-        return alwaysQualify;
-    }
-
-    public void setAlwaysQualify(boolean alwaysQualify) {
-        this.alwaysQualify = alwaysQualify;
-    }
-
-    /**
+	/**
      * {@inheritDoc}
      */
     @Override
@@ -210,7 +210,6 @@ public class CSVFileConfiguration extends AbstractConfiguration {
 
         if (StringUtil.isEmpty(nameAttribute)) {
             log.warn("Name attribute not defined, value from unique attribute will be used (" + uniqueAttribute + ").");
-            nameAttribute = uniqueAttribute;
         }
 
         if (StringUtil.isEmpty(passwordAttribute)) {
@@ -236,6 +235,7 @@ public class CSVFileConfiguration extends AbstractConfiguration {
     }
 
     boolean isUniqueAndNameAttributeEqual() {
-        return uniqueAttribute == null ? nameAttribute == null : uniqueAttribute.equals(nameAttribute);
+		String effectiveNameAttribute = getNameAttribute();
+		return uniqueAttribute == null ? effectiveNameAttribute == null : uniqueAttribute.equals(effectiveNameAttribute);
     }
 }
