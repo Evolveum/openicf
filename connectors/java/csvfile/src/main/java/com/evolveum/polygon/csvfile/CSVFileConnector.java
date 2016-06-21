@@ -461,10 +461,17 @@ public class CSVFileConnector implements Connector, AuthenticateOp, ResolveUsern
         }
 
         boolean hasFileChanged = false;
-        if (configuration.getFilePath().lastModified() > tokenLongValue) {
+		long lastModified = configuration.getFilePath().lastModified();
+		if (lastModified == 0L) {
+			// very suspicious, so let's check it
+			if (!configuration.getFilePath().exists()) {
+				throw new ConnectorException("File " + configuration.getFilePath() + " does not exist or is not accessible");
+			}
+		}
+		if (lastModified > tokenLongValue) {
             hasFileChanged = true;
             log.info("Csv file has changed on {0} which is after time {1}, based on token value {2}",
-                    FORMAT.format(new Date(configuration.getFilePath().lastModified())),
+                    FORMAT.format(new Date(lastModified)),
                     FORMAT.format(new Date(tokenLongValue)), tokenLongValue);
         }
 
