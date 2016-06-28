@@ -141,7 +141,7 @@ public class Utils {
         }
     }
 
-    public static CsvItem createCsvItem(List<String> header, String line, int lineNumber, Pattern linePattern,
+    public static PositionedCsvItem createCsvItem(List<String> header, String line, int lineNumber, Pattern linePattern,
                                  CSVFileConfiguration configuration) {
         List<String> attributes = parseValues(line, linePattern, configuration);
         if (header.size() != attributes.size()) {
@@ -149,7 +149,7 @@ public class Utils {
                     + " is not equal to header size (" + header.size() + ").");
         }
 
-        return new CsvItem(attributes);
+        return new PositionedCsvItem(attributes, lineNumber);
     }
 
     public static List<String> parseValues(String line, Pattern linePattern, CSVFileConfiguration configuration) {

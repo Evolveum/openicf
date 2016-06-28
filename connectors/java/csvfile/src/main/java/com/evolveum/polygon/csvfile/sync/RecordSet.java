@@ -27,7 +27,7 @@
  */
 package com.evolveum.polygon.csvfile.sync;
 
-import com.evolveum.polygon.csvfile.util.CsvItem;
+import com.evolveum.polygon.csvfile.util.PositionedCsvItem;
 import com.evolveum.polygon.csvfile.util.Utils;
 
 import java.util.List;
@@ -40,9 +40,9 @@ import java.util.Set;
 class RecordSet {
 
     private List<String> headers;
-    private Set<CsvItem> records;
+    private Set<PositionedCsvItem> records;
 
-    public RecordSet(List<String> headers, Set<CsvItem> records) {
+    public RecordSet(List<String> headers, Set<PositionedCsvItem> records) {
         Utils.notNullArgument(headers, "headers");
         Utils.notNullArgument(records, "records");
 
@@ -54,7 +54,7 @@ class RecordSet {
         return headers;
     }
 
-    public Set<CsvItem> getRecords() {
+    public Set<PositionedCsvItem> getRecords() {
         return records;
     }
 }

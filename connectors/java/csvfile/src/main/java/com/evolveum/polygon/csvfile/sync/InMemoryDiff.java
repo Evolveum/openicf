@@ -32,14 +32,10 @@ import static com.evolveum.polygon.csvfile.util.Utils.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Pattern;
 
+import com.evolveum.polygon.csvfile.util.PositionedCsvItem;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
@@ -90,8 +86,8 @@ public class InMemoryDiff {
             if (oldFile != null) {
                 RecordSet oldRecordSet = createRecordSet(oldFile);
                 //compare records from both record sets
-                List<CsvItem> newList = new ArrayList<CsvItem>(newRecordSet.getRecords());
-                List<CsvItem> oldList = new ArrayList<CsvItem>(oldRecordSet.getRecords());
+                List<PositionedCsvItem> newList = new ArrayList<>(newRecordSet.getRecords());
+                List<PositionedCsvItem> oldList = new ArrayList<>(oldRecordSet.getRecords());
 
                 log.info("Record set size, new: {0}, old: {1}", newList.size(), oldList.size());
 
@@ -114,31 +110,32 @@ public class InMemoryDiff {
             throw new DiffException("Can't create csv diff, reason: " + ex.getMessage(), ex);
         }
 
+		Collections.sort(changes, new ChangeComparator());
         return changes;
     }
 
     private void createOneTypeChanges(RecordSet recordSet, int uidIndex, List<Change> changes, Change.Type type) {
-        Set<CsvItem> items = recordSet.getRecords();
-        Iterator<CsvItem> iterator = items.iterator();
+        Set<PositionedCsvItem> items = recordSet.getRecords();
+        Iterator<PositionedCsvItem> iterator = items.iterator();
         Change change;
         while (iterator.hasNext()) {
-            CsvItem item = iterator.next();
+            PositionedCsvItem item = iterator.next();
 
             change = new Change(item.getAttribute(uidIndex), type,
-                    recordSet.getHeaders(), item.getAttributes());
+                    recordSet.getHeaders(), item.getAttributes(), item.getPosition());
             changes.add(change);
         }
     }
 
-    private List<Change> findChanges(int uidIndex, List<String> headers, List<CsvItem> newList, List<CsvItem> oldList) {
-        List<Change> changes = new ArrayList<Change>();
+    private List<Change> findChanges(int uidIndex, List<String> headers, List<PositionedCsvItem> newList, List<PositionedCsvItem> oldList) {
+        List<Change> changes = new ArrayList<>();
         Change change;
         int newIndex = 0, oldIndex = 0;
         String oldUid, newUid;
 
         outer:
         for (; newIndex < newList.size(); newIndex++) {
-            CsvItem newItem = newList.get(newIndex);
+            PositionedCsvItem newItem = newList.get(newIndex);
             newUid = newItem.getAttribute(uidIndex);
 
             if (oldIndex >= oldList.size()) {
@@ -146,26 +143,26 @@ public class InMemoryDiff {
             }
 
             for (; oldIndex < oldList.size();) {
-                CsvItem oldItem = oldList.get(oldIndex);
+                PositionedCsvItem oldItem = oldList.get(oldIndex);
                 oldUid = oldItem.getAttribute(uidIndex);
 
                 int compare = String.CASE_INSENSITIVE_ORDER.compare(newUid, oldUid);
                 if (compare < 0) {
-                    CsvItem item = newList.get(newIndex);
+                    PositionedCsvItem item = newList.get(newIndex);
                     change = new Change(item.getAttribute(uidIndex), Change.Type.CREATE,
-                            headers, item.getAttributes());
+                            headers, item.getAttributes(), item.getPosition());
                     changes.add(change);
                     break;
                 } else if (compare > 0) {
-                    CsvItem item = oldList.get(oldIndex);
+                    PositionedCsvItem item = oldList.get(oldIndex);
                     change = new Change(item.getAttribute(uidIndex), Change.Type.DELETE,
-                            headers, item.getAttributes());
+                            headers, item.getAttributes(), item.getPosition());
                     changes.add(change);
                     oldIndex++;
                 } else {
                     if (!isEqual(newItem, oldItem)) {
                         change = new Change(newItem.getAttribute(uidIndex), Change.Type.MODIFY,
-                                headers, newItem.getAttributes());
+                                headers, newItem.getAttributes(), newItem.getPosition());
                         changes.add(change);
                     }
                     oldIndex++;
@@ -179,15 +176,15 @@ public class InMemoryDiff {
         }
 
         for (; newIndex < newList.size(); newIndex++) {
-            CsvItem item = newList.get(newIndex);
+            PositionedCsvItem item = newList.get(newIndex);
             change = new Change(item.getAttribute(uidIndex), Change.Type.CREATE,
-                    headers, item.getAttributes());
+                    headers, item.getAttributes(), item.getPosition());
             changes.add(change);
         }
         for (; oldIndex < oldList.size(); oldIndex++) {
-            CsvItem item = oldList.get(oldIndex);
+            PositionedCsvItem item = oldList.get(oldIndex);
             change = new Change(item.getAttribute(uidIndex), Change.Type.DELETE,
-                    headers, item.getAttributes());
+                    headers, item.getAttributes(), item.getPosition());
             changes.add(change);
         }
 
@@ -211,7 +208,7 @@ public class InMemoryDiff {
                         + "' doesn't contain unique attribute '" + configuration.getUniqueAttribute()
                         + "' as defined in configuration.");
             }
-            Set<CsvItem> set = new TreeSet<CsvItem>(new CsvItemComparator(index));
+            Set<PositionedCsvItem> set = new TreeSet<>(new CsvItemComparator(index));
             String line;
             int lineNumber = 1;
             while ((line = reader.readLine()) != null) {
@@ -256,4 +253,18 @@ public class InMemoryDiff {
                     + "' and '" + oldFile.getPath() + "' doesn't match.");
         }
     }
+
+	private class ChangeComparator implements Comparator<Change> {
+		@Override
+		public int compare(Change o1, Change o2) {
+			// first create/modify entries, then delete ones
+			if ((o1.getType() == Change.Type.CREATE || o1.getType() == Change.Type.MODIFY) && o2.getType() == Change.Type.DELETE) {
+				return -1;
+			}
+			if ((o2.getType() == Change.Type.CREATE || o2.getType() == Change.Type.MODIFY) && o1.getType() == Change.Type.DELETE) {
+				return 1;
+			}
+			return Integer.compare(o1.getPosition(), o2.getPosition());
+		}
+	}
 }

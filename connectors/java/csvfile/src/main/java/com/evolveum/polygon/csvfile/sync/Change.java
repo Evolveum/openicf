@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class Change {
 
-    public static enum Type {
+    public enum Type {
 
         DELETE, CREATE, MODIFY;
     }
@@ -45,12 +45,13 @@ public class Change {
     private Type type;
     private List<String> header;
     private List<String> attributes;
+	private int position;				// for CREATE/MODIFY: position in 'new' file; for DELETE: position in 'old' file
 
-    public Change(String uid, Type type, List<String> header) {
-        this(uid, type, header, null);
+    public Change(String uid, Type type, List<String> header, int position) {
+        this(uid, type, header, null, position);
     }
 
-    public Change(String uid, Type type, List<String> header, List<String> attributes) {
+    public Change(String uid, Type type, List<String> header, List<String> attributes, int position) {
         Utils.notNullArgument(uid, "uid");
         Utils.notNullArgument(type, "type");
         Utils.notNullArgument(header, "header");
@@ -59,6 +60,7 @@ public class Change {
         this.type = type;
         this.header = header;
         this.attributes = attributes;
+		this.position = position;
     }
 
     public String getUid() {
@@ -76,4 +78,8 @@ public class Change {
     public List<String> getAttributes() {
         return attributes;
     }
+
+	public int getPosition() {
+		return position;
+	}
 }

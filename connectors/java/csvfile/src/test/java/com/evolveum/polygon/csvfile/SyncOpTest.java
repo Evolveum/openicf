@@ -41,10 +41,7 @@ import com.evolveum.polygon.csvfile.util.Utils;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -110,11 +107,13 @@ public class SyncOpTest extends AbstractCsvTest {
         SyncToken oldToken = connector.getLatestSyncToken(ObjectClass.ACCOUNT);
         assertEquals("1300734815289", oldToken.getValue());
         final List<SyncDelta> deltas = new ArrayList<SyncDelta>();
+		final List<String> uids = new ArrayList<>();
         connector.sync(ObjectClass.ACCOUNT, oldToken, new SyncResultsHandler() {
 
             @Override
             public boolean handle(SyncDelta sd) {
                 deltas.add(sd);
+				uids.add(sd.getUid().getUidValue());
                 return true;
             }
         }, null);
@@ -134,6 +133,7 @@ public class SyncOpTest extends AbstractCsvTest {
             assertEquals(syncDelta, delta);
         }
         assertTrue(deltaMap.isEmpty(), "deltas didn't match");
+		assertEquals(uids, Arrays.asList("miso", "fanfi", "vilo"), "Order of uids is not correct");
     }
 
     @Test
@@ -146,11 +146,13 @@ public class SyncOpTest extends AbstractCsvTest {
         SyncToken oldToken = connector.getLatestSyncToken(ObjectClass.ACCOUNT);
         assertEquals(oldToken.getValue(), "1300734815289");
         final List<SyncDelta> deltas = new ArrayList<SyncDelta>();
+		final List<String> uids = new ArrayList<>();
         connector.sync(ObjectClass.ACCOUNT, oldToken, new SyncResultsHandler() {
 
             @Override
             public boolean handle(SyncDelta sd) {
                 deltas.add(sd);
+				uids.add(sd.getUid().getUidValue());
                 return false;
             }
         }, null);
@@ -170,6 +172,7 @@ public class SyncOpTest extends AbstractCsvTest {
             assertEquals(syncDelta, delta);
         }
         assertEquals(deltaMap.size(), 2);
+		assertEquals(uids, Arrays.asList("miso"), "Order of uids is not correct");
 
         if (file.exists()) {
             file.delete();

@@ -27,7 +27,7 @@
         <version>1.4.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>connector-csvfile</artifactId>
-    <version>1.4.3.0-SNAPHOST</version>
+    <version>1.4.3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>CSV File Connector</name>
     <description>Connector for CSV File</description>
