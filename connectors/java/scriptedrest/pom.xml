@@ -23,6 +23,7 @@
   ~ your own identifying information:
   ~ "Portions Copyrighted [year] [name of copyright owner]"
   ~
+  ~ Portions Copyrighted 2016 Evolveum
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -34,7 +35,7 @@
     </parent>
     <groupId>org.forgerock.openicf.connectors</groupId>
     <artifactId>scriptedrest-connector</artifactId>
-    <version>1.1.0.0-SNAPSHOT</version>
+    <version>1.1.1.e2</version>
     <packaging>bundle</packaging>
     <name>Scripted REST Connector</name>
     <description>Connector for Scripted REST</description>
@@ -47,6 +48,18 @@
         <system>jenkins</system>
         <url>http://builds.forgerock.org/job/OpenICF - ScriptedREST Connector</url>
     </ciManagement>
+<distributionManagement>
+    <repository>
+        <id>evolveum-nexus</id>
+        <name>Internal Releases</name>
+        <url>http://nexus.evolveum.com/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+        <id>evolveum-nexus</id>
+        <name>Internal Snapshots</name>
+        <url>http://nexus.evolveum.com/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
     <scm>
         <connection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/scriptedrest-connector</connection>
         <developerConnection>scm:svn:https://svn.forgerock.org/openicf/trunk/connectors/java/scriptedrest-connector</developerConnection>
@@ -55,7 +68,7 @@
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
-        <openicf.osgi.embed>scriptedcommon,http-builder,json-lib,nekohtml,httpclient,xml-resolver</openicf.osgi.embed>
+        <openicf.osgi.embed>scriptedcommon,http-builder,json-lib,nekohtml,httpclient,httpcore,xml-resolver,ezmorph</openicf.osgi.embed>
         <openicf.osgi.dynamic.import>*</openicf.osgi.dynamic.import>
         <connectorPackage>org.forgerock.openicf.connectors.scriptedrest</connectorPackage>
         <connectorClass>ScriptedRESTConnector</connectorClass>
@@ -107,10 +120,19 @@
                     <dependency>
                         <groupId>org.codehaus.groovy.modules.http-builder</groupId>
                         <artifactId>http-builder</artifactId>
-                        <version>0.6</version>
+                        <version>0.7.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
+	      <plugin>
+		<artifactId>maven-enforcer-plugin</artifactId>
+		<executions>
+		  <execution>
+		    <id>enforce-plugin-versions</id>
+		    <phase>none</phase>
+		  </execution>
+		</executions>
+	      </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -122,7 +144,7 @@
         <dependency>
             <groupId>org.codehaus.groovy.modules.http-builder</groupId>
             <artifactId>http-builder</artifactId>
-            <version>0.6</version>
+            <version>0.7.1</version>
         </dependency>
     </dependencies>
 </project>
