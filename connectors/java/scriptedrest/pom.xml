@@ -55,7 +55,7 @@
     <properties>
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.compiler.source>1.6</maven.compiler.source>
-        <openicf.osgi.embed>scriptedcommon</openicf.osgi.embed>
+        <openicf.osgi.embed>scriptedcommon,http-builder,json-lib,nekohtml,httpclient,xml-resolver</openicf.osgi.embed>
         <openicf.osgi.dynamic.import>*</openicf.osgi.dynamic.import>
         <connectorPackage>org.forgerock.openicf.connectors.scriptedrest</connectorPackage>
         <connectorClass>ScriptedRESTConnector</connectorClass>
