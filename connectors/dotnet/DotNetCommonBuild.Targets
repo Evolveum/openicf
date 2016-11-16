@@ -30,6 +30,7 @@
     <Copyright>Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.</Copyright>
     <CommonBuildDir>$(MSBuildProjectDirectory)\..\Build</CommonBuildDir>
     <ForgeRockLegal>false</ForgeRockLegal>
+    <SVN_Revision>20359</SVN_Revision>
   </PropertyGroup>
 
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />

@@ -73,7 +73,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return null;
             }
 
-            uid = uid.ToLower();
+            uid = uid.ToLowerInvariant();
             if (!uid.StartsWith("<guid=") || !uid.EndsWith(">") || uid.Length != 39)
             {
                 return uid;
@@ -101,7 +101,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static String ConvertUIDToSearchString(Uid uid)
         {
             // e.g. <GUID=8184d4af97d9ed4c949c21665768881b>
-            string uidValue = uid.GetUidValue().ToLower();
+            string uidValue = uid.GetUidValue().ToLowerInvariant();
             if (!uidValue.StartsWith("<guid=") || !uidValue.EndsWith(">") || uidValue.Length != 39)
             {
                 throw new ArgumentException("Unsupported UID format: " + uidValue);
