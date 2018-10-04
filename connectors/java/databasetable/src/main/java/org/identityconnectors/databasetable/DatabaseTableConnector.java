@@ -586,10 +586,21 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         final Set<String> columnNames = resolveColumnNamesToGet(options);
         log.ok("Column Names {0} To Get", columnNames);        
         
-        final List<OrderBy> orderBy = new ArrayList<OrderBy>();
-        //Add also the token column
+        final List<OrderBy> orderBy = new ArrayList<OrderBy>();        
+        //Add also the token column        
         columnNames.add(changeLogColumnName);
-        orderBy.add(new OrderBy(changeLogColumnName, true));
+        
+        //Set ORDER BY on Sync Data
+        String syncOrderByColumnName = changeLogColumnName;
+        if (StringUtil.isNotBlank(config.getSyncOrderColumn())) {
+            syncOrderByColumnName = config.getSyncOrderColumn();
+        }
+        Boolean syncOrderByAsc = true;
+        if (config.getSyncOrderAsc() != null) {
+            syncOrderByAsc = config.getSyncOrderAsc();
+        }
+        
+        orderBy.add(new OrderBy(syncOrderByColumnName, syncOrderByAsc));
         log.ok("OrderBy {0}", orderBy);        
 
         // The first token is not null set the FilterWhereBuilder

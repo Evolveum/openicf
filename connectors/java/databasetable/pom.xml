@@ -27,7 +27,7 @@
         <version>1.4.2.0</version>
     </parent>
     <artifactId>connector-databasetable</artifactId>
-    <version>1.4.2.0</version>
+    <version>1.4.3.0</version>
     <packaging>jar</packaging>
     <name>Database Table Connector</name>
     <description>Database table connector which uses a single database table to store the Account records.</description>

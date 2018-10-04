@@ -469,12 +469,46 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     public String getChangeLogColumn() {
         return this.changeLogColumn;
     }
-
-    /**
-     * @param value
+    
+     /**
+      * @param value
      */
     public void setChangeLogColumn(String value) {
         this.changeLogColumn = value;
+    }
+    
+    /**
+     * LiveSync Order Column (overrides implicit ORDER BY changeLogColumn)
+     * If the value is empty, sync data are ordered by changeLogColumn
+     */
+    private String syncOrderColumn = EMPTY_STR;
+
+    @ConfigurationProperty(order = 20, operations = SyncOp.class,
+            displayMessageKey = "SYNC_ORDER_COLUMN_DISPLAY", 
+            helpMessageKey = "SYNC_ORDER_COLUMN_HELP")
+    public String getSyncOrderColumn() {
+        return this.syncOrderColumn;
+    }    
+
+    public void setSyncOrderColumn(String value) {
+        this.syncOrderColumn = value;
+    }
+    
+     /**
+     * LiveSync Order Asc
+     * If the value is empty, sync data are ordered by ASC
+     */
+    private Boolean syncOrderAsc = true;
+
+    @ConfigurationProperty(order = 21, operations = SyncOp.class,
+            displayMessageKey = "SYNC_ORDER_ASC_DISPLAY", 
+            helpMessageKey = "SYNC_ORDER_ASC_HELP")
+    public Boolean getSyncOrderAsc() {
+        return this.syncOrderAsc;
+    }    
+
+    public void setSyncOrderAsc(Boolean value) {
+        this.syncOrderAsc = value;
     }
 
     // =======================================================================
@@ -490,7 +524,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Return the datasource 
      * @return datasource value
      */
-    @ConfigurationProperty(order = 20,
+    @ConfigurationProperty(order = 22,
             displayMessageKey = "DATASOURCE_DISPLAY", 
             helpMessageKey = "DATASOURCE_HELP")
     public String getDatasource() {
@@ -514,7 +548,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Return the jndiFactory 
      * @return jndiFactory value
      */
-    @ConfigurationProperty(order = 21,
+    @ConfigurationProperty(order = 23,
             displayMessageKey = "JNDI_PROPERTIES_DISPLAY", 
             helpMessageKey = "JNDI_PROPERTIES_HELP")
     public String[] getJndiProperties() {
@@ -534,7 +568,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * If set to true then the password will not be returned. Never. Even though it is explicitly requested.
      * If set to false then the password will be returned if it is explicitly requested.
      */
-    @ConfigurationProperty(order = 22,
+    @ConfigurationProperty(order = 24,
             displayMessageKey = "SUPRESS_PASSWORD_DISPLAY", 
             helpMessageKey = "SUPRESS_PASSWORD_HELP")
     public boolean getSuppressPassword() {
