@@ -54,6 +54,7 @@ import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.dbcommon.UpdateSetBuilder;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder.OrderBy;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -307,6 +308,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.error(e, "Create account ''{0}'' error", accountName);
             if (throwIt(e.getErrorCode()) ) {            
                 SQLUtil.rollbackQuietly(getConn());
+
+                checkAlreadyExistsException(e);
+
                 throw new ConnectorException(config.getMessage(MSG_CAN_NOT_CREATE, accountName), e);
             }            
         } finally {
@@ -317,6 +321,19 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.ok("Account {0} created", accountName);
         // create and return the uid..
         return new Uid(accountName);
+    }
+
+    private void checkAlreadyExistsException(SQLException ex) {
+        if (ex == null || ex.getMessage() == null || config.getAlreadyExistMessages() == null) {
+            return;
+        }
+
+        String[] messages = config.getAlreadyExistMessages().split(",");
+        for (String msg : messages) {
+            if (ex.getMessage().contains(msg)) {
+                throw new AlreadyExistsException(ex);
+            }
+        }
     }
 
     /**

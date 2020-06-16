@@ -578,8 +578,20 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 	public void setSuppressPassword(boolean suppressPassword) {
 		this.suppressPassword = suppressPassword;
 	}
-    
-	
+
+	private String alreadyExistMessages;
+
+    @ConfigurationProperty(order = 24,
+            displayMessageKey = "ALREADY_EXISTS_MESSAGES_DISPLAY",
+            helpMessageKey = "ALREADY_EXISTS_MESSAGES_HELP")
+    public String getAlreadyExistMessages() {
+        return alreadyExistMessages;
+    }
+
+    public void setAlreadyExistMessages(String alreadyExistMessages) {
+        this.alreadyExistMessages = alreadyExistMessages;
+    }
+
     // =======================================================================
     // Configuration Interface
     // =======================================================================
