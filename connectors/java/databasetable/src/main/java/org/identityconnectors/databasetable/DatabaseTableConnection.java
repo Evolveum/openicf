@@ -49,6 +49,7 @@ import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectionFailedException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
@@ -99,7 +100,11 @@ public class DatabaseTableConnection extends DatabaseConnection {
             final String driver = config.getJdbcDriver();
             final String connectionUrl = config.formatUrlTemplate();
             log.info("Get a new connection using connection url {0} and user {1}", connectionUrl, login);
-            connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, login, password);
+            try {
+                connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, login, password);
+            } catch (RuntimeException e) {
+                throw new ConnectionFailedException(e);
+            }
             log.ok("The new connection using connection url {0} and user {1} created", connectionUrl, login);
         }
 
