@@ -60,7 +60,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * 
      * @return quoting value
      */
-    @ConfigurationProperty(order = 1, 
+    @ConfigurationProperty(order = 1,
                            displayMessageKey = "QUOTING_DISPLAY", 
                            helpMessageKey = "QUOTING_HELP")
     public String getQuoting() {
@@ -427,8 +427,10 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     } 
     
     /**
-     * The new connection validation query. The query can be empty. Then the auto commit true/false 
-     * command is applied by default. This can be unsufficient on some database drivers because of caching
+     * The new connection validation query. The query can be empty. Then the default driver's validate method
+     * will be used with possible fallback to the auto commit true/false switch if driver doesn't support own
+     * validate method.
+     * Auto commit true/false switch can be insufficient on some database drivers because of caching.
      * Then the validation query is required.     
      */
     private String validConnectionQuery;
@@ -453,6 +455,31 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     }
 
     /**
+     * Timeout in seconds for connection validation using driver's own validation method.
+     * It's used only if validConnectionQuery is empty.
+     */
+    private int validConnectionTimeout = DEFAULT_CONNECTION_VALIDATION_TIMEOUT;
+
+    /**
+     * connection validation timeout getter
+     * @return validConnectionTimeout value
+     */
+    @ConfigurationProperty(order = 18,
+            displayMessageKey = "VALID_CONNECTION_TIMEOUT_DISPLAY",
+            helpMessageKey = "VALID_CONNECTION_TIMEOUT_HELP")
+    public int getValidConnectionTimeout() {
+        return this.validConnectionTimeout;
+    }
+
+    /**
+     * Connection validation timeout setter
+     * @param value
+     */
+    public void setValidConnectionTimeout(int value) {
+        this.validConnectionTimeout = value;
+    }
+
+    /**
      * Change Log Column (should automatically add ORDER BY)
      * If the value is non empty, the SyncOp should be supported
      * It could be nativeTimestamps.
@@ -463,7 +490,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Log Column is required be SyncOp
      * @return Log Column 
      */
-    @ConfigurationProperty(order = 19, operations = SyncOp.class,
+    @ConfigurationProperty(order = 20, operations = SyncOp.class,
             displayMessageKey = "CHANGE_LOG_COLUMN_DISPLAY", 
             helpMessageKey = "CHANGE_LOG_COLUMN_HELP")
     public String getChangeLogColumn() {
@@ -483,7 +510,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     private String syncOrderColumn = EMPTY_STR;
 
-    @ConfigurationProperty(order = 20, operations = SyncOp.class,
+    @ConfigurationProperty(order = 21, operations = SyncOp.class,
             displayMessageKey = "SYNC_ORDER_COLUMN_DISPLAY", 
             helpMessageKey = "SYNC_ORDER_COLUMN_HELP")
     public String getSyncOrderColumn() {
@@ -500,7 +527,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     private Boolean syncOrderAsc = true;
 
-    @ConfigurationProperty(order = 21, operations = SyncOp.class,
+    @ConfigurationProperty(order = 22, operations = SyncOp.class,
             displayMessageKey = "SYNC_ORDER_ASC_DISPLAY", 
             helpMessageKey = "SYNC_ORDER_ASC_HELP")
     public Boolean getSyncOrderAsc() {
@@ -524,7 +551,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Return the datasource 
      * @return datasource value
      */
-    @ConfigurationProperty(order = 22,
+    @ConfigurationProperty(order = 23,
             displayMessageKey = "DATASOURCE_DISPLAY", 
             helpMessageKey = "DATASOURCE_HELP")
     public String getDatasource() {
@@ -548,7 +575,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Return the jndiFactory 
      * @return jndiFactory value
      */
-    @ConfigurationProperty(order = 23,
+    @ConfigurationProperty(order = 24,
             displayMessageKey = "JNDI_PROPERTIES_DISPLAY", 
             helpMessageKey = "JNDI_PROPERTIES_HELP")
     public String[] getJndiProperties() {
@@ -568,7 +595,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * If set to true then the password will not be returned. Never. Even though it is explicitly requested.
      * If set to false then the password will be returned if it is explicitly requested.
      */
-    @ConfigurationProperty(order = 24,
+    @ConfigurationProperty(order = 25,
             displayMessageKey = "SUPRESS_PASSWORD_DISPLAY", 
             helpMessageKey = "SUPRESS_PASSWORD_HELP")
     public boolean getSuppressPassword() {
@@ -581,7 +608,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
 	private String alreadyExistMessages;
 
-    @ConfigurationProperty(order = 24,
+    @ConfigurationProperty(order = 26,
             displayMessageKey = "ALREADY_EXISTS_MESSAGES_DISPLAY",
             helpMessageKey = "ALREADY_EXISTS_MESSAGES_HELP")
     public String getAlreadyExistMessages() {

@@ -22,9 +22,6 @@
  */
 package org.identityconnectors.databasetable;
 
-import static org.identityconnectors.databasetable.DatabaseTableConstants.MSG_CAN_NOT_READ;
-import static org.identityconnectors.databasetable.DatabaseTableConstants.MSG_QUERY_INVALID;
-
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -53,6 +50,8 @@ import org.identityconnectors.framework.common.exceptions.ConnectionFailedExcept
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
+
+import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
 /**
  * Wraps JDBC connections extends the DatabaseConnection overriding the test method.
@@ -269,10 +268,19 @@ public class DatabaseTableConnection extends DatabaseConnection {
     public void test() {
         String sql = config.getValidConnectionQuery();
         
-        // attempt through auto commit..
         if (StringUtil.isBlank(sql)) {
-            log.info("valid connection query is empty, test connection using default");
-            super.test();
+            log.info("valid connection query is empty, testing using driver's  built-in method");
+            try {
+                if (!getConnection().isValid(config.getValidConnectionTimeout())) {
+                    throw new ConnectionFailedException(config.getMessage(MSG_CONNECTION_INVALID));
+                }
+            } catch(SQLException ex) {
+                log.warn(ex, "SQL exception was raised when testing connection. This might mean it's not supported by the driver. Falling back to test using autocommit setting change.");
+
+                // attempt through auto commit..
+                super.test();
+            }
+            log.ok("connection is valid");
         } else {
             Statement stmt = null;
             try {

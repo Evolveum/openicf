@@ -31,7 +31,9 @@ public class DatabaseTableConstants {
     /**  The default value for the RA_DRIVER resource attribute. */
     public static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
     /**  The default connect URL template.  */
-    public static final String DEFAULT_TEMPLATE = "jdbc:oracle:thin:@%h:%p:%d";    
+    public static final String DEFAULT_TEMPLATE = "jdbc:oracle:thin:@%h:%p:%d";
+    /**  The default connection validation timeout.  */
+    public static final int DEFAULT_CONNECTION_VALIDATION_TIMEOUT = 5;
     /** The null column default value */
     public static final String EMPTY_STR = "";    
 
@@ -61,7 +63,8 @@ public class DatabaseTableConstants {
     static final String MSG_PORT_BLANK = "port.blank";
     static final String MSG_PWD_BLANK = "pwd.blank";
     static final String MSG_PWD_COLUMN_BLANK="pwd.column.blank";   
-    static final String MSG_QUERY_INVALID = "query.invalid"; 
+    static final String MSG_QUERY_INVALID = "query.invalid";
+    static final String MSG_CONNECTION_INVALID = "connection.invalid";
     static final String MSG_RESULT_HANDLER_NULL="result.handler.null";
     static final String MSG_TABLE_BLANK = "table.blank";
     static final String MSG_UID_BLANK="uid.blank";
