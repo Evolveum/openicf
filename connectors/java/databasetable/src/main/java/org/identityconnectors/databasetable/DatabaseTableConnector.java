@@ -26,14 +26,11 @@ package org.identityconnectors.databasetable;
 import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -305,13 +302,21 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.info("Create account {0} commit", accountName);
             commit();                    
         } catch (SQLException e) {
-            log.error(e, "Create account ''{0}'' error", accountName);
+            boolean alreadyExistsSituation = isAlreadyExistsException(e);
+            if (!alreadyExistsSituation) {
+                log.error(e, "Create account ''{0}'' error", accountName);
+            } else {
+                log.ok(e, "Create account ''{0}'' error resolved as 'already exists' situation", accountName);
+            }
+
             if (throwIt(e.getErrorCode()) ) {            
                 SQLUtil.rollbackQuietly(getConn());
 
-                checkAlreadyExistsException(e);
-
-                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_CREATE, accountName), e);
+                if (alreadyExistsSituation) {
+                    throw new AlreadyExistsException(e);
+                } else {
+                    throw new ConnectorException(config.getMessage(MSG_CAN_NOT_CREATE, accountName), e);
+                }
             }            
         } finally {
             // clean up...
@@ -323,17 +328,18 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return new Uid(accountName);
     }
 
-    private void checkAlreadyExistsException(SQLException ex) {
+    private boolean isAlreadyExistsException(SQLException ex) {
         if (ex == null || ex.getMessage() == null || config.getAlreadyExistMessages() == null) {
-            return;
+            return false;
         }
 
         String[] messages = config.getAlreadyExistMessages().split(",");
         for (String msg : messages) {
             if (ex.getMessage().contains(msg)) {
-                throw new AlreadyExistsException(ex);
+                return true;
             }
         }
+        return false;
     }
 
     /**

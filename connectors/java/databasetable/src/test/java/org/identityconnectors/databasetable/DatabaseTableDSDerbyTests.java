@@ -180,6 +180,7 @@ public class DatabaseTableDSDerbyTests extends DatabaseTableTestBase {
         config.setKeyColumn(ACCOUNTID);
         config.setPasswordColumn(PASSWORD);
         config.setConnectorMessages(TestHelpers.createDummyMessages());
+        config.setAlreadyExistMessages("primary key constraint");
         return config;
     }
 

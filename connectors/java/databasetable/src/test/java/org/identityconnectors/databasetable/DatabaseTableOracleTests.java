@@ -133,6 +133,11 @@ public class DatabaseTableOracleTests extends DatabaseTableTestBase{
         //The column is not defined in oracle
     }
 
+    @Override
+    public void testCreateCallAlreadyExists() throws Exception {
+        // Not configured for Oracle
+    }
+
     /**
      * testTimestampColumn operates on the table 'bug17551table'
      * @throws Exception 

@@ -164,6 +164,7 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         config.setJdbcUrlTemplate(URL_CONN);
         config.setChangeLogColumn(CHANGELOG);
         config.setConnectorMessages(TestHelpers.createDummyMessages());
+        config.setAlreadyExistMessages("primary key constraint");
         return config;
     }
 

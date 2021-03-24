@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.databasetable;
 
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -225,6 +226,31 @@ public abstract class DatabaseTableTestBase {
         attributeSetsEquals(con.schema(), expected, actual);
     }
 
+    /**
+     * Checks that already exists exception is correctly handled and not logged.
+     */
+    @Test
+    public void testCreateCallAlreadyExists() throws Exception {
+        log.ok("testCreateCallAlreadyExists");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+        Set<Attribute> expected = getCreateAttributeSet(cfg);
+        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+
+        // Attempt to create the account second time
+        try {
+            con.create(ObjectClass.ACCOUNT, expected, null);
+            throw new AssertionError("Unexpected success");
+        } catch (AlreadyExistsException e) {
+            log.ok("Expected exception: " + e.getMessage(), e);
+            // TODO check the log
+        } catch (Exception e) {
+            log.error("Unexpected exception: " + e.getMessage(), e);
+            throw e;
+        }
+    }
 
     /**
      * Make sure the Create call works..

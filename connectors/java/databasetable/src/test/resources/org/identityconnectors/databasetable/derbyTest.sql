@@ -16,5 +16,6 @@ create table Accounts (
   opentime    TIME,      
   enrolled    TIMESTAMP,      
   changed     TIMESTAMP NOT NULL,
-  changelog   BIGINT
+  changelog   BIGINT,
+  PRIMARY KEY (accountId)
 )
