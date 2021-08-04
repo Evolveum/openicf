@@ -254,6 +254,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
         final PreparedStatement prepareStatement = getConnection().prepareStatement(sql);
         DatabaseTableSQLUtil.setParams(sms, prepareStatement, params);
         log.ok("SQL Statement ok");
+
         return prepareStatement;
     }
 

@@ -62,11 +62,11 @@
 		</repository>
     </repositories>
     <dependencies>
-        <dependency>
-            <groupId>com.evolveum.polygon</groupId>
-            <artifactId>dbcommon</artifactId>
-            <version>${polygon.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.evolveum.polygon</groupId>-->
+<!--            <artifactId>dbcommon</artifactId>-->
+<!--            <version>${polygon.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>

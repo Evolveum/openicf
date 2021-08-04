@@ -96,7 +96,7 @@ public abstract class DatabaseTableTestBase {
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
      */
-    static final Log log = Log.getLog(DatabaseTableConnector.class);   
+    static final Log log = Log.getLog(DatabaseTableTestBase.class);
     
     
     // always seed that same for results..
@@ -244,7 +244,7 @@ public abstract class DatabaseTableTestBase {
             con.create(ObjectClass.ACCOUNT, expected, null);
             throw new AssertionError("Unexpected success");
         } catch (AlreadyExistsException e) {
-            log.ok("Expected exception: " + e.getMessage(), e);
+            log.ok("Expected exceptiond: " + e.getMessage(), e);
             // TODO check the log
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);

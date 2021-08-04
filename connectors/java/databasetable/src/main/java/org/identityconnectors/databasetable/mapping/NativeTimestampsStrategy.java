@@ -52,20 +52,20 @@ public class NativeTimestampsStrategy implements MappingStrategy {
     /* (non-Javadoc)
      * @see org.identityconnectors.databasetable.MappingStrategy#getSQLParam(java.sql.ResultSet, int, int)
      */
-    public SQLParam getSQLParam(ResultSet resultSet, int i, String name, final int sqlType) throws SQLException {
+    public SQLParam getSQLParam(ResultSet resultSet, int i, String name, final int sqlType,String sqlAttributeTypeName) throws SQLException {
         switch (sqlType) {
         case Types.TIMESTAMP:
             return new SQLParam(name, resultSet.getTimestamp(i), Types.TIMESTAMP);
         default:   
-            return delegate.getSQLParam(resultSet, i, name, sqlType);
+            return delegate.getSQLParam(resultSet, i, name, sqlType, sqlAttributeTypeName);
         }       
     } 
     
     /* (non-Javadoc)
      * @see org.identityconnectors.databasetable.MappingStrategy#getSQLAttributeType(int)
      */
-    public Class<?> getSQLAttributeType(int sqlType) {
-        return delegate.getSQLAttributeType(sqlType);
+    public Class<?> getSQLAttributeType(int sqlType, String sqlAttributeTypeName) {
+        return delegate.getSQLAttributeType(sqlType, sqlAttributeTypeName);
     }
     
     /* (non-Javadoc)

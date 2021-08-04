@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  * Portions Copyrighted 2013 Radovan Semancik, Evolveum
@@ -25,7 +25,6 @@ package org.identityconnectors.databasetable;
 
 import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -44,6 +43,7 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.databasetable.mapping.misc.SQLColumnTypeInfo;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.InsertIntoBuilder;
@@ -91,7 +91,6 @@ import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 
-
 /**
  * The database table {@link DatabaseTableConnector} is a basic, but easy to use
  * {@link DatabaseTableConnector} for accounts in a relational database.
@@ -104,7 +103,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * table. The delete action is implemented to simply remove the row from the
  * table.
  * <p>
- * 
+ *
  * @author Will Droste
  * @author Keith Yarbrough
  * @version $Revision $
@@ -121,10 +120,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      */
     static Log log = Log.getLog(DatabaseTableConnector.class);
 
-    /**
-     * Place holder for the {@link Connection} passed into the callback
-     * {@link ConnectionFactory#setConnection(Connection)}.
-     */
+    //    /**
+//     * Place holder for the {@link Connection} passed into the callback
+//     * {@link ConnectionFactory#setConnection(Connection)}.
+//     */
     private DatabaseTableConnection conn;
 
     /**
@@ -137,27 +136,27 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * Schema cache is used. The schema creation need a jdbc query.
      */
     private Schema schema;
-    
+
     /**
      * Default attributes to get, created and cached from the schema
      */
     private Set<String> defaultAttributesToGet;
-    
+
     /**
      * Same of the data types must be converted
      */
-    private Map<String, Integer> columnSQLTypes;
+    private Map<String, SQLColumnTypeInfo> columnSQLTypes;
 
     /**
-     * Cached value for required columns 
+     * Cached value for required columns
      */
     private Set<String> stringColumnRequired;
-
 
 
     // =======================================================================
     // Initialize/dispose methods..
     // =======================================================================
+
     /**
      * {@inheritDoc}
      */
@@ -170,12 +169,12 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * {@inheritDoc}
      */
     public void init(Configuration cfg) {
-        log.info("init DatabaseTable connector");                
+        log.info("init DatabaseTable connector");
         this.config = (DatabaseTableConfiguration) cfg;
         this.schema = null;
         this.defaultAttributesToGet = null;
-        this.columnSQLTypes = null;            
-        log.ok("init DatabaseTable connector ok, connection is valid");                
+        this.columnSQLTypes = null;
+        log.ok("init DatabaseTable connector ok, connection is valid");
     }
 
     /**
@@ -184,46 +183,47 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     public void checkAlive() {
         log.info("checkAlive DatabaseTable connector");
         try {
-            if ( StringUtil.isNotBlank(config.getDatasource())) {
+            if (StringUtil.isNotBlank(config.getDatasource())) {
                 openConnection();
             } else {
                 getConn().test();
                 commit();
             }
         } catch (SQLException e) {
-          log.error(e, "error in checkAlive");
-          throw ConnectorException.wrap(e);
-        } 
+            log.error(e, "error in checkAlive");
+            throw ConnectorException.wrap(e);
+        }
         //Check alive will not close the connection, the next API call is expected
-        log.ok("checkAlive DatabaseTable connector ok");                
+        log.ok("checkAlive DatabaseTable connector ok");
     }
-    
+
     /**
      * The connector connection access method
+     *
      * @return connection
      */
     DatabaseTableConnection getConn() {
         //Lazy initialize the connection
-        if ( conn == null ) {
+        if (conn == null) {
             this.config.validate();
             //Validate first to minimize wrong resource access
             this.conn = DatabaseTableConnection.createDBTableConnection(this.config);
         }
         return conn;
-    }    
+    }
 
     /**
      * Disposes of the {@link DatabaseTableConnector}'s resources.
      * {@inheritDoc}
      */
     public void dispose() {
-        log.info("dispose DatabaseTable connector");                
-        if ( conn != null ) {
+        log.info("dispose DatabaseTable connector");
+        if (conn != null) {
             conn.dispose();
             conn = null;
         }
         this.defaultAttributesToGet = null;
-        this.schema = null; 
+        this.schema = null;
         this.columnSQLTypes = null;
     }
 
@@ -232,66 +232,67 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * {@inheritDoc}
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        log.info("create account, check the ObjectClass");        
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        log.info("create account, check the ObjectClass");
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
         }
-        log.ok("Object class ok");        
-        
-        if(attrs == null || attrs.size() == 0) {
-            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+        log.ok("Object class ok");
+
+        if (attrs == null || attrs.size() == 0) {
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET));
         }
-        log.ok("Attribute set is not empty");        
+        log.ok("Attribute set is not empty");
 
         //Name must be present in attribute set or must be generated UID set on
-        Name name = AttributeUtil.getNameFromAttributes(attrs);        
-        if(name == null) {
-            throw new IllegalArgumentException(config.getMessage(MSG_NAME_BLANK)); 
-        } 
+        Name name = AttributeUtil.getNameFromAttributes(attrs);
+        if (name == null) {
+            throw new IllegalArgumentException(config.getMessage(MSG_NAME_BLANK));
+        }
         final String accountName = name.getNameValue();
-        log.ok("Required Name attribure value {0} for create", accountName);        
+        log.ok("Required Name attribure value {0} for create", accountName);
 
         final String tblname = config.getTable();
         // start the insert statement
-        final InsertIntoBuilder bld = new InsertIntoBuilder();     
-       
+        final InsertIntoBuilder bld = new InsertIntoBuilder();
+
         log.info("Creating account: {0}", accountName);
         Set<String> missingRequiredColumns = CollectionUtil.newCaseInsensitiveSet();
-        if(config.isEnableEmptyString()) {
-           final Set<String> mrc = getStringColumnReguired();
-           log.info("Empty String is enabled, add missing required columns {0}", mrc);
-           missingRequiredColumns.addAll(mrc); 
+        if (config.isEnableEmptyString()) {
+            final Set<String> mrc = getStringColumnReguired();
+            log.info("Empty String is enabled, add missing required columns {0}", mrc);
+            missingRequiredColumns.addAll(mrc);
         }
-        log.info("process and check the Attribute Set");                
+        log.info("process and check the Attribute Set");
         //All attribute names should be in create columns statement 
-        for (Attribute attr : attrs) {            
+        for (Attribute attr : attrs) {
             // quoted column name
             final String columnName = getColumnName(attr.getName());
             Object value = AttributeUtil.getSingleValue(attr);
             //Empty String
             if (isToBeEmpty(columnName, value)) {
-                log.info("create account, attribute for a column {0} is null and should be empty", columnName);                
-                value = DatabaseTableConstants.EMPTY_STR;
-            } 
-            final int sqlType = getColumnType(columnName);
-            log.info("attribute {0} fit column {1} and sql type {2}", attr.getName(), columnName, sqlType);                
-            bld.addBind(new SQLParam(quoteName(columnName), value, sqlType));
+                log.info("create account, attribute for a column {0} is null and should be empty", columnName);
+                value = EMPTY_STR;
+            }
+            final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+            log.info("attribute {0} fit column {1} and sql type {2}", attr.getName(), columnName, sqlColumnTypeInfo);
+            bld.addBind(new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName()));
             missingRequiredColumns.remove(columnName);
-            log.ok("attribute {0} was added to insert", attr.getName());                
+            log.ok("attribute {0} was added to insert", attr.getName());
         }
-        
+
         // Bind empty string for not-null columns which are not in attribute set list
-        if(config.isEnableEmptyString()) {
-            log.info("there are columns not matched in attribute set which should be empty");                
-            for(String mCol : missingRequiredColumns) {
-                bld.addBind(new SQLParam(quoteName(mCol), DatabaseTableConstants.EMPTY_STR, getColumnType(mCol)));                               
-                log.ok("Required empty value to column {0} added", mCol);                
-            }            
+        if (config.isEnableEmptyString()) {
+            log.info("there are columns not matched in attribute set which should be empty");
+            for (String mCol : missingRequiredColumns) {
+                SQLColumnTypeInfo typeInfo = getColumnTypeInfo(mCol);
+                bld.addBind(new SQLParam(quoteName(mCol), EMPTY_STR, typeInfo.getTypeCode(), typeInfo.getTypeName()));
+                log.ok("Required empty value to column {0} added", mCol);
+            }
         }
-        
+
         final String SQL_INSERT = "INSERT INTO {0} ( {1} ) VALUES ( {2} )";
         // create the prepared statement..
-        final String sql = MessageFormat.format(SQL_INSERT, tblname , bld.getInto(), bld.getValues() );
+        final String sql = MessageFormat.format(SQL_INSERT, tblname, bld.getInto(), bld.getValues());
 
         PreparedStatement pstmt = null;
         try {
@@ -300,7 +301,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             // execute the SQL statement
             pstmt.execute();
             log.info("Create account {0} commit", accountName);
-            commit();                    
+            commit();
         } catch (SQLException e) {
             boolean alreadyExistsSituation = isAlreadyExistsException(e);
             if (!alreadyExistsSituation) {
@@ -309,7 +310,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.ok(e, "Create account ''{0}'' error resolved as 'already exists' situation", accountName);
             }
 
-            if (throwIt(e.getErrorCode()) ) {            
+            if (throwIt(e.getErrorCode())) {
                 SQLUtil.rollbackQuietly(getConn());
 
                 if (alreadyExistsSituation) {
@@ -317,10 +318,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 } else {
                     throw new ConnectorException(config.getMessage(MSG_CAN_NOT_CREATE, accountName), e);
                 }
-            }            
+            }
         } finally {
             // clean up...
-            SQLUtil.closeQuietly(pstmt);            
+            SQLUtil.closeQuietly(pstmt);
             closeConnection();
         }
         log.ok("Account {0} created", accountName);
@@ -344,6 +345,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
     /**
      * Test to throw the exception
+     *
      * @param errorCode exception
      * @return
      */
@@ -353,39 +355,40 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
     /**
      * Test is value is null and must be empty
+     *
      * @param columnName the column name
-     * @param value the value to tests
+     * @param value      the value to tests
      * @return true/false
      */
     private boolean isToBeEmpty(final String columnName, Object value) {
         return config.isEnableEmptyString() && getStringColumnReguired().contains(columnName) && value == null;
     }
-    
-    
+
+
     /**
      * Deletes a row from the table.
      * {@inheritDoc}
      */
     public void delete(final ObjectClass oclass, final Uid uid, final OperationOptions options) {
-        log.info("delete account, check the ObjectClass");        
+        log.info("delete account, check the ObjectClass");
 
         final String SQL_DELETE = "DELETE FROM {0} WHERE {1} = ?";
         PreparedStatement stmt = null;
         // create the SQL string..
 
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
         }
-        log.ok("The ObjectClass is ok");        
-        
-        if(uid == null || (uid.getUidValue() == null)) {
-            throw new IllegalArgumentException(config.getMessage(MSG_UID_BLANK)); 
-        }  
+        log.ok("The ObjectClass is ok");
+
+        if (uid == null || (uid.getUidValue() == null)) {
+            throw new IllegalArgumentException(config.getMessage(MSG_UID_BLANK));
+        }
         final String accountUid = uid.getUidValue();
-        log.ok("The Uid is present");        
-        
+        log.ok("The Uid is present");
+
         final String tblname = config.getTable();
-        final String keycol = quoteName(config.getKeyColumn());        
+        final String keycol = quoteName(config.getKeyColumn());
         final String sql = MessageFormat.format(SQL_DELETE, tblname, keycol);
         try {
             log.info("delete account SQL {0}", sql);
@@ -393,7 +396,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             // create a prepared call..
             stmt = getConn().getConnection().prepareStatement(sql);
             // set object to delete..
-            stmt.setString(1, accountUid);
+            final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(config.getKeyColumn());
+            SQLUtil.setSQLParam(stmt, 1, new SQLParam(quoteName(config.getKeyColumn()), accountUid, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName()));
+            // stmt.setString(1, accountUid);
             // uid to delete..
             log.info("Deleting account Uid: {0}", accountUid);
             final int dr = stmt.executeUpdate();
@@ -406,7 +411,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.error("More then one account Uid: {0} found", accountUid);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new IllegalArgumentException(config.getMessage(MSG_MORE_USERS_DELETED, accountUid));
-            }            
+            }
             log.info("Delete account {0} commit", accountUid);
             commit();
         } catch (SQLException e) {
@@ -426,66 +431,67 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * {@inheritDoc}
      */
     public Uid update(ObjectClass oclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        log.info("update account, check the ObjectClass");        
+        log.info("update account, check the ObjectClass");
 
         final String SQL_TEMPLATE = "UPDATE {0} SET {1} WHERE {2} = ?";
         // create the sql statement..
-        
+
         if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
             throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
         }
-        log.ok("The ObjectClass is ok");        
+        log.ok("The ObjectClass is ok");
 
         if (attrs == null || attrs.size() == 0) {
             throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET));
         }
-        log.ok("Attribute set is not empty");        
+        log.ok("Attribute set is not empty");
 
         final String accountUid = uid.getUidValue();
         Assertions.nullCheck(accountUid, "accountUid");
-        log.ok("Account uid {0} is present", accountUid);        
-        
+        log.ok("Account uid {0} is present", accountUid);
+
         Uid ret = uid;
         // The update is changing name. The oldUid is a key and the name will become new uid.
         final Name name = AttributeUtil.getNameFromAttributes(attrs);
         String accountName = accountUid;
-        if(name != null && !accountUid.equals(name.getNameValue())) {
+        if (name != null && !accountUid.equals(name.getNameValue())) {
             accountName = name.getNameValue();
             Assertions.nullCheck(accountName, "accountName");
-            log.info("Account name {0} is present and is not the same as uid", accountName);        
+            log.info("Account name {0} is present and is not the same as uid", accountName);
             ret = new Uid(accountName);
             log.ok("Renaming account uid {0} to name {1}", accountUid, accountName);
         }
-        
-        log.info("process and check the Attribute Set");                        
+
+        log.info("process and check the Attribute Set");
         UpdateSetBuilder updateSet = new UpdateSetBuilder();
         for (Attribute attribute : attrs) {
             // All attributes needs to be updated except the UID
             if (!attribute.is(Uid.NAME)) {
                 final String attributeName = attribute.getName();
                 final String columnName = getColumnName(attributeName);
-                Object value = AttributeUtil.getSingleValue(attribute);                
+                Object value = AttributeUtil.getSingleValue(attribute);
                 // Handle the empty string values
                 if (isToBeEmpty(columnName, value)) {
-                    log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);        
+                    log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
                     value = DatabaseTableConstants.EMPTY_STR;
-                }                
-                final Integer sqlType = getColumnType(columnName);
-                final SQLParam param = new SQLParam(quoteName(columnName), value, sqlType);
+                }
+                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+                final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
                 updateSet.addBind(param);
-                log.ok("Appended to update statement the attribute {0} for columnName {1} and sqlType {2}", attributeName, columnName, sqlType);                        
+                log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
             }
         }
         log.info("Update account {0}", accountName);
-        
+
         // Format the update query
         final String tblname = config.getTable();
         final String keycol = quoteName(config.getKeyColumn());
-        updateSet.addValue(new SQLParam(keycol, accountUid, getColumnType(config.getKeyColumn())));
-        final String sql = MessageFormat.format(SQL_TEMPLATE, tblname ,updateSet.getSQL(), keycol );                
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(config.getKeyColumn());
+        updateSet.addValue(new SQLParam(keycol, accountUid, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName()));
+        final String sql = MessageFormat.format(SQL_TEMPLATE, tblname, updateSet.getSQL(), keycol);
         PreparedStatement stmt = null;
         try {
-            openConnection();            
+            openConnection();
             // create the prepared statement..
             stmt = getConn().prepareStatement(sql, updateSet.getParams());
             stmt.executeUpdate();
@@ -494,40 +500,40 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             commit();
         } catch (SQLException e) {
             log.error(e, "Update account {0} error", accountName);
-            if (throwIt(e.getErrorCode()) ) {            
+            if (throwIt(e.getErrorCode())) {
                 SQLUtil.rollbackQuietly(getConn());
-                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_UPDATE, accountName), e);                
+                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_UPDATE, accountName), e);
             }
         } finally {
             // clean up..
             SQLUtil.closeQuietly(stmt);
-            
+
             closeConnection();
         }
         log.ok("Account {0} updated", accountName);
         return ret;
-    }    
-    
+    }
+
     /**
      * Creates a Database Table filter translator.
      * {@inheritDoc}
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        log.info("check the ObjectClass");        
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        log.info("check the ObjectClass");
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
         }
-        log.ok("The ObjectClass is ok");        
+        log.ok("The ObjectClass is ok");
         return new DatabaseTableFilterTranslator(this, oclass, options);
     }
 
     /**
-     * Search for rows 
+     * Search for rows
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
-            OperationOptions options) {
-        log.info("check the ObjectClass and result handler");        
+                             OperationOptions options) {
+        log.info("check the ObjectClass and result handler");
         // Contract tests
         if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
             throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
@@ -536,12 +542,12 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         if (handler == null) {
             throw new IllegalArgumentException(config.getMessage(MSG_RESULT_HANDLER_NULL));
         }
-        log.ok("The ObjectClass and result handler is ok");        
-       
+        log.ok("The ObjectClass and result handler is ok");
+
         //Names
         final String tblname = config.getTable();
         final Set<String> columnNamesToGet = resolveColumnNamesToGet(options);
-        log.ok("Column Names {0} To Get", columnNamesToGet);        
+        log.ok("Column Names {0} To Get", columnNamesToGet);
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNamesToGet);
         query.setWhere(where);
@@ -565,19 +571,19 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             }
             // commit changes
             log.info("commit executeQuery account");
-            commit();            
+            commit();
         } catch (SQLException e) {
-            log.error(e, "Query {0} on {1} error", query.getSQL(), oclass);    
+            log.error(e, "Query {0} on {1} error", query.getSQL(), oclass);
             SQLUtil.rollbackQuietly(getConn());
-            if (throwIt(e.getErrorCode()) ) {
+            if (throwIt(e.getErrorCode())) {
                 throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, tblname), e);
-            }             
+            }
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
             closeConnection();
         }
-        log.ok("Query Account commited");        
+        log.ok("Query Account commited");
     }
 
 
@@ -585,34 +591,34 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * {@inheritDoc}
      */
     public void sync(ObjectClass oclass, SyncToken token, SyncResultsHandler handler, OperationOptions options) {
-        log.info("check the ObjectClass and result handler");        
+        log.info("check the ObjectClass and result handler");
         // Contract tests    
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        } 
-        log.ok("The object class is ok");        
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
+        }
+        log.ok("The object class is ok");
         if (handler == null) {
             throw new IllegalArgumentException(config.getMessage(MSG_RESULT_HANDLER_NULL));
         }
-        log.ok("The result handles is not null");        
+        log.ok("The result handles is not null");
         //check if password column is defined in the config
         if (StringUtil.isBlank(config.getChangeLogColumn())) {
-           throw new IllegalArgumentException(config.getMessage(MSG_CHANGELOG_COLUMN_BLANK));
-        }                
-        log.ok("The change log column is ok");        
+            throw new IllegalArgumentException(config.getMessage(MSG_CHANGELOG_COLUMN_BLANK));
+        }
+        log.ok("The change log column is ok");
 
-        
+
         // Names
         final String tblname = config.getTable();
         final String changeLogColumnName = quoteName(config.getChangeLogColumn());
-        log.ok("Change log attribute {0} map to column name {1}", config.getChangeLogColumn(), changeLogColumnName);        
+        log.ok("Change log attribute {0} map to column name {1}", config.getChangeLogColumn(), changeLogColumnName);
         final Set<String> columnNames = resolveColumnNamesToGet(options);
-        log.ok("Column Names {0} To Get", columnNames);        
-        
-        final List<OrderBy> orderBy = new ArrayList<OrderBy>();        
+        log.ok("Column Names {0} To Get", columnNames);
+
+        final List<OrderBy> orderBy = new ArrayList<OrderBy>();
         //Add also the token column        
         columnNames.add(changeLogColumnName);
-        
+
         //Set ORDER BY on Sync Data
         String syncOrderByColumnName = changeLogColumnName;
         if (StringUtil.isNotBlank(config.getSyncOrderColumn())) {
@@ -622,34 +628,34 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         if (config.getSyncOrderAsc() != null) {
             syncOrderByAsc = config.getSyncOrderAsc();
         }
-        
+
         orderBy.add(new OrderBy(syncOrderByColumnName, syncOrderByAsc));
-        log.ok("OrderBy {0}", orderBy);        
+        log.ok("OrderBy {0}", orderBy);
 
         // The first token is not null set the FilterWhereBuilder
         final FilterWhereBuilder where = new FilterWhereBuilder();
-        if(token != null && token.getValue() != null) {
+        if (token != null && token.getValue() != null) {
             final Object tokenVal = token.getValue();
-            log.info("Sync token is {0}", tokenVal);        
-            final Integer sqlType = getColumnType(config.getChangeLogColumn());
-            where.addBind(new SQLParam(changeLogColumnName, tokenVal, sqlType),">" );
+            log.info("Sync token is {0}", tokenVal);
+            final SQLColumnTypeInfo sqlColumnTypeinfo = getColumnTypeInfo(config.getChangeLogColumn());
+            where.addBind(new SQLParam(changeLogColumnName, tokenVal, sqlColumnTypeinfo.getTypeCode(), sqlColumnTypeinfo.getTypeName()), ">");
         }
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNames);
         query.setWhere(where);
         query.setOrderBy(orderBy);
-        
+
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
             openConnection();
-            
+
             statement = getConn().prepareStatement(query);
             result = statement.executeQuery();
             log.info("execute sync query {0} on {1}", query.getSQL(), oclass);
             while (result.next()) {
                 final Map<String, SQLParam> columnValues = getConn().getColumnValues(result);
                 log.ok("Column values {0} from sync result set ", columnValues);
-                
+
                 // create the connector object..
                 final SyncDeltaBuilder sdb = buildSyncDelta(columnValues);
                 if (!handler.handle(sdb.build())) {
@@ -659,45 +665,45 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             }
             // commit changes
             log.info("commit sync account");
-            commit();            
+            commit();
         } catch (SQLException e) {
             log.error(e, "sync {0} on {1} error", query.getSQL(), oclass);
             SQLUtil.rollbackQuietly(getConn());
-            throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, tblname), e);              
+            throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, tblname), e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
-            
+
             closeConnection();
-        }      
-        log.ok("Sync Account commited");        
+        }
+        log.ok("Sync Account commited");
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public SyncToken getLatestSyncToken(ObjectClass oclass) {
-        log.info("check the ObjectClass");        
+        log.info("check the ObjectClass");
         final String SQL_SELECT = "SELECT MAX( {0} ) FROM {1}";
         // Contract tests    
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        } 
-        log.ok("The object class is ok");        
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
+        }
+        log.ok("The object class is ok");
 
         //check if password column is defined in the config
         if (StringUtil.isBlank(config.getChangeLogColumn())) {
-           throw new IllegalArgumentException(config.getMessage(MSG_CHANGELOG_COLUMN_BLANK));
-        }                 
-        log.ok("The change log column is ok");        
+            throw new IllegalArgumentException(config.getMessage(MSG_CHANGELOG_COLUMN_BLANK));
+        }
+        log.ok("The change log column is ok");
 
         // Format the update query
         final String tblname = config.getTable();
         final String chlogName = quoteName(config.getChangeLogColumn());
-        final String sql = MessageFormat.format(SQL_SELECT , chlogName, tblname);
+        final String sql = MessageFormat.format(SQL_SELECT, chlogName, tblname);
         SyncToken ret = null;
-        
-        log.info("getLatestSyncToken on {0}", oclass);               
+
+        log.info("getLatestSyncToken on {0}", oclass);
         PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
@@ -705,40 +711,42 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             // create the prepared statement..
             stmt = getConn().getConnection().prepareStatement(sql);
             rset = stmt.executeQuery();
-            log.ok("The statement {0} executed", sql);               
+            log.ok("The statement {0} executed", sql);
             if (rset.next()) {
-            	Object value = rset.getObject(1);
-            	if(value != null){
+                Object value = rset.getObject(1);
+                if (value != null) {
                     log.ok("New token value {0}", value);
-            		ret = new SyncToken(SQLUtil.jdbc2AttributeValue(value));
-            	}
+                    ret = new SyncToken(SQLUtil.jdbc2AttributeValue(value));
+                }
             }
-            if (ret == null){
-            	ret = new SyncToken(SQLUtil.jdbc2AttributeValue(SQLUtil.getCurrentJdbcTime(getColumnType(chlogName))));
+            if (ret == null) {
+                SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(chlogName);
+                ret = new SyncToken(SQLUtil.jdbc2AttributeValue(SQLUtil.getCurrentJdbcTime(columnTypeInfo.getTypeCode())));
             }
             log.ok("getLatestSyncToken", ret);
             // commit changes
             log.info("commit getLatestSyncToken");
-            commit();            
-        } catch (SQLException e) {  
-            log.error(e, "getLatestSyncToken sql {0} on {1} error", sql, oclass);  
+            commit();
+        } catch (SQLException e) {
+            log.error(e, "getLatestSyncToken sql {0} on {1} error", sql, oclass);
             SQLUtil.rollbackQuietly(getConn());
-            throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, tblname), e);                            
+            throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, tblname), e);
         } finally {
             // clean up..
             SQLUtil.closeQuietly(rset);
             SQLUtil.closeQuietly(stmt);
-            
+
             closeConnection();
         }
 
-        log.ok("getLatestSyncToken commited");          
+        log.ok("getLatestSyncToken commited");
         return ret;
     }
-    
+
     // =======================================================================
     // Schema..
     // =======================================================================
+
     /**
      * {@inheritDoc}
      */
@@ -761,7 +769,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return schema;
     }
 
-   
+
     /**
      * Test the configuration and connection
      * {@inheritDoc}
@@ -770,7 +778,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("test");
         try {
             openConnection();
-            getConn().test();        
+            getConn().test();
             commit();
         } catch (SQLException e) {
             log.error(e, "error in test");
@@ -782,7 +790,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     }
 
     /**
-     * 
+     *
      */
     private void closeConnection() {
         getConn().closeConnection();
@@ -801,43 +809,43 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     private void commit() throws SQLException {
         getConn().getConnection().commit();
     }
-        
+
     /**
      * Attempts to authenticate the given username combination
      * {@inheritDoc}
      */
     public Uid authenticate(ObjectClass oclass, String username, GuardedString password,
-            OperationOptions options) {
+                            OperationOptions options) {
 
         final String SQL_AUTH_QUERY = "SELECT {0} FROM {1} WHERE ( {0} = ? ) AND ( {2} = ? )";
-        
+
         log.info("check the ObjectClass");
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        }              
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
+        }
         log.ok("The object class is ok");
-        if(StringUtil.isBlank(config.getPasswordColumn())) {
+        if (StringUtil.isBlank(config.getPasswordColumn())) {
             throw new UnsupportedOperationException(config.getMessage(MSG_AUTHENTICATE_OP_NOT_SUPPORTED));
         }
         log.ok("The Password Column is ok");
-       // determine if you can get a connection to the database..
+        // determine if you can get a connection to the database..
         if (StringUtil.isBlank(username)) {
             throw new IllegalArgumentException(config.getMessage(MSG_USER_BLANK));
-         }
+        }
         log.ok("The username is ok");
         // check that there is a pwd to query..
         if (password == null) {
             throw new IllegalArgumentException(config.getMessage(MSG_PASSWORD_BLANK));
-         }        
+        }
         log.ok("The password is ok");
-            
+
         final String keyColumnName = quoteName(config.getKeyColumn());
         final String passwordColumnName = quoteName(config.getPasswordColumn());
         String sql = MessageFormat.format(SQL_AUTH_QUERY, keyColumnName, config.getTable(), passwordColumnName);
-
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(config.getKeyColumn());
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add( new SQLParam(keyColumnName, username, getColumnType(config.getKeyColumn()))); // real username
-        values.add( new SQLParam(passwordColumnName, password)); // real password
+        values.add(new SQLParam(keyColumnName, username, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName())); // real username
+        values.add(new SQLParam(passwordColumnName, password)); // real password
 
         PreparedStatement stmt = null;
         ResultSet result = null;
@@ -847,16 +855,16 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             // replace the ? in the SQL_AUTH statement with real data
             log.info("authenticate Account: {0}", username);
             openConnection();
-            
+
             stmt = getConn().prepareStatement(sql, values);
             result = stmt.executeQuery();
             log.ok("authenticate query for account {0} executed ", username);
             //No PasswordExpired capability
             if (!result.next()) {
                 log.error("authenticate query for account {0} has no result ", username);
-                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, username)); 
+                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, username));
             }
-            uid = new Uid( result.getString(1));
+            uid = new Uid(result.getString(1));
             // commit changes
             log.info("commit authenticate");
             commit();
@@ -867,41 +875,42 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);
-            
+
             closeConnection();
         }
         log.info("Account: {0} authenticated ", username);
         return uid;
     }
-    
+
     /**
      * Attempts to resolve the given username
      * {@inheritDoc}
      */
     public Uid resolveUsername(ObjectClass oclass, String username, OperationOptions options) {
         final String SQL_AUTH_QUERY = "SELECT {0} FROM {1} WHERE ( {0} = ? )";
-        
+
         log.info("check the ObjectClass");
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        }              
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
+        }
         log.ok("The object class is ok");
-        if(StringUtil.isBlank(config.getPasswordColumn())) {
+        if (StringUtil.isBlank(config.getPasswordColumn())) {
             throw new UnsupportedOperationException(config.getMessage(MSG_AUTHENTICATE_OP_NOT_SUPPORTED));
         }
         log.ok("The Password Column is ok");
-       // determine if you can get a connection to the database..
+        // determine if you can get a connection to the database..
         if (StringUtil.isBlank(username)) {
             throw new IllegalArgumentException(config.getMessage(MSG_USER_BLANK));
-         }
+        }
         log.ok("The username is ok");
-            
+
         final String keyColumnName = quoteName(config.getKeyColumn());
         final String passwordColumnName = quoteName(config.getPasswordColumn());
         String sql = MessageFormat.format(SQL_AUTH_QUERY, keyColumnName, config.getTable(), passwordColumnName);
 
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add( new SQLParam(keyColumnName, username, getColumnType(config.getKeyColumn()))); // real username
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(config.getKeyColumn());
+        values.add(new SQLParam(keyColumnName, username, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName())); // real username
 
         PreparedStatement stmt = null;
         ResultSet result = null;
@@ -911,16 +920,16 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             // replace the ? in the SQL_AUTH statement with real data
             log.info("authenticate Account: {0}", username);
             openConnection();
-            
+
             stmt = getConn().prepareStatement(sql, values);
             result = stmt.executeQuery();
             log.ok("authenticate query for account {0} executed ", username);
             //No PasswordExpired capability
             if (!result.next()) {
                 log.error("authenticate query for account {0} has no result ", username);
-                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, username)); 
+                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, username));
             }
-            uid = new Uid( result.getString(1));
+            uid = new Uid(result.getString(1));
             // commit changes
             log.info("commit authenticate");
             commit();
@@ -931,46 +940,43 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);
-            
+
             closeConnection();
         }
         log.info("Account: {0} authenticated ", username);
         return uid;
-    }         
-    
+    }
+
     /**
      * Used to escape the table or column name.
+     *
      * @param value Value to be quoted
      * @return the quoted column name
      */
     public String quoteName(String value) {
         return DatabaseTableSQLUtil.quoteName(config.getQuoting(), value);
     }
-        
-    
+
+
     /**
      * The required type is cached
+     *
      * @param columnName the column name
      * @return the cached column type
      */
-    public int getColumnType(String columnName) {
+    public SQLColumnTypeInfo getColumnTypeInfo(String columnName) {
         if (columnSQLTypes == null) {
             cacheSchema();
         }
-     // no null here :)
+        // no null here :)
         assert columnSQLTypes != null;
-        Integer columnType = columnSQLTypes.get(columnName);
-        if(columnType == null) {
-           // throw new IllegalArgumentException("Invalid column name: "+columnName);
-            columnType = Types.NULL;
-        }
-        return columnType;
+        return columnSQLTypes.get(columnName);
     }
-    
+
 
     /**
      * Convert the attribute name to resource specific columnName
-     * 
+     *
      * @param attributeName
      * @return the Column Name value
      */
@@ -991,10 +997,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return attributeName;
     }
 
-    
+
     /**
      * Cache schema, defaultAtributesToGet, columnClassNamens
-     * 
      */
     private void cacheSchema() {
         /*
@@ -1015,7 +1020,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
          * Add any other operational attributes to the attrInfoSet
          */
         // attrInfoSet.add(OperationalAttributeInfos.ENABLE);
-        
+
         /*
          * Use SchemaBuilder to build the schema. Currently, only ACCOUNT type is supported.
          */
@@ -1030,7 +1035,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         /*
          * Note: AuthenticateOp, and all the 'SPIOperation'-s are by default added by Reflection API to the Schema.
-         * 
+         *
          * See for details: SchemaBuilder.defineObjectClass() --> FrameworkUtil.getDefaultSupportedOperations()
          * ReflectionUtil.getAllInterfaces(connector); is the line that *does* acquire the implemented interfaces by the
          * connector class.
@@ -1051,7 +1056,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
     /**
      * Get the schema using a SELECT query.
-     * 
+     *
      * @return Schema based on a empty SELECT query.
      */
     private Set<AttributeInfo> buildSelectBasedAttributeInfos() {
@@ -1077,7 +1082,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             attrInfo = buildAttributeInfoSet(rset);
             // commit changes
             log.info("commit get schema");
-            commit();               
+            commit();
         } catch (SQLException ex) {
             log.error(ex, "buildSelectBasedAttributeInfo in SQL: ''{0}''", sql);
             SQLUtil.rollbackQuietly(getConn());
@@ -1085,21 +1090,22 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         } finally {
             SQLUtil.closeQuietly(rset);
             SQLUtil.closeQuietly(stmt);
-        }     
+        }
         log.ok("schema created");
         return attrInfo;
     }
 
     /**
-     * Return the set of AttributeInfo based on the database query meta-data. 
+     * Return the set of AttributeInfo based on the database query meta-data.
+     *
      * @param rset
      * @return
-     * @throws SQLException  
+     * @throws SQLException
      */
     private Set<AttributeInfo> buildAttributeInfoSet(ResultSet rset) throws SQLException {
         log.info("build AttributeInfoSet");
         Set<AttributeInfo> attrInfo = new HashSet<AttributeInfo>();
-        columnSQLTypes = CollectionUtil.<Integer>newCaseInsensitiveMap();
+        columnSQLTypes = CollectionUtil.<SQLColumnTypeInfo>newCaseInsensitiveMap();
         stringColumnRequired = CollectionUtil.newCaseInsensitiveSet();
         ResultSetMetaData meta = rset.getMetaData();
         int count = meta.getColumnCount();
@@ -1107,8 +1113,12 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             final String name = meta.getColumnName(i);
             final AttributeInfoBuilder attrBld = new AttributeInfoBuilder();
             final Integer columnType = meta.getColumnType(i);
-            log.ok("column name {0} has type {1}", name, columnType);
-            columnSQLTypes.put(name, columnType);
+            final String columnTypeName = meta.getColumnTypeName(i);
+            if (columnType != null) {
+                columnSQLTypes.put(name, new SQLColumnTypeInfo(columnTypeName, columnType));
+            } else {
+                columnSQLTypes.put(name, new SQLColumnTypeInfo(columnTypeName, Types.NULL));
+            }
             if (name.equalsIgnoreCase(config.getKeyColumn())) {
                 // name attribute
                 attrBld.setName(Name.NAME);
@@ -1118,23 +1128,23 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.ok("key column in name attribute in the schema");
             } else if (name.equalsIgnoreCase(config.getPasswordColumn())) {
                 // Password attribute
-                attrInfo.add(OperationalAttributeInfos.PASSWORD);                
+                attrInfo.add(OperationalAttributeInfos.PASSWORD);
                 log.ok("password column in password attribute in the schema");
             } else if (name.equalsIgnoreCase(config.getChangeLogColumn())) {
                 // skip changelog column from the schema. It is not part of the contract
                 log.ok("skip changelog column from the schema");
             } else {
                 // All other attributed taken from the table
-                final Class<?> dataType = getConn().getSms().getSQLAttributeType(columnType);
+                final Class<?> dataType = getConn().getSms().getSQLAttributeType(columnType, columnTypeName);
                 attrBld.setType(dataType);
                 attrBld.setName(name);
-                final boolean required = meta.isNullable(i)==ResultSetMetaData.columnNoNulls;
+                final boolean required = meta.isNullable(i) == ResultSetMetaData.columnNoNulls;
                 attrBld.setRequired(required);
-                if(required && dataType.isAssignableFrom(String.class)) {
+                if (required && dataType.isAssignableFrom(String.class)) {
                     log.ok("the column name {0} is string type and required", name);
                     stringColumnRequired.add(name);
                 }
-                attrBld.setReturnedByDefault( isReturnedByDefault(dataType));
+                attrBld.setReturnedByDefault(isReturnedByDefault(dataType));
                 attrInfo.add(attrBld.build());
                 log.ok("the column name {0} has data type {1}", name, dataType);
             }
@@ -1145,25 +1155,26 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
     /**
      * Decide if should be returned by default
-     * Generally all byte arrays are not returned by default 
+     * Generally all byte arrays are not returned by default
+     *
      * @param dataType the type of the attribute type
      * @return
      */
     private boolean isReturnedByDefault(final Class<?> dataType) {
         return byte[].class.equals(dataType) ? false : true;
-    }    
-    
+    }
+
     /**
      * Construct a connector object
      * <p>Taking care about special attributes</p>
-     *  
+     *
      * @param columnValues from the result set
      * @return ConnectorObjectBuilder object
      */
     private ConnectorObjectBuilder buildConnectorObject(Map<String, SQLParam> columnValues) {
         log.info("build ConnectorObject");
         String uidValue = null;
-        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();               
+        ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
         for (Map.Entry<String, SQLParam> colValue : columnValues.entrySet()) {
             final String columnName = colValue.getKey();
             final SQLParam param = colValue.getValue();
@@ -1177,34 +1188,34 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 uidValue = param.getValue().toString();
                 bld.setName(uidValue);
             } else if (columnName.equalsIgnoreCase(config.getPasswordColumn())) {
-            	if (config.getSuppressPassword()) {
-	                // No Password in the result object
-	                log.ok("Password is supressed in the result object");
-            	} else {
-            		GuardedString passwordValue = null;
-            		if(param != null && param.getValue() != null) {
-            			passwordValue = new GuardedString(((String)param.getValue()).toCharArray());
-            		}
-            		if (passwordValue != null) {
+                if (config.getSuppressPassword()) {
+                    // No Password in the result object
+                    log.ok("Password is supressed in the result object");
+                } else {
+                    GuardedString passwordValue = null;
+                    if (param != null && param.getValue() != null) {
+                        passwordValue = new GuardedString(((String) param.getValue()).toCharArray());
+                    }
+                    if (passwordValue != null) {
                         bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, passwordValue));
                     } else {
-                        bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME));                    
+                        bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME));
                     }
-            	}
+                }
             } else if (columnName.equalsIgnoreCase(config.getChangeLogColumn())) {
-            	//No changelogcolumn attribute in the results
-                log.ok("changelogcolumn attribute in the result");                
+                //No changelogcolumn attribute in the results
+                log.ok("changelogcolumn attribute in the result");
             } else {
-            	if(param != null && param.getValue() != null) { 
+                if (param != null && param.getValue() != null) {
                     bld.addAttribute(AttributeBuilder.build(columnName, param.getValue()));
                 } else {
-                    bld.addAttribute(AttributeBuilder.build(columnName));                    
+                    bld.addAttribute(AttributeBuilder.build(columnName));
                 }
             }
         }
 
         // To be sure that uid and name are present for mysql
-        if(uidValue == null) {
+        if (uidValue == null) {
             final String msg = "The uid value is missing in query.";
             log.error(msg);
             throw new IllegalStateException(msg);
@@ -1213,42 +1224,42 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         bld.setUid(new Uid(uidValue));
         // only deals w/ accounts..
         bld.setObjectClass(ObjectClass.ACCOUNT);
-        log.ok("ConnectorObject is builded");                
+        log.ok("ConnectorObject is builded");
         return bld;
-    }    
-    
-	/**
+    }
+
+    /**
      * Construct a SyncDeltaBuilder the sync builder
      * <p>Taking care about special attributes</p>
-     *  
+     *
      * @param columnValues from the resultSet
      * @return SyncDeltaBuilder the sync builder
      */
     private SyncDeltaBuilder buildSyncDelta(Map<String, SQLParam> columnValues) {
-      	log.info("buildSyncDelta");                
+        log.info("buildSyncDelta");
         SyncDeltaBuilder bld = new SyncDeltaBuilder();
         // Find a token
         SQLParam tokenParam = columnValues.get(config.getChangeLogColumn());
-        
-        if ( tokenParam == null ) {
+
+        if (tokenParam == null) {
             throw new IllegalArgumentException(config.getMessage(MSG_INVALID_SYNC_TOKEN_VALUE));
         }
         Object token = tokenParam.getValue();
         // Null token, set some acceptable value
-        if ( token == null ) {
-        	log.ok("token value is null, replacing to 0L");                
+        if (token == null) {
+            log.ok("token value is null, replacing to 0L");
             token = 0L;
-        }        
-        
+        }
+
         // To be sure that sync token is present
         bld.setToken(new SyncToken(token));
         bld.setObject(buildConnectorObject(columnValues).build());
-        
+
         // only deals w/ updates
         bld.setDeltaType(SyncDeltaType.CREATE_OR_UPDATE);
-      	log.ok("SyncDeltaBuilder is ok");                
+        log.ok("SyncDeltaBuilder is ok");
         return bld;
-    }       
+    }
 
 
     /**
@@ -1260,18 +1271,19 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         if (options != null && options.getAttributesToGet() != null) {
             attributesToGet = CollectionUtil.newSet(options.getAttributesToGet());
             attributesToGet.add(Uid.NAME); // Ensure the Uid colum is there
-        } 
+        }
         // Replace attributes to quoted columnNames
         Set<String> columnNamesToGet = new HashSet<String>();
         for (String attributeName : attributesToGet) {
             final String columnName = getColumnName(attributeName);
-            columnNamesToGet.add( quoteName(columnName));
+            columnNamesToGet.add(quoteName(columnName));
         }
         return columnNamesToGet;
-    }       
-    
+    }
+
     /**
      * Get the default Attributes to get
+     *
      * @return the Set of default attribute names
      */
     private Set<String> getDefaultAttributesToGet() {
@@ -1280,10 +1292,11 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
         assert defaultAttributesToGet != null;
         return defaultAttributesToGet;
-    }      
-    
+    }
+
     /**
      * Get the default Attributes to get
+     *
      * @return the Set of default attribute names
      */
     private Set<String> getStringColumnReguired() {

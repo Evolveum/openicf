@@ -64,7 +64,7 @@ public interface MappingStrategy {
      * @return the object return the retrieved object
      * @throws SQLException any SQL error
      */
-    public SQLParam getSQLParam(ResultSet resultSet, int i, String name, final int sqlType) throws SQLException;
+    public SQLParam getSQLParam(ResultSet resultSet, int i, String name, final int sqlType, String sqlAttributeTypeName) throws SQLException;
 
     /**
      * Convert database type to connector supported set of attribute types
@@ -80,6 +80,6 @@ public interface MappingStrategy {
      * @param sqlType #{@link Types}
      * @return a connector supported class
      */
-    public Class<?> getSQLAttributeType(int sqlType);    
+    public Class<?> getSQLAttributeType(int sqlType, String sqlAttributeName);
 
 }
