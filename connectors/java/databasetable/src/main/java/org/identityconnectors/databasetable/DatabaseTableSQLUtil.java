@@ -131,7 +131,9 @@ public final class DatabaseTableSQLUtil {
         for (int i = 1; i <= count; i++) {
             final String name = meta.getColumnName(i);
             final int sqlType = meta.getColumnType(i);
+
             final String sqlTypeName = meta.getColumnTypeName(i);
+
             final SQLParam param = sms.getSQLParam(resultSet, i, name, sqlType, sqlTypeName);
             ret.put(name, param);
         }

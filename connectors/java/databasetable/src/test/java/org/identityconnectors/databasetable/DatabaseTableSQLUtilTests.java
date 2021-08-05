@@ -76,13 +76,16 @@ public class DatabaseTableSQLUtilTests {
         trsmd.expectAndReturn("getColumnCount", 2);
         trsmd.expectAndReturn("getColumnName", TEST1);
         trsmd.expectAndReturn("getColumnType", Types.VARCHAR);
+        trsmd.expectAndReturn("getColumnTypeName", "varchar");
         trs.expectAndReturn("getString", TEST_VAL1);
         trsmd.expectAndReturn("getColumnName", TEST2);        
         trsmd.expectAndReturn("getColumnType", Types.VARCHAR);
+        trsmd.expectAndReturn("getColumnTypeName", "varchar");
         trs.expectAndReturn("getString", TEST_VAL2);
         
         final DefaultStrategy derbyDbStrategy = new DefaultStrategy();
-        final Map<String, SQLParam> actual = DatabaseTableSQLUtil.getColumnValues(derbyDbStrategy, resultSetProxy);
+         Map<String, SQLParam> actual = null;
+         actual = DatabaseTableSQLUtil.getColumnValues(derbyDbStrategy, resultSetProxy);
         assertTrue("getString not called", trs.isDone());
         assertTrue("getColumnType not called", trsmd.isDone());
         assertEquals(2, actual.size());

@@ -139,7 +139,7 @@ public class DatabaseTableDSDerbyTests extends DatabaseTableTestBase {
         Connection conn = null;
         Statement stmt = null;
         try {
-            Class.forName(DRIVER);             
+            Class.forName(DRIVER);
             conn = DriverManager.getConnection(URL_CREATE, "", "");
             // create the database..
             stmt = conn.createStatement();

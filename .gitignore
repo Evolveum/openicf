@@ -37,3 +37,6 @@ UpgradeLog*.htm
 
 framework/dotnet/_UpgradeReport_Files
 version.txt
+
+#misc
+derby.log
