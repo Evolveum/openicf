@@ -69,7 +69,13 @@ public class DatabaseTableConstants {
     static final String MSG_TABLE_BLANK = "table.blank";
     static final String MSG_UID_BLANK="uid.blank";
     static final String MSG_USER_BLANK = "admin.user.blank";
-    
+    static final String MSG_OP_ALREADY_EXISTS = "exception.already.exists.operation";
+    static final String MSG_OP_UPDATE_UNKNOWN = "exception.unknown.uid.update";
+    static final String MSG_EXP_DEFAULT = "exception.default";
+
+    public static final String SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION = "23505"; // Postgre, DB2, Derby
+    public static final String SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION = "23000"; // MSSQL, MySQL, MariaDB
+
     private DatabaseTableConstants() {
         throw new AssertionError();
     }

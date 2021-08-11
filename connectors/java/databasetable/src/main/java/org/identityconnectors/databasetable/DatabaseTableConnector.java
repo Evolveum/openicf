@@ -303,22 +303,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.info("Create account {0} commit", accountName);
             commit();
         } catch (SQLException e) {
-            boolean alreadyExistsSituation = isAlreadyExistsException(e);
-            if (!alreadyExistsSituation) {
-                log.error(e, "Create account ''{0}'' error", accountName);
-            } else {
-                log.ok(e, "Create account ''{0}'' error resolved as 'already exists' situation", accountName);
-            }
 
-            if (throwIt(e.getErrorCode())) {
-                SQLUtil.rollbackQuietly(getConn());
+            evaluateAndHandleException(e, true, MSG_CAN_NOT_CREATE, accountName);
 
-                if (alreadyExistsSituation) {
-                    throw new AlreadyExistsException(e);
-                } else {
-                    throw new ConnectorException(config.getMessage(MSG_CAN_NOT_CREATE, accountName), e);
-                }
-            }
         } finally {
             // clean up...
             SQLUtil.closeQuietly(pstmt);
@@ -327,20 +314,6 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.ok("Account {0} created", accountName);
         // create and return the uid..
         return new Uid(accountName);
-    }
-
-    private boolean isAlreadyExistsException(SQLException ex) {
-        if (ex == null || ex.getMessage() == null || config.getAlreadyExistMessages() == null) {
-            return false;
-        }
-
-        String[] messages = config.getAlreadyExistMessages().split(",");
-        for (String msg : messages) {
-            if (ex.getMessage().contains(msg)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -494,16 +467,28 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             openConnection();
             // create the prepared statement..
             stmt = getConn().prepareStatement(sql, updateSet.getParams());
-            stmt.executeUpdate();
+            //TODO check
+            log.info("The prepared statement in case of update {0}", stmt.toString());
+
+            int retCode = stmt.executeUpdate();
+            log.info("The return code for the statement: {0}", retCode);
             // commit changes
+
+            if (retCode == 0) {
+                String uidValue = uid.getUidValue();
+                log.error("Account with the uid {0} not found during the update operation.", uidValue);
+                handleUnknownUid(MSG_OP_UPDATE_UNKNOWN, uidValue);
+            }
             log.info("Update account {0} commit", accountName);
             commit();
         } catch (SQLException e) {
-            log.error(e, "Update account {0} error", accountName);
-            if (throwIt(e.getErrorCode())) {
-                SQLUtil.rollbackQuietly(getConn());
-                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_UPDATE, accountName), e);
-            }
+            // TODO check and validate
+//            log.error(e, "Update account {0} error", accountName);
+//            if (throwIt(e.getErrorCode())) {
+//                SQLUtil.rollbackQuietly(getConn());
+//                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_UPDATE, accountName), e);
+//            }
+            evaluateAndHandleException(e, true, MSG_CAN_NOT_UPDATE, accountName);
         } finally {
             // clean up..
             SQLUtil.closeQuietly(stmt);
@@ -1306,4 +1291,68 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         assert stringColumnRequired != null;
         return stringColumnRequired;
     }
+
+
+    private void evaluateAndHandleException(Exception e, Boolean checkIfRethrow, String message, String... messageParameters) {
+        // Boolean throwDefault = true;
+
+        if (e instanceof SQLException) {
+
+            if (!isConfiguredAlreadyExistsException((SQLException) e)) {
+                String sqlState = ((SQLException) e).getSQLState();
+                if (SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
+                        SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION.equals(sqlState)) {
+
+                    log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+                    throw new AlreadyExistsException(e);
+                }
+            } else {
+
+                log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+                throw new AlreadyExistsException(e);
+            }
+
+            if (checkIfRethrow) {
+
+                if (throwIt(((SQLException) e).getErrorCode())) {
+                    SQLUtil.rollbackQuietly(getConn());
+                    throw new ConnectorException(e);
+                }
+            }
+        }
+
+        //if (throwDefault) {
+        // throw default
+//        log.error(config.getMessage(message, messageParameters));
+//        if (checkIfRethrow) {
+//
+//            if (throwIt(e.getErrorCode())) {
+//                SQLUtil.rollbackQuietly(getConn());
+//            }
+//        } else {
+//
+//            throw new ConnectorException(e);
+//        }
+        // }
+    }
+
+    private boolean isConfiguredAlreadyExistsException(SQLException ex) {
+        if (ex == null || ex.getMessage() == null || config.getAlreadyExistMessages() == null) {
+            return false;
+        }
+        String[] messages = config.getAlreadyExistMessages().split(",");
+        for (String msg : messages) {
+            if (ex.getMessage().contains(msg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private void handleUnknownUid(String message, String... attributes) {
+log.info("The message: {0}", config.getMessage("can.not.update"));
+        throw new UnknownUidException(config.getMessage(message, attributes));
+    }
+
 }
