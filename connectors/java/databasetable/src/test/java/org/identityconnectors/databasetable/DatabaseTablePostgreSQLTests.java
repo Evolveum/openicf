@@ -50,11 +50,11 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         cfg.setPort(parser.fetchTestDataSingleValue("port"));
         cfg.setUser(parser.fetchTestDataSingleValue("user"));
         cfg.setChangeLogColumn(parser.fetchTestDataSingleValue("changeLogColumn"));
-        //cfg.setAlreadyExistMessages(parser.fetchTestDataSingleValue("alreadyExists"));
+        cfg.setAlreadyExistMessages(parser.fetchTestDataSingleValue("alreadyExists"));
         cfg.setPassword(new GuardedString(
                 parser.fetchTestDataSingleValue("password").toCharArray()));
         //dp.loadConfiguration(POSTGRE_CONFIGURATINON, cfg);
-        //cfg.setConnectorMessages(TestHelpers.createDummyMessages());
+        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
         cfg.setSQLStateExceptionHandling(false);
         return cfg;
     }

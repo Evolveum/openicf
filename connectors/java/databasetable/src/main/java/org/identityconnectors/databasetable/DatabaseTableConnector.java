@@ -1298,11 +1298,13 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         if (e instanceof SQLException) {
 
-            if (!isConfiguredAlreadyExistsException((SQLException) e) && config.getSQLStateExceptionHandling()) {
+            if (!isConfiguredAlreadyExistsException((SQLException) e)) {
 
-                handleBasedOnSQLState((SQLException) e, checkIfRethrow, message, messageParameters);
+                if (config.getSQLStateExceptionHandling()) {
 
-            } else {
+                    handleBasedOnSQLState((SQLException) e, checkIfRethrow, message, messageParameters);
+                }
+            } else if (isConfiguredAlreadyExistsException((SQLException) e)) {
 
                 log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
 
