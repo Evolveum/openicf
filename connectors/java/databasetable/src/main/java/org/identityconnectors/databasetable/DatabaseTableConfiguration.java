@@ -642,6 +642,21 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         this.alreadyExistMessages = alreadyExistMessages;
     }
 
+    /**
+     * SQLState based error handling
+     * handling some sql exceptions based on the SQLState SQL Exception parameter
+     */
+    public boolean SQLStateExceptionHandling = false;
+
+    @ConfigurationProperty(order = 27,
+            displayMessageKey = "SQL_STATE_EXCEPTION_HANDLING_DISPLAY",
+            helpMessageKey = "SQL_STATE_EXCEPTION_HANDLING_HELP")
+    public boolean getSQLStateExceptionHandling() { return SQLStateExceptionHandling; }
+
+    public void setSQLStateExceptionHandling(Boolean SQLStateExceptionHandling) {
+        this.SQLStateExceptionHandling = SQLStateExceptionHandling;
+    }
+
     // =======================================================================
     // Configuration Interface
     // =======================================================================
@@ -799,4 +814,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             return getMessage(key);
         }
     }
+
+
 }

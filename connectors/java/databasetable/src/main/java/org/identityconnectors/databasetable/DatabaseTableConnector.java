@@ -1298,18 +1298,22 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         if (e instanceof SQLException) {
 
-            if (!isConfiguredAlreadyExistsException((SQLException) e)) {
-                String sqlState = ((SQLException) e).getSQLState();
-                if (SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
-                        SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION.equals(sqlState)) {
+            if (!isConfiguredAlreadyExistsException((SQLException) e) && config.getSQLStateExceptionHandling()) {
 
-                    log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
-                    throw new AlreadyExistsException(e);
-                }
+                handleBasedOnSQLState((SQLException) e, checkIfRethrow, message, messageParameters);
+
             } else {
 
                 log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
-                throw new AlreadyExistsException(e);
+
+                if (checkIfRethrow) {
+
+                    if (throwIt(((SQLException) e).getErrorCode())) {
+
+                        SQLUtil.rollbackQuietly(getConn());
+                        throw new AlreadyExistsException(e);
+                    }
+                }
             }
 
             if (checkIfRethrow) {
@@ -1336,6 +1340,18 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         // }
     }
 
+    private void handleBasedOnSQLState(SQLException e, Boolean checkIfRethrow, String message, String[] messageParameters) {
+        String sqlState = e.getSQLState();
+
+        if (SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
+                SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION.equals(sqlState)) {
+
+            log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+            throw new AlreadyExistsException(e);
+        }
+
+    }
+
     private boolean isConfiguredAlreadyExistsException(SQLException ex) {
         if (ex == null || ex.getMessage() == null || config.getAlreadyExistMessages() == null) {
             return false;
@@ -1351,7 +1367,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
 
     private void handleUnknownUid(String message, String... attributes) {
-log.info("The message: {0}", config.getMessage("can.not.update"));
+        log.info("The message: {0}", config.getMessage("can.not.update"));
         throw new UnknownUidException(config.getMessage(message, attributes));
     }
 

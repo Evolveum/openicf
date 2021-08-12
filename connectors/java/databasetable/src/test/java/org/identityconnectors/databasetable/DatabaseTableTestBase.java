@@ -32,14 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -476,33 +469,120 @@ public abstract class DatabaseTableTestBase {
      *
      * @throws Exception
      */
-    @Test
-    //(expectedExceptions = UnknownUidException.class)
+    @Test(expectedExceptions = AlreadyExistsException.class)
+    public void testUpdateWithAlreadyExists() throws Exception {
+        log.ok("testUpdateWithAlreadyExists");
+        final DatabaseTableConfiguration cfg = getConfiguration();
+        con = getConnector(cfg);
+        final Set<Attribute> expected = getCreateAttributeSet(cfg);
+
+        // create the object
+        final Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+        AssertJUnit.assertNotNull(uid);
+
+        // retrieve the object
+        List<ConnectorObject> list = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid));
+        AssertJUnit.assertTrue(list.size() == 1);
+
+        Iterator<Attribute> iterator = expected.iterator();
+        Uid tmpuid = null;
+        while (iterator.hasNext()) {
+            Attribute attr = iterator.next();
+            if (attr.getName().equals(Name.NAME)) {
+                tmpuid = new Uid((String) attr.getValue().get(0));
+                break;
+            }
+
+        }
+
+        String uidStr = tmpuid.getUidValue();
+        log.info("The uid string: {0}", uidStr);
+        char[] uidToChars = uidStr.toCharArray();
+        int rand = (int) (Math.random() * uidStr.length());
+
+        char c = (char) (r.nextInt(26) + 'a');
+
+        if (c != uidToChars[rand]) {
+            uidToChars[rand] = c;
+        }
+
+        tmpuid = new Uid(new String(uidToChars));
+
+        Set<Attribute> userToUpdateAttrs = new HashSet<>();
+        userToUpdateAttrs.addAll(expected);
+        iterator = userToUpdateAttrs.iterator();
+
+
+        while (iterator.hasNext()) {
+            Attribute attr = iterator.next();
+            if (attr.getName().equals(Name.NAME)) {
+                log.info("The uid string: {0}", tmpuid.getUidValue());
+                Attribute mockName = AttributeBuilder.build(Name.NAME, tmpuid.getUidValue());
+                iterator.remove();
+                userToUpdateAttrs.add(mockName);
+                break;
+            }
+
+        }
+
+        con.create(ObjectClass.ACCOUNT, userToUpdateAttrs, null);
+
+        list = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(tmpuid));
+        AssertJUnit.assertTrue(list.size() == 1);
+
+        // create updated connector object
+        Map<String, Attribute> chMap = new HashMap<String, Attribute>(AttributeUtil.toMap(expected));
+        chMap.put(SALARY, AttributeBuilder.build(SALARY, (Integer) null));
+        // do the update
+        final Set<Attribute> changeSet = CollectionUtil.newSet(chMap.values());
+
+        con.update(ObjectClass.ACCOUNT, tmpuid, changeSet, null);
+
+        // retrieve the object
+        List<ConnectorObject> list2 = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(tmpuid));
+        AssertJUnit.assertNotNull(list2);
+        AssertJUnit.assertTrue(list2.size() == 1);
+        final Set<Attribute> actual = list2.get(0).getAttributes();
+        attributeSetsEquals(con.schema(), changeSet, actual, Name.NAME);
+    }
+
+
+    /**
+     * Test creating of the connector object, searching using UID and update a non existing user
+     *
+     * @throws Exception
+     */
+    @Test(expectedExceptions = UnknownUidException.class)
     public void testUpdateNotFound() throws Exception {
         log.ok("testUpdateNull");
         final DatabaseTableConfiguration cfg = getConfiguration();
         con = getConnector(cfg);
         final Set<Attribute> expected = getCreateAttributeSet(cfg);
 
-        // create the object
-        AtomicReference<Uid> uid = new AtomicReference<Uid>();
-        expected.forEach(attribute -> {
-            if (attribute.getName().equals(Name.NAME)) {
-log.info("#### The UID: {0}", attribute.getValue().get(0));
-                uid.set(new Uid((String) attribute.getValue().get(0)));
-            }
-        });
+        // Fetch the uid
 
-        List<ConnectorObject> list = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid.get()));
+        Uid uid = null;
+        Iterator<Attribute> iterator = expected.iterator();
+
+        while (iterator.hasNext()) {
+            Attribute attr = iterator.next();
+            if (attr.getName().equals(Name.NAME)) {
+                uid = new Uid((String) attr.getValue().get(0));
+                break;
+            }
+        }
+
+        AssertJUnit.assertNotNull(uid);
+        List<ConnectorObject> list = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid));
         AssertJUnit.assertTrue(list.size() == 0);
         Map<String, Attribute> chMap = new HashMap<String, Attribute>(AttributeUtil.toMap(expected));
         chMap.put(SALARY, AttributeBuilder.build(SALARY, (Integer) null));
         // do the update
         final Set<Attribute> changeSet = CollectionUtil.newSet(chMap.values());
-        con.update(ObjectClass.ACCOUNT, uid.get(), changeSet, null);
+        con.update(ObjectClass.ACCOUNT, uid, changeSet, null);
 
         // retrieve the object
-        List<ConnectorObject> list2 = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid.get()));
+        List<ConnectorObject> list2 = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid));
         AssertJUnit.assertNotNull(list2);
         AssertJUnit.assertTrue(list2.size() == 0);
     }

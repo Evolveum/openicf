@@ -54,7 +54,8 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         cfg.setPassword(new GuardedString(
                 parser.fetchTestDataSingleValue("password").toCharArray()));
         //dp.loadConfiguration(POSTGRE_CONFIGURATINON, cfg);
-        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
+        //cfg.setConnectorMessages(TestHelpers.createDummyMessages());
+        cfg.setSQLStateExceptionHandling(false);
         return cfg;
     }
 
