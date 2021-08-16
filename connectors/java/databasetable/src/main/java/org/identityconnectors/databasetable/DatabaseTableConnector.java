@@ -376,14 +376,12 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.info("Deleting account Uid: {0}", accountUid);
             final int dr = stmt.executeUpdate();
             if (dr < 1) {
-                log.error("No account Uid: {0} found", accountUid);
                 SQLUtil.rollbackQuietly(getConn());
-                throw new UnknownUidException();
+                handleUnknownUid(MSG_EXP_UNKNOWN_UID, accountUid);
             }
             if (dr > 1) {
-                log.error("More then one account Uid: {0} found", accountUid);
                 SQLUtil.rollbackQuietly(getConn());
-                throw new IllegalArgumentException(config.getMessage(MSG_MORE_USERS_DELETED, accountUid));
+                handleUnknownUid(MSG_EXP_TOO_MANY_UID, accountUid);
             }
             log.info("Delete account {0} commit", accountUid);
             commit();
@@ -478,6 +476,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 String uidValue = uid.getUidValue();
                 log.error("Account with the uid {0} not found during the update operation.", uidValue);
                 handleUnknownUid(MSG_OP_UPDATE_UNKNOWN, uidValue);
+
             }
             log.info("Update account {0} commit", accountName);
             commit();
@@ -1294,9 +1293,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
 
     private void evaluateAndHandleException(Exception e, Boolean checkIfRethrow, String message, String... messageParameters) {
-        // Boolean throwDefault = true;
+        Boolean throwDefault = true;
 
         if (e instanceof SQLException) {
+            throwDefault = false;
 
             if (!isConfiguredAlreadyExistsException((SQLException) e)) {
 
@@ -1306,7 +1306,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 }
             } else if (isConfiguredAlreadyExistsException((SQLException) e)) {
 
-                log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+//                log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
 
                 if (checkIfRethrow) {
 
@@ -1326,23 +1326,15 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 }
             }
         }
-
-        //if (throwDefault) {
-        // throw default
-//        log.error(config.getMessage(message, messageParameters));
-//        if (checkIfRethrow) {
-//
-//            if (throwIt(e.getErrorCode())) {
-//                SQLUtil.rollbackQuietly(getConn());
-//            }
-//        } else {
-//
-//            throw new ConnectorException(e);
-//        }
-        // }
+        if (throwDefault) {
+            log.error(config.getMessage(message, messageParameters));
+            throw new ConnectorException(e);
+        }
     }
 
-    private void handleBasedOnSQLState(SQLException e, Boolean checkIfRethrow, String message, String[] messageParameters) {
+
+    private void handleBasedOnSQLState(SQLException e, Boolean checkIfRethrow, String message, String[]
+            messageParameters) {
         String sqlState = e.getSQLState();
 
         if (SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
@@ -1369,7 +1361,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
 
     private void handleUnknownUid(String message, String... attributes) {
-        log.info("The message: {0}", config.getMessage("can.not.update"));
+        log.error(config.getMessage(MSG_CAN_NOT_UPDATE, attributes));
         throw new UnknownUidException(config.getMessage(message, attributes));
     }
 
