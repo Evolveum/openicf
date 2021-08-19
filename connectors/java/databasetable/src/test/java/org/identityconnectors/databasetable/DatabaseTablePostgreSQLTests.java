@@ -1,14 +1,10 @@
 package org.identityconnectors.databasetable;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.contract.data.DataProvider;
-import org.identityconnectors.contract.data.GroovyDataProvider;
 import org.identityconnectors.databasetable.util.PropertiesParser;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
@@ -157,7 +153,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
     // Type changes
     @Override
     @Test
-    public void testSyncIncemental() throws Exception {
+    public void testSyncIncremental() throws Exception {
         final String ERR1 = "Could not find new object.";
         final String SQL_TEMPLATE = "UPDATE Accounts SET changelog = ? WHERE accountId = ?";
         // create connector
@@ -184,7 +180,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
             SQLUtil.closeQuietly(ps);
         }
 
-        System.out.println("Uid: " + uid);
+
         FindUidSyncHandler ok = new FindUidSyncHandler(uid);
         // attempt to find the newly created object..
         con.sync(ObjectClass.ACCOUNT, new SyncToken(changelog - 1), ok, null);
@@ -226,7 +222,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
             SQLUtil.closeQuietly(ps);
         }
 
-        System.out.println("Uid: " + uid);
+
         FindUidSyncHandler ok = new FindUidSyncHandler(uid);
         // attempt to find the newly created object..
         con.sync(ObjectClass.ACCOUNT, new SyncToken(changed - 1000), ok, null);
@@ -235,7 +231,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         AssertJUnit.assertNotNull(ok.attributes);
         attributeSetsEquals(con.schema(), expected, ok.attributes, AGE);
 
-        System.out.println("Uid: " + uid);
+
         FindUidSyncHandler empt = new FindUidSyncHandler(uid);
         // attempt to find the newly created object..
         con.sync(ObjectClass.ACCOUNT, ok.token, empt, null);
@@ -268,7 +264,6 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         } finally {
             SQLUtil.closeQuietly(ps);
         }
-        System.out.println("Uid: " + uid);
         FindUidSyncHandler ok = new FindUidSyncHandler(uid);
         // attempt to find the newly created object..
         con.sync(ObjectClass.ACCOUNT, new SyncToken(changed - 1000), ok, null);
@@ -277,7 +272,6 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         AssertJUnit.assertNotNull(ok.attributes);
         attributeSetsEquals(con.schema(), expected, ok.attributes, ACCESSED);
 
-        System.out.println("Uid: " + uid);
         FindUidSyncHandler empt = new FindUidSyncHandler(uid);
         // attempt to find the newly created object..
         con.sync(ObjectClass.ACCOUNT, ok.token, empt, null);
@@ -291,6 +285,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         try {
             if (con != null) {
                 con.delete(ObjectClass.ACCOUNT, new Uid(testUID), null);
+
             }
         } catch (Exception e) {
             // No reaction

@@ -129,7 +129,7 @@ public class DatabaseTableOracleTests extends DatabaseTableTestBase{
      */
     @Override  
     @Test
-    public void testSyncIncemental() throws Exception {
+    public void testSyncIncremental() throws Exception {
         //The column is not defined in oracle
     }
 

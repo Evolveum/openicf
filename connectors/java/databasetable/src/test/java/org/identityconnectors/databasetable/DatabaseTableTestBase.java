@@ -245,8 +245,7 @@ public abstract class DatabaseTableTestBase {
             con.create(ObjectClass.ACCOUNT, expected, null);
             throw new AssertionError("Unexpected success");
         } catch (AlreadyExistsException e) {
-            log.ok("Expected exceptiond: " + e.getMessage(), e);
-            // TODO check the log
+            log.ok("Expected exception: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw e;
@@ -273,8 +272,7 @@ public abstract class DatabaseTableTestBase {
             con.create(ObjectClass.ACCOUNT, expected, null);
             throw new AssertionError("Unexpected success");
         } catch (AlreadyExistsException e) {
-            log.ok("Expected exceptiond: " + e.getMessage(), e);
-            // TODO check the log
+            log.ok("Expected exception: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw e;
@@ -333,8 +331,8 @@ public abstract class DatabaseTableTestBase {
      * @throws Exception
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateUnsuported() throws Exception {
-        log.ok("testCreateUnsuported");
+    public void testCreateUnsupported() throws Exception {
+        log.ok("testCreateUnsupported");
         DatabaseTableConfiguration cfg = getConfiguration();
         DatabaseTableConnector con = getConnector(cfg);
         ObjectClass objClass = new ObjectClass("NOTSUPPORTED");
@@ -756,8 +754,8 @@ public abstract class DatabaseTableTestBase {
      * @throws Exception
      */
     @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testNoPassColumnAutenticate() throws Exception {
-        log.ok("testNoPassColumnAutenticate");
+    public void testNoPassColumnAuthenticate() throws Exception {
+        log.ok("testNoPassColumnAuthenticate");
 
         final DatabaseTableConfiguration cfg = getConfiguration();
         // Erasing password column from the configuration (it will be no longer treated as special attribute).
@@ -990,7 +988,7 @@ public abstract class DatabaseTableTestBase {
      * @throws SQLException
      */
     @Test
-    public void testSyncIncemental() throws Exception {
+    public void testSyncIncremental() throws Exception {
         final String ERR1 = "Could not find new object.";
         final String SQL_TEMPLATE = "UPDATE Accounts SET changelog = ? WHERE accountId = ?";
         // create connector

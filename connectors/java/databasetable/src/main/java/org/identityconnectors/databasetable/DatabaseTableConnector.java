@@ -304,8 +304,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             commit();
         } catch (SQLException e) {
 
-            evaluateAndHandleException(e, true, MSG_CAN_NOT_CREATE, accountName);
-
+            evaluateAndHandleException(e, true, true, MSG_CAN_NOT_CREATE, accountName);
         } finally {
             // clean up...
             SQLUtil.closeQuietly(pstmt);
@@ -481,13 +480,8 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.info("Update account {0} commit", accountName);
             commit();
         } catch (SQLException e) {
-            // TODO check and validate
-//            log.error(e, "Update account {0} error", accountName);
-//            if (throwIt(e.getErrorCode())) {
-//                SQLUtil.rollbackQuietly(getConn());
-//                throw new ConnectorException(config.getMessage(MSG_CAN_NOT_UPDATE, accountName), e);
-//            }
-            evaluateAndHandleException(e, true, MSG_CAN_NOT_UPDATE, accountName);
+
+            evaluateAndHandleException(e, true, true, MSG_CAN_NOT_UPDATE, accountName);
         } finally {
             // clean up..
             SQLUtil.closeQuietly(stmt);
@@ -1291,8 +1285,14 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return stringColumnRequired;
     }
 
+    /**
+     * Analyses the provided exception to evaluate if special handling is needed and throws
+     * an respective exception
+     * {@inheritDoc}
+     */
 
-    private void evaluateAndHandleException(Exception e, Boolean checkIfRethrow, String message, String... messageParameters) {
+    private void evaluateAndHandleException(Exception e, Boolean checkIfRethrow, Boolean logErr,
+                                            String message, String... messageParameters) {
         Boolean throwDefault = true;
 
         if (e instanceof SQLException) {
@@ -1302,12 +1302,17 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
                 if (config.getSQLStateExceptionHandling()) {
 
-                    handleBasedOnSQLState((SQLException) e, checkIfRethrow, message, messageParameters);
+                    handleBasedOnSQLState((SQLException) e, logErr, checkIfRethrow, message, messageParameters);
                 }
             } else if (isConfiguredAlreadyExistsException((SQLException) e)) {
 
-//                log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+                if (!logErr) {
 
+                    log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+                } else {
+
+                    log.error(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+                }
                 if (checkIfRethrow) {
 
                     if (throwIt(((SQLException) e).getErrorCode())) {
@@ -1332,18 +1337,31 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
     }
 
-
-    private void handleBasedOnSQLState(SQLException e, Boolean checkIfRethrow, String message, String[]
+    /**
+     * Exception evaluated based on a set of well known SQLState codes
+     * {@inheritDoc}
+     */
+    private void handleBasedOnSQLState(SQLException e, Boolean logErr, Boolean checkIfRethrow, String message, String[]
             messageParameters) {
         String sqlState = e.getSQLState();
 
         if (SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
                 SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION.equals(sqlState)) {
 
-            log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
-            throw new AlreadyExistsException(e);
-        }
+            if (!logErr) {
 
+                log.ok(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+            } else {
+
+                log.error(e, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
+            }
+            if (checkIfRethrow) {
+                if (throwIt(e.getErrorCode())) {
+                    SQLUtil.rollbackQuietly(getConn());
+                    throw new AlreadyExistsException(e);
+                }
+            }
+        }
     }
 
     private boolean isConfiguredAlreadyExistsException(SQLException ex) {
@@ -1359,7 +1377,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return false;
     }
 
-
+    /**
+     * UnknownUid exception handling
+     * {@inheritDoc}
+     */
     private void handleUnknownUid(String message, String... attributes) {
         log.error(config.getMessage(MSG_CAN_NOT_UPDATE, attributes));
         throw new UnknownUidException(config.getMessage(message, attributes));
