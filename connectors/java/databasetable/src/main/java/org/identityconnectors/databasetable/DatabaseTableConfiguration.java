@@ -646,15 +646,15 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * SQLState based error handling
      * handling some sql exceptions based on the SQLState SQL Exception parameter
      */
-    public boolean SQLStateExceptionHandling = false;
+    public boolean sqlStateExceptionHandling = false;
 
     @ConfigurationProperty(order = 27,
             displayMessageKey = "SQL_STATE_EXCEPTION_HANDLING_DISPLAY",
             helpMessageKey = "SQL_STATE_EXCEPTION_HANDLING_HELP")
-    public boolean getSQLStateExceptionHandling() { return SQLStateExceptionHandling; }
+    public boolean getSQLStateExceptionHandling() { return sqlStateExceptionHandling; }
 
-    public void setSQLStateExceptionHandling(Boolean SQLStateExceptionHandling) {
-        this.SQLStateExceptionHandling = SQLStateExceptionHandling;
+    public void setSQLStateExceptionHandling(boolean sqlStateExceptionHandling) {
+        this.sqlStateExceptionHandling = sqlStateExceptionHandling;
     }
 
     // =======================================================================
