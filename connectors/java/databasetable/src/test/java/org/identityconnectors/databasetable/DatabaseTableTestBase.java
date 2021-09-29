@@ -252,32 +252,6 @@ public abstract class DatabaseTableTestBase {
         }
     }
 
-    /**
-     * Checks that already exists exception is correctly handled and not logged with the use os SQLState codes.
-     */
-    @Test
-    public void testCreateCallAlreadyExistsSQLStateHandled() throws Exception {
-        log.ok("testCreateCallAlreadyExists");
-        DatabaseTableConfiguration cfg = getConfiguration();
-        cfg.setAlreadyExistMessages(null);
-        cfg.setSQLStateExceptionHandling(true);
-        DatabaseTableConnector con = getConnector(cfg);
-
-        deleteAllFromAccounts(con.getConn());
-        Set<Attribute> expected = getCreateAttributeSet(cfg);
-        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
-
-        // Attempt to create the account second time
-        try {
-            con.create(ObjectClass.ACCOUNT, expected, null);
-            throw new AssertionError("Unexpected success");
-        } catch (AlreadyExistsException e) {
-            log.ok("Expected exception: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("Unexpected exception: " + e.getMessage(), e);
-            throw e;
-        }
-    }
 /*
 
     */

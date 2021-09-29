@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -25,11 +25,15 @@ package org.identityconnectors.databasetable;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
+
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
+
 import static org.identityconnectors.common.ByteUtil.randomBytes;
 import static org.identityconnectors.common.StringUtil.randomString;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -72,12 +76,12 @@ import org.identityconnectors.test.common.TestHelpers;
 public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
 
     /**
-     * 
+     *
      */
     static final String CREATE_RES = "derbyTest.sql";
 
     /**
-     * 
+     *
      */
     static final String DB_DIR = "test_db1";
 
@@ -90,27 +94,28 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
     /**
      * URL used to connect to a derby database.
      */
-    static final String URL_CONN = "jdbc:derby:"+getDBDirectory().toString();
+    static final String URL_CONN = "jdbc:derby:" + getDBDirectory().toString();
 
     /**
      * URL used to connect to a derby database.
      */
-    static final String URL_CREATE = URL_CONN+";create=true";    
-    
+    static final String URL_CREATE = URL_CONN + ";create=true";
+
     /**
      * URL used to shutdown a derby database.
      */
-    static final String URL_SHUTDOWN = URL_CONN+";shutdown=true";
+    static final String URL_SHUTDOWN = URL_CONN + ";shutdown=true";
 
     //The tested table
     static final String DB_TABLE = "Accounts";
 
 
-
     // Setup/Teardown
+
     /**
      * Creates a temporary database based on a SQL resource file.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @BeforeClass
     public static void createDatabase() throws Exception {
@@ -121,7 +126,7 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         Connection conn = null;
         Statement stmt = null;
         try {
-            Class.forName(DRIVER);            
+            Class.forName(DRIVER);
             conn = DriverManager.getConnection(URL_CREATE, "", "");
             // create the database..
             stmt = conn.createStatement();
@@ -146,12 +151,13 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
             //expected
         }
     }
-    
+
     /**
      * Create the test configuration
+     *
      * @return the initialized configuration
      */
-     @Override
+    @Override
     protected DatabaseTableConfiguration getConfiguration() throws Exception {
         DatabaseTableConfiguration config = new DatabaseTableConfiguration();
         config.setJdbcDriver(DRIVER);
@@ -165,53 +171,54 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         config.setChangeLogColumn(CHANGELOG);
         config.setConnectorMessages(TestHelpers.createDummyMessages());
         config.setAlreadyExistMessages("primary key constraint");
+        config.setSQLStateAlreadyExists(new String[]{"23505"});
         return config;
     }
 
-     /* (non-Javadoc)
-      * @see org.identityconnectors.databasetable.DatabaseTableTestBase#getCreateAttributeSet()
-      */
-     @Override
-     protected Set<Attribute> getCreateAttributeSet(DatabaseTableConfiguration cfg) throws Exception {
-         Set<Attribute> ret = new HashSet<Attribute>();        
-         ret.add(AttributeBuilder.build(Name.NAME, randomString(r, 50)));
-         if (StringUtil.isNotBlank(cfg.getPasswordColumn())) {
-             ret.add(AttributeBuilder.buildPassword(new GuardedString(randomString(r, 50).toCharArray())));
-         } else {
-             ret.add(AttributeBuilder.build(PASSWORD, randomString(r, 40)));
-         }
-         ret.add(AttributeBuilder.build(MANAGER, randomString(r, 15)));
-         ret.add(AttributeBuilder.build(MIDDLENAME, randomString(r, 50)));
-         ret.add(AttributeBuilder.build(FIRSTNAME, randomString(r, 50)));
-         ret.add(AttributeBuilder.build(LASTNAME, randomString(r, 50)));
-         ret.add(AttributeBuilder.build(EMAIL, randomString(r, 50)));
-         ret.add(AttributeBuilder.build(DEPARTMENT, randomString(r, 50)));
-         ret.add(AttributeBuilder.build(TITLE, randomString(r, 50)));
-         if(!cfg.getChangeLogColumn().equalsIgnoreCase(AGE)){
-             ret.add(AttributeBuilder.build(AGE, r.nextInt(100)));
-         }
-         if(!cfg.getChangeLogColumn().equalsIgnoreCase(ACCESSED)){
-             ret.add(AttributeBuilder.build(ACCESSED, r.nextLong()));
-         }
-         ret.add(AttributeBuilder.build(SALARY, new BigDecimal("360536.75")));
-         ret.add(AttributeBuilder.build(JPEGPHOTO, randomBytes(r, 2000)));
-         ret.add(AttributeBuilder.build(OPENTIME, new java.sql.Time(System.currentTimeMillis()).toString()));
-         ret.add(AttributeBuilder.build(ACTIVATE, new java.sql.Date(System.currentTimeMillis()).toString()));
-         ret.add(AttributeBuilder.build(ENROLLED, new Timestamp(System.currentTimeMillis()).toString()));
-         ret.add(AttributeBuilder.build(CHANGED, new Timestamp(System.currentTimeMillis()).toString()));
-         if(!cfg.getChangeLogColumn().equalsIgnoreCase(CHANGELOG)){
-             ret.add(AttributeBuilder.build(CHANGELOG, new Timestamp(System.currentTimeMillis()).getTime()));
-         }
-         return ret;
-     }
+    /* (non-Javadoc)
+     * @see org.identityconnectors.databasetable.DatabaseTableTestBase#getCreateAttributeSet()
+     */
+    @Override
+    protected Set<Attribute> getCreateAttributeSet(DatabaseTableConfiguration cfg) throws Exception {
+        Set<Attribute> ret = new HashSet<Attribute>();
+        ret.add(AttributeBuilder.build(Name.NAME, randomString(r, 50)));
+        if (StringUtil.isNotBlank(cfg.getPasswordColumn())) {
+            ret.add(AttributeBuilder.buildPassword(new GuardedString(randomString(r, 50).toCharArray())));
+        } else {
+            ret.add(AttributeBuilder.build(PASSWORD, randomString(r, 40)));
+        }
+        ret.add(AttributeBuilder.build(MANAGER, randomString(r, 15)));
+        ret.add(AttributeBuilder.build(MIDDLENAME, randomString(r, 50)));
+        ret.add(AttributeBuilder.build(FIRSTNAME, randomString(r, 50)));
+        ret.add(AttributeBuilder.build(LASTNAME, randomString(r, 50)));
+        ret.add(AttributeBuilder.build(EMAIL, randomString(r, 50)));
+        ret.add(AttributeBuilder.build(DEPARTMENT, randomString(r, 50)));
+        ret.add(AttributeBuilder.build(TITLE, randomString(r, 50)));
+        if (!cfg.getChangeLogColumn().equalsIgnoreCase(AGE)) {
+            ret.add(AttributeBuilder.build(AGE, r.nextInt(100)));
+        }
+        if (!cfg.getChangeLogColumn().equalsIgnoreCase(ACCESSED)) {
+            ret.add(AttributeBuilder.build(ACCESSED, r.nextLong()));
+        }
+        ret.add(AttributeBuilder.build(SALARY, new BigDecimal("360536.75")));
+        ret.add(AttributeBuilder.build(JPEGPHOTO, randomBytes(r, 2000)));
+        ret.add(AttributeBuilder.build(OPENTIME, new java.sql.Time(System.currentTimeMillis()).toString()));
+        ret.add(AttributeBuilder.build(ACTIVATE, new java.sql.Date(System.currentTimeMillis()).toString()));
+        ret.add(AttributeBuilder.build(ENROLLED, new Timestamp(System.currentTimeMillis()).toString()));
+        ret.add(AttributeBuilder.build(CHANGED, new Timestamp(System.currentTimeMillis()).toString()));
+        if (!cfg.getChangeLogColumn().equalsIgnoreCase(CHANGELOG)) {
+            ret.add(AttributeBuilder.build(CHANGELOG, new Timestamp(System.currentTimeMillis()).getTime()));
+        }
+        return ret;
+    }
 
-     /* (non-Javadoc)
-      * @see org.identityconnectors.databasetable.DatabaseTableTestBase#getModifyAttributeSet()
-      */
-     @Override
-     protected Set<Attribute> getModifyAttributeSet(DatabaseTableConfiguration cfg) throws Exception {         
-         return getCreateAttributeSet(cfg);
-     }     
+    /* (non-Javadoc)
+     * @see org.identityconnectors.databasetable.DatabaseTableTestBase#getModifyAttributeSet()
+     */
+    @Override
+    protected Set<Attribute> getModifyAttributeSet(DatabaseTableConfiguration cfg) throws Exception {
+        return getCreateAttributeSet(cfg);
+    }
 
     /**
      * test method
@@ -231,19 +238,19 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         config.setJdbcUrlTemplate(URL_CONN);
         assertEquals(URL_CONN, config.getJdbcUrlTemplate());
         config.setDatabase(getDBDirectory().toString());
-        assertEquals(getDBDirectory().toString(), config.getDatabase());        
+        assertEquals(getDBDirectory().toString(), config.getDatabase());
         config.setUser(ACCOUNTID);
         assertEquals(ACCOUNTID, config.getUser());
         config.setPassword(new GuardedString("".toCharArray()));
         assertEquals(ACCOUNTID, config.getUser());
         config.validate();
     }
-    
 
 
     /**
      * For testing purposes we creating connection an not the framework.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test
     public void testNoZeroSQLExceptions() throws Exception {
@@ -267,10 +274,11 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         con.update(ObjectClass.ACCOUNT, uid, expected, null);
         assertTrue("setSQLParam not called", smse.isDone());
     }
-    
+
     /**
      * For testing purposes we creating connection an not the framework.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test(expectedExceptions = ConnectorException.class)
     public void testNonZeroSQLExceptions() throws Exception {
@@ -288,11 +296,12 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         Set<Attribute> expected = getCreateAttributeSet(cfg);
         con.create(ObjectClass.ACCOUNT, expected, null);
         assertTrue("setSQLParam not called", smse.isDone());
-    }    
-    
+    }
+
     /**
      * For testing purposes we creating connection an not the framework.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test(expectedExceptions = ConnectorException.class)
     public void testRethrowAllSQLExceptions() throws Exception {
@@ -310,11 +319,12 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         Set<Attribute> expected = getCreateAttributeSet(cfg);
         con.create(ObjectClass.ACCOUNT, expected, null);
         assertTrue("setSQLParam not called", smse.isDone());
-    }    
+    }
 
     /**
      * For testing purposes we creating connection an not the framework.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test
     public void testSchema() throws Exception {
@@ -324,15 +334,13 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         Schema schema = con.schema();
         checkSchema(schema);
     }
-    
-    
-       
+
+
     /**
      * check validity of the schema
-     * 
-     * @param schema
-     *            the schema to be checked
-     * @throws Exception 
+     *
+     * @param schema the schema to be checked
+     * @throws Exception
      */
     void checkSchema(Schema schema) throws Exception {
         // Schema should not be null
@@ -342,7 +350,7 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         assertEquals(1, objectInfos.size());
         // get the fields from the test account
         final Set<Attribute> attributeSet = getCreateAttributeSet(getConfiguration());
-        final Map<String,Attribute> expected = AttributeUtil.toMap(attributeSet);
+        final Map<String, Attribute> expected = AttributeUtil.toMap(attributeSet);
         final Set<String> keys = CollectionUtil.newCaseInsensitiveSet();
         keys.addAll(expected.keySet());
 
@@ -356,28 +364,29 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
             for (AttributeInfo attInfo : objectInfo.getAttributeInfo()) {
                 assertNotNull(attInfo);
                 String fieldName = attInfo.getName();
-                if(fieldName.equalsIgnoreCase(CHANGELOG)){
+                if (fieldName.equalsIgnoreCase(CHANGELOG)) {
                     keys.remove(fieldName);
                     continue;
                 }
                 assertTrue("Field:" + fieldName + " doesn't exist", keys.contains(fieldName));
                 keys.remove(fieldName);
-                Attribute fa = expected.get(fieldName); 
+                Attribute fa = expected.get(fieldName);
                 assertNotNull("Field:" + fieldName + "  was duplicated", fa);
                 Object field = AttributeUtil.getSingleValue(fa);
                 Class<?> valueClass = field.getClass();
                 assertEquals("field: " + fieldName, valueClass, attInfo.getType());
             }
             // all the attribute has to be removed
-            assertEquals("There are missing attributes which were not included in the schema:"+keys, 0, keys.size());
+            assertEquals("There are missing attributes which were not included in the schema:" + keys, 0, keys.size());
         }
-    }    
-    
+    }
+
 
     /**
      * Test creating of the connector object, searching using UID and delete
-     * @throws Exception 
-     * @throws SQLException 
+     *
+     * @throws Exception
+     * @throws SQLException
      */
     @Test
     public void testGetLatestSyncToken() throws Exception {
@@ -412,15 +421,42 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         assertNotNull(latestSyncToken);
         final Object actual = latestSyncToken.getValue();
         assertEquals(changelog, actual);
-    }     
-    
+    }
+
+    /**
+     * Checks that already exists exception is correctly handled and not logged with the use os SQLState codes.
+     */
+    @Test
+    public void testCreateCallAlreadyExistsSQLStateHandled() throws Exception {
+        log.ok("testCreateCallAlreadyExists");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        cfg.setAlreadyExistMessages(null);
+        cfg.setSQLStateExceptionHandling(true);
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+        Set<Attribute> expected = getCreateAttributeSet(cfg);
+        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+
+        // Attempt to create the account second time
+        try {
+            con.create(ObjectClass.ACCOUNT, expected, null);
+            throw new AssertionError("Unexpected success");
+        } catch (AlreadyExistsException e) {
+            log.ok("Expected exception: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected exception: " + e.getMessage(), e);
+            throw e;
+        }
+    }
+
     static String getResourceAsString(String res) {
         return IOUtil.getResourceAsString(DatabaseTableDerbyTests.class, res);
-    }    
-    
+    }
+
     static File getDBDirectory() {
         return new File(System.getProperty("java.io.tmpdir"), DB_DIR);
     }
 
-    
+
 }
