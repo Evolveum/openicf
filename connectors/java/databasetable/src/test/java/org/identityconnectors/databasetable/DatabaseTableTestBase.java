@@ -235,7 +235,7 @@ public abstract class DatabaseTableTestBase {
         log.ok("testCreateCallAlreadyExists");
         DatabaseTableConfiguration cfg = getConfiguration();
         DatabaseTableConnector con = getConnector(cfg);
-
+        cfg.setSQLStateExceptionHandling(false);
         deleteAllFromAccounts(con.getConn());
         Set<Attribute> expected = getCreateAttributeSet(cfg);
         Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
@@ -278,6 +278,38 @@ public abstract class DatabaseTableTestBase {
             throw e;
         }
     }
+/*
+
+    */
+/**
+     * Checks that already exists exception is correctly handled via the default sqlState code.
+     *//*
+
+    @Test
+    public void testCreateCallAlreadyExistsDefaultSQLStateHandled() throws Exception {
+        log.ok("testCreateCallAlreadyExists");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        cfg.setAlreadyExistMessages(null);
+        cfg.setSQLStateAlreadyExists(null);
+        cfg.setSQLStateExceptionHandling(true);
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+        Set<Attribute> expected = getCreateAttributeSet(cfg);
+        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+
+        // Attempt to create the account second time
+        try {
+            con.create(ObjectClass.ACCOUNT, expected, null);
+            throw new AssertionError("Unexpected success");
+        } catch (AlreadyExistsException e) {
+            log.ok("Expected exception: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected exception: " + e.getMessage(), e);
+            throw e;
+        }
+    }
+*/
 
     /**
      * Make sure the Create call works..
@@ -511,29 +543,8 @@ public abstract class DatabaseTableTestBase {
         AssertJUnit.assertTrue(list.size() == 1);
 
         Iterator<Attribute> iterator = expected.iterator();
-        Uid tmpuid = null;
-        while (iterator.hasNext()) {
-            Attribute attr = iterator.next();
-            if (attr.getName().equals(Name.NAME)) {
-                tmpuid = new Uid((String) attr.getValue().get(0));
-                break;
-            }
 
-        }
-
-        String uidStr = tmpuid.getUidValue();
-        log.info("The uid string: {0}", uidStr);
-        char[] uidToChars = uidStr.toCharArray();
-        int rand = (int) (Math.random() * uidStr.length());
-
-        char c = (char) (r.nextInt(26) + 'a');
-
-        if (c != uidToChars[rand]) {
-            uidToChars[rand] = c;
-        }
-
-        tmpuid = new Uid(new String(uidToChars));
-
+        Uid tmpuid = new Uid(UUID.randomUUID().toString());
         Set<Attribute> userToUpdateAttrs = new HashSet<>();
         userToUpdateAttrs.addAll(expected);
         iterator = userToUpdateAttrs.iterator();

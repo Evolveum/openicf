@@ -651,11 +651,82 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     @ConfigurationProperty(order = 27,
             displayMessageKey = "SQL_STATE_EXCEPTION_HANDLING_DISPLAY",
             helpMessageKey = "SQL_STATE_EXCEPTION_HANDLING_HELP")
-    public boolean getSQLStateExceptionHandling() { return sqlStateExceptionHandling; }
+    public boolean getSQLStateExceptionHandling() {
+        return sqlStateExceptionHandling;
+    }
 
     public void setSQLStateExceptionHandling(boolean sqlStateExceptionHandling) {
         this.sqlStateExceptionHandling = sqlStateExceptionHandling;
     }
+
+    /**
+     * SQLState based error handling AlreadyExist codes.
+     * SQLState values which can be interpreted as codes for "alreadyExistException" error handling.
+     */
+    public String[] sqlStateAlreadyExists;
+
+    @ConfigurationProperty(order = 28,
+            displayMessageKey = "SQL_STATE_ALREADY_EXIST_DISPLAY",
+            helpMessageKey = "SQL_STATE_ALREADY_EXIST_HELP")
+    public String[] getSQLStateAlreadyExists() {
+        return sqlStateAlreadyExists;
+    }
+
+    public void setSQLStateAlreadyExists(String[] sqlStateAlreadyExists) {
+        this.sqlStateAlreadyExists = sqlStateAlreadyExists;
+    }
+
+    /**
+     * SQLState based error handling ConnectionFailed codes.
+     * SQLState values which can be interpreted as codes for "ConnectionFailedException" error handling.
+     */
+    public String[] sqlStateConnectionFailed;
+
+    @ConfigurationProperty(order = 29,
+            displayMessageKey = "SQL_STATE_CONNECTION_FAILED_DISPLAY",
+            helpMessageKey = "SQL_STATE_CONNECTION_FAILED_HELP")
+    public String[] getSQLStateConnectionFailed() {
+        return sqlStateConnectionFailed;
+    }
+
+    public void setSQLStateConnectionFailed(String[] sqlStateConnectionFailed) {
+        this.sqlStateConnectionFailed = sqlStateConnectionFailed;
+    }
+
+    /**
+     * SQLState based error handling Invalid Attribute Value codes.
+     * SQLState values which can be interpreted as codes for "InvalidAttributeValue" exception error handling.
+     */
+    public String[] sqlStateInvalidAttributeValue;
+
+    @ConfigurationProperty(order = 30,
+            displayMessageKey = "SQL_STATE_INVALID_ATTRIBUTE_VALUE_DISPLAY",
+            helpMessageKey = "SQL_STATE_INVALID_ATTRIBUTE_VALUE_HELP")
+    public String[] getSQLStateInvalidAttributeValue() {
+        return sqlStateInvalidAttributeValue;
+    }
+
+    public void setSQLStateInvalidAttributeValue(String[] sqlStateInvalidAttributeValue) {
+        this.sqlStateInvalidAttributeValue = sqlStateInvalidAttributeValue;
+    }
+
+    /**
+     * SQLState based error handling Configuration Exception codes.
+     * SQLState values which can be interpreted as codes for "ConfigurationException" exception error handling.
+     */
+    public String[] sqlStateConfigurationException;
+
+    @ConfigurationProperty(order = 31,
+            displayMessageKey = "SQL_STATE_CONFIGURATION_EXCEPTION_DISPLAY",
+            helpMessageKey = "SQL_STATE_CONFIGURATION_EXCEPTION_HELP")
+    public String[] getSQLStateConfigurationException() {
+        return sqlStateConfigurationException;
+    }
+
+    public void setSQLStateConfigurationException(String[] sqlStateConfigurationException) {
+        this.sqlStateConfigurationException = sqlStateConfigurationException;
+    }
+
 
     // =======================================================================
     // Configuration Interface

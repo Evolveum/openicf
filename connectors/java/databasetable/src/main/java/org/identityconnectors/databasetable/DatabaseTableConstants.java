@@ -84,8 +84,8 @@ public class DatabaseTableConstants {
     static final String MSG_EXP_UNKNOWN_UID = "exception.unknown.uid";
     static final String MSG_EXP_TOO_MANY_UID = "exception.more.than.one.uid";
 
-    public static final String SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION = "23505"; // Postgre, DB2, Derby
-    public static final String SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION = "23000"; // MSSQL, MySQL, MariaDB
+//    public static final String DEFAULT_SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION = "23505";
+//    public static final String DEFAULT_SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION = "23000";
 
     private DatabaseTableConstants() {
         throw new AssertionError();

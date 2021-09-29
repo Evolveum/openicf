@@ -5,6 +5,8 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.databasetable.util.PropertiesParser;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
@@ -31,6 +33,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
     PropertiesParser parser = new PropertiesParser("src/test/resources/TEST.properties");
     private final String testUID = "a7924d33-c3cd-4e1c-91ad-a5070c344ad7";
     private final String testMockUID = "ce014695-48e3-4a4a-9e6f-c06c104f7dd7";
+    private final String MIDDLE_NAME_EXTRA_LONG = "Donaudampfschifffahrtselektrizitätenhauptbetriebswerkbauunterbeamtengesellschaft";
 
     @Override
     protected DatabaseTableConfiguration getConfiguration() throws Exception {
@@ -47,11 +50,15 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         cfg.setUser(parser.fetchTestDataSingleValue("user"));
         cfg.setChangeLogColumn(parser.fetchTestDataSingleValue("changeLogColumn"));
         cfg.setAlreadyExistMessages(parser.fetchTestDataSingleValue("alreadyExists"));
+        cfg.setSQLStateAlreadyExists(parser.fetchTestDataMultiValue("sqlstate.alreadyexists"));
+        cfg.setSQLStateConfigurationException(parser.fetchTestDataMultiValue("sqlstate.configurationexception"));
+        cfg.setSQLStateConnectionFailed(parser.fetchTestDataMultiValue("sqlstate.connectionfailed"));
+        cfg.setSQLStateInvalidAttributeValue(parser.fetchTestDataMultiValue("sqlstate.invalidattribute"));
         cfg.setPassword(new GuardedString(
                 parser.fetchTestDataSingleValue("password").toCharArray()));
         //dp.loadConfiguration(POSTGRE_CONFIGURATINON, cfg);
         cfg.setConnectorMessages(TestHelpers.createDummyMessages());
-        cfg.setSQLStateExceptionHandling(false);
+        cfg.setSQLStateExceptionHandling(true);
         return cfg;
     }
 
@@ -278,6 +285,57 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         AssertJUnit.assertFalse(ERR1, empt.found);
     }
 
+    /**
+     * Make sure the Create call works..
+     *
+     * @throws InvalidAttributeValueException
+     */
+    @Test(expectedExceptions = InvalidAttributeValueException.class)
+    public void testCreateCallNameLongerThanConfigured() throws Exception {
+        log.ok("testCreateCall");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+        Set<Attribute> expected = getCreateAttributeSet(cfg);
+        expected.remove(AttributeBuilder.build(MIDDLENAME, MIDDLENAME));
+        expected.add(AttributeBuilder.build(MIDDLENAME, MIDDLE_NAME_EXTRA_LONG));
+        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+        // attempt to get the record back..
+        List<ConnectorObject> results = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        AssertJUnit.assertTrue("expect 1 connector object", results.size() == 1);
+        final ConnectorObject co = results.get(0);
+        AssertJUnit.assertNotNull(co);
+        final Set<Attribute> actual = co.getAttributes();
+        AssertJUnit.assertNotNull(actual);
+        attributeSetsEquals(con.schema(), expected, actual);
+    }
+
+    /**
+     * Make sure the Create call works..
+     *
+     * @throws InvalidAttributeValueException
+     */
+    @Test(expectedExceptions = InvalidAttributeValueException.class)
+    public void testCreateCallNameNull() throws Exception {
+        log.ok("testCreateCall");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+        Set<Attribute> expected = getCreateAttributeSet(cfg);
+        expected.remove(AttributeBuilder.build(FIRSTNAME, FIRSTNAME));
+        expected.add(AttributeBuilder.build(FIRSTNAME, (Object) null));
+        Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+        // attempt to get the record back..
+        List<ConnectorObject> results = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        AssertJUnit.assertTrue("expect 1 connector object", results.size() == 1);
+        final ConnectorObject co = results.get(0);
+        AssertJUnit.assertNotNull(co);
+        final Set<Attribute> actual = co.getAttributes();
+        AssertJUnit.assertNotNull(actual);
+        attributeSetsEquals(con.schema(), expected, actual);
+    }
 
     @AfterMethod
     public void tryToCleanUpAfterMethod() {
