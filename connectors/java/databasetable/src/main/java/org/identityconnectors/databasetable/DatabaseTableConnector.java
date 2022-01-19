@@ -1287,7 +1287,6 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
     private void evaluateAndHandleException(Exception e, Boolean checkIfRethrow, Boolean logErr, Boolean wrap,
                                             String message, String... messageParameters) {
-        // TODO check what happens if message not in "config.getMessage"??
         Boolean throwDefault = true;
 
         if (e instanceof SQLException) {
