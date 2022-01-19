@@ -59,6 +59,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         //dp.loadConfiguration(POSTGRE_CONFIGURATINON, cfg);
         cfg.setConnectorMessages(TestHelpers.createDummyMessages());
         cfg.setSQLStateExceptionHandling(true);
+        cfg.setQuoting(parser.fetchTestDataSingleValue("quoting"));
         return cfg;
     }
 
@@ -364,6 +365,7 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
         }
     }
 
+
     @AfterMethod
     public void tryToCleanUpAfterMethod() {
 
@@ -376,4 +378,5 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
             // No reaction
         }
     }
+
 }

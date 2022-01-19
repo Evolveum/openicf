@@ -252,12 +252,12 @@ public abstract class DatabaseTableTestBase {
         }
     }
 
-/*
+    /*
 
-    */
+     */
 /**
-     * Checks that already exists exception is correctly handled via the default sqlState code.
-     *//*
+ * Checks that already exists exception is correctly handled via the default sqlState code.
+ *//*
 
     @Test
     public void testCreateCallAlreadyExistsDefaultSQLStateHandled() throws Exception {
@@ -1111,7 +1111,6 @@ public abstract class DatabaseTableTestBase {
         con.sync(ObjectClass.ACCOUNT, ok.token, empt, null);
         AssertJUnit.assertFalse(ERR1, empt.found);
     }
-
 
     // Helper Methods/Classes
 

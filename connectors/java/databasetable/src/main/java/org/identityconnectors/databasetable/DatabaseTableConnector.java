@@ -153,7 +153,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     /**
      * {@inheritDoc}
      */
-    public Configuration getConfiguration() {
+    public DatabaseTableConfiguration getConfiguration() {
         return this.config;
     }
 
@@ -940,6 +940,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
         // no null here :)
         assert columnSQLTypes != null;
+
         return columnSQLTypes.get(columnName);
     }
 
@@ -1084,6 +1085,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             final AttributeInfoBuilder attrBld = new AttributeInfoBuilder();
             final Integer columnType = meta.getColumnType(i);
             final String columnTypeName = meta.getColumnTypeName(i);
+
             if (columnType != null) {
                 columnSQLTypes.put(name, new SQLColumnTypeInfo(columnTypeName, columnType));
             } else {

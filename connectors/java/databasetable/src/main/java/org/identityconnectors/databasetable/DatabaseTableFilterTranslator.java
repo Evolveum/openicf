@@ -25,6 +25,7 @@ package org.identityconnectors.databasetable;
 import org.identityconnectors.databasetable.mapping.misc.SQLColumnTypeInfo;
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -53,12 +54,49 @@ public class DatabaseTableFilterTranslator extends DatabaseFilterTranslator {
     /* (non-Javadoc)
      * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    @Override
+    @Override //TODO
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         final Object value = AttributeUtil.getSingleValue(attribute);
-        final String columnName = connector.quoteName(connector.getColumnName(attribute.getName()));
-        final SQLColumnTypeInfo columnTypeInfo = connector.getColumnTypeInfo(columnName);
-        return new SQLParam(columnName, value, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName());
+        String columnName = connector.quoteName(connector.getColumnName(attribute.getName()));
+        SQLColumnTypeInfo columnTypeInfo = connector.getColumnTypeInfo(columnName);
+
+        if (columnTypeInfo != null) {
+        } else {
+            String quoting = connector.getConfiguration().getQuoting();
+            if (quoting != null && !quoting.isEmpty() && !quoting.equalsIgnoreCase(Quoting.NONE.getType())) {
+
+                if (columnName != null && columnName.length() >= 2) {
+                    String firstChar = String.valueOf(columnName.charAt(0));
+                    String lastChar = String.valueOf(columnName.charAt(columnName.length() - 1));
+
+                    String quoteValue = Quoting.compareAndFetch(quoting).getValue();
+                    if (quoteValue != null) {
+                        if (quoteValue.contains(firstChar) && quoteValue.contains(lastChar)) {
+                            String trimmedColumnName = columnName.substring(1, columnName.length() - 1);
+                            //2nd attempt to find the column type information, removing double quotes
+                            columnTypeInfo = connector.getColumnTypeInfo(trimmedColumnName);
+                        }
+                    } else {
+
+                        throw new ConnectorException("The 'Quoting' configuration parameter is set to an unknown value," +
+                                " please use either of the following: " + Quoting.printAll());
+                    }
+                } else {
+
+                    throw new ConnectorException("Column with an empty name, not possible to process such column.");
+                }
+            }
+        }
+
+        if (columnTypeInfo != null) {
+
+            return new SQLParam(columnName, value, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName());
+        } else {
+
+            throw new ConnectorException("Column with the name '" + columnName + "' not found amongst the generated " +
+                    "'type data set' and probably not present in resource schema.");
+        }
+
     }
 
 }
