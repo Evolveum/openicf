@@ -139,7 +139,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return user value
      */
-    @ConfigurationProperty(order = 4,
+    @ConfigurationProperty(order = 4, required = true,
             displayMessageKey = "USER_DISPLAY",
             helpMessageKey = "USER_HELP")
     public String getUser() {
@@ -163,7 +163,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return password value
      */
-    @ConfigurationProperty(order = 5, confidential = true,
+    @ConfigurationProperty(order = 5, required = true, confidential = true,
             displayMessageKey = "PASSWORD_DISPLAY",
             helpMessageKey = "PASSWORD_HELP")
     public GuardedString getPassword() {
@@ -212,7 +212,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * @return the user account table name
      * Please notice, there are used non default message keys
      */
-    @ConfigurationProperty(order = 7, required = true,
+    @ConfigurationProperty(order = 7,
             displayMessageKey = "TABLE_DISPLAY",
             helpMessageKey = "TABLE_HELP")
     public String getTable() {
@@ -240,7 +240,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      *
      * @return keyColumn value
      */
-    @ConfigurationProperty(order = 8, required = true,
+    @ConfigurationProperty(order = 8,
             displayMessageKey = "KEY_COLUMN_DISPLAY",
             helpMessageKey = "KEY_COLUMN_HELP")
     public String getKeyColumn() {
@@ -292,7 +292,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return jdbcDriver value
      */
-    @ConfigurationProperty(order = 10,
+    @ConfigurationProperty(order = 10, required = true,
             displayMessageKey = "JDBC_DRIVER_DISPLAY",
             helpMessageKey = "JDBC_DRIVER_HELP")
     public String getJdbcDriver() {
@@ -317,7 +317,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      *
      * @return url value
      */
-    @ConfigurationProperty(order = 11,
+    @ConfigurationProperty(order = 11, required = true,
             displayMessageKey = "URL_TEMPLATE_DISPLAY",
             helpMessageKey = "URL_TEMPLATE_HELP")
     public String getJdbcUrlTemplate() {
@@ -738,7 +738,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     @Override
     public void validate() {
         log.info("Validate DatabaseTableConfiguration");
-        // check that there is a table to query..
+        // check that there is a table to query.
         if (StringUtil.isBlank(getTable())) {
             throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
         }
