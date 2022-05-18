@@ -35,6 +35,7 @@ import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -223,6 +224,7 @@ public abstract class DatabaseTableTestBase {
     private void assertSuggestion(Map<String, SuggestedValues> suggestions, String attributeName, List<Object> expectedValues) {
         assertTrue("Suggestions not contain suggestion for attribute " + attributeName, suggestions.containsKey(attributeName));
         List<Object> values = suggestions.get(attributeName).getValues();
+        values = values.stream().map(value -> ((String)value).toLowerCase()).collect(Collectors.toList());
         assertTrue("Suggestions contains wrong suggestion value for attribute " + attributeName, values.containsAll(expectedValues));
     }
 
