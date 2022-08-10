@@ -32,6 +32,7 @@ import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
+import org.identityconnectors.framework.spi.operations.DiscoverConfigurationOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
 
 
@@ -139,9 +140,10 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return user value
      */
-    @ConfigurationProperty(order = 4, required = true,
+    @ConfigurationProperty(order = 4,
             displayMessageKey = "USER_DISPLAY",
-            helpMessageKey = "USER_HELP")
+            helpMessageKey = "USER_HELP",
+            operations={DiscoverConfigurationOp.class})
     public String getUser() {
         return this.user;
     }
@@ -163,7 +165,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return password value
      */
-    @ConfigurationProperty(order = 5, required = true, confidential = true,
+    @ConfigurationProperty(order = 5, confidential = true,
             displayMessageKey = "PASSWORD_DISPLAY",
             helpMessageKey = "PASSWORD_HELP")
     public GuardedString getPassword() {
@@ -292,7 +294,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * @return jdbcDriver value
      */
-    @ConfigurationProperty(order = 10, required = true,
+    @ConfigurationProperty(order = 10,
             displayMessageKey = "JDBC_DRIVER_DISPLAY",
             helpMessageKey = "JDBC_DRIVER_HELP")
     public String getJdbcDriver() {
@@ -317,7 +319,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      *
      * @return url value
      */
-    @ConfigurationProperty(order = 11, required = true,
+    @ConfigurationProperty(order = 11,
             displayMessageKey = "URL_TEMPLATE_DISPLAY",
             helpMessageKey = "URL_TEMPLATE_HELP")
     public String getJdbcUrlTemplate() {
@@ -738,31 +740,9 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     @Override
     public void validate() {
         log.info("Validate DatabaseTableConfiguration");
-        // check that there is a table to query.
-        if (StringUtil.isBlank(getTable())) {
-            throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
-        }
         // check the url is configured
         if (StringUtil.isBlank(getJdbcUrlTemplate())) {
             throw new IllegalArgumentException(getMessage(MSG_JDBC_TEMPLATE_BLANK));
-        }
-        // determine if you can get a key column
-        if (StringUtil.isBlank(getKeyColumn())) {
-            throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_BLANK));
-        } else {
-            if (getKeyColumn().equalsIgnoreCase(getChangeLogColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_EQ_CHANGE_LOG_COLUMN));
-            }
-        }
-        // key column, password column
-        if (StringUtil.isNotBlank(getPasswordColumn())) {
-            if (getPasswordColumn().equalsIgnoreCase(getKeyColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_KEY_COLUMN));
-            }
-
-            if (getPasswordColumn().equalsIgnoreCase(getChangeLogColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_CHANGE_LOG_COLUMN));
-            }
         }
         // check that there is not a datasource
         if (StringUtil.isBlank(getDatasource())) {
@@ -812,12 +792,41 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             log.ok("datasource configuration is ok");
         }
 
+        log.ok("Configuration is valid");
+    }
+
+    public void validateConfigurationForTable() {
+        log.info("Validate DatabaseTableConfiguration for table");
+
+        // check that there is a table to query.
+        if (StringUtil.isBlank(getTable())) {
+            throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
+        }
+        // determine if you can get a key column
+        if (StringUtil.isBlank(getKeyColumn())) {
+            throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_BLANK));
+        } else {
+            if (getKeyColumn().equalsIgnoreCase(getChangeLogColumn())) {
+                throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_EQ_CHANGE_LOG_COLUMN));
+            }
+        }
+        // key column, password column
+        if (StringUtil.isNotBlank(getPasswordColumn())) {
+            if (getPasswordColumn().equalsIgnoreCase(getKeyColumn())) {
+                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_KEY_COLUMN));
+            }
+
+            if (getPasswordColumn().equalsIgnoreCase(getChangeLogColumn())) {
+                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_CHANGE_LOG_COLUMN));
+            }
+        }
+
         try {
             DatabaseTableSQLUtil.quoteName(getQuoting(), "test");
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(getMessage(MSG_INVALID_QUOTING, getQuoting()));
         }
-        log.ok("Configuration is valid");
+        log.ok("Configuration for table is valid");
     }
 
     /**

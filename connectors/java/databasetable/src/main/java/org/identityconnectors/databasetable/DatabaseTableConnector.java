@@ -710,7 +710,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("test");
         try {
             openConnection();
-            getConn().test();
+            DatabaseTableConnection connection = getConn();
+            this.config.validateConfigurationForTable();
+            connection.test();
             commit();
         } catch (SQLException e) {
             log.error(e, "error in test");
