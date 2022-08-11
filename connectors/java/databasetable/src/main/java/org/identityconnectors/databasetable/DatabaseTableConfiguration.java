@@ -47,6 +47,26 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     static Log log = Log.getLog(DatabaseTableConfiguration.class);
 
+    enum Validation {
+        FULL,
+        BASIC
+    }
+
+    /**
+     * Type of validation.
+     * BASIC - validation of configuration for connection
+     * FULL - validation of configuration for connection and basic elements for table
+     */
+    private Validation validation = Validation.FULL;
+
+    void setValidationOnlyConnection(){
+        this.validation = Validation.BASIC;
+    }
+
+    void setValidationFull(){
+        this.validation = Validation.FULL;
+    }
+
     // =======================================================================
     // DatabaseTableConfiguration
     // =======================================================================
@@ -792,12 +812,14 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             log.ok("datasource configuration is ok");
         }
 
+        if (Validation.FULL.equals(validation)) {
+            validateConfigurationForTable();
+        }
+
         log.ok("Configuration is valid");
     }
 
-    public void validateConfigurationForTable() {
-        log.info("Validate DatabaseTableConfiguration for table");
-
+    private void validateConfigurationForTable() {
         // check that there is a table to query.
         if (StringUtil.isBlank(getTable())) {
             throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
@@ -826,7 +848,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(getMessage(MSG_INVALID_QUOTING, getQuoting()));
         }
-        log.ok("Configuration for table is valid");
     }
 
     /**

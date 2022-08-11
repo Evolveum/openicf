@@ -141,7 +141,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             if (StringUtil.isNotBlank(config.getDatasource())) {
                 openConnection();
             } else {
+                this.config.setValidationOnlyConnection();
                 getConn().test();
+                this.config.setValidationFull();
                 commit();
             }
         } catch (SQLException e) {
@@ -711,7 +713,6 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         try {
             openConnection();
             DatabaseTableConnection connection = getConn();
-            this.config.validateConfigurationForTable();
             connection.test();
             commit();
         } catch (SQLException e) {
@@ -1414,6 +1415,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("test partial configuration");
         DatabaseTableConnection connection = null;
         try {
+            this.config.setValidationOnlyConnection();
+            this.config.validate();
+            this.config.setValidationFull();
             connection = DatabaseTableConnection.createDBTableConnection(this.config);
             connection.openConnection();
             connection.testByDriver();
@@ -1436,6 +1440,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         List<String> nameColumnSuggestions = new ArrayList<>();
         List<String> passwordColumnSuggestions = new ArrayList<>();
 
+        this.config.setValidationOnlyConnection();
+        this.config.validate();
+        this.config.setValidationFull();
 
         DatabaseTableConnection connection = null;
         try {
