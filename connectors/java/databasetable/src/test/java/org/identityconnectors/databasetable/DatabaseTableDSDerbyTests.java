@@ -184,6 +184,15 @@ public class DatabaseTableDSDerbyTests extends DatabaseTableTestBase {
         return config;
     }
 
+    protected DatabaseTableConfiguration getMinimalConfiguration() throws Exception {
+        DatabaseTableConfiguration actualConfig = getConfiguration();
+        DatabaseTableConfiguration minimalConfig = new DatabaseTableConfiguration();
+        minimalConfig.setJdbcDriver(actualConfig.getJdbcDriver());
+        minimalConfig.setDatasource(actualConfig.getDatasource());
+        minimalConfig.setJndiProperties(actualConfig.getJndiProperties());
+        return minimalConfig;
+    }
+
      /* (non-Javadoc)
       * @see org.identityconnectors.databasetable.DatabaseTableTestBase#getCreateAttributeSet()
       */

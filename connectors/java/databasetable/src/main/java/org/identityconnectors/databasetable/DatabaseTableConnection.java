@@ -271,16 +271,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
         
         if (StringUtil.isBlank(sql)) {
             log.info("valid connection query is empty, testing using driver's  built-in method");
-            try {
-                if (!getConnection().isValid(config.getValidConnectionTimeout())) {
-                    throw new ConnectionFailedException(config.getMessage(MSG_CONNECTION_INVALID));
-                }
-            } catch(SQLException ex) {
-                log.warn(ex, "SQL exception was raised when testing connection. This might mean it's not supported by the driver. Falling back to test using autocommit setting change.");
-
-                // attempt through auto commit..
-                super.test();
-            }
+            testByDriver();
             log.ok("connection is valid");
         } else {
             Statement stmt = null;
@@ -303,6 +294,19 @@ public class DatabaseTableConnection extends DatabaseConnection {
                 SQLUtil.closeQuietly(stmt);
             }
         }        
+    }
+
+    void testByDriver() {
+        try {
+            if (!getConnection().isValid(config.getValidConnectionTimeout())) {
+                throw new ConnectionFailedException(config.getMessage(MSG_CONNECTION_INVALID));
+            }
+        } catch(SQLException ex) {
+            log.warn(ex, "SQL exception was raised when testing connection. This might mean it's not supported by the driver. Falling back to test using autocommit setting change.");
+
+            // attempt through auto commit..
+            super.test();
+        }
     }
 
     /**

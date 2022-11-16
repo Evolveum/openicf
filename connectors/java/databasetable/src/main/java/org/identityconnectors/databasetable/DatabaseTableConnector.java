@@ -25,12 +25,7 @@ package org.identityconnectors.databasetable;
 
 import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -41,48 +36,15 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.databasetable.mapping.MappingStrategy;
 import org.identityconnectors.databasetable.mapping.misc.SQLColumnTypeInfo;
-import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
-import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.InsertIntoBuilder;
-import org.identityconnectors.dbcommon.SQLParam;
-import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.dbcommon.UpdateSetBuilder;
+import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder.OrderBy;
 import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.SyncDeltaBuilder;
-import org.identityconnectors.framework.common.objects.SyncDeltaType;
-import org.identityconnectors.framework.common.objects.SyncResultsHandler;
-import org.identityconnectors.framework.common.objects.SyncToken;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.DeleteOp;
-import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.SearchOp;
-import org.identityconnectors.framework.spi.operations.SyncOp;
-import org.identityconnectors.framework.spi.operations.TestOp;
-import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.framework.spi.operations.*;
 
 
 /**
@@ -107,7 +69,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
         displayNameKey = "DBTABLE_CONNECTOR",
         configurationClass = DatabaseTableConfiguration.class)
 public class DatabaseTableConnector implements PoolableConnector, CreateOp, SearchOp<FilterWhereBuilder>,
-        DeleteOp, UpdateOp, SchemaOp, TestOp, AuthenticateOp, SyncOp, ResolveUsernameOp {
+        DeleteOp, UpdateOp, SchemaOp, TestOp, AuthenticateOp, SyncOp, ResolveUsernameOp, DiscoverConfigurationOp {
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -180,7 +142,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             if (StringUtil.isNotBlank(config.getDatasource())) {
                 openConnection();
             } else {
+                this.config.setValidationOnlyConnection();
                 getConn().test();
+                this.config.setValidationFull();
                 commit();
             }
         } catch (SQLException e) {
@@ -749,7 +713,8 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("test");
         try {
             openConnection();
-            getConn().test();
+            DatabaseTableConnection connection = getConn();
+            connection.test();
             commit();
         } catch (SQLException e) {
             log.error(e, "error in test");
@@ -1478,4 +1443,164 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         return true;
     }
 
+    @Override
+    public void testPartialConfiguration() {
+        log.info("test partial configuration");
+        DatabaseTableConnection connection = null;
+        try {
+            this.config.setValidationOnlyConnection();
+            this.config.validate();
+            this.config.setValidationFull();
+            connection = DatabaseTableConnection.createDBTableConnection(this.config);
+            connection.openConnection();
+            connection.testByDriver();
+            connection.commit();
+        } catch (SQLException e) {
+            log.error(e, "error in test partial configuration");
+            evaluateAndHandleException(e, true, true, true, "error in test partial configuration");
+        } finally {
+            if (connection != null) {
+                connection.closeConnection();
+            }
+        }
+        log.ok("test partial configuration ok");
+    }
+
+    @Override
+    public Map<String, SuggestedValues> discoverConfiguration() {
+        List<String> dbTableNameSuggestions = new ArrayList<>();
+        List<String> keyColumnSuggestions = new ArrayList<>();
+        List<String> nameColumnSuggestions = new ArrayList<>();
+        List<String> passwordColumnSuggestions = new ArrayList<>();
+
+        this.config.setValidationOnlyConnection();
+        this.config.validate();
+        this.config.setValidationFull();
+
+        DatabaseTableConnection connection = null;
+        try {
+            connection = DatabaseTableConnection.createDBTableConnection(this.config);
+
+            List<String> tableNames = getTableNamesContainingWord(Arrays.asList("account", "user"), connection);
+
+            for (String tableName : tableNames) {
+                selectTableWithPossibleSuggestions(
+                        connection,
+                        tableName,
+                        dbTableNameSuggestions,
+                        keyColumnSuggestions,
+                        nameColumnSuggestions,
+                        passwordColumnSuggestions);
+            }
+        } finally {
+            if (connection != null) {
+                connection.closeConnection();
+            }
+        }
+
+        Map<String, SuggestedValues> suggestions = new HashMap<>();
+
+        createSuggestions(suggestions, "table", dbTableNameSuggestions);
+
+        nameColumnSuggestions.removeAll(keyColumnSuggestions);
+        keyColumnSuggestions.addAll(nameColumnSuggestions);
+        createSuggestions(suggestions, "keyColumn", keyColumnSuggestions);
+
+        createSuggestions(suggestions, "passwordColumn", passwordColumnSuggestions);
+
+        return suggestions;
+    }
+
+    private List<String> getTableNamesContainingWord(List<String> expectedNames, DatabaseConnection connection) {
+        List<String> tableNames = new ArrayList<>();
+        ResultSet tables = null;
+        try {
+            String[] types = {"TABLE"};
+
+            DatabaseMetaData meta = connection.getConnection().getMetaData();
+            tables = meta.getTables(null, null, "%", types);
+
+            List<String> allTableNames = new ArrayList<>();
+
+            while (tables.next()) {
+                String tableName = tables.getString("TABLE_NAME");
+                allTableNames.add(tableName);
+            }
+            if (allTableNames.size() > 1) {
+                allTableNames.forEach(tableName -> {
+                    for (String expectedName : expectedNames) {
+                        if (tableName.toLowerCase().contains(expectedName)) {
+                            tableNames.add(tableName);
+                            break;
+                        }
+                    }
+                });
+            } else {
+                tableNames.addAll(allTableNames);
+            }
+
+            // commit changes
+            log.info("commit get suggestions");
+            connection.commit();
+        } catch (SQLException ex) {
+            SQLUtil.rollbackQuietly(connection);
+        } finally {
+            SQLUtil.closeQuietly(tables);
+        }
+        return tableNames;
+    }
+
+    private void createSuggestions(Map<String, SuggestedValues> suggestions, String suggestionName, List<String> suggestionsValue) {
+        if (!suggestionsValue.isEmpty()) {
+            suggestions.put(suggestionName, SuggestedValuesBuilder.buildOpen(suggestionsValue.toArray()));
+        }
+    }
+
+    private void selectTableWithPossibleSuggestions(DatabaseTableConnection connection, String dbTableName, List<String> dbTableNameSuggestions, List<String> keyColumnSuggestions,
+                                                    List<String> nameColumnSuggestions, List<String> passwordColumnSuggestions) {
+        final String SCHEMA_QUERY = "SELECT * FROM {0} WHERE 0 = 1";
+
+        log.info("get Suggestions from the table {0}", dbTableName);
+        String sql = MessageFormat.format(SCHEMA_QUERY, dbTableName);
+        // check out the result etc.
+        ResultSet rset = null;
+        Statement stmt = null;
+        try {
+            // create the query.
+            connection = DatabaseTableConnection.createDBTableConnection(this.config);
+            stmt = connection.getConnection().createStatement();
+
+            log.info("executeQuery ''{0}''", sql);
+            rset = stmt.executeQuery(sql);
+            log.ok("query executed");
+            // get the results queued.
+
+            dbTableNameSuggestions.add(dbTableName);
+
+            ResultSetMetaData meta = rset.getMetaData();
+            int count = meta.getColumnCount();
+            for (int i = 1; i <= count; i++) {
+                final String name = meta.getColumnName(i).toLowerCase();
+                if ((name.contains("id") || name.contains("key")) && !keyColumnSuggestions.contains(name)) {
+                    keyColumnSuggestions.add(name);
+                }
+                if (name.contains("name") && !nameColumnSuggestions.contains(name)) {
+                    nameColumnSuggestions.add(name);
+                }
+                if (name.contains("password") && !passwordColumnSuggestions.contains(name)) {
+                    passwordColumnSuggestions.add(name);
+                }
+            }
+
+            // commit changes
+            log.info("commit get suggestions");
+            connection.commit();
+        } catch (SQLException ex) {
+            SQLUtil.rollbackQuietly(connection);
+        } finally {
+            SQLUtil.closeQuietly(rset);
+            SQLUtil.closeQuietly(stmt);
+        }
+        log.ok("suggestions created");
+    }
 }

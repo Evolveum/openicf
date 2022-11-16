@@ -23,6 +23,7 @@
 package org.identityconnectors.databasetable;
 
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.objects.*;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -34,6 +35,7 @@ import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -44,24 +46,11 @@ import org.identityconnectors.framework.api.operations.AuthenticationApiOp;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SyncDelta;
-import org.identityconnectors.framework.common.objects.SyncDeltaType;
-import org.identityconnectors.framework.common.objects.SyncResultsHandler;
-import org.identityconnectors.framework.common.objects.SyncToken;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Attempts to test the Connector with the framework.
@@ -200,6 +189,53 @@ public abstract class DatabaseTableTestBase {
         cfg.setValidConnectionQuery("INVALID");
         con = getConnector(cfg);
         con.test();
+    }
+
+    /**
+     * test partial configuration method
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testTestPartialConfigurationMethod() throws Exception {
+        log.ok("testTestPartialConfigurationMethod");
+        final DatabaseTableConfiguration cfg = getMinimalConfiguration();
+        con = getConnector(cfg);
+        con.testPartialConfiguration();
+    }
+
+    /**
+     * discover configuration method
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDiscoverConfigurationMethod() throws Exception {
+        log.ok("testDiscoverConfigurationMethod");
+        final DatabaseTableConfiguration cfg = getMinimalConfiguration();
+        con = getConnector(cfg);
+        Map<String, SuggestedValues> suggestions = con.discoverConfiguration();
+
+        assertSuggestion(suggestions, "keyColumn", Arrays.asList("accountid", "middlename", "firstname", "lastname"));
+        assertSuggestion(suggestions, "table", Collections.singletonList("accounts"));
+        assertSuggestion(suggestions, "passwordColumn", Collections.singletonList("password"));
+    }
+
+    private void assertSuggestion(Map<String, SuggestedValues> suggestions, String attributeName, List<Object> expectedValues) {
+        assertTrue("Suggestions not contain suggestion for attribute " + attributeName, suggestions.containsKey(attributeName));
+        List<Object> values = suggestions.get(attributeName).getValues();
+        values = values.stream().map(value -> ((String)value).toLowerCase()).collect(Collectors.toList());
+        assertTrue("Suggestions contains wrong suggestion value for attribute " + attributeName, values.containsAll(expectedValues));
+    }
+
+    protected DatabaseTableConfiguration getMinimalConfiguration() throws Exception {
+        DatabaseTableConfiguration actualConfig = getConfiguration();
+        DatabaseTableConfiguration minimalConfig = new DatabaseTableConfiguration();
+        minimalConfig.setUser(actualConfig.getUser());
+        minimalConfig.setJdbcUrlTemplate(actualConfig.getJdbcUrlTemplate());
+        minimalConfig.setPassword(actualConfig.getPassword());
+        minimalConfig.setJdbcDriver(actualConfig.getJdbcDriver());
+        return minimalConfig;
     }
 
 

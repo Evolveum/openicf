@@ -2,60 +2,69 @@
 <!--
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
- Copyright (c) 2014-2015 Evolveum All rights reserved.
- 
+ Copyright (C) 2014-2022 Evolveum All rights reserved.
+
  The contents of this file are subject to the terms of the Common Development
- and tribution License("CDDL") (the "License").  You may not use this file
+ and Distribution License("CDDL") (the "License").  You may not use this file
  except in compliance with the License.
- 
+
  You can obtain a copy of the License at
- http://opensource.org/licenses/cddl1.php
+ https://opensource.org/licenses/cddl1.php
  See the License for the specific language governing permissions and limitations
  under the License.
- 
+
  When distributing the Covered Code, include this CDDL Header Notice in each file
- and include the License file at http://opensource.org/licenses/cddl1.php.
+ and include the License file at https://opensource.org/licenses/cddl1.php.
  If applicable, add the following below this CDDL Header, with the fields
  enclosed by brackets [] replaced by your own identifying information:
  "Portions Copyrighted [year] [name of copyright owner]"
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.evolveum.polygon</groupId>
         <artifactId>connector-parent</artifactId>
-        <version>1.5.0.0</version>
+        <version>1.5.1.3</version>
     </parent>
+
     <artifactId>connector-databasetable</artifactId>
-    <version>1.5.0.0-SNAPSHOT</version>
+    <version>1.5.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
     <name>Database Table Connector</name>
     <description>Database table connector which uses a single database table to store the Account records.</description>
+
     <url>https://wiki.evolveum.com/display/midPoint/DatabaseTable+Connector</url>
     <scm>
-            <connection>https://github.com/Evolveum/openicf.git</connection>
-            <developerConnection>git@github.com:Evolveum/openicf.git</developerConnection>
-            <url>https://github.com/Evolveum/openicf.git</url>
+        <connection>https://github.com/Evolveum/openicf.git</connection>
+        <developerConnection>git@github.com:Evolveum/openicf.git</developerConnection>
+        <url>https://github.com/Evolveum/openicf.git</url>
     </scm>
     <issueManagement>
         <system>jira</system>
         <url>https://jira.evolveum.com</url>
     </issueManagement>
+
     <properties>
+        <project.source.version>11</project.source.version>
+
         <connectorPackage>org.identityconnectors.databasetable</connectorPackage>
         <connectorClass>DatabaseTableConnector</connectorClass>
     </properties>
+
     <repositories>
-		<repository>
-		        <id>evolveum</id>
-		        <name>Evolveum Public Releases</name>
-		        <url>http://nexus.evolveum.com/nexus/content/groups/public</url>
-		</repository>
-		<repository>
-		        <id>evolveum-snapshots</id>
-		        <name>Evolveum Snapshots</name>
-		        <url>http://nexus.evolveum.com/nexus/content/repositories/snapshots/</url>
-		</repository>
+        <repository>
+            <id>evolveum</id>
+            <name>Evolveum Public Releases</name>
+            <url>https://nexus.evolveum.com/nexus/content/groups/public</url>
+        </repository>
+        <repository>
+            <id>evolveum-snapshots</id>
+            <name>Evolveum Snapshots</name>
+            <url>https://nexus.evolveum.com/nexus/content/repositories/snapshots/</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -64,8 +73,8 @@
             <version>2.3</version>
         </dependency>
 
-<!-- Java 9 and higher -->
-<!-- Derby test dependencies-->
+        <!-- Java 9 and higher -->
+        <!-- Derby test dependencies-->
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
@@ -92,6 +101,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
