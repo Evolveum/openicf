@@ -39,6 +39,7 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.databasetable.mapping.MappingStrategy;
 import org.identityconnectors.databasetable.mapping.misc.SQLColumnTypeInfo;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -1082,6 +1083,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         int count = meta.getColumnCount();
         for (int i = 1; i <= count; i++) {
             final String name = meta.getColumnName(i);
+
+            log.ok("Name of the parameter being evaluated : {0}", name);
+
             final AttributeInfoBuilder attrBld = new AttributeInfoBuilder();
             final Integer columnType = meta.getColumnType(i);
             final String columnTypeName = meta.getColumnTypeName(i);
@@ -1107,11 +1111,29 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.ok("skip changelog column from the schema");
             } else {
                 // All other attributed taken from the table
-                final Class<?> dataType = getConn().getSms().getSQLAttributeType(columnType, columnTypeName);
-                attrBld.setType(dataType);
+                log.ok("Building attribute info set for standard attribute. ");
+
+                MappingStrategy msTmp= getConn().getSms();
+                log.ok("Datatype fetch finished, used strategy : {0}", msTmp.getClass());
+                Class<?> dataType = msTmp.getSQLAttributeType(columnType, columnTypeName);
+
+
+
+                log.ok("Datatype to be used : {0}", dataType);
+
+                if (!UUID.class.equals(dataType)){
+
+                    log.ok("UUID datatype handled in schema builder as String.class for schema definition purposes ", name);
+                    attrBld.setType(dataType);
+                } else {
+
+                    attrBld.setType(String.class);
+                }
+
                 attrBld.setName(name);
                 final boolean required = meta.isNullable(i) == ResultSetMetaData.columnNoNulls;
                 attrBld.setRequired(required);
+
                 if (required && dataType.isAssignableFrom(String.class)) {
                     log.ok("the column name {0} is string type and required", name);
                     stringColumnRequired.add(name);
@@ -1179,7 +1201,18 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.ok("changelogcolumn attribute in the result");
             } else {
                 if (param != null && param.getValue() != null) {
-                    bld.addAttribute(AttributeBuilder.build(columnName, param.getValue()));
+                    Object paramValue = param.getValue();
+
+                    if (!(paramValue instanceof UUID)) {
+
+                        bld.addAttribute(AttributeBuilder.build(columnName, paramValue));
+                    } else {
+
+                        log.ok("Column with the name: {0} with the UUID datatype will be handled as a String.class type" +
+                                "Object for the purpose of Connector object translation", columnName);
+                        bld.addAttribute(AttributeBuilder.build(columnName, paramValue.toString()));
+                    }
+
                 } else {
                     bld.addAttribute(AttributeBuilder.build(columnName));
                 }

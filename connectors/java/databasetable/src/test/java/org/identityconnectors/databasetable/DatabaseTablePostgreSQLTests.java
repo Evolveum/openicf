@@ -9,8 +9,10 @@ import org.identityconnectors.framework.common.exceptions.AlreadyExistsException
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
+import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -363,6 +365,90 @@ public class DatabaseTablePostgreSQLTests extends DatabaseTableTestBase {
             log.error("Unexpected exception: " + e.getMessage(), e);
             throw e;
         }
+    }
+
+
+    /**
+     *  Story tests for UUID columns being present as other than NAME or UID 'tagged' column
+     * CREATE TABLE accounts(
+     * ACCOUNTID varchar(255) PRIMARY KEY NOT NULL,
+     * PASSWORD varchar(255),
+     * BADGE_ID uuid NOT NULL DEFAULT gen_random_uuid()
+     * );
+     */
+   // @Test
+    public void testCreateUUIDColumnDifferentThanName() throws Exception {
+        log.ok("testCreateCallAlreadyExists");
+        DatabaseTableConfiguration cfg = getConfiguration();
+        DatabaseTableConnector con = getConnector(cfg);
+
+        deleteAllFromAccounts(con.getConn());
+       // Set<Attribute> expected = getCreateAttributeSet(cfg);
+      //  Uid uid = con.create(ObjectClass.ACCOUNT, expected, null);
+
+        // Attempt to create the account second time
+
+            Set<Attribute> ret = new HashSet<Attribute>();
+            ret.add(AttributeBuilder.build(Name.NAME, testUID));
+        ret.add(AttributeBuilder.build("password", testUID));
+            ret.add(AttributeBuilder.build("test_uuid", testUID));
+
+            con.create(ObjectClass.ACCOUNT, ret, null);
+
+    }
+
+
+    /**
+     *  Story tests for UUID columns being present as other than NAME or UID 'tagged' column
+     * CREATE TABLE accounts(
+     * ACCOUNTID varchar(255) PRIMARY KEY NOT NULL,
+     * PASSWORD varchar(255),
+     * BADGE_ID uuid NOT NULL DEFAULT gen_random_uuid()
+     * );
+     */
+   // @Test
+    public void testCreateAndUpdate() throws Exception {
+        log.ok("testCreateAndUpdate");
+        final DatabaseTableConfiguration cfg = getConfiguration();
+        con = getConnector(cfg);
+        deleteAllFromAccounts(con.getConn());
+
+        Set<Attribute> ret = new HashSet<Attribute>();
+        ret.add(AttributeBuilder.build(Name.NAME, testUID));
+        ret.add(AttributeBuilder.build("password", testUID));
+        ret.add(AttributeBuilder.build("test_uuid", testUID));
+
+        // create the object
+        Uid uid = con.create(ObjectClass.ACCOUNT, ret, null);
+        AssertJUnit.assertNotNull(uid);
+
+        // retrieve the object
+        List<ConnectorObject> list = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid));
+        AssertJUnit.assertTrue(list.size() == 1);
+
+        // create updated connector object
+        final Set<Attribute> changeSet = new HashSet<Attribute>();
+        changeSet.add(AttributeBuilder.build("test_uuid", UUID.randomUUID().toString()));
+
+        uid = con.update(ObjectClass.ACCOUNT, uid, changeSet, null);
+
+        // retrieve the object
+        List<ConnectorObject> list2 = TestHelpers.searchToList(con, ObjectClass.ACCOUNT, new EqualsFilter(uid));
+        AssertJUnit.assertNotNull(list2);
+        AssertJUnit.assertTrue(list2.size() == 1);
+        final Set<Attribute> actual = list2.get(0).getAttributes();
+
+        boolean attrPresent = false;
+        for(Attribute a : actual){
+            if ("test_uuid".equals(a.getName())){
+
+                attrPresent = true;
+                AssertJUnit.assertNotSame(a.getValue().get(0),testUID);
+                break;
+            }
+        }
+
+        AssertJUnit.assertTrue(attrPresent);
     }
 
 
