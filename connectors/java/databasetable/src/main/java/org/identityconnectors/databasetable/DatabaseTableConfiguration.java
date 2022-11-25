@@ -19,7 +19,7 @@
  * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
- * Portions Copyrighted 2013 Radovan Semancik, Evolveum
+ * Portions Copyrighted 2013-2022 Evolveum
  */
 package org.identityconnectors.databasetable;
 
@@ -34,7 +34,6 @@ import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.framework.spi.operations.DiscoverConfigurationOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
-
 
 /**
  * Implements the {@link Configuration} interface to provide all the necessary
@@ -59,11 +58,11 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     private Validation validation = Validation.FULL;
 
-    void setValidationOnlyConnection(){
+    void setValidationOnlyConnection() {
         this.validation = Validation.BASIC;
     }
 
-    void setValidationFull(){
+    void setValidationFull() {
         this.validation = Validation.FULL;
     }
 
@@ -90,8 +89,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * NameQuote Setter
-     *
-     * @param value
      */
     public void setQuoting(String value) {
         this.quoting = value;
@@ -116,13 +113,10 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * NameQuote Setter
-     *
-     * @param value
      */
     public void setHost(String value) {
         this.host = value;
     }
-
 
     /**
      * The port value
@@ -143,8 +137,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * NameQuote Setter
-     *
-     * @param value
      */
     public void setPort(String value) {
         this.port = value;
@@ -163,14 +155,11 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     @ConfigurationProperty(order = 4,
             displayMessageKey = "USER_DISPLAY",
             helpMessageKey = "USER_HELP",
-            operations={DiscoverConfigurationOp.class})
+            operations = { DiscoverConfigurationOp.class })
     public String getUser() {
         return this.user;
     }
 
-    /**
-     * @param value
-     */
     public void setUser(String value) {
         this.user = value;
     }
@@ -192,13 +181,9 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return this.password;
     }
 
-    /**
-     * @param value
-     */
     public void setPassword(GuardedString value) {
         this.password = value;
     }
-
 
     /**
      * Database name.
@@ -215,13 +200,9 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return this.database;
     }
 
-    /**
-     * @param value
-     */
     public void setDatabase(String value) {
         this.database = value;
     }
-
 
     /**
      * Database Table name. The name of the identity holder table (Integration table).
@@ -249,7 +230,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     public void setTable(String table) {
         this.table = table;
     }
-
 
     /**
      * Key Column, The name of the key column is required
@@ -298,8 +278,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * Password Column setter
-     *
-     * @param value
      */
     public void setPasswordColumn(String value) {
         this.passwordColumn = value;
@@ -321,9 +299,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return this.jdbcDriver;
     }
 
-    /**
-     * @param value
-     */
     public void setJdbcDriver(String value) {
         this.jdbcDriver = value;
     }
@@ -346,9 +321,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return jdbcUrlTemplate;
     }
 
-    /**
-     * @param value
-     */
     public void setJdbcUrlTemplate(String value) {
         this.jdbcUrlTemplate = value;
     }
@@ -442,7 +414,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     public boolean allNative = false;
 
-
     /**
      * Accessor for the allNativeproperty
      *
@@ -487,8 +458,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * Connection validation query setter
-     *
-     * @param value
      */
     public void setValidConnectionQuery(String value) {
         this.validConnectionQuery = value;
@@ -514,8 +483,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * Connection validation timeout setter
-     *
-     * @param value
      */
     public void setValidConnectionTimeout(int value) {
         this.validConnectionTimeout = value;
@@ -523,7 +490,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     /**
      * Change Log Column (should automatically add ORDER BY)
-     * If the value is non empty, the SyncOp should be supported
+     * If the value is non-empty, the SyncOp should be supported
      * It could be nativeTimestamps.
      */
     private String changeLogColumn = EMPTY_STR;
@@ -540,9 +507,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return this.changeLogColumn;
     }
 
-    /**
-     * @param value
-     */
     public void setChangeLogColumn(String value) {
         this.changeLogColumn = value;
     }
@@ -602,13 +566,9 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return datasource;
     }
 
-    /**
-     * @param value
-     */
     public void setDatasource(String value) {
         this.datasource = value;
     }
-
 
     /**
      * The jndiFactory name is used to connect to database.
@@ -627,9 +587,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         return jndiProperties;
     }
 
-    /**
-     * @param value
-     */
     public void setJndiProperties(String[] value) {
         this.jndiProperties = value;
     }
@@ -641,8 +598,8 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * If set to false then the password will be returned if it is explicitly requested.
      */
     @ConfigurationProperty(order = 25,
-            displayMessageKey = "SUPRESS_PASSWORD_DISPLAY",
-            helpMessageKey = "SUPRESS_PASSWORD_HELP")
+            displayMessageKey = "SUPPRESS_PASSWORD_DISPLAY",
+            helpMessageKey = "SUPPRESS_PASSWORD_HELP")
     public boolean getSuppressPassword() {
         return suppressPassword;
     }
@@ -748,7 +705,6 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     public void setSQLStateConfigurationException(String[] sqlStateConfigurationException) {
         this.sqlStateConfigurationException = sqlStateConfigurationException;
     }
-
 
     // =======================================================================
     // Configuration Interface
@@ -858,28 +814,29 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      */
     public String formatUrlTemplate() {
         log.info("format UrlTemplate");
-        final StringBuffer b = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         final String url = getJdbcUrlTemplate();
         final int len = url.length();
         for (int i = 0; i < len; i++) {
             char ch = url.charAt(i);
-            if (ch != '%')
-                b.append(ch);
-            else if (i + 1 < len) {
+            if (ch != '%') {
+                sb.append(ch);
+            } else if (i + 1 < len) {
                 i++;
                 ch = url.charAt(i);
-                if (ch == '%')
-                    b.append(ch);
-                else if (ch == 'h')
-                    b.append(getHost());
-                else if (ch == 'p')
-                    b.append(getPort());
-                else if (ch == 'd')
-                    b.append(getDatabase());
+                if (ch == '%') {
+                    sb.append(ch);
+                } else if (ch == 'h') {
+                    sb.append(getHost());
+                } else if (ch == 'p') {
+                    sb.append(getPort());
+                } else if (ch == 'd') {
+                    sb.append(getDatabase());
+                }
             }
         }
-        String formattedURL = b.toString();
-        log.ok("UrlTemplate is formated to {0}", formattedURL);
+        String formattedURL = sb.toString();
+        log.ok("UrlTemplate is formatted to {0}", formattedURL);
         return formattedURL;
     }
 
@@ -887,7 +844,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Format the connector message
      *
      * @param key key of the message
-     * @return return the formated message
+     * @return return the formatted message
      */
     public String getMessage(String key) {
         final String fmt = getConnectorMessages().format(key, key);
@@ -898,15 +855,15 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
     /**
      * Format message with arguments
      *
-     * @param key     key of the message
-     * @param objects arguments
+     * @param key key of the message
+     * @param args arguments
      * @return the localized message string
      */
-    public String getMessage(String key, Object... objects) {
+    public String getMessage(String key, Object... args) {
 
-        if (objects != null) {
+        if (args != null) {
 
-            final String fmt = getConnectorMessages().format(key, key, objects);
+            final String fmt = getConnectorMessages().format(key, key, args);
             log.ok("Get for a key {0} connector message {1}", key, fmt);
 
             return fmt;
@@ -915,6 +872,4 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             return getMessage(key);
         }
     }
-
-
 }

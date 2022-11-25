@@ -1,47 +1,41 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
+ * Portions Copyrighted 2013-2022 Evolveum
  */
 package org.identityconnectors.databasetable;
 
+import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
+
 import java.lang.reflect.Method;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.databasetable.mapping.AttributeConvertor;
-import org.identityconnectors.databasetable.mapping.DefaultStrategy;
-import org.identityconnectors.databasetable.mapping.JdbcConvertor;
-import org.identityconnectors.databasetable.mapping.MappingStrategy;
-import org.identityconnectors.databasetable.mapping.NativeTimestampsStrategy;
-import org.identityconnectors.databasetable.mapping.StringStrategy;
+import org.identityconnectors.databasetable.mapping.*;
 import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -50,8 +44,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectionFailedExcept
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
-
-import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
 /**
  * Wraps JDBC connections extends the DatabaseConnection overriding the test method.
@@ -65,9 +57,8 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Get the instance method
-     * 
-     * @param config
-     *            a {@link DatabaseTableConfiguration} object
+     *
+     * @param config a {@link DatabaseTableConfiguration} object
      * @return a new {@link DatabaseTableConnection} connection
      */
     static DatabaseTableConnection createDBTableConnection(DatabaseTableConfiguration config) {
@@ -75,10 +66,6 @@ public class DatabaseTableConnection extends DatabaseConnection {
         return new DatabaseTableConnection(connection, config);
     }
 
-    /**
-     * @param config
-     * @return
-     */
     private static java.sql.Connection getNativeConnection(DatabaseTableConfiguration config) {
         java.sql.Connection connection;
         final String login = config.getUser();
@@ -110,7 +97,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
         /* On Oracle enable the synonyms */
         try {
             Class<?> clazz = Class.forName("oracle.jdbc.OracleConnection");
-            if (clazz != null && clazz.isAssignableFrom(connection.getClass())) {
+            if (clazz.isAssignableFrom(connection.getClass())) {
                 try {
                     final Method getIncludeSynonyms = clazz.getMethod("getIncludeSynonyms");
                     final Object includeSynonyms = getIncludeSynonyms.invoke(connection);
@@ -130,7 +117,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
         //Disable auto-commit mode
         try {
-            if ( connection.getAutoCommit() ) {
+            if (connection.getAutoCommit()) {
                 log.info("setAutoCommit(false)");
                 connection.setAutoCommit(false);
             }
@@ -155,13 +142,10 @@ public class DatabaseTableConnection extends DatabaseConnection {
     /**
      * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
      * {@link RuntimeException} will be thrown.
-     * 
-     * @param conn
-     *            Connection created in the time of calling the newConnection
-     * @param config
-     *            Configuration required to obtain a valid connection.
-     * @throws RuntimeException
-     *             if there is a problem creating a {@link java.sql.Connection}.
+     *
+     * @param conn Connection created in the time of calling the newConnection
+     * @param config Configuration required to obtain a valid connection.
+     * @throws RuntimeException if there is a problem creating a {@link java.sql.Connection}.
      */
     private DatabaseTableConnection(Connection conn, DatabaseTableConfiguration config) {
         super(conn);
@@ -172,9 +156,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * The strategy utility
-     * 
-     * @param conn
-     * @param config
+     *
      * @return the created strategy
      */
     public MappingStrategy createMappingStrategy(Connection conn, DatabaseTableConfiguration config) {
@@ -199,10 +181,8 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Get the Column Values map
-     * 
-     * @param result
+     *
      * @return the result of Column Values map
-     * @throws SQLException
      */
     public Map<String, SQLParam> getColumnValues(ResultSet result) throws SQLException {
         return DatabaseTableSQLUtil.getColumnValues(sms, result);
@@ -210,7 +190,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Accessor for the sms property
-     * 
+     *
      * @return the sms
      */
     public MappingStrategy getSms() {
@@ -219,14 +199,11 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Indirect call of prepareCall statement with mapped callable statement parameters
-     * 
-     * @param sql
-     *            a <CODE>String</CODE> sql statement definition
-     * @param params
-     *            the bind parameter values
+     *
+     * @param sql a <CODE>String</CODE> sql statement definition
+     * @param params the bind parameter values
      * @return return a callable statement
-     * @throws SQLException
-     *             an exception in statement
+     * @throws SQLException an exception in statement
      */
     @Override
     public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
@@ -239,14 +216,11 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Indirect call of prepare statement with mapped prepare statement parameters
-     * 
-     * @param sql
-     *            a <CODE>String</CODE> sql statement definition
-     * @param params
-     *            the bind parameter values
+     *
+     * @param sql a <CODE>String</CODE> sql statement definition
+     * @param params the bind parameter values
      * @return return a prepared statement
-     * @throws SQLException
-     *             an exception in statement
+     * @throws SQLException an exception in statement
      */
     @Override
     public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
@@ -261,14 +235,13 @@ public class DatabaseTableConnection extends DatabaseConnection {
     /**
      * Determines if the underlying JDBC {@link java.sql.Connection} is valid.
      *
-     * @throws RuntimeException
-     *             if the underlying JDBC {@link java.sql.Connection} is not
-     *             valid otherwise do nothing.
+     * @throws RuntimeException if the underlying JDBC {@link java.sql.Connection} is not
+     * valid otherwise do nothing.
      */
     @Override
     public void test() {
         String sql = config.getValidConnectionQuery();
-        
+
         if (StringUtil.isBlank(sql)) {
             log.info("valid connection query is empty, testing using driver's  built-in method");
             testByDriver();
@@ -283,17 +256,17 @@ public class DatabaseTableConnection extends DatabaseConnection {
                     // should have thrown if server was down don't get the
                     // ResultSet, we don't want it if we got to this point and
                     // the SQL was not a query, give a hint why we failed
-                    throw new ConnectorException(config.getMessage(MSG_QUERY_INVALID, sql));                            
+                    throw new ConnectorException(config.getMessage(MSG_QUERY_INVALID, sql));
                 }
-                log.ok("connection is valid");                
+                log.ok("connection is valid");
             } catch (Exception ex) {
                 // anything, not just SQLException
                 // nothing to do, just invalidate the connection
                 throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, sql), ex);
             } finally {
-                SQLUtil.closeQuietly(stmt);
+                IOUtil.quietClose(stmt);
             }
-        }        
+        }
     }
 
     void testByDriver() {
@@ -301,7 +274,7 @@ public class DatabaseTableConnection extends DatabaseConnection {
             if (!getConnection().isValid(config.getValidConnectionTimeout())) {
                 throw new ConnectionFailedException(config.getMessage(MSG_CONNECTION_INVALID));
             }
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             log.warn(ex, "SQL exception was raised when testing connection. This might mean it's not supported by the driver. Falling back to test using autocommit setting change.");
 
             // attempt through auto commit..
@@ -311,31 +284,30 @@ public class DatabaseTableConnection extends DatabaseConnection {
 
     /**
      * Setter for the sms
-     * 
-     * @param sms
-     *            the strategy
+     *
+     * @param sms the strategy
      */
     void setSms(MappingStrategy sms) {
         this.sms = sms;
     }
-    
+
     /**
      * Close connection if pooled
      */
     void closeConnection() {
-        if( getConnection() != null && StringUtil.isNotBlank(config.getDatasource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
+        if (getConnection() != null && StringUtil.isNotBlank(config.getDatasource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
             log.info("Close the pooled connection");
             dispose();
         }
     }
+
     /**
      * Create new connection if pooled and taken from the datasource
-     * @throws SQLException
      */
     void openConnection() throws SQLException {
         if (getConnection() == null || getConnection().isClosed()) {
             log.info("Get new connection, it is closed");
             setConnection(getNativeConnection(config));
         }
-    }    
+    }
 }
