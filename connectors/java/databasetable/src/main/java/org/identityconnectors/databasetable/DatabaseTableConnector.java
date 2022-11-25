@@ -333,10 +333,16 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             final int dr = stmt.executeUpdate();
             if (dr < 1) {
                 SQLUtil.rollbackQuietly(getConn());
+                // TODO: Before we throw this error we should recheck that the account is really not there with select.
+                // This may happen when the "table" is view and update returns UPDATED 0.
+                // The consequences of killing the shadow are quite annoying, so we should double-check.
+                // Of course, the previous behaviour quietly ignoring the problem was not good either.
                 handleUnknownUid(MSG_EXP_UNKNOWN_UID, accountUid);
             }
             if (dr > 1) {
                 SQLUtil.rollbackQuietly(getConn());
+                // TODO: This one is even stranger - again, should it make the shadow dead?
+                // It likely should not be ignored like before, I agree with that.
                 handleUnknownUid(MSG_EXP_TOO_MANY_UID, accountUid);
             }
             log.info("Delete account {0} commit", accountUid);
@@ -430,6 +436,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
             if (retCode == 0) {
                 String uidValue = uid.getUidValue();
+                // TODO: Before we throw this error we should recheck that the account is really not there with select.
+                // This may happen when the "table" is view and update returns UPDATED 0.
+                // The consequences of killing the shadow are quite annoying, so we should double-check.
+                // Of course, the previous behaviour quietly ignoring the problem was not good either.
                 log.error("Account with the uid {0} not found during the update operation.", uidValue);
                 handleUnknownUid(MSG_OP_UPDATE_UNKNOWN, uidValue);
 
