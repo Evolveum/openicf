@@ -872,4 +872,23 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             return getMessage(key);
         }
     }
+
+    private boolean ignorePasswordWorkaround = false;
+
+    /**
+     * If set to true then the password processed in updateOp. It will simply be ignored.
+     * If set to false then the password will be processed as usual.
+     */
+    @ConfigurationProperty(order = 25,
+            displayMessageKey = "IGNORE_PASSWORD_WORKAROUND_DISPLAY",
+            helpMessageKey = "IGNORE_PASSWORD_WORKAROUND_HELP")
+    public boolean getIgnorePasswordWorkaround() {
+        return ignorePasswordWorkaround;
+    }
+
+    public void setIgnorePasswordWorkaround(boolean ignorePasswordWorkaround) {
+        this.ignorePasswordWorkaround = ignorePasswordWorkaround;
+    }
+
+
 }

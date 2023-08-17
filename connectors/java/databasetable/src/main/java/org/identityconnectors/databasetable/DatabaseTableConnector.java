@@ -395,18 +395,26 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         for (Attribute attribute : attrs) {
             // All attributes needs to be updated except the UID
             if (!attribute.is(Uid.NAME)) {
-                final String attributeName = attribute.getName();
-                final String columnName = getColumnName(attributeName);
-                Object value = AttributeUtil.getSingleValue(attribute);
-                // Handle the empty string values
-                if (isToBeEmpty(columnName, value)) {
-                    log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
-                    value = DatabaseTableConstants.EMPTY_STR;
+                if (config.getIgnorePasswordWorkaround() && attribute.is(OperationalAttributeInfos.PASSWORD.getName())) {
+                    if(attrs.size() == 1) {
+                        return ret;
+                    } else {
+                        break;
+                    }
+                } else {
+                    final String attributeName = attribute.getName();
+                    final String columnName = getColumnName(attributeName);
+                    Object value = AttributeUtil.getSingleValue(attribute);
+                    // Handle the empty string values
+                    if (isToBeEmpty(columnName, value)) {
+                        log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
+                        value = DatabaseTableConstants.EMPTY_STR;
+                    }
+                    final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+                    final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
+                    updateSet.addBind(param);
+                    log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
                 }
-                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
-                final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
-                updateSet.addBind(param);
-                log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
             }
         }
         log.info("Update account {0}", accountName);
@@ -1031,8 +1039,13 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.ok("Name of the parameter being evaluated : {0}", name);
 
             final AttributeInfoBuilder attrBld = new AttributeInfoBuilder();
-            final int columnType = meta.getColumnType(i);
-            final String columnTypeName = meta.getColumnTypeName(i);
+            Integer columnType = meta.getColumnType(i);
+            String columnTypeName = meta.getColumnTypeName(i);
+
+            if(meta.getColumnType(i) == 5) {
+                columnType = 4;
+                columnTypeName = "int";
+            }
 
             columnSQLTypes.put(name, new SQLColumnTypeInfo(columnTypeName, columnType));
             if (name.equalsIgnoreCase(config.getKeyColumn())) {
