@@ -48,7 +48,7 @@
     </issueManagement>
 
     <properties>
-        <project.source.version>11</project.source.version>
+        <project.source.version>17</project.source.version>
 
         <connectorPackage>org.identityconnectors.databasetable</connectorPackage>
         <connectorClass>DatabaseTableConnector</connectorClass>
