@@ -1,5 +1,5 @@
 create table Accounts (
-  "accountId"   VARCHAR(50) NOT NULL,
+  accountId   VARCHAR(50) NOT NULL,
   password    VARCHAR(50),
   manager     VARCHAR(50),
   middlename  VARCHAR(50),
@@ -17,5 +17,5 @@ create table Accounts (
   enrolled    TIMESTAMP,      
   changed     TIMESTAMP NOT NULL,
   changelog   BIGINT,
-  PRIMARY KEY ("accountId")
+  PRIMARY KEY (accountId)
 )

@@ -217,7 +217,7 @@ public abstract class DatabaseTableTestBase {
         Map<String, SuggestedValues> suggestions = con.discoverConfiguration();
 
         List<String> columns = List.of(
-                "accountId",
+                "accountid",
                 "password",
                 "manager",
                 "middlename",
@@ -243,7 +243,12 @@ public abstract class DatabaseTableTestBase {
 
     private void assertSuggestion(Map<String, SuggestedValues> suggestions, String attributeName, List<String> expectedValues) {
         assertTrue("Suggestions not contain suggestion for attribute " + attributeName, suggestions.containsKey(attributeName));
-        List<Object> values = suggestions.get(attributeName).getValues();
+        List<Object> values = suggestions
+                .get(attributeName)
+                .getValues()
+                .stream()
+                .map(value -> ((String)value).toLowerCase())
+                .collect(Collectors.toList());
         assertTrue(
                 "Suggestions contains wrong suggestion value for attribute "
                         + attributeName + ", actual: " + values + ", expected: " + expectedValues,
