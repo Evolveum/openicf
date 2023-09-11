@@ -1448,9 +1448,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     @Override
     public Map<String, SuggestedValues> discoverConfiguration() {
         List<String> dbTableNameSuggestions = new ArrayList<>();
-        List<String> keyColumnSuggestions = new ArrayList<>();
         List<String> nameColumnSuggestions = new ArrayList<>();
-        List<String> passwordColumnSuggestions = new ArrayList<>();
 
         this.config.setValidationOnlyConnection();
         this.config.validate();
@@ -1467,9 +1465,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                         connection,
                         tableName,
                         dbTableNameSuggestions,
-                        keyColumnSuggestions,
-                        nameColumnSuggestions,
-                        passwordColumnSuggestions);
+                        nameColumnSuggestions);
             }
         } finally {
             if (connection != null) {
@@ -1481,11 +1477,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         createSuggestions(suggestions, "table", dbTableNameSuggestions);
 
-        nameColumnSuggestions.removeAll(keyColumnSuggestions);
-        keyColumnSuggestions.addAll(nameColumnSuggestions);
-        createSuggestions(suggestions, "keyColumn", keyColumnSuggestions);
+        createSuggestions(suggestions, "keyColumn", nameColumnSuggestions);
 
-        createSuggestions(suggestions, "passwordColumn", passwordColumnSuggestions);
+        createSuggestions(suggestions, "passwordColumn", nameColumnSuggestions);
 
         return suggestions;
     }
@@ -1535,8 +1529,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
     }
 
-    private void selectTableWithPossibleSuggestions(DatabaseTableConnection connection, String dbTableName, List<String> dbTableNameSuggestions, List<String> keyColumnSuggestions,
-            List<String> nameColumnSuggestions, List<String> passwordColumnSuggestions) {
+    private void selectTableWithPossibleSuggestions(DatabaseTableConnection connection,
+                                                    String dbTableName,
+                                                    List<String> dbTableNameSuggestions,
+                                                    List<String> nameColumnSuggestions) {
         final String SCHEMA_QUERY = "SELECT * FROM {0} WHERE 0 = 1";
 
         log.info("get Suggestions from the table {0}", dbTableName);
@@ -1559,15 +1555,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             ResultSetMetaData meta = rset.getMetaData();
             int count = meta.getColumnCount();
             for (int i = 1; i <= count; i++) {
-                final String name = meta.getColumnName(i).toLowerCase();
-                if ((name.contains("id") || name.contains("key")) && !keyColumnSuggestions.contains(name)) {
-                    keyColumnSuggestions.add(name);
-                }
-                if (name.contains("name") && !nameColumnSuggestions.contains(name)) {
+                final String name = meta.getColumnName(i);
+                if (!nameColumnSuggestions.contains(name)) {
                     nameColumnSuggestions.add(name);
-                }
-                if (name.contains("password") && !passwordColumnSuggestions.contains(name)) {
-                    passwordColumnSuggestions.add(name);
                 }
             }
 

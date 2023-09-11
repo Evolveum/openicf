@@ -216,16 +216,43 @@ public abstract class DatabaseTableTestBase {
         con = getConnector(cfg);
         Map<String, SuggestedValues> suggestions = con.discoverConfiguration();
 
-        assertSuggestion(suggestions, "keyColumn", Arrays.asList("accountid", "middlename", "firstname", "lastname"));
+        List<String> columns = List.of(
+                "accountid",
+                "password",
+                "manager",
+                "middlename",
+                "firstname",
+                "lastname",
+                "email",
+                "department",
+                "title",
+                "age",
+                "accessed",
+                "salary",
+                "jpegphoto",
+                "activate",
+                "opentime",
+                "enrolled",
+                "changed",
+                "changelog");
+
+        assertSuggestion(suggestions, "keyColumn", columns);
         assertSuggestion(suggestions, "table", Collections.singletonList("accounts"));
-        assertSuggestion(suggestions, "passwordColumn", Collections.singletonList("password"));
+        assertSuggestion(suggestions, "passwordColumn", columns);
     }
 
-    private void assertSuggestion(Map<String, SuggestedValues> suggestions, String attributeName, List<Object> expectedValues) {
+    private void assertSuggestion(Map<String, SuggestedValues> suggestions, String attributeName, List<String> expectedValues) {
         assertTrue("Suggestions not contain suggestion for attribute " + attributeName, suggestions.containsKey(attributeName));
-        List<Object> values = suggestions.get(attributeName).getValues();
-        values = values.stream().map(value -> ((String)value).toLowerCase()).collect(Collectors.toList());
-        assertTrue("Suggestions contains wrong suggestion value for attribute " + attributeName, values.containsAll(expectedValues));
+        List<Object> values = suggestions
+                .get(attributeName)
+                .getValues()
+                .stream()
+                .map(value -> ((String)value).toLowerCase())
+                .collect(Collectors.toList());
+        assertTrue(
+                "Suggestions contains wrong suggestion value for attribute "
+                        + attributeName + ", actual: " + values + ", expected: " + expectedValues,
+                values.containsAll(expectedValues));
     }
 
     protected DatabaseTableConfiguration getMinimalConfiguration() throws Exception {
@@ -1072,7 +1099,7 @@ public abstract class DatabaseTableTestBase {
         // update the last change
         PreparedStatement ps = null;
         DatabaseTableConnection conn = DatabaseTableConnection.createDBTableConnection(cfg);
-        Integer changed = new Long(System.currentTimeMillis()).intValue();
+        Integer changed = Long.valueOf(System.currentTimeMillis()).intValue();
         try {
             List<SQLParam> values = new ArrayList<SQLParam>();
             values.add(new SQLParam("age", changed, Types.INTEGER));
@@ -1121,7 +1148,7 @@ public abstract class DatabaseTableTestBase {
         // update the last change
         PreparedStatement ps = null;
         DatabaseTableConnection conn = DatabaseTableConnection.createDBTableConnection(cfg);
-        Integer changed = new Long(System.currentTimeMillis()).intValue();
+        Integer changed = Long.valueOf(System.currentTimeMillis()).intValue();
         try {
             List<SQLParam> values = new ArrayList<SQLParam>();
             values.add(new SQLParam("accessed", changed, Types.INTEGER));
