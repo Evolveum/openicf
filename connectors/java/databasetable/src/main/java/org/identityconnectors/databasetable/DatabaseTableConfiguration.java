@@ -287,7 +287,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * The Driver class. The jdbcDriver is located by connector framework to connect to database.
      * Required configuration property, and should be validated
      */
-    private String jdbcDriver = DEFAULT_DRIVER;
+    private String jdbcDriver = EMPTY_STR;
 
     /**
      * @return jdbcDriver value
@@ -307,7 +307,7 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
      * Database connection URL. The url is used to connect to database.
      * Required configuration property, and should be validated
      */
-    private String jdbcUrlTemplate = DEFAULT_TEMPLATE;
+    private String jdbcUrlTemplate = EMPTY_STR;
 
     /**
      * Return the jdbcUrlTemplate
@@ -318,6 +318,21 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
             displayMessageKey = "URL_TEMPLATE_DISPLAY",
             helpMessageKey = "URL_TEMPLATE_HELP")
     public String getJdbcUrlTemplate() {
+        if (StringUtil.isNotEmpty(jdbcUrlTemplate)) {
+            return jdbcUrlTemplate;
+        }
+
+        String driver = getJdbcDriver();
+        if ("oracle.jdbc.driver.OracleDriver".equals(driver) || "org.apache.derby.jdbc.EmbeddedDriver".equals(driver)) {
+            return "jdbc:oracle:thin:@%h:%p:%d";
+        } else if ("com.mysql.cj.jdbc.Driver".equals(driver) || "com.mysql.jdbc.Driver".equals(driver)) {
+            return "jdbc:mysql://%h:%p/%d";
+        } else if ("org.postgresql.Driver".equals(driver)) {
+            return "jdbc:postgresql://%h:%p/%d";
+        } else if ("com.microsoft.sqlserver.jdbc.SQLServerDriver".equals(driver)) {
+            return "jdbc:sqlserver://%h:%p;databaseName=%d;";
+        }
+
         return jdbcUrlTemplate;
     }
 

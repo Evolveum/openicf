@@ -30,14 +30,6 @@ package org.identityconnectors.databasetable;
  */
 public class DatabaseTableConstants {
     /**
-     * The default value for the RA_DRIVER resource attribute.
-     */
-    public static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
-    /**
-     * The default connect URL template.
-     */
-    public static final String DEFAULT_TEMPLATE = "jdbc:oracle:thin:@%h:%p:%d";
-    /**
      * The default connection validation timeout.
      */
     public static final int DEFAULT_CONNECTION_VALIDATION_TIMEOUT = 5;
