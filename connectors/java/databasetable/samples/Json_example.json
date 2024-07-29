@@ -1,0 +1,30 @@
+{
+  "objects": [
+    {
+      "objectClassName": "User",
+      "configurationProperties": {
+        "Table": "pouzivatelia",
+        "Key Column": "key_column",
+        "Enable writing empty string": true,
+        "Change Log Column (Sync)": "change_log_column",
+        "Sync Order Column": "sync_order_column",
+        "Sync Order Asc": true,
+        "Suppress Password": true,
+        "Native Timestamps": true
+      }
+    },
+    {
+      "objectClassName": "Group",
+      "configurationProperties": {
+        "Table": "skupiny",
+        "Key Column": "key_column",
+        "Enable writing empty string": true,
+        "Change Log Column (Sync)": "change_log_column",
+        "Sync Order Column": "sync_order_column",
+        "Sync Order Asc": true,
+        "Suppress Password": true,
+        "All native": true
+      }
+    }
+  ]
+}

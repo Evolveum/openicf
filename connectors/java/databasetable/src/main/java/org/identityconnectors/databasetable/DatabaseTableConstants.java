@@ -30,14 +30,6 @@ package org.identityconnectors.databasetable;
  */
 public class DatabaseTableConstants {
     /**
-     * The default value for the RA_DRIVER resource attribute.
-     */
-    public static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
-    /**
-     * The default connect URL template.
-     */
-    public static final String DEFAULT_TEMPLATE = "jdbc:oracle:thin:@%h:%p:%d";
-    /**
      * The default connection validation timeout.
      */
     public static final int DEFAULT_CONNECTION_VALIDATION_TIMEOUT = 5;
@@ -83,6 +75,9 @@ public class DatabaseTableConstants {
     static final String MSG_EXP_DEFAULT = "exception.default";
     static final String MSG_EXP_UNKNOWN_UID = "exception.unknown.uid";
     static final String MSG_EXP_TOO_MANY_UID = "exception.more.than.one.uid";
+
+    static final String MSG_JSON_FILE_BLANK = "json.file.blank";
+    static final String MSG_SQL_FILE_BLANK = "sql.file.blank";
 
 //    public static final String DEFAULT_SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION = "23505";
 //    public static final String DEFAULT_SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION = "23000";
