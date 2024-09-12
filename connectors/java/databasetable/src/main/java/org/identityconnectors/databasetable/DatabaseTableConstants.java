@@ -76,6 +76,9 @@ public class DatabaseTableConstants {
     static final String MSG_EXP_UNKNOWN_UID = "exception.unknown.uid";
     static final String MSG_EXP_TOO_MANY_UID = "exception.more.than.one.uid";
 
+    static final String MSG_JSON_FILE_BLANK = "json.file.blank";
+    static final String MSG_SQL_FILE_BLANK = "sql.file.blank";
+
 //    public static final String DEFAULT_SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION = "23505";
 //    public static final String DEFAULT_SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION = "23000";
 

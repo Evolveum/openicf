@@ -50,6 +50,7 @@
     <properties>
         <project.source.version>17</project.source.version>
         <derby.version>10.17.1.0</derby.version>
+        <javax.json.version>1.1.4</javax.json.version>
 
         <connectorPackage>org.identityconnectors.databasetable</connectorPackage>
         <connectorClass>DatabaseTableConnector</connectorClass>
@@ -87,6 +88,16 @@
             <artifactId>derbytools</artifactId>
             <version>${derby.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>${javax.json.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.4</version>
         </dependency>
     </dependencies>
     <build>

@@ -34,6 +34,11 @@ import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.framework.spi.operations.DiscoverConfigurationOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Objects;
+
 
 /**
  * Implements the {@link Configuration} interface to provide all the necessary
@@ -50,6 +55,8 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         FULL,
         BASIC
     }
+    
+    
 
     /**
      * Type of validation.
@@ -721,6 +728,92 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         this.sqlStateConfigurationException = sqlStateConfigurationException;
     }
 
+    /**
+     * Path for the JSON file with configuration
+     */
+    private String jsonFilePath;
+
+    /**
+     * JsonFilePath getter
+     *
+     * @return JsonFile path
+     */
+    @ConfigurationProperty(order = 32,
+            displayMessageKey = "CUSTOM_JSONFILE_DISPLAY_KEY",
+            helpMessageKey = "CUSTOM_JSONFILE_HELP_KEY")
+
+    public String getJsonFilePath() {
+        return this.jsonFilePath;
+    }
+
+    /**
+     * JsonFilePath Setter
+     */
+    public void setJsonFilePath(String jsonFilePath) {
+        this.jsonFilePath = jsonFilePath;
+    }
+
+    /**
+     * Path for the SQL file
+     */
+    private String sqlFilePath;
+    @ConfigurationProperty(order = 33,
+            displayMessageKey = "CUSTOM_SQL_FILE_PATH_DISPLAY_KEY",
+            helpMessageKey = "CUSTOM_SQL_FILE_PATH_HELP_KEY")
+
+    /**
+     * SqlFilePath getter
+     *
+     * @return SqlFile path
+     */
+    public String getSqlFilePath() {
+        return this.sqlFilePath;
+    }
+
+    /**
+     * SqlFilePath Setter
+     */
+    public void setSqlFilePath(String sqlFilePath) {
+        this.sqlFilePath = sqlFilePath;
+    }
+
+    /**
+     * Which connector type is used. Possible values can be Json, Basic, Custom_SQL_Query
+     */
+    private String connectorMode;
+    @ConfigurationProperty(order = 34,
+            displayMessageKey = "CUSTOM_CONNECTOR_MODE_DISPLAY_KEY",
+            helpMessageKey = "CUSTOM_CONNECTOR_MODE_HELP_KEY")
+
+    /**
+     * ConnectorMode getter
+     *
+     * @return ConnectorMode value
+     */
+    public String getConnectorMode() {
+        return this.connectorMode;
+    }
+
+    /**
+     * ConnectorMode Setter
+     */
+    public void setConnectorMode(String connectorMode) {
+        if (connectorMode == null) {
+            connectorMode = "Basic";
+        }
+        switch (connectorMode.toLowerCase()) {
+            case "basic":
+                this.connectorMode = "Basic";
+                break;
+            case "json":
+                this.connectorMode = "Json";
+                break;
+            case "custom_sql_query":
+                this.connectorMode = "Custom_SQL_Query";
+                break;
+        }
+    }
+
     // =======================================================================
     // Configuration Interface
     // =======================================================================
@@ -792,27 +885,44 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
 
     private void validateConfigurationForTable() {
         // check that there is a table to query.
-        if (StringUtil.isBlank(getTable())) {
-            throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
-        }
-        // determine if you can get a key column
-        if (StringUtil.isBlank(getKeyColumn())) {
-            throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_BLANK));
-        } else {
-            if (getKeyColumn().equalsIgnoreCase(getChangeLogColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_EQ_CHANGE_LOG_COLUMN));
+
+        if(Objects.equals(this.connectorMode, "Json")) {
+            if(StringUtil.isBlank(getJsonFilePath())) {
+                throw new IllegalArgumentException(getMessage(MSG_JSON_FILE_BLANK));
             }
-        }
-        // key column, password column
-        if (StringUtil.isNotBlank(getPasswordColumn())) {
-            if (getPasswordColumn().equalsIgnoreCase(getKeyColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_KEY_COLUMN));
+        } else if (Objects.equals(this.connectorMode, "Custom_SQL_Query")){
+            if(StringUtil.isBlank(getSqlFilePath())) {
+                throw new IllegalArgumentException(getMessage(MSG_SQL_FILE_BLANK));
             }
 
-            if (getPasswordColumn().equalsIgnoreCase(getChangeLogColumn())) {
-                throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_CHANGE_LOG_COLUMN));
+            if (StringUtil.isBlank(getKeyColumn())) {
+                throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_BLANK));
+            }
+        } else {
+            if (StringUtil.isBlank(getTable())) {
+                throw new IllegalArgumentException(getMessage(MSG_TABLE_BLANK));
+            }
+            // determine if you can get a key column
+            if (StringUtil.isBlank(getKeyColumn())) {
+                throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_BLANK));
+            } else {
+                if (getKeyColumn().equalsIgnoreCase(getChangeLogColumn())) {
+                    throw new IllegalArgumentException(getMessage(MSG_KEY_COLUMN_EQ_CHANGE_LOG_COLUMN));
+                }
+            }
+            // key column, password column
+            if (StringUtil.isNotBlank(getPasswordColumn())) {
+                if (getPasswordColumn().equalsIgnoreCase(getKeyColumn())) {
+                    throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_KEY_COLUMN));
+                }
+
+                if (getPasswordColumn().equalsIgnoreCase(getChangeLogColumn())) {
+                    throw new IllegalArgumentException(getMessage(MSG_PASSWD_COLUMN_EQ_CHANGE_LOG_COLUMN));
+                }
             }
         }
+
+
 
         try {
             DatabaseTableSQLUtil.quoteName(getQuoting(), "test");
