@@ -721,6 +721,22 @@ public class DatabaseTableConfiguration extends AbstractConfiguration {
         this.sqlStateConfigurationException = sqlStateConfigurationException;
     }
 
+    /**
+     * Column which describes last login date. If empty, the last login date is not supported.
+     */
+    private String lastLoginDateColumn = EMPTY_STR;
+
+    @ConfigurationProperty(order = 32,
+            displayMessageKey = "LAST_LOGIN_DATE_COLUMN_DISPLAY",
+            helpMessageKey = "LAST_LOGIN_DATE_COLUMN_HELP")
+    public String getLastLoginDateColumn() {
+        return lastLoginDateColumn;
+    }
+
+    public void setLastLoginDateColumn(String lastLoginDateColumn) {
+        this.lastLoginDateColumn = lastLoginDateColumn;
+    }
+
     // =======================================================================
     // Configuration Interface
     // =======================================================================

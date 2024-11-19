@@ -26,6 +26,7 @@ package org.identityconnectors.databasetable;
 import static org.identityconnectors.databasetable.DatabaseTableConstants.*;
 
 import java.sql.*;
+import java.sql.Date;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -917,6 +918,11 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             log.ok("attribute name {0} map to password column", attributeName);
             return config.getPasswordColumn();
         }
+        if (!StringUtil.isBlank(config.getLastLoginDateColumn())
+            && PredefinedAttributes.LAST_LOGIN_DATE_NAME.equalsIgnoreCase(attributeName)) {
+            log.ok("attribute name {0} map to last login date column", attributeName);
+            return config.getLastLoginDateColumn();
+        }
         return attributeName;
     }
 
@@ -1049,6 +1055,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             } else if (name.equalsIgnoreCase(config.getChangeLogColumn())) {
                 // skip changelog column from the schema. It is not part of the contract
                 log.ok("skip changelog column from the schema");
+            } else if (name.equalsIgnoreCase(config.getLastLoginDateColumn())) {
+                attrInfo.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
+                log.ok("last login date column in last login date attribute in the schema");
             } else {
                 // All other attributed taken from the table
                 log.ok("Building attribute info set for standard attribute. ");
@@ -1136,6 +1145,18 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             } else if (columnName.equalsIgnoreCase(config.getChangeLogColumn())) {
                 //No changelogcolumn attribute in the results
                 log.ok("changelogcolumn attribute in the result");
+            } else if (columnName.equalsIgnoreCase(config.getLastLoginDateColumn())) {
+                log.ok("Last login date column in the result");
+                if (param != null && param.getValue() != null) {
+                    Long lastLoginDateValue = getLastLoginDateValue(param);
+                    if (lastLoginDateValue != null) {
+                        bld.addAttribute(AttributeBuilder.build(PredefinedAttributes.LAST_LOGIN_DATE_NAME, lastLoginDateValue));
+                    } else {
+                        log.ok("Couldn't parse the last login date value from the column {0}, param {1}", columnName, param);
+                    }
+                } else {
+                    bld.addAttribute(AttributeBuilder.build(PredefinedAttributes.LAST_LOGIN_DATE_NAME));
+                }
             } else {
                 if (param != null && param.getValue() != null) {
                     Object paramValue = param.getValue();
@@ -1168,6 +1189,36 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         bld.setObjectClass(ObjectClass.ACCOUNT);
         log.ok("ConnectorObject is builded");
         return bld;
+    }
+
+    private Long getLastLoginDateValue(SQLParam param) {
+        Long result = null;
+
+        switch (param.getSqlType()) {
+            case Types.DATE:
+                if (param.getValue() instanceof String s) {
+                    result = SQLUtil.string2Date(s).getTime();
+                } else if (param.getValue() instanceof Date d) {
+                    result = d.getTime();
+                }
+                break;
+            case Types.TIME:
+                if (param.getValue() instanceof String s) {
+                    result = SQLUtil.string2Time(s).getTime();
+                } else if (param.getValue() instanceof Time t) {
+                    result = t.getTime();
+                }
+                break;
+            case Types.TIMESTAMP:
+                if (param.getValue() instanceof String s) {
+                    result = SQLUtil.string2Timestamp(s).getTime();
+                } else if (param.getValue() instanceof Timestamp t) {
+                    result = t.getTime();
+                }
+                break;
+        }
+
+        return result;
     }
 
     /**

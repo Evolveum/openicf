@@ -22,17 +22,18 @@
  */
 package org.identityconnectors.databasetable;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
+import org.identityconnectors.framework.api.APIConfiguration;
+import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.objects.*;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
 import static org.identityconnectors.common.ByteUtil.randomBytes;
 import static org.identityconnectors.common.StringUtil.randomString;
+import static org.testng.AssertJUnit.*;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -58,16 +59,6 @@ import org.identityconnectors.dbcommon.ExpectProxy;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SyncToken;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.test.common.TestHelpers;
 
 /**
@@ -459,4 +450,32 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
     }
 
 
+    @Test
+    public void testLastLoginDate() throws Exception {
+        DatabaseTableConfiguration config = getConfiguration();
+        config.setLastLoginDateColumn("enrolled");
+
+        ConnectorFacade connector = createNewInstance(config);
+
+        Set<Attribute> attributes = getCreateAttributeSet(config);
+        Uid uid = connector.create(ObjectClass.ACCOUNT, attributes, null);
+
+        ConnectorObject object = connector.getObject(ObjectClass.ACCOUNT, uid, null);
+        assertNotNull(object);
+        Attribute enrolled = object.getAttributeByName("enrolled");
+        assertNull(enrolled);
+
+        Attribute lastLoginDate = object.getAttributeByName(PredefinedAttributes.LAST_LOGIN_DATE_NAME);
+        assertNotNull(lastLoginDate);
+        List<Object> values = lastLoginDate.getValue();
+        assertEquals(1, values.size());
+        assertEquals(Long.class, values.get(0).getClass());
+    }
+
+    protected ConnectorFacade createNewInstance(DatabaseTableConfiguration config) {
+        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+
+        APIConfiguration impl = TestHelpers.createTestConfiguration(DatabaseTableConnector.class, config);
+        return factory.newInstance(impl);
+    }
 }
