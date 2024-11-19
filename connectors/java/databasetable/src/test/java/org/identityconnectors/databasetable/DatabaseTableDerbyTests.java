@@ -449,10 +449,30 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         return new File(System.getProperty("java.io.tmpdir"), DB_DIR);
     }
 
-
     @Test
     public void testLastLoginDate() throws Exception {
         DatabaseTableConfiguration config = getConfiguration();
+
+        testLastLoginDate(config);
+    }
+
+    @Test
+    public void testLastLoginDateAllNative() throws Exception {
+        DatabaseTableConfiguration config = getConfiguration();
+        config.setAllNative(true);
+
+        testLastLoginDate(config);
+    }
+
+    @Test
+    public void testLastLoginDateNativeTimestamps() throws Exception {
+        DatabaseTableConfiguration config = getConfiguration();
+        config.setNativeTimestamps(true);
+
+        testLastLoginDate(config);
+    }
+
+    public void testLastLoginDate(DatabaseTableConfiguration config) throws Exception {
         config.setLastLoginDateColumn("enrolled");
 
         ConnectorFacade connector = createNewInstance(config);
@@ -461,6 +481,17 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         Uid uid = connector.create(ObjectClass.ACCOUNT, attributes, null);
 
         ConnectorObject object = connector.getObject(ObjectClass.ACCOUNT, uid, null);
+        // we just assert last login date is there
+        getLastLoginDate(object);
+
+        long currentTime = System.currentTimeMillis();
+
+        connector.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(AttributeBuilder.build(PredefinedAttributes.LAST_LOGIN_DATE_NAME, currentTime)), null);
+        object = connector.getObject(ObjectClass.ACCOUNT, uid, null);
+        assertEquals(currentTime, getLastLoginDate(object).longValue());
+    }
+
+    private Long getLastLoginDate(ConnectorObject object) {
         assertNotNull(object);
         Attribute enrolled = object.getAttributeByName("enrolled");
         assertNull(enrolled);
@@ -470,6 +501,8 @@ public class DatabaseTableDerbyTests extends DatabaseTableTestBase {
         List<Object> values = lastLoginDate.getValue();
         assertEquals(1, values.size());
         assertEquals(Long.class, values.get(0).getClass());
+
+        return (Long) values.get(0);
     }
 
     protected ConnectorFacade createNewInstance(DatabaseTableConfiguration config) {

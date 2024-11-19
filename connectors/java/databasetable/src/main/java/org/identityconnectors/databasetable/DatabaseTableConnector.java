@@ -395,20 +395,26 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         UpdateSetBuilder updateSet = new UpdateSetBuilder();
         for (Attribute attribute : attrs) {
             // All attributes needs to be updated except the UID
-            if (!attribute.is(Uid.NAME)) {
-                final String attributeName = attribute.getName();
-                final String columnName = getColumnName(attributeName);
-                Object value = AttributeUtil.getSingleValue(attribute);
-                // Handle the empty string values
-                if (isToBeEmpty(columnName, value)) {
-                    log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
-                    value = DatabaseTableConstants.EMPTY_STR;
-                }
-                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
-                final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
-                updateSet.addBind(param);
-                log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
+            if (attribute.is(Uid.NAME)) {
+                continue;
             }
+
+            final String attributeName = attribute.getName();
+            final String columnName = getColumnName(attributeName);
+            Object value = AttributeUtil.getSingleValue(attribute);
+            // Handle the empty string values
+            if (isToBeEmpty(columnName, value)) {
+                log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
+                value = DatabaseTableConstants.EMPTY_STR;
+            }
+            final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+            if (PredefinedAttributes.LAST_LOGIN_DATE_NAME.equalsIgnoreCase(attributeName) && value instanceof Long l) {
+                value =  getLastLoginDateOriginalValue(l, sqlColumnTypeInfo);
+            }
+
+            final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
+            updateSet.addBind(param);
+            log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
         }
         log.info("Update account {0}", accountName);
 
@@ -1189,6 +1195,19 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         bld.setObjectClass(ObjectClass.ACCOUNT);
         log.ok("ConnectorObject is builded");
         return bld;
+    }
+
+    private Object getLastLoginDateOriginalValue(Long value, SQLColumnTypeInfo info) {
+        switch (info.getTypeCode()) {
+            case Types.DATE:
+                return SQLUtil.date2String(new Date(value));
+            case Types.TIME:
+                return SQLUtil.time2String(new Time(value));
+            case Types.TIMESTAMP:
+                return SQLUtil.timestamp2String(new Timestamp(value));
+        }
+
+        return value;
     }
 
     private Long getLastLoginDateValue(SQLParam param) {
