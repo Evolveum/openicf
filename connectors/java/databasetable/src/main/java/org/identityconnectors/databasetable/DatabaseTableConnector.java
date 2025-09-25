@@ -208,7 +208,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         final String accountName = name.getNameValue();
         log.ok("Required Name attribure value {0} for create", accountName);
 
-        final String tblname = config.getTable();
+        final String tblname = quoteName(config.getTable());
         // start the insert statement
         final InsertIntoBuilder bld = new InsertIntoBuilder();
 
@@ -313,7 +313,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         final String accountUid = uid.getUidValue();
         log.ok("The Uid is present");
 
-        final String tblname = config.getTable();
+        final String tblname = quoteName(config.getTable());
         final String keycol = quoteName(config.getKeyColumn());
         final String sql = MessageFormat.format(SQL_DELETE, tblname, keycol);
         try {
@@ -419,7 +419,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("Update account {0}", accountName);
 
         // Format the update query
-        final String tblname = config.getTable();
+        final String tblname = quoteName(config.getTable());
         final String keycol = quoteName(config.getKeyColumn());
         SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(config.getKeyColumn());
         updateSet.addValue(new SQLParam(keycol, accountUid, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName()));
@@ -493,7 +493,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         final Set<String> columnNamesToGet = resolveColumnNamesToGet(options);
         log.ok("Column Names {0} To Get", columnNamesToGet);
         // For all account query there is no need to replace or quote anything
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNamesToGet);
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(quoteName(tblname), columnNamesToGet);
         query.setWhere(where);
 
         ResultSet result = null;
@@ -550,7 +550,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.ok("The change log column is ok");
 
         // Names
-        final String tblname = config.getTable();
+        final String tblname = quoteName(config.getTable());
         final String changeLogColumnName = quoteName(config.getChangeLogColumn());
         log.ok("Change log attribute {0} map to column name {1}", config.getChangeLogColumn(), changeLogColumnName);
         final Set<String> columnNames = resolveColumnNamesToGet(options);
@@ -640,8 +640,8 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         // Format the update query
         final String tblname = config.getTable();
-        final String chlogName = quoteName(config.getChangeLogColumn());
-        final String sql = MessageFormat.format(SQL_SELECT, chlogName, tblname);
+        final String chlogName = config.getChangeLogColumn();
+        final String sql = MessageFormat.format(SQL_SELECT, quoteName(chlogName), quoteName(tblname));
         SyncToken ret = null;
 
         log.info("getLatestSyncToken on {0}", oclass);
@@ -999,7 +999,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         log.info("get schema from the table");
         Set<AttributeInfo> attrInfo;
-        String sql = MessageFormat.format(schemaQuery, config.getTable(), quoteName(config.getKeyColumn()));
+        String sql = MessageFormat.format(schemaQuery, quoteName(config.getTable()), quoteName(config.getKeyColumn()));
         // check out the result etc..
         ResultSet rset = null;
         Statement stmt = null;
