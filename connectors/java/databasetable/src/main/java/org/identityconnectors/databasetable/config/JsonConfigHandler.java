@@ -48,12 +48,22 @@ public class JsonConfigHandler {
                 // Retrieving configuration property values from the new configuration object
                 universalObjectClassHandler.setTable(configProperties.getString("Table"));
                 universalObjectClassHandler.setKeyColumn(configProperties.getString("Key Column"));
-                universalObjectClassHandler.setEnableWritingEmptyString(configProperties.getBoolean("Enable writing empty string"));
-                universalObjectClassHandler.setChangeLogColumn(configProperties.getString("Change Log Column (Sync)"));
-                universalObjectClassHandler.setSyncOrderColumn(configProperties.getString("Sync Order Column"));
-                universalObjectClassHandler.setSyncOrderAsc(configProperties.getBoolean("Sync Order Asc"));
-                universalObjectClassHandler.setSuppressPassword(configProperties.getBoolean("Suppress Password"));
 
+                if (configProperties.containsKey("Enable writing empty string")) {
+                    universalObjectClassHandler.setEnableWritingEmptyString(configProperties.getBoolean("Enable writing empty string"));
+                }
+                if (configProperties.containsKey("Change Log Column (Sync)")) {
+                    universalObjectClassHandler.setChangeLogColumn(configProperties.getString("Change Log Column (Sync)"));
+                }
+                if (configProperties.containsKey("Sync Order Column")) {
+                    universalObjectClassHandler.setSyncOrderColumn(configProperties.getString("Sync Order Column"));
+                }
+                if (configProperties.containsKey("Sync Order Asc")) {
+                    universalObjectClassHandler.setSyncOrderAsc(configProperties.getBoolean("Sync Order Asc"));
+                }
+                if (configProperties.containsKey("Suppress Password")) {
+                    universalObjectClassHandler.setSuppressPassword(configProperties.getBoolean("Suppress Password"));
+                }
                 // Retrieving optional configuration property values from the new configuration object
                 if (configProperties.containsKey("All native")) {
                     universalObjectClassHandler.setSuppressPassword(configProperties.getBoolean("All native"));

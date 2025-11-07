@@ -129,7 +129,7 @@ public final class DatabaseTableSQLUtil {
         final ResultSetMetaData meta = resultSet.getMetaData();
         int count = meta.getColumnCount();
         for (int i = 1; i <= count; i++) {
-            final String name = meta.getColumnName(i);
+            final String name = meta.getColumnLabel(i);
             final int sqlType = meta.getColumnType(i);
 
             final String sqlTypeName = meta.getColumnTypeName(i);

@@ -109,6 +109,11 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
     private Map<String, SQLColumnTypeInfo> columnSQLTypes;
 
     /**
+     * Stores values from different tables
+     */
+    private  Map<String, Map<String, SQLColumnTypeInfo>> columnSQLTypesCollection;
+
+    /**
      * Cached value for required columns
      */
     private Set<String> stringColumnRequired;
@@ -141,11 +146,13 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             this.universalObjectClassHandlers = jsonConfigHandler.getUniversalObjectClassHandlers();
         } else if (Objects.equals(this.config.getConnectorMode(), "Custom_SQL_Query")) {
             this.sqlHandler = new SqlHandler(this.config);
+            this.config.setTable(this.sqlHandler.getTable());
         }
 
         this.schema = null;
         this.defaultAttributesToGet = null;
         this.columnSQLTypes = null;
+        this.columnSQLTypesCollection = null;
         log.ok("init DatabaseTable connector ok, connection is valid");
     }
 
@@ -199,6 +206,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         this.defaultAttributesToGet = null;
         this.schema = null;
         this.columnSQLTypes = null;
+        this.columnSQLTypesCollection = null;
     }
 
     /**
@@ -264,7 +272,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                     log.info("create account, attribute for a column {0} is null and should be empty", columnName);
                     value = EMPTY_STR;
                 }
-                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), columnName);
                 log.info("attribute {0} fit column {1} and sql type {2}", attr.getName(), columnName, sqlColumnTypeInfo);
                 bld.addBind(new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName()));
                 missingRequiredColumns.remove(columnName);
@@ -276,7 +284,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         if (isEnableEmptyString) {
             log.info("there are columns not matched in attribute set which should be empty");
             for (String mCol : missingRequiredColumns) {
-                SQLColumnTypeInfo typeInfo = getColumnTypeInfo(mCol);
+                SQLColumnTypeInfo typeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), mCol);
                 bld.addBind(new SQLParam(quoteName(mCol), EMPTY_STR, typeInfo.getTypeCode(), typeInfo.getTypeName()));
                 log.ok("Required empty value to column {0} added", mCol);
             }
@@ -374,7 +382,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                         // create a prepared call..
                         stmt = getConn().getConnection().prepareStatement(sql);
                         // set object to delete..
-                        final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(keycol);
+                        final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), keycol);
                         SQLUtil.setSQLParam(stmt, 1, new SQLParam(quoteName(keycol), accountUid, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName()));
                         // stmt.setString(1, accountUid);
                         // uid to delete..
@@ -463,7 +471,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                     log.info("Append empty attribute {0} for required columnName {1}", attributeName, columnName);
                     value = DatabaseTableConstants.EMPTY_STR;
                 }
-                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(columnName);
+                final SQLColumnTypeInfo sqlColumnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), columnName);
                 final SQLParam param = new SQLParam(quoteName(columnName), value, sqlColumnTypeInfo.getTypeCode(), sqlColumnTypeInfo.getTypeName());
                 updateSet.addBind(param);
                 log.ok("Appended to update statement the attribute {0} for columnName {1} and sql type code {2}", attributeName, columnName, sqlColumnTypeInfo.getTypeCode());
@@ -484,7 +492,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
 
         // Format the update query
-        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(keycol);
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), keycol);
         updateSet.addValue(new SQLParam(keycol, accountUid, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName()));
         final String sql = MessageFormat.format(sqlTemplate, tblname, updateSet.getSQL(), keycol);
         PreparedStatement stmt = null;
@@ -609,41 +617,231 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
 
         if(where != null) {
             whereCondition = where.getWhereClause();
+            int minIndex = sqlQuery.length();
 
-            // Regular expression to match clauses that can come after WHERE
-            String[] clauses = {"GROUP BY", "HAVING", "ORDER BY", "LIMIT"};
-            int minIndex = sqlQuery.length(); // Start with the maximum possible index
-
-            // Find the earliest occurrence of any of the clauses
-            for (String clause : clauses) {
-                int index = sqlQuery.toUpperCase().indexOf(clause);
-                if (index != -1 && index < minIndex) {
-                    minIndex = index;
-                }
-            }
-
-            // Check if WHERE exists before any of these clauses
-            int whereIndex = sqlQuery.toUpperCase().indexOf("WHERE");
+            int whereIndex = this.sqlHandler.getWhereIndex();
             if (whereIndex == -1 || whereIndex > minIndex) {
-                // Insert WHERE clause at the correct position
-                if (minIndex == sqlQuery.length()) {
-                    // No other clause exists, append WHERE to the end
-                    return sqlQuery + " WHERE " + whereCondition;
-                } else {
-                    // Insert WHERE before the earliest clause
-                    return sqlQuery.substring(0,minIndex) + " WHERE " + whereCondition + " " + sqlQuery.substring(minIndex);
-                }
+                return sqlQuery + " WHERE " + whereCondition;
             }
 
-            return sqlQuery.substring(0,whereIndex) + "WHERE " + whereCondition + " AND " + sqlQuery.substring(whereIndex+6);
+            if(this.sqlHandler.getWhereClause()!=null) {
+                return sqlQuery.substring(0,whereIndex) + "WHERE " + whereCondition + " AND " + sqlQuery.substring(whereIndex+6);
+            }
+
+            return sqlQuery.substring(0,whereIndex) + "WHERE " + whereCondition + " " + sqlQuery.substring(whereIndex);
         }
         return sqlQuery;
     }
 
+    private boolean isNumericType(int sqlType) {
+        switch (sqlType) {
+            case -7:  // BIT
+            case -6:  // TINYINT
+            case -5:  // BIGINT
+            case 2:   // NUMERIC
+            case 3:   // DECIMAL
+            case 4:   // INTEGER
+            case 5:   // SMALLINT
+            case 6:   // FLOAT
+            case 7:   // REAL
+            case 8:   // DOUBLE
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static String detectOperatorFor(String whereSql, String sourceName, Map<String, String> aliasBySource) {
+        if (whereSql == null) {
+            whereSql = "";
+        }
+        if (sourceName == null || sourceName.trim().isEmpty()) {
+            return "=";
+        }
+
+
+        String alias = (aliasBySource != null) ? aliasBySource.get(sourceName) : null;
+
+        java.util.List<String> candidates = new java.util.ArrayList<>();
+        if (alias != null && !alias.isEmpty()) {
+            candidates.add(alias);
+        }
+        candidates.add(sourceName);
+
+        for (String cand : candidates) {
+            String patName = java.util.regex.Pattern.quote(cand);
+            java.util.regex.Pattern pat = java.util.regex.Pattern.compile("(?i)" + patName + "\\s*(=|like|equals)\\b");
+            java.util.regex.Matcher m = pat.matcher(whereSql);
+            if (m.find()) {
+                String op = m.group(1);
+                if ("equals".equalsIgnoreCase(op)) {
+                    return "=";
+                }
+                if ("like".equalsIgnoreCase(op)) {
+                    return "LIKE";
+                }
+                return "=";
+            }
+        }
+
+        return "=";
+    }
+
+    private String getSqlTypeName(int sqlType) {
+        switch (sqlType) {
+            case -7: return "BIT";
+            case -6: return "TINYINT";
+            case -5: return "BIGINT";
+            case -4: return "LONGVARBINARY";
+            case -3: return "VARBINARY";
+            case -2: return "BINARY";
+            case -1: return "LONGVARCHAR";
+            case 1: return "CHAR";
+            case 2: return "NUMERIC";
+            case 3: return "DECIMAL";
+            case 4: return "INTEGER";
+            case 5: return "SMALLINT";
+            case 6: return "FLOAT";
+            case 7: return "REAL";
+            case 8: return "DOUBLE";
+            case 12: return "VARCHAR";
+            case 16: return "BOOLEAN";
+            case 91: return "DATE";
+            case 92: return "TIME";
+            case 93: return "TIMESTAMP";
+            case 2004: return "BLOB";
+            case 2005: return "CLOB";
+            default: return "SQL Type:" + sqlType;
+        }
+    }
+
+    private Object convertToNumericType(String value, int sqlType) throws NumberFormatException {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String trimmedValue = value.trim();
+
+        switch (sqlType) {
+            case -7:  // BIT
+            case 16:  // BOOLEAN
+                return Boolean.parseBoolean(trimmedValue);
+
+            case -6:  // TINYINT
+                return Byte.parseByte(trimmedValue);
+
+            case 5:   // SMALLINT
+                return Short.parseShort(trimmedValue);
+
+            case 4:   // INTEGER
+                return Integer.parseInt(trimmedValue);
+
+            case -5:  // BIGINT
+                return Long.parseLong(trimmedValue);
+
+            case 6:   // FLOAT
+            case 7:   // REAL
+                return Float.parseFloat(trimmedValue);
+
+            case 8:   // DOUBLE
+                return Double.parseDouble(trimmedValue);
+
+            case 2:   // NUMERIC
+            case 3:   // DECIMAL
+                return new java.math.BigDecimal(trimmedValue);
+
+            default:
+                return value;
+        }
+    }
+
     private void executeSqlQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler) {
-        List <SQLParam> params = new ArrayList<>();
-        if(where != null ) {
+        List<SQLParam> params = new ArrayList<>();
+        if (where != null) {
             params = where.getParams();
+
+            String originalWhereSql = where.getWhere() != null ? where.getWhere().toString() : "";
+
+            List<SQLParam> replacedParams = new ArrayList<>();
+            if (!this.sqlHandler.getColumnAliasBySource().isEmpty()) {
+
+                ListIterator<SQLParam> it = params.listIterator();
+                while (it.hasNext()) {
+                    SQLParam p = it.next();
+                    String oldName = p.getName();
+                    String newName = this.sqlHandler.getSourceByColumnAlias().get(oldName);
+                    Object value = p.getValue();
+
+                    if(isNumericType(p.getSqlType())) {
+                        if (value instanceof String) {
+                            String strValue = (String) value;
+                            String originalValue = strValue;
+
+                            if (strValue.startsWith("%")) {
+                                strValue = strValue.substring(1);
+                            }
+
+                            if (strValue.endsWith("%")) {
+                                strValue = strValue.substring(0, strValue.length() - 1);
+                            }
+
+                            if (!originalValue.equals(strValue)) {
+                                log.info("Removed leading/trailing % from value ''{0}'' -> ''{1}'' for column {2}",
+                                        originalValue, strValue, p.getName());
+                                value = strValue;
+                            }
+
+                            if (isNumericType(p.getSqlType())) {
+                                if (strValue.contains("%") || strValue.contains("_")) {
+                                    String cleanValue = strValue.replace("%", "").replace("_", "");
+
+                                    log.warn("Column {0} is numeric type {1} but received wildcard value ''{2}''. " +
+                                                    "Removing all wildcards and using exact match with value ''{3}''",
+                                            p.getName(), getSqlTypeName(p.getSqlType()), strValue, cleanValue);
+
+                                    strValue = cleanValue;
+                                }
+
+                                try {
+                                    value = convertToNumericType(strValue, p.getSqlType());
+                                    log.ok("Converted string ''{0}'' to numeric type {1} for column {2}",
+                                            strValue, getSqlTypeName(p.getSqlType()), p.getName());
+                                } catch (NumberFormatException e) {
+                                    log.error("Cannot convert ''{0}'' to numeric type for column {1}. Using string value.",
+                                            strValue, p.getName());
+                                    value = strValue;
+                                }
+                            }
+                        }
+                    }
+
+                    if (newName != null && !newName.equals(oldName)) {
+                        replacedParams.add(new SQLParam(newName, value, p.getSqlType(), p.getSqlTypeName()));
+                    } else {
+                        replacedParams.add(p);
+                    }
+                }
+                params = replacedParams;
+
+                where = new FilterWhereBuilder();
+                boolean first = true;
+                for (SQLParam p : params) {
+                    if (!first) {
+                        where.getWhere().append(" AND ");
+                    }
+
+                    String operator = detectOperatorFor(originalWhereSql, p.getName(), this.sqlHandler.getColumnAliasBySource());
+                    if(isNumericType(p.getSqlType())) {operator = "=";}
+
+                    Object v = p.getValue();
+                    where.addBind(
+                            new SQLParam(p.getName(), v, p.getSqlType(), p.getSqlTypeName()),
+                            operator
+                    );
+
+                    first = false;
+                }
+            }
         }
 
         String sqlQuery = buildSqlQuery(where);
@@ -657,14 +855,12 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             while (result.next()) {
                 final Map<String, SQLParam> columnValues = getConn().getColumnValues(result);
                 log.ok("Column values {0} from result set ", columnValues);
-                // create the connector object
                 final ConnectorObjectBuilder bld = buildConnectorObject(oclass,columnValues);
                 if (!handler.handle(bld.build())) {
                     log.ok("Stop processing of the result set");
                     break;
                 }
             }
-            // commit changes
             log.info("commit executeSqlQuery");
             commit();
 
@@ -753,7 +949,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         if (token != null && token.getValue() != null) {
             final Object tokenVal = token.getValue();
             log.info("Sync token is {0}", tokenVal);
-            final SQLColumnTypeInfo sqlColumnTypeinfo = getColumnTypeInfo(changeLogColumn);
+            final SQLColumnTypeInfo sqlColumnTypeinfo = getColumnTypeInfo(oclass.getObjectClassValue(), changeLogColumn);
             where.addBind(new SQLParam(quoteName(changeLogColumn), tokenVal, sqlColumnTypeinfo.getTypeCode(), sqlColumnTypeinfo.getTypeName()), ">");
         }
 
@@ -863,7 +1059,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 }
             }
             if (ret == null) {
-                SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(chlogName);
+                SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), chlogName);
                 ret = new SyncToken(SQLUtil.jdbc2AttributeValue(SQLUtil.getCurrentJdbcTime(columnTypeInfo.getTypeCode())));
             }
             log.ok("getLatestSyncToken", ret);
@@ -989,7 +1185,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         }
 
         String sql = MessageFormat.format(SQL_AUTH_QUERY, quoteName(keyCol), tblname, passwordColumnName);
-        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(keyCol);
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), keyCol);
         final List<SQLParam> values = new ArrayList<>();
         values.add(new SQLParam(quoteName(keyCol), username, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName())); // real username
         values.add(new SQLParam(passwordColumnName, password)); // real password
@@ -1070,7 +1266,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         String sql = MessageFormat.format(SQL_AUTH_QUERY, quoteName(keyCol), tblname, passwordColumnName);
 
         final List<SQLParam> values = new ArrayList<>();
-        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(keyCol);
+        SQLColumnTypeInfo columnTypeInfo = getColumnTypeInfo(oclass.getObjectClassValue(), keyCol);
         values.add(new SQLParam(quoteName(keyCol), username, columnTypeInfo.getTypeCode(), columnTypeInfo.getTypeName())); // real username
 
         PreparedStatement stmt = null;
@@ -1124,14 +1320,19 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      * @param columnName the column name
      * @return the cached column type
      */
-    public SQLColumnTypeInfo getColumnTypeInfo(String columnName) {
+    public SQLColumnTypeInfo getColumnTypeInfo(String objectClass, String columnName) {
         if (columnSQLTypes == null) {
             cacheSchema();
+        } else if (Objects.equals(this.config.getConnectorMode(), "Json")) {
+            if(columnSQLTypesCollection.size() < this.universalObjectClassHandlers.size()) {
+                cacheSchema();
+            }
         }
         // no null here :)
-        assert columnSQLTypes != null;
+        assert columnSQLTypesCollection != null;
+        assert columnSQLTypesCollection.get(objectClass) != null;
 
-        return columnSQLTypes.get(columnName);
+        return columnSQLTypesCollection.get(objectClass).get(columnName);
     }
 
     /**
@@ -1223,10 +1424,17 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
              * First, compute the account attributes based on the database schema
              */
             String table = config.getTable();
+            String keyCol = config.getKeyColumn();
+
+            Set<AttributeInfo> attrInfoSet;
+
             if(Objects.equals(this.config.getConnectorMode(), "Custom_SQL_Query")) {
-                table = this.sqlHandler.getTable();
+                attrInfoSet = buildSQLSelectBasedAttributeInfos(ObjectClass.ACCOUNT_NAME,
+                        this.sqlHandler.getColumnSchemaFormat(),
+                        this.sqlHandler.getSqlQuery());
+            } else {
+                attrInfoSet = buildSelectBasedAttributeInfos(ObjectClass.ACCOUNT_NAME, table,keyCol);
             }
-            final Set<AttributeInfo> attrInfoSet = buildSelectBasedAttributeInfos(ObjectClass.ACCOUNT_NAME, table,config.getKeyColumn());
 
             log.info("cacheSchema");
             // Cache the attributes to get
@@ -1272,6 +1480,64 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.ok("schema builded");
     }
 
+    private Set<AttributeInfo> buildSQLSelectBasedAttributeInfos(String oClass,
+                                                                 Map<String, String> columnSchemaFormat,
+                                                                 String sql) {
+        if (sql == null) {
+            throw new IllegalArgumentException("sql must not be null");
+        }
+        if (columnSchemaFormat == null || columnSchemaFormat.isEmpty()) {
+            throw new IllegalArgumentException("columnSchemaFormat must not be null or empty (alias -> table.column)");
+        }
+
+        String core = sql.trim();
+        if (core.endsWith(";")) {
+            core = core.substring(0, core.length() - 1);
+        }
+
+        StringBuilder projection = new StringBuilder();
+        int i = 0;
+        for (String alias : columnSchemaFormat.keySet()) {
+            if (alias == null || alias.isEmpty()) {
+                continue;
+            }
+            if (i++ > 0) {
+                projection.append(", ");
+            }
+            projection.append("__src.").append(quoteName(alias))
+                    .append(" AS ").append(quoteName(alias));
+        }
+
+        if (projection.length() == 0) {
+            throw new IllegalArgumentException("columnSchemaFormat has no usable aliases.");
+        }
+
+        String wrapped = "SELECT " + projection + " FROM (" + core + ") AS __src WHERE 1=0";
+
+        Set<AttributeInfo> attrInfo;
+        ResultSet rset = null;
+        Statement stmt = null;
+        try {
+            stmt = getConn().getConnection().createStatement();
+            log.info("executeQuery ''{0}''", wrapped);
+            rset = stmt.executeQuery(wrapped);
+            log.ok("query executed");
+            attrInfo = buildAttributeInfoSet(oClass, rset);
+            log.info("commit get schema");
+            commit();
+        } catch (SQLException ex) {
+            log.error(ex, "buildSelectBasedAttributeInfo in SQL: ''{0}''", wrapped);
+            SQLUtil.rollbackQuietly(getConn());
+            throw new ConnectorException(config.getMessage(MSG_CAN_NOT_READ, config.getTable()), ex);
+        } finally {
+            IOUtil.quietClose(rset);
+            IOUtil.quietClose(stmt);
+        }
+        log.ok("schema created");
+        return attrInfo;
+    }
+
+
     /**
      * Get the schema using a SELECT query.
      *
@@ -1284,36 +1550,6 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         log.info("get schema from the table");
         Set<AttributeInfo> attrInfo;
         String sql = MessageFormat.format(schemaQuery, table, quoteName(keyColumn));
-
-        if(Objects.equals(this.config.getConnectorMode(), "Custom_SQL_Query")) {
-            sql = this.sqlHandler.getSqlQuery();
-
-            String[] clauses = {"GROUP BY", "HAVING", "ORDER BY", "LIMIT"};
-            int minIndex = sql.length(); // Start with the maximum possible index
-
-            // Find the earliest occurrence of any of the clauses
-            for (String clause : clauses) {
-                int index = sql.toUpperCase().indexOf(clause);
-                if (index != -1 && index < minIndex) {
-                    minIndex = index;
-                }
-            }
-
-            // Check if WHERE exists before any of these clauses
-            int whereIndex = sql.toUpperCase().indexOf("WHERE");
-            if (whereIndex == -1 || whereIndex > minIndex) {
-                // Insert WHERE clause at the correct position
-                if (minIndex == sql.length()) {
-                    // No other clause exists, append WHERE to the end
-                    sql = sql + " WHERE " + keyColumn + " is null ";
-                } else {
-                    // Insert WHERE before the earliest clause
-                    sql = sql.substring(0, minIndex) + " WHERE " + keyColumn + " is null " + sql.substring(minIndex);
-                }
-            } else {
-                sql = sql.substring(0,whereIndex) + "WHERE " + keyColumn + " is null " + sql.substring(minIndex);
-            }
-        }
 
         // check out the result etc..
         ResultSet rset = null;
@@ -1347,6 +1583,11 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
      */
     private Set<AttributeInfo> buildAttributeInfoSet(String oClass, ResultSet rset) throws SQLException {
         log.info("build AttributeInfoSet");
+
+        if(columnSQLTypesCollection == null) {
+            columnSQLTypesCollection = CollectionUtil.newCaseInsensitiveMap();
+        }
+
         Set<AttributeInfo> attrInfo = new HashSet<>();
         columnSQLTypes = CollectionUtil.newCaseInsensitiveMap();
         stringColumnRequired = CollectionUtil.newCaseInsensitiveSet();
@@ -1398,13 +1639,20 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                     attrBld.setName(Name.NAME);
                     //The generate UID make the Name attribute is nor required
                     attrBld.setRequired(true);
-                    if(Objects.equals(this.config.getConnectorMode(), "Custom_SQL_Query")) {
+                    if (Objects.equals(this.config.getConnectorMode(), "Custom_SQL_Query")) {
                         attrBld.setUpdateable(false);
                         attrBld.setCreateable(false);
                     }
                     attrInfo.add(attrBld.build());
                     attrBld = new AttributeInfoBuilder();
-                    attrBld.setName(name);
+                    if (this.sqlHandler.getColumnAliasBySource().containsKey(name)){
+                        String newName = this.sqlHandler.getColumnAliasBySource().get(name);
+                        attrBld.setName(newName);
+                    }else {
+                        attrBld.setName(name);
+                    }
+                    attrBld.setReadable(false);
+                    attrBld.setReturnedByDefault(false);
                     attrInfo.add(attrBld.build());
                     log.ok("key column in name attribute in the schema");
                     attributeFound = true;
@@ -1457,6 +1705,7 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                 log.ok("the column name {0} has data type {1}", name, dataType);
             }
         }
+        columnSQLTypesCollection.put(oClass, columnSQLTypes);
         log.ok("the Attribute InfoSet is done");
         return attrInfo;
     }
@@ -1483,10 +1732,10 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
         String uidValue = null;
         ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
         for (Map.Entry<String, SQLParam> colValue : columnValues.entrySet()) {
-            final String columnName = colValue.getKey();
+            String columnName = colValue.getKey();
             final SQLParam param = colValue.getValue();
-            // Map the special
 
+            // Map the special
             String keyCol;
             String changeLogCol;
             // Sets table name and change log column from config specified by connector mode
@@ -1496,6 +1745,9 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
             } else {
                 keyCol = this.config.getKeyColumn();
                 changeLogCol = this.config.getChangeLogColumn();
+            }
+            if(!this.sqlHandler.getColumnAliasBySource().isEmpty() && this.sqlHandler.getColumnAliasBySource().containsKey(columnName)) {
+                columnName = this.sqlHandler.getColumnAliasBySource().get(columnName);
             }
             if (columnName.equalsIgnoreCase(keyCol)) {
                 if (param == null || param.getValue() == null) {
@@ -1726,17 +1978,6 @@ public class DatabaseTableConnector implements PoolableConnector, CreateOp, Sear
                         logErr, config.getMessage(message, messageParameters));
                 return;
             }
-            /// TODO should we leave the defaults for already exists ?
-/*            if (alreadyExistsSqlStates == null) {
-                if (DEFAULT_SQLSTATE_UNIQUE_CONSTRAIN_VIOLATION.equals(sqlState) ||
-                        DEFAULT_SQLSTATE_INTEGRITY_CONSTRAIN_VIOLATION.equals(sqlState)) {
-
-                    log.ok("sqlState exception handling for AlreadyExistsException based on default sqlState values.");
-                    evaluateAndThrow(new AlreadyExistsException(e), e, checkIfRethrow,
-                            logErr, config.getMessage(MSG_OP_ALREADY_EXISTS, messageParameters));
-                    return;
-                }
-            }*/
         }
 
         // DEFAULT

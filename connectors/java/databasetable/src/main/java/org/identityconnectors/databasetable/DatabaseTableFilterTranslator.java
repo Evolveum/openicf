@@ -58,7 +58,7 @@ public class DatabaseTableFilterTranslator extends DatabaseFilterTranslator {
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         final Object value = AttributeUtil.getSingleValue(attribute);
         String columnName = connector.quoteName(connector.getColumnName(oclass, attribute.getName()));
-        SQLColumnTypeInfo columnTypeInfo = connector.getColumnTypeInfo(columnName);
+        SQLColumnTypeInfo columnTypeInfo = connector.getColumnTypeInfo(oclass.getObjectClassValue(), columnName);
 
         if (columnTypeInfo != null) {
         } else {
@@ -74,7 +74,7 @@ public class DatabaseTableFilterTranslator extends DatabaseFilterTranslator {
                         if (quoteValue.contains(firstChar) && quoteValue.contains(lastChar)) {
                             String trimmedColumnName = columnName.substring(1, columnName.length() - 1);
                             //2nd attempt to find the column type information, removing double quotes
-                            columnTypeInfo = connector.getColumnTypeInfo(trimmedColumnName);
+                            columnTypeInfo = connector.getColumnTypeInfo(oclass.getObjectClassValue(), trimmedColumnName);
                         }
                     } else {
 
